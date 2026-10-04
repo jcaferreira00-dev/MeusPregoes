@@ -1,0 +1,2297 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Pregões MEI</title>
+<meta name="description" content="Controle de pregões, itens, valor mínimo da proposta, limite do MEI e geração de proposta em PDF.">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#1f3864" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0f1c33" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="manifest.webmanifest">
+
+<!-- ícones -->
+<link rel="icon" href="icons/favicon.ico" sizes="48x48">
+<link rel="icon" type="image/svg+xml" href="icons/icon.svg" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="apple-touch-icon" sizes="120x120" href="icons/apple-touch-icon-120.png">
+<link rel="apple-touch-icon" sizes="152x152" href="icons/apple-touch-icon-152.png">
+<link rel="apple-touch-icon" sizes="167x167" href="icons/apple-touch-icon-167.png">
+<link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png">
+<link rel="mask-icon" href="icons/safari-pinned-tab.svg" color="#1f3864">
+<meta name="msapplication-TileColor" content="#1f3864">
+<meta name="msapplication-config" content="browserconfig.xml">
+
+<!-- modo app (iOS / Android) -->
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Pregões MEI">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="format-detection" content="telephone=no">
+
+<style>
+:root {
+  --bg: #f3f5f9; --card: #ffffff; --ink: #14213d; --muted: #667489; --line: #e3e8f0;
+  --navy: #1f3864; --blue: #2e75b6; --blue-soft: #eaf1fb; --gold: #b7791f;
+  --green: #2f7d3a; --green-soft: #e6f4ea; --red: #c0392b; --red-soft: #fdeaea; --amber: #b7791f; --amber-soft: #fff4dc;
+  --r: 16px; --shadow: 0 1px 2px rgba(20,33,61,.06), 0 8px 24px rgba(20,33,61,.06);
+  --safe-t: env(safe-area-inset-top, 0px); --safe-b: env(safe-area-inset-bottom, 0px);
+  --nav-h: 62px; --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0d1420; --card: #162031; --ink: #e8edf6; --muted: #95a3ba; --line: #25314a;
+    --navy: #0f1c33; --blue: #5aa2e6; --blue-soft: #1a2b45; --green: #5bc36b; --green-soft: #15301d;
+    --red: #ef7b6e; --red-soft: #3a1c1a; --amber: #e8b04a; --amber-soft: #38290e; --gold: #e8b04a;
+    --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.35);
+  }
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font); font-size: 15px; line-height: 1.4; }
+body { min-height: 100vh; overscroll-behavior-y: none; }
+button, input, select, textarea { font: inherit; color: inherit; }
+h1, h2, h3, h4, p { margin: 0; }
+svg.i { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+svg.i.sm { width: 16px; height: 16px; }
+
+/* ---------- estrutura ---------- */
+.shell { display: grid; grid-template-columns: 1fr; min-height: 100vh; }
+.topbar { position: sticky; top: 0; z-index: 20; background: var(--navy); color: #fff; padding: calc(var(--safe-t) + 10px) 16px 10px; display: flex; align-items: center; gap: 12px; }
+.topbar .logo { width: 34px; height: 34px; border-radius: 9px; flex: none; }
+.topbar h1 { font-size: 17px; font-weight: 700; letter-spacing: .2px; }
+.topbar .sub { font-size: 12px; opacity: .75; }
+.topbar .grow { flex: 1; min-width: 0; }
+.pill { display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px; padding: 5px 10px; border-radius: 99px; background: rgba(255,255,255,.14); color: #fff; white-space: nowrap; }
+.pill .dot { width: 7px; height: 7px; border-radius: 50%; background: #62d26f; }
+.pill.off .dot { background: #f0b429; } .pill.err .dot { background: #ff7b72; }
+.main { padding: 14px 14px calc(var(--nav-h) + var(--safe-b) + 90px); max-width: 980px; width: 100%; margin: 0 auto; }
+.nav { position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; display: flex; background: var(--card); border-top: 1px solid var(--line); padding: 6px 6px calc(var(--safe-b) + 6px); box-shadow: 0 -6px 20px rgba(20,33,61,.07); }
+.nav button { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; background: none; border: 0; padding: 6px 2px; color: var(--muted); font-size: 11px; font-weight: 600; border-radius: 12px; cursor: pointer; }
+.nav button.on { color: var(--blue); }
+.nav button.on svg { stroke-width: 2.2; }
+@media (min-width: 900px) {
+  .shell { grid-template-columns: 220px 1fr; }
+  .topbar { grid-column: 1 / -1; }
+  .nav { position: sticky; top: 60px; align-self: start; height: calc(100vh - 60px); flex-direction: column; justify-content: flex-start; gap: 4px; border-top: 0; border-right: 1px solid var(--line); padding: 14px 10px; box-shadow: none; }
+  .nav button { flex: none; flex-direction: row; gap: 12px; font-size: 14px; padding: 12px 14px; justify-content: flex-start; }
+  .nav button.on { background: var(--blue-soft); }
+  .main { padding-bottom: 90px; }
+}
+
+/* ---------- componentes ---------- */
+.page { display: flex; flex-direction: column; gap: 14px; animation: fade .18s ease; }
+@keyframes fade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+.card { background: var(--card); border-radius: var(--r); box-shadow: var(--shadow); padding: 16px; border: 1px solid var(--line); }
+.card h3 { font-size: 13px; text-transform: uppercase; letter-spacing: .6px; color: var(--muted); margin-bottom: 12px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+.card h3 .grow { flex: 1; }
+.muted { color: var(--muted); } .small { font-size: 12.5px; } .tiny { font-size: 11.5px; }
+.row { display: flex; align-items: center; gap: 10px; } .row.wrap { flex-wrap: wrap; } .between { justify-content: space-between; }
+.grow { flex: 1; min-width: 0; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.kpis { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (min-width: 700px) { .kpis { grid-template-columns: repeat(4, 1fr); } .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; align-items: start; } }
+.kpi { background: var(--card); border-radius: var(--r); padding: 14px; box-shadow: var(--shadow); border: 1px solid var(--line); border-top: 3px solid var(--c, var(--blue)); }
+.kpi .l { font-size: 10.5px; text-transform: uppercase; letter-spacing: .5px; color: var(--muted); font-weight: 700; }
+.kpi .v { font-size: 20px; font-weight: 800; margin-top: 4px; color: var(--c, var(--blue)); font-variant-numeric: tabular-nums; }
+.kpi .s { font-size: 11.5px; color: var(--muted); margin-top: 2px; }
+
+.badge { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 99px; background: var(--blue-soft); color: var(--blue); white-space: nowrap; }
+.badge.ok, .st-Faturado, .st-Ganhou { background: var(--green-soft); color: var(--green); }
+.badge.warn, .st-Em-disputa, .st-Proposta-enviada { background: var(--amber-soft); color: var(--amber); }
+.badge.bad, .st-Perdeu, .st-Desclassificado { background: var(--red-soft); color: var(--red); }
+.st-Desisti { background: var(--line); color: var(--muted); }
+.st-Analisando { background: var(--blue-soft); color: var(--blue); }
+.chip { display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px; padding: 3px 9px; border-radius: 8px; background: var(--bg); color: var(--ink); border: 1px solid var(--line); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.chip.org { background: var(--blue-soft); color: var(--blue); border-color: transparent; font-weight: 600; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.filters { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 2px; scrollbar-width: none; }
+.filters::-webkit-scrollbar { display: none; }
+.filters button { flex: none; border: 1px solid var(--line); background: var(--card); color: var(--muted); border-radius: 99px; padding: 6px 13px; font-size: 12.5px; font-weight: 600; cursor: pointer; }
+.filters button.on { background: var(--navy); color: #fff; border-color: var(--navy); }
+
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border: 1px solid var(--line); background: var(--card); border-radius: 12px; padding: 11px 16px; font-weight: 700; font-size: 14px; cursor: pointer; min-height: 44px; transition: transform .06s ease, background .15s; }
+.btn:active { transform: scale(.98); }
+.btn.primary { background: var(--blue); border-color: var(--blue); color: #fff; }
+.btn.navy { background: var(--navy); border-color: var(--navy); color: #fff; }
+.btn.danger { color: var(--red); border-color: var(--red-soft); background: var(--red-soft); }
+.btn.ghost { background: transparent; }
+.btn.sm { padding: 7px 12px; min-height: 36px; font-size: 13px; border-radius: 10px; }
+.btn.block { width: 100%; }
+.btn[disabled] { opacity: .55; pointer-events: none; }
+.icon-btn { width: 40px; height: 40px; border-radius: 12px; border: 0; background: transparent; display: grid; place-items: center; cursor: pointer; color: inherit; }
+.fab { position: fixed; right: 16px; bottom: calc(var(--nav-h) + var(--safe-b) + 18px); z-index: 25; width: 56px; height: 56px; border-radius: 18px; border: 0; background: var(--blue); color: #fff; display: grid; place-items: center; box-shadow: 0 10px 24px rgba(46,117,182,.45); cursor: pointer; }
+.fab svg { width: 26px; height: 26px; stroke-width: 2.4; }
+@media (min-width: 900px) { .fab { bottom: 24px; right: 28px; } }
+
+/* barras */
+.stack { display: flex; height: 22px; border-radius: 99px; overflow: hidden; background: var(--line); position: relative; }
+.stack .seg { height: 100%; min-width: 0; }
+.stack .mark { position: absolute; top: -3px; bottom: -3px; width: 2px; background: var(--red); }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 10px; font-size: 12px; color: var(--muted); }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
+.meter { height: 12px; border-radius: 99px; background: var(--line); overflow: hidden; }
+.meter > div { height: 100%; border-radius: 99px; background: linear-gradient(90deg, var(--blue), #5aa2e6); }
+.meter.red > div { background: linear-gradient(90deg, #e07a5f, var(--red)); }
+.alert { display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; border-radius: 12px; font-weight: 700; font-size: 13.5px; }
+.alert.ok { background: var(--green-soft); color: var(--green); } .alert.warn { background: var(--amber-soft); color: var(--amber); } .alert.bad { background: var(--red-soft); color: var(--red); }
+.alert.info { background: var(--blue-soft); color: var(--blue); }
+.strow { display: grid; grid-template-columns: 1fr auto; gap: 4px 10px; align-items: center; padding: 8px 0; border-bottom: 1px dashed var(--line); }
+.strow:last-child { border-bottom: 0; }
+.strow .bar { grid-column: 1 / -1; height: 6px; border-radius: 99px; background: var(--line); overflow: hidden; }
+.strow .bar > div { height: 100%; background: var(--blue); border-radius: 99px; }
+.donut-wrap { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
+.donut-wrap svg { width: 150px; height: 150px; flex: none; }
+.donut-leg { flex: 1; min-width: 160px; display: flex; flex-direction: column; gap: 8px; font-size: 13px; }
+.donut-leg div { display: flex; align-items: center; gap: 8px; } .donut-leg b { margin-left: auto; font-variant-numeric: tabular-nums; }
+.donut-leg i { width: 11px; height: 11px; border-radius: 3px; flex: none; }
+
+/* listas / cards */
+.list { display: flex; flex-direction: column; gap: 12px; }
+.pcard, .icard { background: var(--card); border: 1px solid var(--line); border-radius: var(--r); padding: 14px; box-shadow: var(--shadow); cursor: pointer; display: flex; flex-direction: column; gap: 8px; text-align: left; width: 100%; }
+.pcard:active, .icard:active { transform: scale(.995); }
+.pcard h4, .icard h4 { font-size: 15.5px; font-weight: 700; }
+.pcard .num { font-size: 12px; color: var(--muted); font-weight: 700; letter-spacing: .3px; }
+.nums { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding-top: 8px; border-top: 1px dashed var(--line); }
+.nums div { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .4px; font-weight: 700; }
+.nums b { display: block; font-size: 14px; color: var(--ink); text-transform: none; letter-spacing: 0; margin-top: 2px; font-variant-numeric: tabular-nums; }
+.minbox { display: flex; justify-content: space-between; align-items: center; gap: 10px; background: var(--green-soft); border-radius: 12px; padding: 10px 12px; }
+.minbox.bad { background: var(--red-soft); }
+.minbox .t { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .4px; color: var(--green); }
+.minbox.bad .t { color: var(--red); }
+.minbox .v { font-size: 19px; font-weight: 800; color: var(--green); font-variant-numeric: tabular-nums; }
+.minbox.bad .v { color: var(--red); }
+.grp { margin-top: 6px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.grp h3 { font-size: 14px; text-transform: none; letter-spacing: 0; color: var(--ink); margin: 0; }
+.empty { text-align: center; padding: 34px 18px; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.empty svg { width: 46px; height: 46px; color: var(--blue); stroke-width: 1.5; }
+.search { position: relative; }
+.search svg { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--muted); width: 18px; height: 18px; }
+.search input { padding-left: 38px; }
+
+/* formulários */
+.field { display: flex; flex-direction: column; gap: 5px; margin-bottom: 12px; }
+.field > label, .lbl { font-size: 12px; font-weight: 700; color: var(--muted); }
+.input, select.input, textarea.input { width: 100%; border: 1.5px solid var(--line); background: var(--card); border-radius: 12px; padding: 11px 13px; font-size: 16px; min-height: 46px; outline: none; transition: border-color .15s, box-shadow .15s; }
+.input:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(46,117,182,.18); }
+.input.err { border-color: var(--red); }
+textarea.input { min-height: 78px; resize: vertical; }
+.hint { font-size: 11.5px; color: var(--muted); }
+.formgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 12px; }
+.formgrid .full { grid-column: 1 / -1; }
+.sect { font-size: 12px; font-weight: 800; letter-spacing: .6px; text-transform: uppercase; color: var(--navy); margin: 8px 0 10px; display: flex; gap: 8px; align-items: center; }
+@media (prefers-color-scheme: dark) { .sect { color: var(--blue); } }
+.switch { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 0; }
+.switch input { appearance: none; width: 46px; height: 28px; border-radius: 99px; background: var(--line); position: relative; cursor: pointer; transition: background .15s; flex: none; }
+.switch input::after { content: ""; position: absolute; top: 3px; left: 3px; width: 22px; height: 22px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.3); transition: transform .15s; }
+.switch input:checked { background: var(--blue); } .switch input:checked::after { transform: translateX(18px); }
+input[type=range] { width: 100%; accent-color: var(--blue); }
+.saved-ind { font-size: 11.5px; color: var(--green); font-weight: 700; opacity: 0; transition: opacity .3s; }
+.saved-ind.show { opacity: 1; }
+
+/* sheet (formulário em tela cheia no celular) */
+.sheet-wrap { position: fixed; inset: 0; z-index: 60; display: flex; align-items: flex-end; justify-content: center; }
+.sheet-backdrop { position: absolute; inset: 0; background: rgba(10,18,32,.55); animation: bd .2s ease; }
+@keyframes bd { from { opacity: 0; } to { opacity: 1; } }
+.sheet { position: relative; width: 100%; max-width: 640px; max-height: 94vh; background: var(--bg); border-radius: 22px 22px 0 0; display: flex; flex-direction: column; animation: up .24s cubic-bezier(.2,.8,.2,1); overflow: hidden; }
+@keyframes up { from { transform: translateY(40px); opacity: .4; } to { transform: none; opacity: 1; } }
+@media (min-width: 700px) { .sheet-wrap { align-items: center; } .sheet { border-radius: 22px; max-height: 90vh; } }
+.sheet-head { display: flex; align-items: center; gap: 6px; padding: 10px 12px 10px 8px; background: var(--card); border-bottom: 1px solid var(--line); }
+.sheet-head h2 { font-size: 16.5px; flex: 1; }
+.sheet-form { display: flex; flex-direction: column; min-height: 0; flex: 1; }
+.sheet-body { padding: 14px 16px; overflow-y: auto; flex: 1; -webkit-overflow-scrolling: touch; }
+.sheet-foot { display: flex; gap: 10px; padding: 12px 16px calc(var(--safe-b) + 12px); background: var(--card); border-top: 1px solid var(--line); }
+.sheet-foot .btn { flex: 1; }
+.preview { position: sticky; top: -14px; z-index: 2; margin: -14px -16px 14px; padding: 12px 16px; background: var(--bg); border-bottom: 1px solid var(--line); display: flex; flex-direction: column; gap: 8px; }
+.preview .kv { display: flex; gap: 14px; font-size: 12px; color: var(--muted); flex-wrap: wrap; } .preview .kv b { color: var(--ink); font-variant-numeric: tabular-nums; }
+.draftbar { display: flex; gap: 10px; align-items: center; background: var(--amber-soft); color: var(--amber); border-radius: 12px; padding: 10px 12px; margin-bottom: 12px; font-size: 12.5px; font-weight: 700; }
+.draftbar button { margin-left: auto; border: 0; background: transparent; color: inherit; font-weight: 800; text-decoration: underline; cursor: pointer; }
+
+/* diálogos e avisos */
+.dlg-wrap { position: fixed; inset: 0; z-index: 90; display: grid; place-items: center; padding: 20px; background: rgba(10,18,32,.6); animation: bd .15s ease; }
+.dlg { background: var(--card); border-radius: 20px; padding: 20px; width: 100%; max-width: 380px; box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 10px; }
+.dlg h3 { font-size: 17px; } .dlg p { color: var(--muted); font-size: 14px; }
+.dlg .btns { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+.toast { position: fixed; left: 50%; bottom: calc(var(--nav-h) + var(--safe-b) + 84px); transform: translateX(-50%); background: #111c30; color: #fff; padding: 11px 16px; border-radius: 12px; font-size: 13.5px; font-weight: 600; z-index: 100; box-shadow: 0 8px 24px rgba(0,0,0,.35); max-width: 90vw; animation: fade .2s ease; }
+.banner { position: fixed; left: 12px; right: 12px; top: calc(var(--safe-t) + 66px); z-index: 70; background: var(--navy); color: #fff; border-radius: 14px; padding: 12px 14px; display: flex; align-items: center; gap: 12px; box-shadow: 0 10px 28px rgba(0,0,0,.3); max-width: 600px; margin: 0 auto; font-size: 13.5px; }
+.banner .btn { background: #fff; color: var(--navy); border-color: #fff; }
+
+/* detalhe do pregão e PDF */
+.back { display: inline-flex; align-items: center; gap: 4px; border: 0; background: none; color: var(--blue); font-weight: 700; font-size: 14px; padding: 4px 0; cursor: pointer; }
+.hero { background: linear-gradient(135deg, var(--navy), #2a4f87); color: #fff; border-radius: var(--r); padding: 16px; display: flex; flex-direction: column; gap: 6px; box-shadow: var(--shadow); }
+.hero .num { font-size: 12px; opacity: .8; font-weight: 700; letter-spacing: .4px; } .hero h2 { font-size: 20px; } .hero .m { font-size: 12.5px; opacity: .85; display: flex; flex-wrap: wrap; gap: 4px 14px; }
+.kv-list { display: flex; flex-direction: column; gap: 10px; font-size: 14px; }
+.kv-list div { display: flex; gap: 10px; } .kv-list span { color: var(--muted); min-width: 118px; font-size: 12.5px; padding-top: 1px; } .kv-list b { font-weight: 600; word-break: break-word; }
+.tbl { width: 100%; border-collapse: collapse; font-size: 13px; }
+.tbl th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .4px; color: var(--muted); padding: 6px 4px; border-bottom: 1px solid var(--line); }
+.tbl td { padding: 8px 4px; border-bottom: 1px dashed var(--line); vertical-align: top; }
+.tbl .r { text-align: right; font-variant-numeric: tabular-nums; } .tbl tfoot td { font-weight: 800; border-bottom: 0; }
+.tbl-scroll { overflow-x: auto; }
+.wm-prev { height: 120px; border-radius: 12px; border: 1px dashed var(--line); display: grid; place-items: center; overflow: hidden; position: relative; background: #fff; }
+.wm-prev span { font-weight: 800; color: #738094; white-space: nowrap; }
+.wm-prev img { max-width: 70%; max-height: 90%; }
+.seg-ctl { display: flex; background: var(--bg); border-radius: 12px; padding: 4px; gap: 4px; border: 1px solid var(--line); }
+.seg-ctl button { flex: 1; border: 0; background: transparent; padding: 9px 6px; border-radius: 9px; font-weight: 700; font-size: 13px; color: var(--muted); cursor: pointer; }
+.seg-ctl button.on { background: var(--card); color: var(--blue); box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+.hidden { display: none !important; }
+@media print { .nav, .topbar, .fab { display: none !important; } }
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+
+</style>
+</head>
+<body>
+<div id="app"></div>
+<noscript>Este aplicativo precisa de JavaScript para funcionar.</noscript>
+<script>
+/* ===== NÚCLEO: cálculos, formatação e armazenamento (APP_VERSION fica aqui) ===== */
+/* Pregões MEI — núcleo (cálculos, formatação, armazenamento e merge)
+ * Sem dependências. Funciona no navegador (window.Core) e no Node (testes). */
+(function (root) {
+  'use strict';
+
+  const APP_VERSION = '1.1.0';
+  const STATUS = ['Analisando', 'Proposta enviada', 'Em disputa', 'Ganhou', 'Faturado', 'Perdeu', 'Desclassificado', 'Desisti'];
+  const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti'];
+  const DECL_PADRAO =
+    'Declaramos que, nos preços ofertados, estão incluídas todas as despesas com tributos, fretes, embalagens, ' +
+    'seguros e demais custos necessários ao fornecimento, e que concordamos com todas as condições do edital.';
+
+  /* ---------- utilitários ---------- */
+  const uid = () =>
+    (root.crypto && root.crypto.randomUUID)
+      ? root.crypto.randomUUID()
+      : 'id-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
+
+  const n0 = (v) => (v === null || v === undefined || v === '' || !isFinite(v)) ? 0 : Number(v);
+  const round2 = (x) => Math.round((x + Number.EPSILON) * 100) / 100;
+  // equivalente ao ROUNDUP(x, 2) da planilha (sempre para cima, em centavos)
+  const ceil2 = (x) => Math.ceil(Math.round(x * 100 * 1e6) / 1e6 - 1e-9) / 100;
+
+  // "1.234,56" | "19,5" | "19.50" | "R$ 20" | "20%" -> número (ou null)
+  function parseBR(v) {
+    if (v === null || v === undefined) return null;
+    if (typeof v === 'number') return isFinite(v) ? v : null;
+    let s = String(v).trim();
+    if (s === '') return null;
+    s = s.replace(/[R$\s%]/g, '');
+    if (s.includes(',')) s = s.replace(/\./g, '').replace(',', '.');
+    const n = Number(s);
+    return isFinite(n) ? n : null;
+  }
+
+  const _brl = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
+  const _brl0 = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 });
+  const brl = (n) => (n === null || n === undefined || n === '' || !isFinite(n)) ? '—' : _brl.format(n);
+  const brl0 = (n) => (n === null || n === undefined || n === '' || !isFinite(n)) ? '—' : _brl0.format(n);
+  const pct = (n, d = 1) => (n === null || n === undefined || !isFinite(n)) ? '—' : (n * 100).toFixed(d).replace('.', ',') + '%';
+  const numBR = (n, d = 2) => (n === null || n === undefined || !isFinite(n)) ? '' : String(Number(Number(n).toFixed(d))).replace('.', ',');
+  const qtdBR = (n) => (n === null || n === undefined || !isFinite(n)) ? '—' : new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 3 }).format(n);
+
+  // 'YYYY-MM-DDTHH:mm' -> '10/09/2026 10:00'
+  function fmtSessao(s) {
+    if (!s) return '';
+    const m = /^(\d{4})-(\d{2})-(\d{2})(?:T(\d{2}):(\d{2}))?/.exec(s);
+    if (!m) return s;
+    return `${m[3]}/${m[2]}/${m[1]}` + (m[4] ? ` ${m[4]}:${m[5]}` : '');
+  }
+  const MESES = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
+  // 'YYYY-MM-DD' -> '3 de outubro de 2026'
+  function dataExtensa(s) {
+    const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(s || '');
+    if (!m) return '';
+    return `${Number(m[3])} de ${MESES[Number(m[2]) - 1]} de ${m[1]}`;
+  }
+  const hojeISO = () => {
+    const d = new Date();
+    const p = (x) => String(x).padStart(2, '0');
+    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+  };
+
+  /* ---------- estado padrão ---------- */
+  const defaultConfig = () => ({
+    margemPadrao: 0.20,
+    consumo: 10,
+    combustivel: 6,
+    desgaste: 0.30,
+    anoRef: new Date().getFullYear(),
+    limiteCheio: 81000,
+    anoAbertura: null,
+    mesAbertura: null,
+    fatFora: 0,
+    empresa: {
+      nome: '', cnpj: '', cpf: '', endereco: '', cidade: 'Telêmaco Borba/PR', telefone: '', email: '', responsavel: '',
+      banco: '', agencia: '', conta: '', pix: '', favorecido: '',
+    },
+    proposta: {
+      validadeDias: 60, condPagamento: '30 dias', textoDeclaracao: DECL_PADRAO, cor: '#FFC000',
+      incluirExtenso: true, incluirBancarios: true, incluirDeclaracao: false, incluirLocalData: false,
+    },
+    cabecalho: { imagem: null },
+    marcaDagua: { tipo: 'texto', texto: 'PROPOSTA COMERCIAL', imagem: null, opacidade: 0.12, angulo: 0, tamanho: 64 },
+    updatedAt: 0,
+  });
+
+  const emptyState = () => ({ version: 1, config: defaultConfig(), pregoes: [], itens: [] });
+
+  function migrate(s) {
+    const d = defaultConfig();
+    const c = (s && s.config) || {};
+    return {
+      version: 1,
+      config: Object.assign({}, d, c, {
+        empresa: Object.assign({}, d.empresa, c.empresa),
+        proposta: Object.assign({}, d.proposta, c.proposta),
+        marcaDagua: Object.assign({}, d.marcaDagua, c.marcaDagua),
+        cabecalho: Object.assign({}, d.cabecalho, c.cabecalho),
+      }),
+      pregoes: Array.isArray(s && s.pregoes) ? s.pregoes : [],
+      itens: Array.isArray(s && s.itens) ? s.itens : [],
+    };
+  }
+
+  /* ---------- cálculo (espelha a planilha) ---------- */
+  function custoViagem(p, cfg) {
+    const consumo = n0(cfg.consumo);
+    if (consumo === 0) return 0;
+    return (n0(p.km) / consumo * n0(cfg.combustivel) + n0(p.km) * n0(cfg.desgaste) + n0(p.pedagio)) * n0(p.viagens);
+  }
+
+  function calcItem(it, pst, cfg) {
+    const qtd = n0(it.qtd), custo = n0(it.custo), frete = n0(it.frete);
+    const compra = qtd * custo + frete;
+    const entrega = pst && pst.base > 0 ? pst.viagem * compra / pst.base : 0;
+    const custoTotal = compra + entrega;
+    const custoUnit = qtd > 0 ? custoTotal / qtd : null;
+    const margem = (it.margem !== null && it.margem !== undefined) ? it.margem : cfg.margemPadrao;
+    const minimo = (custoUnit !== null && margem < 1) ? ceil2(custoUnit / (1 - margem)) : null;
+    const teto = (it.teto !== null && it.teto !== undefined) ? it.teto : null;
+    const lance = (it.lanceFinal !== null && it.lanceFinal !== undefined) ? it.lanceFinal : null;
+    const folgaRs = (minimo !== null && teto !== null) ? teto - minimo : null;
+    const folgaPct = (minimo !== null && teto !== null && teto > 0) ? 1 - minimo / teto : null;
+    let totalVenda = null;
+    if (lance !== null) totalVenda = qtd * lance; else if (teto !== null) totalVenda = qtd * teto;
+    const lucro = totalVenda !== null ? totalVenda - custoTotal : null;
+    let situacao = '', sitTipo = '';
+    if (minimo !== null && teto !== null) {
+      if (minimo > teto) { situacao = 'Inviável: mínimo acima do teto'; sitTipo = 'bad'; }
+      else if (lance !== null && lance < minimo) { situacao = 'Lance abaixo do mínimo'; sitTipo = 'bad'; }
+      else { situacao = 'OK'; sitTipo = 'ok'; }
+    }
+    return { compra, entrega, custoTotal, custoUnit, margem, minimo, teto, lance, folgaRs, folgaPct, totalVenda, lucro, situacao, sitTipo, produtos: qtd * custo, frete };
+  }
+
+  function limiteMEI(cfg) {
+    const ab = Number(cfg.anoAbertura), mes = Number(cfg.mesAbertura);
+    if (ab && mes >= 1 && mes <= 12 && ab === Number(cfg.anoRef)) return round2(n0(cfg.limiteCheio) / 12 * (13 - mes));
+    return n0(cfg.limiteCheio);
+  }
+
+  function computeAll(state) {
+    const cfg = state.config;
+    const pregoes = state.pregoes.filter((p) => !p.deleted);
+    const itens = state.itens.filter((i) => !i.deleted);
+    const byP = new Map();
+    for (const it of itens) {
+      if (!byP.has(it.pregaoId)) byP.set(it.pregaoId, []);
+      byP.get(it.pregaoId).push(it);
+    }
+    const pMap = new Map();
+    for (const p of pregoes) {
+      const list = byP.get(p.id) || [];
+      let base = 0;
+      for (const it of list) base += n0(it.qtd) * n0(it.custo) + n0(it.frete);
+      pMap.set(p.id, { p, viagem: custoViagem(p, cfg), base, itens: list, nItens: list.length, venda: 0, custo: 0, lucro: 0, margem: null });
+    }
+    const iMap = new Map();
+    for (const it of itens) {
+      const pst = pMap.get(it.pregaoId) || null;
+      const c = calcItem(it, pst, cfg);
+      iMap.set(it.id, c);
+      if (pst) { pst.custo += c.custoTotal; pst.venda += c.totalVenda || 0; pst.lucro += c.lucro || 0; }
+    }
+    for (const pst of pMap.values()) pst.margem = pst.venda > 0 ? pst.lucro / pst.venda : null;
+
+    // limite do MEI
+    const limite = limiteMEI(cfg);
+    let somaFat = 0, aFaturar = 0, emDisputa = 0;
+    for (const pst of pMap.values()) {
+      const s = pst.p.status;
+      if (s === 'Faturado') somaFat += pst.venda;
+      else if (s === 'Ganhou') aFaturar += pst.venda;
+      else if (s === 'Proposta enviada' || s === 'Em disputa') emDisputa += pst.venda;
+    }
+    const faturado = n0(cfg.fatFora) + somaFat;
+    const comprometido = faturado + aFaturar;
+    const mei = {
+      limite, faturado, aFaturar, comprometido, emDisputa,
+      saldoAgora: limite - comprometido,
+      saldoSeGanhar: limite - comprometido - emDisputa,
+      pctComprometido: limite > 0 ? comprometido / limite : 0,
+      pctComTudo: limite > 0 ? (comprometido + emDisputa) / limite : 0,
+    };
+    mei.alerta = mei.saldoAgora < 0 ? 'bad' : (mei.saldoSeGanhar < 0 ? 'warn' : 'ok');
+
+    // por status
+    const statusRows = STATUS.map((s) => {
+      let count = 0, venda = 0, lucro = 0;
+      for (const pst of pMap.values()) if (pst.p.status === s) { count++; venda += pst.venda; lucro += pst.lucro; }
+      return { status: s, count, venda, lucro };
+    });
+
+    // composição do preço (pregões ativos)
+    const comp = { produtos: 0, frete: 0, entrega: 0, lucro: 0, venda: 0 };
+    for (const it of itens) {
+      const pst = pMap.get(it.pregaoId);
+      if (!pst || INATIVOS.includes(pst.p.status)) continue;
+      const c = iMap.get(it.id);
+      comp.produtos += c.produtos; comp.frete += c.frete; comp.entrega += c.entrega; comp.lucro += c.lucro || 0;
+    }
+    comp.venda = comp.produtos + comp.frete + comp.entrega + comp.lucro;
+
+    // próximas sessões
+    const agora = Date.now();
+    const proximas = [...pMap.values()]
+      .filter((x) => x.p.sessao && !INATIVOS.includes(x.p.status) && x.p.status !== 'Faturado')
+      .map((x) => ({ x, t: new Date(x.p.sessao).getTime() }))
+      .filter((o) => isFinite(o.t) && o.t >= agora)
+      .sort((a, b) => a.t - b.t)
+      .map((o) => o.x);
+
+    return { pMap, iMap, mei, statusRows, comp, proximas, lucroPrevisto: comp.lucro };
+  }
+
+  // calcula um item "em edição" (ainda não salvo), recalculando o rateio da entrega do pregão
+  function previewItem(state, draft) {
+    const itens = state.itens.filter((i) => i.id !== draft.id && !i.deleted).concat([Object.assign({}, draft, { deleted: false })]);
+    const R = computeAll(Object.assign({}, state, { itens }));
+    return R.iMap.get(draft.id) || null;
+  }
+
+  /* ---------- linhas da proposta (PDF) ---------- */
+  // fonte: 'auto' (lance final, senão mínimo) | 'minimo' | 'teto' | 'lance'
+  function linhasProposta(state, pregaoId, fonte) {
+    const R = computeAll(state);
+    const pst = R.pMap.get(pregaoId);
+    if (!pst) return { linhas: [], total: 0, semValor: 0 };
+    const linhas = [];
+    let total = 0, semValor = 0, n = 0;
+    for (const it of pst.itens) {
+      const c = R.iMap.get(it.id);
+      let unit = null;
+      if (fonte === 'minimo') unit = c.minimo;
+      else if (fonte === 'teto') unit = c.teto;
+      else if (fonte === 'lance') unit = c.lance;
+      else unit = c.lance !== null ? c.lance : c.minimo;
+      n += 1;
+      const qtd = n0(it.qtd);
+      const tot = unit !== null ? round2(qtd * unit) : null;
+      if (unit === null) semValor += 1; else total += tot;
+      linhas.push({
+        n, numeroItem: (it.itemEdital && String(it.itemEdital).trim()) || String(n).padStart(2, '0'),
+        descricao: it.descricao || '', descEdital: (it.descEdital && it.descEdital.trim()) || it.descricao || '',
+        marca: it.marca || '', un: it.unidade || 'Un', qtd,
+        unit, total: tot, teto: c.teto, acimaTeto: (unit !== null && c.teto !== null && unit > c.teto + 1e-9),
+      });
+    }
+    return { linhas, total: round2(total), semValor, pregao: pst.p };
+  }
+
+  /* ---------- merge (sincronização: sempre puxa antes de empurrar) ---------- */
+  function mergeById(a, b) {
+    const m = new Map();
+    for (const r of a) m.set(r.id, r);
+    for (const r of b) {
+      const x = m.get(r.id);
+      if (!x || (r.updatedAt || 0) > (x.updatedAt || 0)) m.set(r.id, r);
+    }
+    return [...m.values()];
+  }
+  function mergeState(local, remote) {
+    const r = migrate(remote || {});
+    const l = migrate(local || {});
+    let config = (r.config.updatedAt || 0) > (l.config.updatedAt || 0) ? r.config : l.config;
+    if (config === r.config) {
+      // as imagens (papel timbrado e marca d'água) ficam só no aparelho: nunca perdê-las ao aceitar a config da nuvem
+      config = Object.assign({}, r.config, {
+        cabecalho: Object.assign({}, r.config.cabecalho, { imagem: l.config.cabecalho.imagem || r.config.cabecalho.imagem }),
+        marcaDagua: Object.assign({}, r.config.marcaDagua, { imagem: l.config.marcaDagua.imagem || r.config.marcaDagua.imagem }),
+      });
+    }
+    return { version: 1, config, pregoes: mergeById(l.pregoes, r.pregoes), itens: mergeById(l.itens, r.itens) };
+  }
+  // há alguma diferença relevante entre dois estados? (compara config.updatedAt e id/updatedAt/deleted de cada registro)
+  function diffState(a, b) {
+    const A = migrate(a), B = migrate(b);
+    if ((A.config.updatedAt || 0) !== (B.config.updatedAt || 0)) return true;
+    for (const k of ['pregoes', 'itens']) {
+      if (A[k].length !== B[k].length) return true;
+      const ma = new Map(A[k].map((r) => [r.id, r]));
+      for (const r of B[k]) {
+        const x = ma.get(r.id);
+        if (!x || (x.updatedAt || 0) !== (r.updatedAt || 0) || !!x.deleted !== !!r.deleted) return true;
+      }
+    }
+    return false;
+  }
+  // cópia limpa para a nuvem: sem 'undefined' e sem as imagens (só locais)
+  function paraNuvem(state) {
+    const s = JSON.parse(JSON.stringify(migrate(state)));
+    s.config.cabecalho.imagem = null;
+    s.config.marcaDagua.imagem = null;
+    return s;
+  }
+
+  /* ---------- armazenamento ---------- */
+  function createStore(storage, key) {
+    let state = load();
+    const listeners = new Set();
+    let lastError = null;
+
+    function load() {
+      try {
+        const raw = storage.getItem(key);
+        if (raw) return migrate(JSON.parse(raw));
+      } catch (e) { /* ignora e recomeça */ }
+      return emptyState();
+    }
+    function emit(kind) { for (const fn of listeners) { try { fn(kind); } catch (e) { console.error(e); } } }
+    function persist(kind) {
+      try { storage.setItem(key, JSON.stringify(state)); lastError = null; }
+      catch (e) { lastError = e; emit('error'); return false; }
+      emit(kind === true ? 'silent' : (kind || 'change'));
+      return true;
+    }
+    const now = () => Date.now();
+
+    return {
+      get: () => state,
+      on: (fn) => { listeners.add(fn); return () => listeners.delete(fn); },
+      error: () => lastError,
+
+      upsertPregao(data) {
+        const t = now();
+        const i = state.pregoes.findIndex((p) => p.id === data.id);
+        if (i >= 0) state.pregoes[i] = Object.assign({}, state.pregoes[i], data, { updatedAt: t, deleted: false });
+        else {
+          const id = data.id || uid();
+          state.pregoes.push(Object.assign({ status: 'Analisando', viagens: 1, km: 0, pedagio: 0 }, data, { id, createdAt: t, updatedAt: t, deleted: false }));
+          data = { id };
+        }
+        persist();
+        return data.id;
+      },
+      removePregao(id) {
+        const t = now();
+        const p = state.pregoes.find((x) => x.id === id);
+        if (p) { p.deleted = true; p.updatedAt = t; }
+        for (const it of state.itens) if (it.pregaoId === id && !it.deleted) { it.deleted = true; it.updatedAt = t; }
+        persist();
+      },
+      upsertItem(data) {
+        const t = now();
+        const i = state.itens.findIndex((x) => x.id === data.id);
+        if (i >= 0) state.itens[i] = Object.assign({}, state.itens[i], data, { updatedAt: t, deleted: false });
+        else {
+          const id = data.id || uid();
+          state.itens.push(Object.assign({}, data, { id, createdAt: t, updatedAt: t, deleted: false }));
+          data = { id };
+        }
+        persist();
+        return data.id;
+      },
+      removeItem(id) {
+        const it = state.itens.find((x) => x.id === id);
+        if (it) { it.deleted = true; it.updatedAt = now(); }
+        persist();
+      },
+      // caminho tipo 'empresa.nome' ou 'margemPadrao'
+      setConfigPath(path, value, opts) {
+        const parts = path.split('.');
+        let o = state.config;
+        for (let i = 0; i < parts.length - 1; i++) {
+          if (typeof o[parts[i]] !== 'object' || o[parts[i]] === null) o[parts[i]] = {};
+          o = o[parts[i]];
+        }
+        o[parts[parts.length - 1]] = value;
+        state.config.updatedAt = now();
+        persist(opts && opts.silent);
+      },
+      replaceAll(next) { state = migrate(next); persist(); },
+      // mescla dados vindos de fora (nuvem/backup). Só grava e avisa se algo realmente mudou ('remote' não dispara novo envio)
+      mergeFrom(remote) {
+        const merged = mergeState(state, remote);
+        if (!diffState(state, merged)) return false;
+        state = merged; persist('remote'); return true;
+      },
+      hasData() { return state.pregoes.some((p) => !p.deleted) || state.itens.some((i) => !i.deleted); },
+      mergeDemo() { state = mergeState(state, demoState()); persist(); },
+      clearAll() {
+        const t = now();
+        for (const p of state.pregoes) { p.deleted = true; p.updatedAt = t; }
+        for (const i of state.itens) { i.deleted = true; i.updatedAt = t; }
+        persist();
+      },
+      changedSince(ts) {
+        return {
+          config: (state.config.updatedAt || 0) > ts ? state.config : null,
+          pregoes: state.pregoes.filter((p) => (p.updatedAt || 0) > ts),
+          itens: state.itens.filter((i) => (i.updatedAt || 0) > ts),
+        };
+      },
+      export() { return JSON.stringify(state, null, 1); },
+    };
+  }
+
+  /* ---------- dados de exemplo (os mesmos da planilha) ---------- */
+  function demoState() {
+    const d = (dias, h, m) => {
+      const x = new Date(); x.setDate(x.getDate() + dias); x.setHours(h, m, 0, 0);
+      const p = (v) => String(v).padStart(2, '0');
+      return `${x.getFullYear()}-${p(x.getMonth() + 1)}-${p(x.getDate())}T${p(x.getHours())}:${p(x.getMinutes())}`;
+    };
+    const t = Date.now();
+    const P = (id, numero, orgao, cidadeUf, sessao, intervaloMin, prazo, exig, status, km, viagens, pedagio) => ({
+      id, numero, orgao, cidadeUf, sessao, intervaloMin, prazoEntregaDias: prazo, exigencias: exig, status, km, viagens, pedagio,
+      link: '', obs: 'Dado de exemplo: pode apagar.', createdAt: t, updatedAt: t, deleted: false,
+    });
+    const I = (id, pregaoId, descricao, marca, unidade, qtd, onde, custo, teto, frete, margem, lanceFinal) => ({
+      id, pregaoId, descricao, marca, unidade, qtd, onde, custo, teto, frete, margem, lanceFinal, createdAt: t, updatedAt: t, deleted: false,
+    });
+    return {
+      version: 1,
+      config: Object.assign(defaultConfig(), { updatedAt: 0 }),
+      pregoes: [
+        P('demo-p1', '90001/2026', 'Universidade de Londrina (exemplo)', 'Londrina/PR', d(-23, 10, 0), 'R$ 0,10', 15, 'SICAF, CND estadual', 'Faturado', 120, 1, 0),
+        P('demo-p2', '90002/2026', 'Câmara Municipal de Exemplo B', 'Cidade B/PR', d(-8, 9, 0), 'R$ 0,50', 20, 'SICAF, CND federal', 'Ganhou', 80, 1, 0),
+        P('demo-p3', '90003/2026', 'Autarquia de Exemplo C', 'Cidade C/PR', d(11, 10, 0), '0,5%', 30, 'SICAF, declaração ME/EPP', 'Em disputa', 200, 1, 30),
+        P('demo-p4', '90004/2026', 'Hospital de Exemplo D', 'Cidade D/PR', d(19, 14, 0), 'R$ 0,10', 15, 'SICAF', 'Analisando', 0, 0, 0),
+      ],
+      itens: [
+        I('demo-i1', 'demo-p1', 'Caixa organizadora plástica 30 L', 'Marca X', 'Un', 200, 'Atacado Y', 28, 49, 120, null, 44),
+        I('demo-i2', 'demo-p1', 'Estilete 18 mm', 'Marca Z', 'Un', 300, 'Distribuidor Z', 3.2, 6.5, 0, null, 5.8),
+        I('demo-i3', 'demo-p2', 'Resma de papel A4 75 g', 'Marca W', 'Resma', 500, 'Atacado Y', 24.9, 33, 0, null, null),
+        I('demo-i4', 'demo-p2', 'Grampeador de mesa', 'Marca V', 'Un', 80, 'Atacado Y', 30, 38, 0, null, null),
+        I('demo-i5', 'demo-p3', 'Mouse USB óptico', 'Marca U', 'Un', 300, 'Distribuidor X', 14, 25, 90, null, null),
+        I('demo-i6', 'demo-p3', 'Teclado ABNT2 USB', 'Marca T', 'Un', 200, 'Distribuidor X', 32, 55, 120, 0.30, null),
+        I('demo-i7', 'demo-p4', 'Cadeado de segurança 50 mm', 'Marca S', 'Un', 250, 'Distribuidor Z', 28, 45, 80, null, null),
+      ],
+    };
+  }
+
+  const api = {
+    APP_VERSION, STATUS, INATIVOS, DECL_PADRAO, uid, n0, round2, ceil2, parseBR, brl, brl0, pct, numBR, qtdBR,
+    fmtSessao, dataExtensa, hojeISO, defaultConfig, emptyState, migrate, custoViagem, calcItem, limiteMEI,
+    computeAll, previewItem, linhasProposta, mergeState, diffState, paraNuvem, createStore, demoState,
+  };
+  if (typeof module !== 'undefined' && module.exports) module.exports = api;
+  root.Core = api;
+})(typeof window !== 'undefined' ? window : globalThis);
+
+</script>
+<script>
+/* ===== SINCRONIZAÇÃO: regras (puxa o servidor primeiro, uma por vez, nova tentativa) ===== */
+/* Pregões MEI — sincronização (pronta para receber o Firebase)
+ *
+ * REGRA: toda sincronização PRIMEIRO puxa o que está no servidor e mescla (vence o registro com
+ * updatedAt mais novo; exclusões são "lápides" com deleted:true), e SÓ DEPOIS envia o que mudou.
+ * Assim um aparelho desatualizado nunca sobrescreve o servidor nem trava a fila de gravações.
+ * Só roda uma sincronização por vez (mutex) e só com internet.
+ *
+ * COMO LIGAR O FIREBASE: implemente um adaptador com os 2 métodos abaixo e chame
+ *   Sync.configure(meuAdaptador)
+ * (o código do seu sync entra aqui; o resto do app já chama Sync.schedule() a cada alteração).
+ *
+ *   adaptador.sync(local)   -> Promise<estado mesclado>   (preferido: transação, lê + mescla + grava de uma vez)
+ * ou, alternativamente:
+ *   adaptador.pull()        -> Promise<{config, pregoes:[], itens:[]}>   estado completo do servidor
+ *   adaptador.push(changed) -> Promise<void>   changed = {config|null, pregoes:[], itens:[]}
+ */
+(function (root) {
+  'use strict';
+
+  const LS = 'mp.lastSync';
+  const listeners = new Set();
+
+  const Sync = {
+    enabled: false,
+    running: false,
+    state: 'off',          // off | idle | sync | erro | offline
+    message: 'Sincronização não configurada',
+    lastSync: Number((root.localStorage && root.localStorage.getItem(LS)) || 0),
+    adapter: null,
+    store: null,
+    _t: null,
+
+    attach(store) { this.store = store; },
+    configure(adapter) {
+      this.adapter = adapter || null;
+      this.enabled = !!adapter;
+      this._set(this.enabled ? 'idle' : 'off', this.enabled ? 'Pronta' : 'Sincronização não configurada');
+      if (this.enabled) this.schedule('configurado', 300);
+    },
+    on(fn) { listeners.add(fn); return () => listeners.delete(fn); },
+    _set(state, message) {
+      this.state = state; this.message = message;
+      for (const fn of listeners) { try { fn(this); } catch (e) { /* ignora */ } }
+    },
+
+    // chamado a cada alteração local (com atraso, juntando várias alterações numa só)
+    schedule(reason, delay) {
+      if (!this.enabled) return;
+      clearTimeout(this._t);
+      this._t = setTimeout(() => this.run(reason), delay == null ? 2500 : delay);
+    },
+
+    async run(reason) {
+      if (!this.enabled || !this.store) return { skipped: 'desligado' };
+      if (this.running) return { skipped: 'ocupado' };
+      if (root.navigator && root.navigator.onLine === false) { this._set('offline', 'Sem internet: sincroniza quando voltar'); return { skipped: 'offline' }; }
+      this.running = true;
+      this._set('sync', 'Sincronizando…');
+      const t0 = Date.now();
+      try {
+        if (this.adapter.sync) {
+          // adaptador atômico (transação): lê o servidor, mescla e grava numa tacada só
+          const merged = await this.adapter.sync(this.store.get());
+          if (merged) this.store.mergeFrom(merged);
+        } else {
+          // 1) PRIMEIRO traz o servidor e mescla
+          const remote = await this.adapter.pull();
+          if (remote) this.store.mergeFrom(remote);
+          // 2) DEPOIS envia só o que mudou desde a última sincronização
+          const changed = this.store.changedSince(this.lastSync);
+          if (changed.config || changed.pregoes.length || changed.itens.length) await this.adapter.push(changed);
+        }
+        this.fails = 0;
+        this.lastSync = t0;
+        try { root.localStorage.setItem(LS, String(t0)); } catch (e) { /* ignora */ }
+        this._set('idle', 'Sincronizado às ' + new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }));
+        return { ok: true, reason };
+      } catch (e) {
+        console.error('[sync]', e);
+        this._set('erro', 'Falha ao sincronizar: ' + (e && e.message ? e.message : e));
+        // tenta de novo sozinho, com espera crescente (15 s, 30 s, 1 min… até 5 min) para não insistir à toa
+        this.fails = (this.fails || 0) + 1;
+        this.schedule('nova tentativa', Math.min(300000, 15000 * Math.pow(2, this.fails - 1)));
+        return { ok: false, error: e };
+      } finally {
+        this.running = false;
+      }
+    },
+  };
+
+  root.addEventListener && root.addEventListener('online', () => Sync.schedule('online', 500));
+  root.Sync = Sync;
+  if (typeof module !== 'undefined' && module.exports) module.exports = Sync;
+})(typeof window !== 'undefined' ? window : globalThis);
+
+</script>
+<script>
+/* ===== FIREBASE: login e nuvem (baseado no seu cloud-sync.js; coleção pregoesmei_usuarios) ===== */
+/* =====================================================
+ * FIREBASE — LOGIN + SINCRONIZAÇÃO NA NUVEM
+ * Baseado no seu cloud-sync.js (mesma API em window.CloudSync).
+ * Diferenças, todas para o app não travar:
+ *  - o SDK é carregado SOB DEMANDA (import dinâmico), então o app abre na hora mesmo sem internet
+ *    e tenta de novo quando a internet volta;
+ *  - coleção própria deste app (pregoesmei_usuarios), para não misturar com os outros apps;
+ *  - mesclarNaNuvem(): lê o servidor, mescla e grava numa transação (um aparelho nunca sobrescreve outro);
+ *  - a promessa do enableIndexedDbPersistence é tratada (evita erro solto com mais de uma aba).
+ * ===================================================== */
+(function (root) {
+  'use strict';
+
+  const FIREBASE_VERSION = '12.15.0';
+  const BASE = `https://www.gstatic.com/firebasejs/${FIREBASE_VERSION}/`;
+
+  // Coleção exclusiva deste app: cada app da mesma conta Firebase usa o seu próprio nome.
+  const COLECAO = 'pregoesmei_usuarios';
+
+  const firebaseConfig = {
+    apiKey: 'AIzaSyCQBwZU8NK9YTGrnI-1-XDUhRGcmn3vMHs',
+    authDomain: 'ajuste-financeiro.firebaseapp.com',
+    projectId: 'ajuste-financeiro',
+    storageBucket: 'ajuste-financeiro.firebasestorage.app',
+    messagingSenderId: '1084264963597',
+    appId: '1:1084264963597:web:fbf369dfa8e5dcb1d1bf44',
+  };
+
+  let carregando = null;
+
+  function carregarCloudSync() {
+    if (root.CloudSync) return Promise.resolve(root.CloudSync);
+    if (carregando) return carregando;
+    carregando = (async () => {
+      const [mApp, mAuth, mFs] = await Promise.all([
+        import(BASE + 'firebase-app.js'),
+        import(BASE + 'firebase-auth.js'),
+        import(BASE + 'firebase-firestore.js'),
+      ]);
+
+      const app = mApp.initializeApp(firebaseConfig);
+      const auth = mAuth.getAuth(app);
+      const db = mFs.getFirestore(app);
+
+      // Permite o app funcionar offline e sincronizar quando voltar a internet
+      try {
+        const p = mFs.enableIndexedDbPersistence(db);
+        if (p && p.catch) p.catch(() => { /* acontece com o site aberto em mais de uma aba: ignora */ });
+      } catch (e) { /* ignora */ }
+
+      let pararDeOuvirSnapshot = null;
+      const referenciaDoUsuario = (uid) => mFs.doc(db, COLECAO, uid);
+
+      root.CloudSync = {
+        onAuthStateChanged(callback) { return mAuth.onAuthStateChanged(auth, callback); },
+        login(email, senha) { return mAuth.signInWithEmailAndPassword(auth, email, senha); },
+        cadastrar(email, senha) { return mAuth.createUserWithEmailAndPassword(auth, email, senha); },
+        logout() { return mAuth.signOut(auth); },
+
+        async salvarNaNuvem(uid, dados) { await mFs.setDoc(referenciaDoUsuario(uid), dados); },
+        async buscarDaNuvem(uid) {
+          const snap = await mFs.getDoc(referenciaDoUsuario(uid));
+          return snap.exists() ? snap.data() : null;
+        },
+
+        // lê o servidor, deixa o app mesclar e grava só se mudou — tudo numa transação
+        // mesclar(remoto|null) -> { gravar:boolean, dados:object, resultado:any }
+        mesclarNaNuvem(uid, mesclar) {
+          const ref = referenciaDoUsuario(uid);
+          return mFs.runTransaction(db, async (tx) => {
+            const snap = await tx.get(ref);
+            const r = mesclar(snap.exists() ? snap.data() : null);
+            if (r.gravar) tx.set(ref, r.dados);
+            return r.resultado;
+          });
+        },
+
+        ouvirMudancas(uid, callback) {
+          if (pararDeOuvirSnapshot) pararDeOuvirSnapshot();
+          pararDeOuvirSnapshot = mFs.onSnapshot(referenciaDoUsuario(uid), (snap) => {
+            if (snap.exists()) callback(snap.data());
+          }, (err) => console.warn('[cloud] escuta interrompida:', err && err.code));
+        },
+        pararDeOuvir() {
+          if (pararDeOuvirSnapshot) { pararDeOuvirSnapshot(); pararDeOuvirSnapshot = null; }
+        },
+      };
+
+      root.dispatchEvent(new Event('cloudsync-pronto'));
+      return root.CloudSync;
+    })().catch((e) => { carregando = null; throw e; });
+    return carregando;
+  }
+
+  root.carregarCloudSync = carregarCloudSync;
+  root.CLOUD_COLECAO = COLECAO;
+})(typeof window !== 'undefined' ? window : globalThis);
+
+</script>
+<script>
+/* ===== PDF DA PROPOSTA e marca d'água ===== */
+/* Pregões MEI — gerador de PDF da proposta (usa pdf-lib, carregado sob demanda)
+ *
+ * COMO TROCAR O MODELO: todo o desenho está em gerarProposta(), em blocos comentados
+ * (cabeçalho, destinatário, tabela, totais, condições, declaração, assinatura).
+ * A MARCA D'ÁGUA está isolada em desenharMarca(): texto ou imagem, com opacidade e ângulo. */
+(function (root) {
+  'use strict';
+
+  const C = root.Core || (typeof require !== 'undefined' ? require('./core.js') : null);
+  const PL = () => root.PDFLib || (typeof require !== 'undefined' ? require('pdf-lib') : null);
+
+  /* ---------- valor por extenso ---------- */
+  const U = ['zero', 'um', 'dois', 'três', 'quatro', 'cinco', 'seis', 'sete', 'oito', 'nove', 'dez', 'onze', 'doze', 'treze', 'quatorze', 'quinze', 'dezesseis', 'dezessete', 'dezoito', 'dezenove'];
+  const D = ['', '', 'vinte', 'trinta', 'quarenta', 'cinquenta', 'sessenta', 'setenta', 'oitenta', 'noventa'];
+  const CT = ['', 'cento', 'duzentos', 'trezentos', 'quatrocentos', 'quinhentos', 'seiscentos', 'setecentos', 'oitocentos', 'novecentos'];
+
+  function ate999(n) {
+    if (n === 0) return '';
+    if (n === 100) return 'cem';
+    const c = Math.floor(n / 100), r = n % 100, parts = [];
+    if (c) parts.push(CT[c]);
+    if (r) {
+      if (r < 20) parts.push(U[r]);
+      else { const d = Math.floor(r / 10), u = r % 10; parts.push(u ? D[d] + ' e ' + U[u] : D[d]); }
+    }
+    return parts.join(' e ');
+  }
+  function inteiroExtenso(n) {
+    if (n === 0) return 'zero';
+    const escalas = [[1e9, 'bilhão', 'bilhões'], [1e6, 'milhão', 'milhões'], [1e3, 'mil', 'mil']];
+    let resto = n; const partes = [], valores = [];
+    for (const [v, s, p] of escalas) {
+      const q = Math.floor(resto / v);
+      if (q) {
+        partes.push(v === 1e3 && q === 1 ? 'mil' : ate999(q) + ' ' + (q === 1 ? s : p));
+        valores.push(q); resto %= v;
+      }
+    }
+    if (resto) { partes.push(ate999(resto)); valores.push(resto); }
+    if (partes.length === 1) return partes[0];
+    const ult = valores[valores.length - 1];
+    const juntaE = ult < 100 || ult % 100 === 0;
+    return partes.slice(0, -1).join(' ') + (juntaE ? ' e ' : ' ') + partes[partes.length - 1];
+  }
+  function valorExtenso(v) {
+    const tot = Math.round(v * 100);
+    const reais = Math.floor(tot / 100), cent = tot % 100;
+    const out = [];
+    if (reais > 0) {
+      let t = inteiroExtenso(reais);
+      if (reais % 1e6 === 0) t += ' de';
+      out.push(reais === 1 ? 'um real' : t + ' reais');
+    }
+    if (cent > 0) out.push(cent === 1 ? 'um centavo' : inteiroExtenso(cent) + ' centavos');
+    return out.length ? out.join(' e ') : 'zero real';
+  }
+
+  /* ---------- auxiliares ---------- */
+  const safe = (s) => String(s == null ? '' : s).replace(/\r/g, '').replace(/\t/g, ' ')
+    .replace(/[^\n\u0020-\u007E\u00A0-\u00FF\u2013\u2014\u2018\u2019\u201C\u201D\u2022\u2026\u20AC]/g, '?');
+
+  function wrap(text, f, size, maxW) {
+    const out = [];
+    for (const para of safe(text).split('\n')) {
+      const words = para.split(/\s+/).filter(Boolean);
+      let line = '';
+      for (const w of words) {
+        const t = line ? line + ' ' + w : w;
+        if (f.widthOfTextAtSize(t, size) <= maxW) { line = t; continue; }
+        if (line) out.push(line);
+        if (f.widthOfTextAtSize(w, size) > maxW) {
+          let chunk = '';
+          for (const ch of w) {
+            if (f.widthOfTextAtSize(chunk + ch, size) > maxW) { out.push(chunk); chunk = ch; } else chunk += ch;
+          }
+          line = chunk;
+        } else line = w;
+      }
+      out.push(line);
+    }
+    return out;
+  }
+
+  function dataUrlToBytes(url) {
+    const b64 = url.split(',')[1] || '';
+    const bin = (root.atob || atob)(b64);
+    const bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    return bytes;
+  }
+
+  const slug = (s) => safe(s).normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^A-Za-z0-9]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 40);
+
+  /* ---------- geração ---------- */
+  const hexRgb = (h, rgb) => {
+    const m = /^#?([0-9a-f]{6})$/i.exec(h || '');
+    const n = m ? parseInt(m[1], 16) : 0xFFC000;
+    return rgb(((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255);
+  };
+  const cap = (t) => t ? t.charAt(0).toUpperCase() + t.slice(1) : t;
+
+  async function gerarProposta(state, pregaoId, o) {
+    const { PDFDocument, StandardFonts, rgb, degrees } = PL();
+    const cfg = state.config, emp = cfg.empresa;
+    o = Object.assign({
+      fonte: 'auto',
+      validadeDias: cfg.proposta.validadeDias,
+      condPagamento: cfg.proposta.condPagamento,
+      incluirExtenso: cfg.proposta.incluirExtenso,
+      incluirBancarios: cfg.proposta.incluirBancarios,
+      incluirDeclaracao: cfg.proposta.incluirDeclaracao,
+      incluirLocalData: cfg.proposta.incluirLocalData,
+      textoDeclaracao: cfg.proposta.textoDeclaracao,
+      cor: cfg.proposta.cor,
+      local: emp.cidade,
+      data: C.hojeISO(),
+      prazoEntrega: '',
+      localEntrega: '',
+      observacoes: '',
+      marcaDagua: cfg.marcaDagua,
+      cabecalho: cfg.cabecalho,
+    }, o || {});
+
+    const L = C.linhasProposta(state, pregaoId, o.fonte);
+    const preg = L.pregao;
+    if (!preg) throw new Error('Pregão não encontrado.');
+
+    const doc = await PDFDocument.create();
+    doc.setTitle('Proposta comercial — ' + (preg.numero || ''));
+    doc.setAuthor(emp.nome || 'Pregões MEI');
+    doc.setCreator('Pregões MEI');
+    doc.setProducer('Pregões MEI (pdf-lib)');
+    const font = await doc.embedFont(StandardFonts.Helvetica);
+    const bold = await doc.embedFont(StandardFonts.HelveticaBold);
+    const ital = await doc.embedFont(StandardFonts.HelveticaOblique);
+
+    const PW = 595.28, PH = 841.89, M = 36, CW = PW - 2 * M;
+    const ACC = hexRgb(o.cor, rgb);                                   // cor do modelo (bordas, faixas, rótulos)
+    const ACCT = rgb(ACC.red * 0.72, ACC.green * 0.72, ACC.blue * 0.72); // versão escura para texto legível
+    const INK = rgb(0.08, 0.08, 0.1), GRAY = rgb(0.4, 0.42, 0.46), WHITE = rgb(1, 1, 1);
+    const BOTTOM = 40;
+
+    const embedImg = async (dataUrl) => {
+      if (!dataUrl) return null;
+      try {
+        const bytes = dataUrlToBytes(dataUrl);
+        return /^data:image\/png/i.test(dataUrl) ? await doc.embedPng(bytes) : await doc.embedJpg(bytes);
+      } catch (e) { return null; }
+    };
+
+    /* ===== PAPEL TIMBRADO (imagem do topo, em todas as páginas) ===== */
+    const hdImg = await embedImg(o.cabecalho && o.cabecalho.imagem);
+    let hdW = 0, hdH = 0;
+    if (hdImg) {
+      const s = Math.min(CW / hdImg.width, 78 / hdImg.height);
+      hdW = hdImg.width * s; hdH = hdImg.height * s;
+    }
+
+    /* ===== MARCA D'ÁGUA (troque aqui: texto ou imagem, opacidade, ângulo, tamanho) ===== */
+    const wm = o.marcaDagua || {};
+    const wmImg = wm.tipo === 'imagem' ? await embedImg(wm.imagem) : null;
+    function desenharMarca(page) {
+      const op = Math.min(1, Math.max(0.02, Number(wm.opacidade) || 0.1));
+      const ang = Number(wm.angulo) || 0, rad = ang * Math.PI / 180;
+      const cx = PW / 2, cy = PH / 2;
+      if (wm.tipo === 'texto' && wm.texto) {
+        const txt = safe(wm.texto).split('\n')[0];
+        let size = Number(wm.tamanho) || 64;
+        const w1 = bold.widthOfTextAtSize(txt, 1) || 1;
+        const disp = Math.min(PW / Math.max(Math.abs(Math.cos(rad)), 0.001), PH / Math.max(Math.abs(Math.sin(rad)), 0.001)) * 0.86;
+        if (w1 * size > disp) size = disp / w1;
+        const w = w1 * size, h = size * 0.35;
+        const x0 = cx - (w / 2 * Math.cos(rad) - h * Math.sin(rad));
+        const y0 = cy - (w / 2 * Math.sin(rad) + h * Math.cos(rad));
+        page.drawText(txt, { x: x0, y: y0, size, font: bold, color: rgb(0.45, 0.5, 0.58), opacity: op, rotate: degrees(ang) });
+      } else if (wmImg) {
+        const maxW = PW * 0.7 * ((Number(wm.tamanho) || 64) / 64), maxH = PH * 0.5;
+        const s = Math.min(maxW / wmImg.width, maxH / wmImg.height);
+        const w = wmImg.width * s, h = wmImg.height * s;
+        const x0 = cx - (w / 2 * Math.cos(rad) - h / 2 * Math.sin(rad));
+        const y0 = cy - (w / 2 * Math.sin(rad) + h / 2 * Math.cos(rad));
+        page.drawImage(wmImg, { x: x0, y: y0, width: w, height: h, opacity: op, rotate: degrees(ang) });
+      }
+    }
+
+    /* ===== controle de páginas ===== */
+    const pages = [];
+    let page, y;
+    const topo = () => (hdImg ? PH - 20 - hdH - 8 : PH - M);
+    function novaPagina() {
+      page = doc.addPage([PW, PH]); pages.push(page); desenharMarca(page);
+      if (hdImg) page.drawImage(hdImg, { x: (PW - hdW) / 2, y: PH - 20 - hdH, width: hdW, height: hdH });
+      y = topo();
+    }
+    const garantir = (h) => { if (y - h < BOTTOM) { novaPagina(); return true; } return false; };
+    const T = (t, x, yy, size, f, color) => page.drawText(safe(t), { x, y: yy, size, font: f || font, color: color || INK });
+    const TR = (t, xr, yy, size, f, color) => { const s = safe(t); page.drawText(s, { x: xr - (f || font).widthOfTextAtSize(s, size), y: yy, size, font: f || font, color: color || INK }); };
+    const TC = (t, xc, yy, size, f, color) => { const s = safe(t); page.drawText(s, { x: xc - (f || font).widthOfTextAtSize(s, size) / 2, y: yy, size, font: f || font, color: color || INK }); };
+    const box = (x, yy, w, h, fill) => page.drawRectangle({ x, y: yy, width: w, height: h, borderColor: ACC, borderWidth: 1, color: fill, opacity: fill ? 1 : undefined });
+
+    novaPagina();
+
+    /* ===== 1) CABEÇALHO (sem papel timbrado: texto simples) ===== */
+    if (!hdImg) {
+      T(emp.nome || 'SUA EMPRESA (preencha em Config)', M, y - 14, 15, bold, ACCT);
+      let yl = y - 27;
+      [emp.cnpj ? 'CNPJ: ' + emp.cnpj : '', emp.endereco || '', [emp.telefone, emp.email].filter(Boolean).join('  ·  ')]
+        .filter(Boolean).forEach((l) => { T(l, M, yl, 8.5, font, GRAY); yl -= 11; });
+      page.drawLine({ start: { x: M, y: yl - 2 }, end: { x: PW - M, y: yl - 2 }, thickness: 1.2, color: ACC });
+      y = yl - 12;
+    }
+
+    /* ===== 2) GRADE DE DADOS (órgão, processo, validade, pagamento, entrega) ===== */
+    function grade(pares) {
+      for (let i = 0; i < pares.length; i += 2) {
+        const par = pares.slice(i, i + 2);
+        const cw = CW / 2;
+        const lines = par.map(([, v]) => wrap(v || '—', font, 11, cw - 10));
+        const h = Math.max(40, 24 + Math.max(...lines.map((l) => l.length)) * 13);
+        garantir(h + 2);
+        par.forEach(([lab], k) => {
+          const x = M + k * cw;
+          box(x, y - h, cw, h);
+          T(lab, x + 4, y - 13, 10.5, font, ACC);
+          lines[k].forEach((l, j) => T(l, x + 4, y - 27 - j * 13, 11, font, INK));
+        });
+        y -= h;
+      }
+    }
+    const prazoEnt = o.prazoEntrega || (preg.prazoEntregaDias ? preg.prazoEntregaDias + ' dias' : 'Conforme edital');
+    grade([
+      ['ÓRGÃO / CLIENTE', preg.orgao], ['PROCESSO', preg.numero],
+      ['VALIDADE DA PROPOSTA', (o.validadeDias || 60) + ' dias'], ['PRAZO DE PAGAMENTO', o.condPagamento || 'Conforme edital'],
+      ['LOCAL DE ENTREGA', o.localEntrega || preg.cidadeUf], ['PRAZO DE ENTREGA', prazoEnt],
+    ]);
+    y -= 10;
+
+    /* ===== 3) DADOS BANCÁRIOS ===== */
+    const temBanco = o.incluirBancarios && [emp.banco, emp.agencia, emp.conta, emp.pix, emp.favorecido].some(Boolean);
+    if (temBanco) {
+      garantir(24 + 3 * 40);
+      T('DADOS BANCÁRIOS', M + 8, y - 12, 12, font, INK); y -= 18;
+      grade([
+        ['BANCO', emp.banco], ['AGÊNCIA', emp.agencia],
+        ['CONTA', emp.conta], ['PIX', emp.pix],
+        ['FAVORECIDO', emp.favorecido || emp.nome], ['CNPJ DA EMPRESA', emp.cnpj],
+      ]);
+      y -= 10;
+    }
+
+    /* ===== 4) ITENS DA PROPOSTA (um bloco por item) ===== */
+    garantir(24 + 90);
+    T('ITENS DA PROPOSTA', M + 8, y - 12, 12, font, INK); y -= 18;
+    const fr = [0.14, 0.34, 0.12, 0.09, 0.15, 0.16];
+    const cx = []; { let a = M; for (const f of fr) { cx.push([a, f * CW]); a += f * CW; } }
+    const fmtNum = (n) => new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n);
+    const brlTxt = (n) => 'R$ ' + fmtNum(n);
+    const heads = ['Item', 'Descrição', 'Unid', 'Qtd', 'Valor Unit. (R$)', 'Valor Total (R$)'];
+
+    if (!L.linhas.length) { garantir(24); T('Nenhum item cadastrado neste pregão.', M + 8, y - 12, 10, ital, GRAY); y -= 24; }
+    for (const ln of L.linhas) {
+      const descL = wrap(ln.descEdital, font, 10, CW - 14);
+      const marcaL = wrap('MARCA/MODELO: ' + (ln.marca || '—'), font, 9.5, CW - 14);
+      const hHead = 19, hRow = 24, hDesc = descL.length * 12.5 + 10, hMarca = marcaL.length * 12 + 8;
+      const total = hHead + hRow + hDesc + hMarca;
+      garantir(total + 2);
+      // faixa de cabeçalho
+      page.drawRectangle({ x: M, y: y - hHead, width: CW, height: hHead, color: ACC, borderColor: ACC, borderWidth: 1 });
+      heads.forEach((t, k) => {
+        const [x, w] = cx[k];
+        if (k <= 1) T(t, x + 4, y - 13, 9.5, bold, WHITE); else TC(t, x + w / 2, y - 13, 9.5, bold, WHITE);
+      });
+      y -= hHead;
+      // linha principal
+      box(M, y - hRow, CW, hRow);
+      const vals = [`ITEM ${ln.numeroItem}`, 'Ver descrição abaixo', ln.un.toUpperCase(),
+        new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 3 }).format(ln.qtd),
+        ln.unit !== null ? brlTxt(ln.unit) : '—', ln.total !== null ? brlTxt(ln.total) : '—'];
+      vals.forEach((t, k) => {
+        const [x, w] = cx[k];
+        const f = k === 1 ? bold : font;
+        if (k <= 1) T(t, x + 4, y - 16, 10, f, ACCT); else TC(t, x + w / 2, y - 16, 10, f, ACCT);
+      });
+      y -= hRow;
+      // descrição completa
+      box(M, y - hDesc, CW, hDesc);
+      descL.forEach((l, j) => T(l, M + 7, y - 15 - j * 12.5, 10, font, ACCT));
+      y -= hDesc;
+      // marca / modelo
+      box(M, y - hMarca, CW, hMarca);
+      marcaL.forEach((l, j) => T(l, M + 7, y - 14 - j * 12, 9.5, font, ACCT));
+      y -= hMarca;
+    }
+
+    /* ===== 5) RESUMO COMERCIAL ===== */
+    garantir(80);
+    y -= 12;
+    T('Resumo Comercial', M, y - 12, 12.5, bold, ACC); y -= 18;
+    box(M, y - 18, CW, 18);
+    T('Valor global da proposta', M + 4, y - 12.5, 10.5, bold, ACCT);
+    TR(brlTxt(L.total), PW - M - 6, y - 12.5, 10.5, bold, ACCT);
+    y -= 18 + 8;
+    if (o.incluirExtenso && L.total > 0) {
+      const ln = wrap('Valor por extenso: ' + cap(valorExtenso(L.total)) + '.', font, 11.5, CW - 30);
+      ln.forEach((l, i) => {
+        garantir(14);
+        if (i === 0) { T('Valor por extenso:', M + 14, y - 11, 11.5, bold, INK); T(l.slice('Valor por extenso:'.length), M + 14 + bold.widthOfTextAtSize('Valor por extenso:', 11.5), y - 11, 11.5, font, INK); }
+        else T(l, M + 14, y - 11, 11.5, font, INK);
+        y -= 14;
+      });
+      y -= 4;
+    }
+    if (L.semValor > 0) {
+      const ln = wrap('Atenção: ' + L.semValor + ' item(ns) sem valor definido nesta proposta.', bold, 9.5, CW);
+      ln.forEach((l) => { garantir(14); T(l, M, y - 10, 9.5, bold, rgb(0.75, 0.2, 0.1)); y -= 13; });
+    }
+    if (o.observacoes) {
+      y -= 4; garantir(30);
+      T('Observações:', M + 14, y - 10, 10.5, bold, INK); y -= 15;
+      wrap(o.observacoes, font, 10.5, CW - 30).forEach((l) => { garantir(14); T(l, M + 14, y - 10, 10.5, font, INK); y -= 13.5; });
+    }
+
+    /* ===== 6) DECLARAÇÃO (opcional) ===== */
+    if (o.incluirDeclaracao && o.textoDeclaracao) {
+      y -= 8; garantir(50);
+      wrap(o.textoDeclaracao, font, 10, CW - 30).forEach((l) => { garantir(14); T(l, M + 14, y - 10, 10, font, INK); y -= 13; });
+    }
+
+    /* ===== 7) LOCAL/DATA (opcional) E ASSINATURA ===== */
+    garantir(o.incluirLocalData ? 120 : 96);
+    y -= 14;
+    if (o.incluirLocalData) {
+      T([o.local, C.dataExtensa(o.data)].filter(Boolean).join(', ') + '.', M + 14, y - 10, 10.5, font, INK); y -= 34;
+    } else y -= 20;
+    const sigW = 250, sx = (PW - sigW) / 2;
+    page.drawLine({ start: { x: sx, y }, end: { x: sx + sigW, y }, thickness: 1, color: INK });
+    const nome = (emp.responsavel || emp.nome || '').toUpperCase();
+    const doc2 = emp.cpf ? 'CPF: ' + emp.cpf : (emp.cnpj ? 'CNPJ: ' + emp.cnpj : '');
+    if (nome) TC(nome, PW / 2, y - 13, 10.5, bold, INK);
+    if (doc2) TC(doc2, PW / 2, y - 26, 10.5, bold, INK);
+    y -= 34;
+
+    /* ===== numeração de páginas (só se houver mais de uma) ===== */
+    if (pages.length > 1) {
+      pages.forEach((pg, i) => {
+        const pt = `Página ${i + 1} de ${pages.length}`;
+        pg.drawText(pt, { x: PW / 2 - font.widthOfTextAtSize(pt, 8) / 2, y: 20, size: 8, font, color: GRAY });
+      });
+    }
+
+    const bytes = await doc.save();
+    const filename = `Proposta_${slug(preg.numero) || 'compra'}_${slug(preg.orgao) || 'orgao'}.pdf`;
+    return { bytes, filename, total: L.total, linhas: L.linhas.length, semValor: L.semValor, paginas: pages.length };
+  }
+
+  const api = { gerarProposta, valorExtenso, inteiroExtenso };
+  if (typeof module !== 'undefined' && module.exports) module.exports = api;
+  root.PropostaPDF = api;
+})(typeof window !== 'undefined' ? window : globalThis);
+
+</script>
+<script>
+/* ===== TELAS E FORMULÁRIOS ===== */
+/* Pregões MEI — interface */
+(function () {
+  'use strict';
+
+  const C = window.Core, S = window.Sync;
+  const store = C.createStore(window.localStorage, 'mp.state.v1');
+  S.attach(store);
+
+  const $ = (s, r) => (r || document).querySelector(s);
+  const $$ = (s, r) => [...(r || document).querySelectorAll(s)];
+  const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const slugClass = (s) => String(s).replace(/\s+/g, '-');
+
+  /* ---------- ícones ---------- */
+  const ICONS = {
+    plus: '<path d="M12 5v14M5 12h14"/>',
+    search: '<circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/>',
+    painel: '<rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/>',
+    pregoes: '<rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M9 12h6M9 16h4"/>',
+    itens: '<path d="M21 8l-9-5-9 5v8l9 5 9-5V8z"/><path d="M3 8l9 5 9-5M12 13v8"/>',
+    pdf: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h6"/>',
+    config: '<path d="M4 6h10M18 6h2M4 12h2M10 12h10M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="8" cy="12" r="2"/><circle cx="18" cy="18" r="2"/>',
+    calendar: '<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>',
+    pin: '<path d="M12 22s7-6.2 7-12a7 7 0 1 0-14 0c0 5.8 7 12 7 12z"/><circle cx="12" cy="10" r="2.5"/>',
+    trash: '<path d="M3 6h18M8 6V4h8v2M6 6l1 15h10l1-15M10 11v6M14 11v6"/>',
+    edit: '<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/>',
+    download: '<path d="M12 3v12M7 10l5 5 5-5M4 21h16"/>',
+    share: '<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/>',
+    check: '<path d="M20 6L9 17l-5-5"/>',
+    alert: '<path d="M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/>',
+    x: '<path d="M18 6L6 18M6 6l12 12"/>',
+    back: '<path d="M15 18l-6-6 6-6"/>',
+    refresh: '<path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.5 9a9 9 0 0 1 14.9-3.4L23 10M1 14l4.6 4.4A9 9 0 0 0 20.5 15"/>',
+    cloud: '<path d="M18 10h-1.3A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/>',
+    eye: '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z"/><circle cx="12" cy="12" r="3"/>',
+    image: '<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/>',
+    info: '<circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/>',
+    link: '<path d="M10 13a5 5 0 0 0 7.1 0l3-3a5 5 0 0 0-7.1-7.1l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.1 0l-3 3A5 5 0 0 0 11 21.1l1.7-1.7"/>',
+  };
+  const icon = (n, cls) => `<svg class="i ${cls || ''}" viewBox="0 0 24 24" aria-hidden="true">${ICONS[n] || ''}</svg>`;
+
+  /* ---------- estado da interface ---------- */
+  const UI = {
+    tab: 'painel', detailId: null, filtro: 'todos', busca: '', buscaI: '',
+    pdf: { pregaoId: null, fonte: 'auto', prazoEntrega: '', localEntrega: '', observacoes: '', data: C.hojeISO(), busy: false, result: null },
+    ignorePop: 0, deferredPrompt: null, reloadPending: false, updateBanner: false,
+  };
+  try {
+    const s = JSON.parse(localStorage.getItem('mp.ui') || '{}');
+    if (s.tab) UI.tab = s.tab;
+    if (s.pdfPregao) UI.pdf.pregaoId = s.pdfPregao;
+    if (s.fonte) UI.pdf.fonte = s.fonte;
+  } catch (e) { /* ignora */ }
+  const saveUI = () => { try { localStorage.setItem('mp.ui', JSON.stringify({ tab: UI.tab, pdfPregao: UI.pdf.pregaoId, fonte: UI.pdf.fonte })); } catch (e) { /* ignora */ } };
+
+  const TABS = [
+    { id: 'painel', t: 'Painel', title: 'Visão geral' },
+    { id: 'pregoes', t: 'Pregões', title: 'Pregões e compras' },
+    { id: 'itens', t: 'Itens', title: 'Itens e valor mínimo' },
+    { id: 'pdf', t: 'Proposta', title: 'Proposta em PDF' },
+    { id: 'config', t: 'Config', title: 'Configurações' },
+  ];
+
+  /* ---------- proteção: rascunhos e saída sem salvar ---------- */
+  const Guard = { pending: new Set() };
+  const Sheet = { current: null };
+  const isDirty = () => !!(Sheet.current && Sheet.current.dirty) || Guard.pending.size > 0;
+
+  const Draft = {
+    k: (key) => 'mp.draft:' + key,
+    save(key, data) { try { localStorage.setItem(this.k(key), JSON.stringify({ t: Date.now(), data })); } catch (e) { /* ignora */ } },
+    load(key) { try { const r = localStorage.getItem(this.k(key)); return r ? JSON.parse(r) : null; } catch (e) { return null; } },
+    clear(key) { try { localStorage.removeItem(this.k(key)); } catch (e) { /* ignora */ } },
+    all() {
+      const out = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && k.startsWith('mp.draft:')) { try { out.push({ key: k.slice(9), t: JSON.parse(localStorage.getItem(k)).t }); } catch (e) { /* ignora */ } }
+      }
+      return out.sort((a, b) => b.t - a.t);
+    },
+  };
+
+  window.addEventListener('beforeunload', (e) => {
+    if (isDirty()) { e.preventDefault(); e.returnValue = ''; return ''; }
+    return undefined;
+  });
+
+  /* ---------- toast e diálogos ---------- */
+  let toastT;
+  function toast(msg) {
+    $$('.toast').forEach((t) => t.remove());
+    const el = document.createElement('div');
+    el.className = 'toast'; el.setAttribute('role', 'status'); el.textContent = msg;
+    document.body.appendChild(el);
+    clearTimeout(toastT); toastT = setTimeout(() => el.remove(), 3200);
+  }
+  function dialog({ title, text, buttons }) {
+    return new Promise((resolve) => {
+      const w = document.createElement('div');
+      w.className = 'dlg-wrap';
+      w.innerHTML = `<div class="dlg" role="alertdialog" aria-modal="true"><h3>${esc(title)}</h3><p>${esc(text || '')}</p><div class="btns">${
+        buttons.map((b, i) => `<button type="button" class="btn ${b.cls || ''}" data-i="${i}">${esc(b.label)}</button>`).join('')}</div></div>`;
+      document.body.appendChild(w);
+      const done = (v) => { w.remove(); resolve(v); };
+      w.addEventListener('click', (e) => { const b = e.target.closest('button[data-i]'); if (b) done(buttons[+b.dataset.i].value); });
+      const first = $('button', w); if (first) first.focus();
+    });
+  }
+  const confirmar = (title, text, ok, danger) => dialog({ title, text, buttons: [{ label: ok, value: true, cls: danger ? 'danger' : 'primary' }, { label: 'Cancelar', value: false, cls: 'ghost' }] });
+
+  /* ---------- formulários (sheet) com rascunho automático ---------- */
+  const readForm = (form) => {
+    const o = {};
+    for (const el of form.elements) if (el.name) o[el.name] = el.type === 'checkbox' ? el.checked : el.value;
+    return o;
+  };
+  const applyValues = (form, vals) => {
+    for (const el of form.elements) {
+      if (el.name && Object.prototype.hasOwnProperty.call(vals, el.name)) {
+        if (el.type === 'checkbox') el.checked = !!vals[el.name]; else el.value = vals[el.name];
+      }
+    }
+  };
+
+  function field(o) {
+    const id = 'f_' + o.name;
+    const cls = o.full ? 'field full' : 'field';
+    let ctl;
+    if (o.type === 'textarea') ctl = `<textarea class="input" id="${id}" name="${o.name}" placeholder="${esc(o.ph || '')}" rows="2">${esc(o.value)}</textarea>`;
+    else if (o.type === 'select') ctl = `<select class="input" id="${id}" name="${o.name}">${o.options.map((x) => `<option value="${esc(x.v)}"${String(x.v) === String(o.value) ? ' selected' : ''}>${esc(x.l)}</option>`).join('')}</select>`;
+    else ctl = `<input class="input" id="${id}" name="${o.name}" type="${o.type || 'text'}" value="${esc(o.value)}" placeholder="${esc(o.ph || '')}"${o.inputmode ? ` inputmode="${o.inputmode}"` : ''} autocomplete="off"${o.type === 'datetime-local' || o.type === 'date' ? '' : ' autocapitalize="sentences"'}>`;
+    return `<div class="${cls}"><label for="${id}">${esc(o.label)}</label>${ctl}${o.hint ? `<div class="hint">${esc(o.hint)}</div>` : ''}</div>`;
+  }
+
+  function openForm(o) {
+    if (Sheet.current) closeSheetNow();
+    const draft = Draft.load(o.key);
+    const wrap = document.createElement('div');
+    wrap.className = 'sheet-wrap';
+    wrap.innerHTML = `<div class="sheet-backdrop"></div>
+      <section class="sheet" role="dialog" aria-modal="true" aria-label="${esc(o.title)}">
+        <header class="sheet-head"><button type="button" class="icon-btn" data-sh="close" aria-label="Fechar">${icon('x')}</button><h2>${esc(o.title)}</h2></header>
+        <form class="sheet-form" novalidate>
+          <div class="sheet-body">${o.top || ''}<div data-slot="draft"></div>${o.body}${o.onDelete ? `<div style="margin-top:8px"><button type="button" class="btn danger block" data-sh="delete">${icon('trash')} ${esc(o.deleteLabel || 'Excluir')}</button></div>` : ''}</div>
+          <div class="sheet-foot"><button type="button" class="btn ghost" data-sh="close">Cancelar</button><button type="submit" class="btn primary">${esc(o.saveLabel || 'Salvar')}</button></div>
+        </form>
+      </section>`;
+    document.body.appendChild(wrap);
+    document.body.style.overflow = 'hidden';
+    const form = $('form', wrap);
+    const ctl = { key: o.key, el: wrap, form, dirty: false };
+    Sheet.current = ctl;
+    history.pushState({ sheet: o.key }, '');
+
+    const restoreOriginal = () => { applyValues(form, o.values); Draft.clear(o.key); ctl.dirty = false; $('[data-slot="draft"]', wrap).innerHTML = ''; if (o.onInput) o.onInput(form); };
+    if (draft) {
+      applyValues(form, draft.data);
+      ctl.dirty = true;
+      const quando = new Date(draft.t).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+      $('[data-slot="draft"]', wrap).innerHTML = `<div class="draftbar">${icon('alert', 'sm')}<span>Rascunho não salvo recuperado (${quando})</span><button type="button" data-sh="discard-draft">Descartar</button></div>`;
+    }
+
+    const onInput = () => { ctl.dirty = true; Draft.save(o.key, readForm(form)); if (o.onInput) o.onInput(form); };
+    form.addEventListener('input', onInput);
+    form.addEventListener('change', onInput);
+
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const res = o.onSave(readForm(form), form);
+      if (res === true) { Draft.clear(o.key); ctl.dirty = false; closeSheetNow(); if (o.afterSave) o.afterSave(); }
+      else if (typeof res === 'string') toast(res);
+    });
+    wrap.addEventListener('click', async (e) => {
+      const b = e.target.closest('[data-sh]');
+      if (e.target.classList.contains('sheet-backdrop')) { requestClose(); return; }
+      if (!b) return;
+      const a = b.dataset.sh;
+      if (a === 'close') requestClose();
+      else if (a === 'discard-draft') restoreOriginal();
+      else if (a === 'delete' && o.onDelete) { if (await o.onDelete()) { Draft.clear(o.key); ctl.dirty = false; closeSheetNow(); } }
+    });
+
+    ctl.requestClose = requestClose;
+    async function requestClose() {
+      if (ctl.dirty) {
+        const v = await dialog({
+          title: 'Sair sem salvar?',
+          text: 'Você começou a preencher e ainda não salvou. O que foi digitado fica guardado como rascunho neste aparelho.',
+          buttons: [
+            { label: 'Continuar editando', value: 'ficar', cls: 'primary' },
+            { label: 'Sair e manter rascunho', value: 'manter' },
+            { label: 'Descartar o que digitei', value: 'descartar', cls: 'danger' },
+          ],
+        });
+        if (v === 'ficar') return false;
+        if (v === 'descartar') Draft.clear(o.key);
+      }
+      closeSheetNow();
+      return true;
+    }
+    if (o.onMount) o.onMount(form, ctl);
+    if (o.onInput) o.onInput(form);
+    const first = $('input[type=text],textarea', form); if (first && !draft && !o.values._noFocus) setTimeout(() => first.focus({ preventScroll: true }), 250);
+    return ctl;
+  }
+
+  function closeSheetNow() {
+    const c = Sheet.current;
+    if (!c) return;
+    c.el.remove();
+    Sheet.current = null;
+    document.body.style.overflow = '';
+    if (history.state && history.state.sheet) { UI.ignorePop++; history.back(); }
+    afterClose();
+  }
+
+  window.addEventListener('popstate', async () => {
+    if (UI.ignorePop > 0) { UI.ignorePop--; return; }
+    if (Sheet.current) {
+      const ok = await Sheet.current.requestClose();
+      if (!ok) history.pushState({ sheet: Sheet.current.key }, '');
+      return;
+    }
+    if (UI.detailId) { UI.detailId = null; render(); }
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && Sheet.current && !$('.dlg-wrap')) Sheet.current.requestClose();
+  });
+
+  /* ---------- editores ---------- */
+  const activePregoes = () => store.get().pregoes.filter((p) => !p.deleted);
+  const pregaoLabel = (p) => `#${p.numero} — ${p.orgao}`;
+
+  function pregaoValues(p) {
+    return {
+      numero: p.numero || '', orgao: p.orgao || '', cidadeUf: p.cidadeUf || '', sessao: p.sessao || '', intervaloMin: p.intervaloMin || '',
+      prazoEntregaDias: p.prazoEntregaDias == null ? '' : String(p.prazoEntregaDias), exigencias: p.exigencias || '', status: p.status || 'Analisando',
+      km: p.km ? C.numBR(p.km, 1) : '', viagens: p.viagens == null ? '1' : String(p.viagens), pedagio: p.pedagio ? C.numBR(p.pedagio) : '',
+      link: p.link || '', obs: p.obs || '',
+    };
+  }
+  function openPregaoForm(id) {
+    const cur = id ? store.get().pregoes.find((p) => p.id === id && !p.deleted) : null;
+    const v = pregaoValues(cur || { status: 'Analisando', viagens: 1 });
+    v._noFocus = false;
+    const body = `
+      <div class="formgrid">
+        ${field({ label: 'Nº da compra *', name: 'numero', value: v.numero, ph: 'ex.: 90001/2026' })}
+        ${field({ label: 'Status', name: 'status', type: 'select', value: v.status, options: C.STATUS.map((s) => ({ v: s, l: s })) })}
+        ${field({ label: 'Órgão / entidade *', name: 'orgao', value: v.orgao, full: true, ph: 'ex.: Universidade de Londrina' })}
+        ${field({ label: 'Cidade/UF', name: 'cidadeUf', value: v.cidadeUf, ph: 'Londrina/PR' })}
+        ${field({ label: 'Data e hora da sessão', name: 'sessao', type: 'datetime-local', value: v.sessao })}
+        ${field({ label: 'Intervalo mín. entre lances', name: 'intervaloMin', value: v.intervaloMin, ph: 'R$ 0,10 ou 0,5%' })}
+        ${field({ label: 'Prazo de entrega (dias)', name: 'prazoEntregaDias', value: v.prazoEntregaDias, inputmode: 'numeric' })}
+        ${field({ label: 'Exigências (IE, certidões)', name: 'exigencias', type: 'textarea', value: v.exigencias, full: true, ph: 'SICAF, CND estadual…' })}
+      </div>
+      <div class="sect">${icon('pin', 'sm')} Entrega de carro</div>
+      <div class="formgrid">
+        ${field({ label: 'Km (ida e volta)', name: 'km', value: v.km, inputmode: 'decimal', ph: '0 = não vou de carro' })}
+        ${field({ label: 'Nº de viagens', name: 'viagens', value: v.viagens, inputmode: 'numeric' })}
+        ${field({ label: 'Pedágio/outros por viagem (R$)', name: 'pedagio', value: v.pedagio, inputmode: 'decimal' })}
+        <div class="field"><label>Custo da entrega</label><div class="input" id="viagemCusto" style="display:flex;align-items:center;font-weight:800">—</div></div>
+      </div>
+      <div class="sect">Outros</div>
+      ${field({ label: 'Link do edital', name: 'link', type: 'url', value: v.link, ph: 'https://…' })}
+      ${field({ label: 'Observações', name: 'obs', type: 'textarea', value: v.obs })}`;
+    openForm({
+      key: 'pregao:' + (id || 'novo'), title: id ? 'Editar pregão' : 'Novo pregão', body, values: v,
+      onInput: (form) => {
+        const x = readForm(form), cfg = store.get().config;
+        const custo = C.custoViagem({ km: C.parseBR(x.km), viagens: C.parseBR(x.viagens), pedagio: C.parseBR(x.pedagio) }, cfg);
+        $('#viagemCusto', form).textContent = C.brl(custo);
+      },
+      onSave: (x, form) => {
+        $$('.input.err', form).forEach((e) => e.classList.remove('err'));
+        const miss = [];
+        if (!x.numero.trim()) miss.push('numero');
+        if (!x.orgao.trim()) miss.push('orgao');
+        if (miss.length) { miss.forEach((n) => $('[name=' + n + ']', form).classList.add('err')); return 'Preencha o número da compra e o órgão.'; }
+        const km = C.parseBR(x.km) || 0;
+        const data = {
+          numero: x.numero.trim(), orgao: x.orgao.trim(), cidadeUf: x.cidadeUf.trim(), sessao: x.sessao || '', intervaloMin: x.intervaloMin.trim(),
+          prazoEntregaDias: x.prazoEntregaDias ? parseInt(x.prazoEntregaDias, 10) : null, exigencias: x.exigencias.trim(), status: x.status,
+          km, viagens: x.viagens === '' ? (km > 0 ? 1 : 0) : (C.parseBR(x.viagens) || 0), pedagio: C.parseBR(x.pedagio) || 0, link: x.link.trim(), obs: x.obs.trim(),
+        };
+        if (id) data.id = id;
+        const nid = store.upsertPregao(data);
+        toast(id ? 'Pregão atualizado' : 'Pregão cadastrado');
+        if (!id) { UI.tab = 'pregoes'; UI.detailId = nid; }
+        return true;
+      },
+      onDelete: id ? async () => {
+        const ok = await confirmar('Excluir este pregão?', 'Os itens dele também serão excluídos.', 'Excluir', true);
+        if (ok) { store.removePregao(id); if (UI.detailId === id) { UI.detailId = null; } toast('Pregão excluído'); }
+        return ok;
+      } : null,
+    });
+  }
+
+  function itemValues(it) {
+    return {
+      pregaoId: it.pregaoId || '', itemEdital: it.itemEdital || '', descricao: it.descricao || '', descEdital: it.descEdital || '', marca: it.marca || '', unidade: it.unidade || 'Un',
+      qtd: it.qtd == null ? '' : C.numBR(it.qtd, 3), onde: it.onde || '',
+      custo: it.custo == null ? '' : C.numBR(it.custo), teto: it.teto == null ? '' : C.numBR(it.teto), frete: it.frete ? C.numBR(it.frete) : '',
+      margem: it.margem == null ? '' : C.numBR(it.margem * 100, 2), lanceFinal: it.lanceFinal == null ? '' : C.numBR(it.lanceFinal),
+    };
+  }
+  function itemFromForm(x, id) {
+    const m = C.parseBR(x.margem);
+    return {
+      id: id || 'new', pregaoId: x.pregaoId, itemEdital: x.itemEdital.trim(), descricao: x.descricao.trim(), descEdital: x.descEdital.trim(), marca: x.marca.trim(), unidade: x.unidade.trim() || 'Un',
+      qtd: C.parseBR(x.qtd), onde: x.onde.trim(), custo: C.parseBR(x.custo), teto: C.parseBR(x.teto), frete: C.parseBR(x.frete) || 0,
+      margem: m == null ? null : m / 100, lanceFinal: C.parseBR(x.lanceFinal),
+    };
+  }
+  function openItemForm(id, pregaoId) {
+    const list = activePregoes();
+    if (!list.length) { toast('Cadastre um pregão primeiro'); openPregaoForm(); return; }
+    const cur = id ? store.get().itens.find((i) => i.id === id && !i.deleted) : null;
+    const v = itemValues(cur || { pregaoId: pregaoId || (UI.detailId || list[0].id), unidade: 'Un' });
+    const cfg = store.get().config;
+    const body = `
+      <div class="preview" id="prev"></div>
+      ${field({ label: 'Pregão / órgão *', name: 'pregaoId', type: 'select', value: v.pregaoId, options: list.map((p) => ({ v: p.id, l: pregaoLabel(p) })) })}
+      ${field({ label: 'Item que vou comprar *', name: 'descricao', value: v.descricao, ph: 'ex.: Caixa organizadora plástica 30 L' })}
+      <div class="formgrid">
+        ${field({ label: 'Nº do item no edital', name: 'itemEdital', value: v.itemEdital, ph: 'ex.: 04', hint: 'Sai como “ITEM 04” no PDF' })}
+        ${field({ label: 'Unidade', name: 'unidade', value: v.unidade, ph: 'Un, Cx, Resma…' })}
+        ${field({ label: 'Marca / modelo', name: 'marca', value: v.marca, full: true, ph: 'ex.: SONE/Bico RN Anatômico' })}
+        ${field({ label: 'Quantidade *', name: 'qtd', value: v.qtd, inputmode: 'decimal' })}
+        ${field({ label: 'Onde compro', name: 'onde', value: v.onde })}
+        ${field({ label: 'Custo unit. (R$) *', name: 'custo', value: v.custo, inputmode: 'decimal', hint: 'O que eu vou pagar' })}
+        ${field({ label: 'Valor unit. do edital (teto)', name: 'teto', value: v.teto, inputmode: 'decimal', hint: 'Máximo que o órgão aceita' })}
+        ${field({ label: 'Frete do fornecedor (R$, total do item)', name: 'frete', value: v.frete, inputmode: 'decimal' })}
+        ${field({ label: 'Minha margem (%)', name: 'margem', value: v.margem, inputmode: 'decimal', ph: 'padrão: ' + C.numBR(cfg.margemPadrao * 100, 2).replace(',00', '') + '%', hint: 'Vazio = margem padrão' })}
+        ${field({ label: 'Lance final (R$ unit., opcional)', name: 'lanceFinal', value: v.lanceFinal, inputmode: 'decimal', full: true, hint: 'Preencha depois de disputar. Vazio = conta pelo teto.' })}
+        ${field({ label: 'Descrição completa do edital (vai no PDF)', name: 'descEdital', type: 'textarea', value: v.descEdital, full: true, ph: 'Cole aqui a descrição do item como está no edital', hint: 'Se ficar vazia, o PDF usa o nome do item.' })}
+      </div>`;
+        openForm({
+      key: 'item:' + (id || 'novo'), title: id ? 'Editar item' : 'Novo item', body, values: v,
+      onInput: (form) => {
+        const x = readForm(form);
+        const c = C.previewItem(store.get(), itemFromForm(x, id));
+        const el = $('#prev', form);
+        if (!c || c.minimo == null) { el.innerHTML = `<div class="small muted">Informe quantidade e custo para ver o valor mínimo da proposta.</div>`; return; }
+        const bad = c.sitTipo === 'bad';
+        el.innerHTML = `<div class="minbox ${bad ? 'bad' : ''}"><div><div class="t">Valor mínimo p/ proposta (unit.)</div><div class="tiny muted">margem ${C.pct(c.margem, 1)} sobre o preço</div></div><div class="v">${C.brl(c.minimo)}</div></div>
+          <div class="kv"><span>Custo unit. final <b>${C.brl(c.custoUnit)}</b></span><span>Entrega rateada <b>${C.brl(c.entrega)}</b></span>
+          <span>Posso baixar do teto <b>${c.folgaRs != null ? C.brl(c.folgaRs) + ' (' + C.pct(c.folgaPct, 0) + ')' : '—'}</b></span></div>
+          ${c.situacao ? `<div><span class="badge ${c.sitTipo}">${esc(c.situacao)}</span> <span class="tiny muted">Lucro previsto ${C.brl(c.lucro)}</span></div>` : ''}`;
+      },
+      onSave: (x, form) => {
+        $$('.input.err', form).forEach((e) => e.classList.remove('err'));
+        const it = itemFromForm(x, id);
+        const miss = [];
+        if (!it.pregaoId) miss.push('pregaoId');
+        if (!it.descricao) miss.push('descricao');
+        if (!(it.qtd > 0)) miss.push('qtd');
+        if (it.custo == null || it.custo < 0) miss.push('custo');
+        if (miss.length) { miss.forEach((n) => $('[name=' + n + ']', form).classList.add('err')); return 'Preencha pregão, item, quantidade e custo.'; }
+        if (it.margem != null && it.margem >= 1) { $('[name=margem]', form).classList.add('err'); return 'A margem precisa ser menor que 100%.'; }
+        const data = Object.assign({}, it); delete data.id;
+        if (id) data.id = id;
+        store.upsertItem(data);
+        toast(id ? 'Item atualizado' : 'Item adicionado');
+        return true;
+      },
+      onDelete: id ? async () => {
+        const ok = await confirmar('Excluir este item?', cur ? cur.descricao : '', 'Excluir', true);
+        if (ok) { store.removeItem(id); toast('Item excluído'); }
+        return ok;
+      } : null,
+    });
+  }
+
+  /* ---------- telas ---------- */
+  const badgeStatus = (s) => `<span class="badge st-${slugClass(s)}">${esc(s)}</span>`;
+
+  function draftDesc(key) {
+    const [kind, id] = key.split(':');
+    const st = store.get();
+    if (kind === 'pregao') { const p = st.pregoes.find((x) => x.id === id); return id === 'novo' ? 'Novo pregão' : 'Pregão ' + (p ? '#' + p.numero : ''); }
+    if (kind === 'item') { const i = st.itens.find((x) => x.id === id); return id === 'novo' ? 'Novo item' : 'Item ' + (i ? i.descricao : ''); }
+    return key;
+  }
+  function openDraft(key) {
+    const [kind, id] = key.split(':');
+    if (kind === 'pregao') openPregaoForm(id === 'novo' ? null : id);
+    else if (kind === 'item') openItemForm(id === 'novo' ? null : id);
+  }
+
+  function emptyWelcome() {
+    return `<div class="page"><div class="card empty">${icon('pregoes')}<h2>Bem-vindo ao Pregões MEI</h2>
+      <p class="muted">Cadastre um pregão, adicione os itens que vai vender e veja na hora o <b>valor mínimo</b> da proposta e quanto falta para o teto do MEI.</p>
+      <button class="btn primary block" data-act="novo-pregao">${icon('plus')} Cadastrar primeiro pregão</button>
+      <button class="btn ghost block" data-act="demo">Ver com dados de exemplo</button></div></div>`;
+  }
+
+  function renderPainel() {
+    const st = store.get();
+    if (!st.pregoes.some((p) => !p.deleted)) return emptyWelcome();
+    const R = C.computeAll(st), m = R.mei;
+    const drafts = Draft.all();
+    const f = m.faturado, a = m.aFaturar, d = m.emDisputa, livre = Math.max(0, m.limite - (f + a + d));
+    const scale = Math.max(m.limite, f + a + d) || 1;
+    const w = (x) => (Math.max(0, x) / scale * 100).toFixed(2) + '%';
+    const alertTxt = m.alerta === 'bad' ? 'ATENÇÃO: o que já está faturado + ganho passa do limite do MEI.'
+      : m.alerta === 'warn' ? 'Cuidado: se você ganhar tudo o que está em disputa, passa do limite do MEI.' : 'Dentro do limite do MEI.';
+    const meter = (p) => `<div class="meter ${p >= 1 ? 'red' : ''}"><div style="width:${Math.min(100, p * 100).toFixed(1)}%"></div></div>`;
+    const maxV = Math.max(1, ...R.statusRows.map((r) => r.venda));
+    const comp = R.comp, tot = comp.venda || 1;
+    const segs = [['Custo dos produtos', comp.produtos, '#5b6b82'], ['Frete do fornecedor', comp.frete, '#e8a76b'], ['Entrega de carro', comp.entrega, '#f2cf5b'], ['Lucro', comp.lucro, '#4caf66']];
+    const CIRC = 2 * Math.PI * 54;
+    let acc = 0;
+    const arcs = segs.map(([, v, col]) => {
+      const len = Math.max(0, v) / tot * CIRC;
+      const s = `<circle cx="80" cy="80" r="54" fill="none" stroke="${col}" stroke-width="22" stroke-dasharray="${len.toFixed(2)} ${(CIRC - len).toFixed(2)}" stroke-dashoffset="${(-acc).toFixed(2)}" transform="rotate(-90 80 80)"/>`;
+      acc += len; return s;
+    }).join('');
+    const margemTot = comp.venda > 0 ? comp.lucro / comp.venda : null;
+    const prox = R.proximas.slice(0, 4);
+
+    return `<div class="page">
+      ${drafts.length ? `<div class="alert warn">${icon('alert', 'sm')}<div class="grow">Você tem preenchimento não salvo: ${esc(drafts.slice(0, 2).map((x) => draftDesc(x.key)).join(', '))}.</div><button class="btn sm" data-act="rascunho" data-key="${esc(drafts[0].key)}">Continuar</button></div>` : ''}
+      <div class="kpis">
+        <div class="kpi" style="--c:#1f3864"><div class="l">Limite do MEI</div><div class="v" style="color:var(--ink)">${C.brl0(m.limite)}</div><div class="s">no ano de ${st.config.anoRef}</div></div>
+        <div class="kpi" style="--c:#2e75b6"><div class="l">Comprometido</div><div class="v">${C.brl0(m.comprometido)}</div><div class="s">faturado + ganho · ${C.pct(m.pctComprometido, 0)}</div></div>
+        <div class="kpi" style="--c:${m.saldoAgora < 0 ? '#c0392b' : '#2f7d3a'}"><div class="l">Saldo disponível</div><div class="v">${C.brl0(m.saldoAgora)}</div><div class="s">se ganhar tudo: ${C.brl0(m.saldoSeGanhar)}</div></div>
+        <div class="kpi" style="--c:#b7791f"><div class="l">Lucro previsto</div><div class="v">${C.brl0(R.lucroPrevisto)}</div><div class="s">pregões ativos</div></div>
+      </div>
+      ${prox.length ? `<div class="card"><h3>${icon('calendar', 'sm')} Próximas sessões</h3>${prox.map((x) => `<div class="strow" data-act="abrir-pregao" data-id="${x.p.id}" style="cursor:pointer"><div><b>${esc(x.p.orgao)}</b><div class="tiny muted">#${esc(x.p.numero)} · ${esc(C.fmtSessao(x.p.sessao))}</div></div>${badgeStatus(x.p.status)}</div>`).join('')}</div>` : ''}
+      <div class="card"><h3>Uso do limite do MEI</h3>
+        <div class="stack" role="img" aria-label="Uso do limite">
+          <div class="seg" style="width:${w(f)};background:#1f3864"></div><div class="seg" style="width:${w(a)};background:#2e75b6"></div>
+          <div class="seg" style="width:${w(d)};background:#f4b183"></div><div class="seg" style="width:${w(livre)};background:#a9d18e"></div>
+          ${scale > m.limite ? `<div class="mark" style="left:${(m.limite / scale * 100).toFixed(2)}%"></div>` : ''}
+        </div>
+        <div class="legend"><span><i style="background:#1f3864"></i>Faturado ${C.brl0(f)}</span><span><i style="background:#2e75b6"></i>A faturar ${C.brl0(a)}</span><span><i style="background:#f4b183"></i>Em disputa ${C.brl0(d)}</span><span><i style="background:#a9d18e"></i>Livre ${C.brl0(livre)}</span></div>
+        <div style="margin-top:14px" class="row between small"><b>Comprometido</b><span>${C.pct(m.pctComprometido, 0)}</span></div>${meter(m.pctComprometido)}
+        <div style="margin-top:10px" class="row between small"><b>Se ganhar tudo em disputa</b><span>${C.pct(m.pctComTudo, 0)}</span></div>${meter(m.pctComTudo)}
+        <div class="alert ${m.alerta}" style="margin-top:14px">${icon(m.alerta === 'ok' ? 'check' : 'alert', 'sm')}<span>${alertTxt}</span></div>
+        <p class="tiny muted" style="margin-top:10px">O total de cada pregão usa o lance final; sem lance, usa o valor do edital (pior caso para o teto).</p>
+      </div>
+      <div class="two-col">
+        <div class="card"><h3>Pregões por status</h3>${R.statusRows.map((r) => `<div class="strow"><div class="row">${badgeStatus(r.status)}<span class="small muted">${r.count} pregão(ões)</span></div><b>${C.brl0(r.venda)}</b><div class="bar"><div style="width:${(r.venda / maxV * 100).toFixed(1)}%"></div></div></div>`).join('')}</div>
+        <div class="card"><h3>De onde vem o preço de venda</h3><div class="donut-wrap">
+          <svg viewBox="0 0 160 160" role="img" aria-label="Composição do preço"><circle cx="80" cy="80" r="54" fill="none" stroke="var(--line)" stroke-width="22"/>${comp.venda > 0 ? arcs : ''}
+            <text x="80" y="76" text-anchor="middle" font-size="22" font-weight="800" fill="currentColor">${margemTot == null ? '—' : C.pct(margemTot, 0)}</text><text x="80" y="95" text-anchor="middle" font-size="11" fill="var(--muted)">de lucro</text></svg>
+          <div class="donut-leg">${segs.map(([l, v, col]) => `<div><i style="background:${col}"></i>${l}<b>${C.brl0(v)}</b></div>`).join('')}</div></div>
+          <p class="tiny muted" style="margin-top:10px">Pregões ativos (exclui Perdeu, Desclassificado e Desisti).</p></div>
+      </div></div>`;
+  }
+
+  function pregaoCard(pst) {
+    const p = pst.p;
+    const chips = pst.itens.slice(0, 3).map((i) => `<span class="chip">${esc(i.descricao)}</span>`).join('') + (pst.itens.length > 3 ? `<span class="chip">+${pst.itens.length - 3}</span>` : '');
+    return `<article class="pcard" data-act="abrir-pregao" data-id="${p.id}" tabindex="0" role="button">
+      <div class="row between"><span class="num">COMPRA Nº ${esc(p.numero)}</span>${badgeStatus(p.status)}</div>
+      <h4>${esc(p.orgao)}</h4>
+      <div class="small muted row wrap" style="gap:4px 14px">${p.cidadeUf ? `<span class="row" style="gap:4px">${icon('pin', 'sm')}${esc(p.cidadeUf)}</span>` : ''}${p.sessao ? `<span class="row" style="gap:4px">${icon('calendar', 'sm')}${esc(C.fmtSessao(p.sessao))}</span>` : ''}</div>
+      <div class="chips">${chips || '<span class="chip">Sem itens ainda</span>'}</div>
+      <div class="nums"><div>Venda<b>${C.brl0(pst.venda)}</b></div><div>Lucro<b>${C.brl0(pst.lucro)}</b></div><div>Margem<b>${C.pct(pst.margem, 0)}</b></div></div></article>`;
+  }
+
+  function pregoesListHtml() {
+    const R = C.computeAll(store.get());
+    let list = [...R.pMap.values()];
+    if (UI.filtro !== 'todos') list = list.filter((x) => x.p.status === UI.filtro);
+    const q = UI.busca.trim().toLowerCase();
+    if (q) list = list.filter((x) => (x.p.numero + ' ' + x.p.orgao + ' ' + (x.p.cidadeUf || '') + ' ' + x.itens.map((i) => i.descricao).join(' ')).toLowerCase().includes(q));
+    list.sort((a, b) => (b.p.createdAt || 0) - (a.p.createdAt || 0));
+    if (!list.length) return `<div class="card empty"><p class="muted">Nenhum pregão encontrado.</p></div>`;
+    return `<div class="list">${list.map(pregaoCard).join('')}</div>`;
+  }
+
+  function renderPregoes() {
+    if (UI.detailId) return renderDetail();
+    const st = store.get();
+    if (!st.pregoes.some((p) => !p.deleted)) return emptyWelcome();
+    const fl = ['todos', ...C.STATUS];
+    return `<div class="page">
+      <div class="search">${icon('search')}<input class="input" id="busca" type="search" placeholder="Buscar por número, órgão ou item" value="${esc(UI.busca)}"></div>
+      <div class="filters">${fl.map((s) => `<button data-act="filtro" data-v="${esc(s)}" class="${UI.filtro === s ? 'on' : ''}">${s === 'todos' ? 'Todos' : esc(s)}</button>`).join('')}</div>
+      <div id="plist">${pregoesListHtml()}</div></div>
+      <button class="fab" data-act="novo-pregao" aria-label="Novo pregão">${icon('plus')}</button>`;
+  }
+
+  function itemCard(it, c, opt) {
+    const p = opt.pst && opt.pst.p;
+    return `<article class="icard" data-act="editar-item" data-id="${it.id}" tabindex="0" role="button">
+      <div class="row between" style="align-items:flex-start"><h4 class="grow">${esc(it.descricao)}</h4>${c.situacao ? `<span class="badge ${c.sitTipo}">${esc(c.situacao)}</span>` : ''}</div>
+      ${opt.showOrg && p ? `<div class="chips"><span class="chip org">#${esc(p.numero)} · ${esc(p.orgao)}</span></div>` : ''}
+      <div class="small muted">${C.qtdBR(it.qtd)} ${esc(it.unidade || 'Un')} · custo ${C.brl(it.custo)} · teto ${C.brl(c.teto)}${it.marca ? ' · ' + esc(it.marca) : ''}</div>
+      <div class="minbox ${c.sitTipo === 'bad' ? 'bad' : ''}"><div><div class="t">Valor mínimo p/ proposta (unit.)</div><div class="tiny muted">margem ${C.pct(c.margem, 0)} · custo final ${C.brl(c.custoUnit)}</div></div><div class="v">${C.brl(c.minimo)}</div></div>
+      <div class="row between small muted"><span>Posso baixar do teto: <b style="color:var(--ink)">${c.folgaRs != null ? C.brl(c.folgaRs) + ' (' + C.pct(c.folgaPct, 0) + ')' : '—'}</b></span><span>Lucro: <b style="color:var(--ink)">${C.brl(c.lucro)}</b></span></div></article>`;
+  }
+
+  function renderDetail() {
+    const R = C.computeAll(store.get());
+    const pst = R.pMap.get(UI.detailId);
+    if (!pst) { UI.detailId = null; return renderPregoes(); }
+    const p = pst.p;
+    const kv = (k, v) => v ? `<div><span>${k}</span><b>${v}</b></div>` : '';
+    return `<div class="page">
+      <button class="back" data-act="voltar">${icon('back')} Pregões</button>
+      <div class="hero"><span class="num">COMPRA Nº ${esc(p.numero)}</span><h2>${esc(p.orgao)}</h2>
+        <div class="m">${p.cidadeUf ? `<span>${esc(p.cidadeUf)}</span>` : ''}${p.sessao ? `<span>Sessão ${esc(C.fmtSessao(p.sessao))}</span>` : ''}</div></div>
+      <div class="card"><div class="field" style="margin:0"><label for="stsel">Status do pregão</label>
+        <select class="input" id="stsel" data-status-pregao="${p.id}">${C.STATUS.map((s) => `<option${s === p.status ? ' selected' : ''}>${esc(s)}</option>`).join('')}</select></div></div>
+      <div class="kpis">
+        <div class="kpi"><div class="l">Total de venda</div><div class="v">${C.brl0(pst.venda)}</div></div>
+        <div class="kpi" style="--c:#667489"><div class="l">Custo total</div><div class="v" style="color:var(--ink)">${C.brl0(pst.custo)}</div><div class="s">entrega ${C.brl0(pst.viagem)}</div></div>
+        <div class="kpi" style="--c:#2f7d3a"><div class="l">Lucro</div><div class="v">${C.brl0(pst.lucro)}</div></div>
+        <div class="kpi" style="--c:#b7791f"><div class="l">Margem real</div><div class="v">${C.pct(pst.margem, 1)}</div></div>
+      </div>
+      <div class="card"><h3><span class="grow">Itens deste pregão (${pst.nItens})</span><button class="btn sm primary" data-act="novo-item" data-pid="${p.id}">${icon('plus', 'sm')} Item</button></h3>
+        ${pst.itens.length ? `<div class="list">${pst.itens.map((it) => itemCard(it, R.iMap.get(it.id), { pst, showOrg: false })).join('')}</div>` : `<p class="muted small">Nenhum item ainda. Toque em “Item” para adicionar o primeiro.</p>`}</div>
+      <div class="card"><h3>Dados do pregão</h3><div class="kv-list">
+        ${kv('Intervalo mín. lances', esc(p.intervaloMin))}${kv('Prazo de entrega', p.prazoEntregaDias ? esc(p.prazoEntregaDias) + ' dias' : '')}${kv('Exigências', esc(p.exigencias))}
+        ${kv('Entrega de carro', p.km ? `${C.numBR(p.km, 1)} km · ${p.viagens || 0} viagem(ns)${p.pedagio ? ' · pedágio ' + C.brl(p.pedagio) : ''} = ${C.brl(pst.viagem)}` : '')}
+        ${kv('Link do edital', p.link ? `<a href="${esc(p.link)}" target="_blank" rel="noopener">${esc(p.link)}</a>` : '')}${kv('Observações', esc(p.obs))}</div></div>
+      <div class="grid2"><button class="btn" data-act="editar-pregao" data-id="${p.id}">${icon('edit', 'sm')} Editar dados</button>
+        <button class="btn navy" data-act="pdf-pregao" data-id="${p.id}">${icon('pdf', 'sm')} Proposta PDF</button></div></div>`;
+  }
+
+  function itensListHtml() {
+    const R = C.computeAll(store.get());
+    const q = UI.buscaI.trim().toLowerCase();
+    const groups = [...R.pMap.values()].sort((a, b) => (b.p.createdAt || 0) - (a.p.createdAt || 0));
+    let html = '', n = 0;
+    for (const g of groups) {
+      const its = g.itens.filter((i) => !q || (i.descricao + ' ' + (i.marca || '') + ' ' + (i.onde || '') + ' ' + g.p.orgao + ' ' + g.p.numero).toLowerCase().includes(q));
+      if (!its.length) continue;
+      n += its.length;
+      html += `<div class="grp"><h3>#${esc(g.p.numero)} · ${esc(g.p.orgao)}</h3>${badgeStatus(g.p.status)}</div><div class="list">${its.map((it) => itemCard(it, R.iMap.get(it.id), { pst: g, showOrg: true })).join('')}</div>`;
+    }
+    return n ? html : `<div class="card empty"><p class="muted">Nenhum item encontrado.</p></div>`;
+  }
+  function renderItens() {
+    if (!activePregoes().length) return emptyWelcome();
+    return `<div class="page"><div class="search">${icon('search')}<input class="input" id="buscaI" type="search" placeholder="Buscar item, marca, onde compro ou órgão" value="${esc(UI.buscaI)}"></div>
+      <div id="ilist" class="page">${itensListHtml()}</div></div>
+      <button class="fab" data-act="novo-item" aria-label="Novo item">${icon('plus')}</button>`;
+  }
+
+  /* ---------- tela PDF ---------- */
+  const FONTES = [['auto', 'Lance final; sem lance, valor mínimo'], ['minimo', 'Sempre o valor mínimo (custo + margem)'], ['teto', 'Valor do edital (teto)'], ['lance', 'Só o lance final']];
+  const wmTexto = (w) => (w.tipo === 'texto' ? esc(w.texto || '') : '');
+
+  function renderPDF() {
+    const st = store.get(), cfg = st.config, p = cfg.proposta, w = cfg.marcaDagua, e = cfg.empresa;
+    const list = activePregoes();
+    if (!list.length) return emptyWelcome();
+    if (!UI.pdf.pregaoId || !list.some((x) => x.id === UI.pdf.pregaoId)) UI.pdf.pregaoId = list[0].id;
+    const L = C.linhasProposta(st, UI.pdf.pregaoId, UI.pdf.fonte);
+    const pz = L.pregao || {};
+    const hd = cfg.cabecalho;
+    const r = UI.pdf.result;
+    const cf = (path, type, val, extra) => `data-cfg="${path}" data-type="${type}" value="${esc(val)}" ${extra || ''}`;
+    const empOk = !!(e.nome && e.cnpj);
+    return `<div class="page">
+      <div class="card"><h3>1 · Qual pregão?</h3>
+        <div class="field"><label for="pdfp">Pregão</label><select class="input" id="pdfp" data-ui="pregaoId">${list.map((x) => `<option value="${x.id}"${x.id === UI.pdf.pregaoId ? ' selected' : ''}>${esc(pregaoLabel(x))}</option>`).join('')}</select></div>
+        <div class="field"><label for="pdff">Qual valor entra na proposta?</label><select class="input" id="pdff" data-ui="fonte">${FONTES.map(([v, l]) => `<option value="${v}"${v === UI.pdf.fonte ? ' selected' : ''}>${l}</option>`).join('')}</select></div>
+        <div class="tbl-scroll"><table class="tbl"><thead><tr><th>Item</th><th class="r">Qtd</th><th class="r">Unit.</th><th class="r">Total</th></tr></thead><tbody>
+          ${L.linhas.map((x) => `<tr><td>${esc(x.descricao)}${x.acimaTeto ? ' <span class="badge bad">acima do teto</span>' : ''}</td><td class="r">${C.qtdBR(x.qtd)}</td><td class="r">${x.unit != null ? C.brl(x.unit) : '<span class="badge bad">sem valor</span>'}</td><td class="r">${x.total != null ? C.brl(x.total) : '—'}</td></tr>`).join('') || '<tr><td colspan="4" class="muted">Nenhum item neste pregão.</td></tr>'}
+          </tbody><tfoot><tr><td colspan="3">Total da proposta</td><td class="r">${C.brl(L.total)}</td></tr></tfoot></table></div>
+        ${L.semValor ? `<div class="alert warn" style="margin-top:10px">${icon('alert', 'sm')}<span>${L.semValor} item(ns) sem valor nesta opção. Preencha o teto ou o lance final, ou troque a opção acima.</span></div>` : ''}
+      </div>
+      <div class="card"><h3>2 · Dados desta proposta</h3><div class="formgrid">
+        <div class="field"><label>Prazo de entrega</label><input class="input" data-ui="prazoEntrega" value="${esc(UI.pdf.prazoEntrega)}" placeholder="${pz.prazoEntregaDias ? pz.prazoEntregaDias + ' dias (do pregão)' : 'ex.: 10 dias'}"></div>
+        <div class="field"><label>Local de entrega</label><input class="input" data-ui="localEntrega" value="${esc(UI.pdf.localEntrega)}" placeholder="${esc(pz.cidadeUf || 'cidade do pregão')}"></div>
+        <div class="field"><label>Validade (dias)</label><input class="input" inputmode="numeric" ${cf('proposta.validadeDias', 'int', p.validadeDias)}></div>
+        <div class="field"><label>Prazo de pagamento</label><input class="input" ${cf('proposta.condPagamento', 'text', p.condPagamento)}></div>
+        <div class="field full"><label>Observações (aparecem no PDF)</label><textarea class="input" data-ui="observacoes" rows="2">${esc(UI.pdf.observacoes)}</textarea></div></div>
+        <label class="switch"><span>Dados bancários</span><input type="checkbox" data-cfg="proposta.incluirBancarios" data-type="check" ${p.incluirBancarios ? 'checked' : ''}></label>
+        <label class="switch"><span>Valor total por extenso</span><input type="checkbox" data-cfg="proposta.incluirExtenso" data-type="check" ${p.incluirExtenso ? 'checked' : ''}></label>
+        <label class="switch"><span>Local e data acima da assinatura</span><input type="checkbox" data-cfg="proposta.incluirLocalData" data-type="check" ${p.incluirLocalData ? 'checked' : ''}></label>
+        ${p.incluirLocalData ? `<div class="field"><label>Data do documento</label><input class="input" type="date" data-ui="data" value="${esc(UI.pdf.data)}"></div>` : ''}
+        <label class="switch"><span>Declaração de preços</span><input type="checkbox" data-cfg="proposta.incluirDeclaracao" data-type="check" ${p.incluirDeclaracao ? 'checked' : ''}></label>
+        ${p.incluirDeclaracao ? `<div class="field"><label>Texto da declaração</label><textarea class="input" rows="3" data-cfg="proposta.textoDeclaracao" data-type="text">${esc(p.textoDeclaracao)}</textarea></div>` : ''}
+        <div class="field" style="margin-top:6px"><label>Cor do modelo (faixas, bordas e rótulos)</label><input class="input" type="color" style="padding:4px;height:46px" ${cf('proposta.cor', 'text', p.cor)}></div></div>
+      <div class="card"><h3>3 · Papel timbrado (imagem do topo) <span class="grow"></span><span class="saved-ind" id="savedInd">Salvo</span></h3>
+        ${hd.imagem ? `<div class="wm-prev" style="height:auto;padding:8px;margin-bottom:12px"><img alt="Papel timbrado" src="${hd.imagem}" style="max-width:100%;max-height:90px"></div>` : `<p class="small muted" style="margin-bottom:12px">Opcional. Sem imagem, o cabeçalho sai em texto com os dados da empresa.</p>`}
+        <div class="row"><label class="btn sm grow" style="cursor:pointer">${icon('image', 'sm')} ${hd.imagem ? 'Trocar imagem' : 'Escolher imagem do cabeçalho'}<input type="file" accept="image/png,image/jpeg" data-hd-file class="hidden"></label>${hd.imagem ? `<button type="button" class="btn sm danger" data-act="hd-remover">${icon('trash', 'sm')}</button>` : ''}</div></div>
+      <div class="card"><h3>4 · Marca d’água</h3>
+        <div class="seg-ctl" role="tablist">${[['nenhuma', 'Nenhuma'], ['texto', 'Texto'], ['imagem', 'Imagem']].map(([v, l]) => `<button type="button" data-act="wm-tipo" data-v="${v}" class="${w.tipo === v ? 'on' : ''}">${l}</button>`).join('')}</div>
+        <div style="height:12px"></div>
+        <div class="wm-prev" id="wmPrev">${w.tipo === 'imagem' && w.imagem ? `<img alt="" src="${w.imagem}" style="opacity:${Math.max(.15, w.opacidade * 3)};transform:rotate(${-w.angulo}deg)">` : w.tipo === 'texto' ? `<span style="font-size:${Math.min(40, w.tamanho / 2)}px;opacity:${Math.max(.15, w.opacidade * 3)};transform:rotate(${-w.angulo}deg)">${wmTexto(w)}</span>` : '<span class="small muted" style="font-weight:600">Sem marca d’água</span>'}</div>
+        <div style="height:12px"></div>
+        ${w.tipo === 'texto' ? `<div class="field"><label>Texto</label><input class="input" ${cf('marcaDagua.texto', 'text', w.texto)}></div>` : ''}
+        ${w.tipo === 'imagem' ? `<div class="row" style="margin-bottom:12px"><label class="btn sm grow" style="cursor:pointer">${icon('image', 'sm')} ${w.imagem ? 'Trocar imagem' : 'Escolher imagem'}<input type="file" accept="image/png,image/jpeg" data-wm-file class="hidden"></label>${w.imagem ? `<button type="button" class="btn sm danger" data-act="wm-remover">${icon('trash', 'sm')}</button>` : ''}</div>` : ''}
+        ${w.tipo !== 'nenhuma' ? `<div class="field"><label>Opacidade: <span id="lbOp">${Math.round(w.opacidade * 100)}%</span></label><input type="range" min="2" max="60" step="1" data-cfg="marcaDagua.opacidade" data-type="pctrange" data-lb="lbOp" value="${Math.round(w.opacidade * 100)}"></div>
+        <div class="field"><label>Ângulo: <span id="lbAn">${w.angulo}°</span></label><input type="range" min="-90" max="90" step="5" data-cfg="marcaDagua.angulo" data-type="range" data-lb="lbAn" data-suf="°" value="${w.angulo}"></div>
+        <div class="field"><label>Tamanho: <span id="lbTm">${w.tamanho}</span></label><input type="range" min="20" max="140" step="2" data-cfg="marcaDagua.tamanho" data-type="range" data-lb="lbTm" value="${w.tamanho}"></div>` : ''}
+      </div>
+      ${empOk ? '' : `<div class="alert info">${icon('info', 'sm')}<div class="grow">Preencha o nome e o CNPJ da empresa em <b>Config</b> para sair no cabeçalho da proposta.</div><button class="btn sm" data-act="tab" data-v="config">Abrir</button></div>`}
+      <button class="btn primary block" data-act="pdf-gerar" ${UI.pdf.busy ? 'disabled' : ''}>${icon('pdf')} ${UI.pdf.busy ? 'Gerando…' : 'Gerar PDF da proposta'}</button>
+      ${r ? `<div class="card"><h3>PDF pronto</h3><p class="small"><b>${esc(r.name)}</b><br><span class="muted">${r.paginas} página(s) · total ${C.brl(r.total)}</span></p>
+        ${r.semValor ? `<div class="alert warn" style="margin:10px 0">${icon('alert', 'sm')}<span>Gerado com ${r.semValor} item(ns) sem valor.</span></div>` : ''}
+        <div class="grid2" style="margin-top:12px"><button class="btn" data-act="pdf-abrir">${icon('eye', 'sm')} Abrir</button><button class="btn" data-act="pdf-baixar">${icon('download', 'sm')} Baixar</button></div>
+        ${navigator.canShare ? `<button class="btn block" style="margin-top:10px" data-act="pdf-compartilhar">${icon('share', 'sm')} Compartilhar</button>` : ''}</div>` : ''}
+    </div>`;
+  }
+
+  let pdfLibPromise = null;
+  function ensurePdfLib() {
+    if (window.PDFLib) return Promise.resolve();
+    if (!pdfLibPromise) {
+      pdfLibPromise = new Promise((res, rej) => {
+        const s = document.createElement('script');
+        s.src = 'js/vendor/pdf-lib.min.js'; s.onload = res; s.onerror = () => { pdfLibPromise = null; rej(new Error('Não consegui carregar o gerador de PDF (sem internet na primeira vez?)')); };
+        document.head.appendChild(s);
+      });
+    }
+    return pdfLibPromise;
+  }
+  function commitAllPending() { $$('[data-cfg]').forEach((el) => { if (Guard.pending.has(el.dataset.cfg)) commitCfg(el); }); }
+  async function gerarPDF() {
+    commitAllPending();
+    const id = UI.pdf.pregaoId;
+    if (!id) { toast('Escolha um pregão'); return; }
+    UI.pdf.busy = true; render();
+    try {
+      await ensurePdfLib();
+      const res = await window.PropostaPDF.gerarProposta(store.get(), id, { fonte: UI.pdf.fonte, prazoEntrega: UI.pdf.prazoEntrega.trim(), localEntrega: UI.pdf.localEntrega.trim(), observacoes: UI.pdf.observacoes.trim(), data: UI.pdf.data || C.hojeISO() });
+      if (UI.pdf.result) URL.revokeObjectURL(UI.pdf.result.url);
+      const blob = new Blob([res.bytes], { type: 'application/pdf' });
+      UI.pdf.result = { blob, url: URL.createObjectURL(blob), name: res.filename, total: res.total, paginas: res.paginas, semValor: res.semValor };
+      toast('PDF gerado');
+    } catch (e) { console.error(e); toast('Erro ao gerar o PDF: ' + (e.message || e)); }
+    UI.pdf.busy = false; render();
+    const card = $('#main .card:last-child'); if (card && UI.pdf.result) card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+  function baixarPDF() {
+    const r = UI.pdf.result; if (!r) return;
+    const a = document.createElement('a'); a.href = r.url; a.download = r.name; document.body.appendChild(a); a.click(); a.remove();
+  }
+  async function compartilharPDF() {
+    const r = UI.pdf.result; if (!r) return;
+    try {
+      const file = new File([r.blob], r.name, { type: 'application/pdf' });
+      if (navigator.canShare && navigator.canShare({ files: [file] })) await navigator.share({ files: [file], title: r.name });
+      else baixarPDF();
+    } catch (e) { if (e && e.name !== 'AbortError') toast('Não foi possível compartilhar'); }
+  }
+
+  /* ---------- config ---------- */
+  function renderConfig() {
+    const st = store.get(), c = st.config, e = c.empresa;
+    const lim = C.limiteMEI(c);
+    const cf = (path, type, val, ph) => `data-cfg="${path}" data-type="${type}" value="${esc(val == null ? '' : val)}"${ph ? ` placeholder="${esc(ph)}"` : ''}`;
+    const fld = (label, path, type, val, o) => `<div class="field${o && o.full ? ' full' : ''}"><label>${label}</label><input class="input" ${o && o.im ? `inputmode="${o.im}"` : ''} ${cf(path, type, val, o && o.ph)}>${o && o.hint ? `<div class="hint">${o.hint}</div>` : ''}</div>`;
+    const syncCls = S.state === 'erro' ? 'err' : (S.state === 'offline' ? 'off' : '');
+    return `<div class="page">
+      <div class="row between"><h2 style="font-size:17px">Configurações</h2><span class="saved-ind" id="savedInd">Salvo</span></div>
+      <p class="small muted" style="margin-top:-8px">As alterações são salvas automaticamente.</p>
+      <div class="card"><h3>Margem e entrega de carro</h3><div class="formgrid">
+        ${fld('Minha margem padrão (%)', 'margemPadrao', 'pct', C.numBR(c.margemPadrao * 100, 2), { im: 'decimal', hint: 'Sobre o preço de venda. Vale para itens sem margem própria.' })}
+        ${fld('Consumo do carro (km/l)', 'consumo', 'num', C.numBR(c.consumo, 2), { im: 'decimal' })}
+        ${fld('Combustível (R$/l)', 'combustivel', 'num', C.numBR(c.combustivel, 2), { im: 'decimal' })}
+        ${fld('Desgaste do carro (R$/km)', 'desgaste', 'num', C.numBR(c.desgaste, 2), { im: 'decimal', hint: 'Pneu, óleo, manutenção. Estimativa: ajuste ou zere.' })}</div></div>
+      <div class="card"><h3>Limite do MEI</h3><div class="formgrid">
+        ${fld('Ano de referência', 'anoRef', 'int', c.anoRef, { im: 'numeric' })}
+        ${fld('Limite anual cheio (R$)', 'limiteCheio', 'num', C.numBR(c.limiteCheio, 2), { im: 'decimal', hint: 'Valor de referência. Confirme o vigente.' })}
+        ${fld('Ano de abertura do MEI', 'anoAbertura', 'intnull', c.anoAbertura == null ? '' : c.anoAbertura, { im: 'numeric', hint: 'Só se abriu no ano de referência.' })}
+        ${fld('Mês de abertura (1 a 12)', 'mesAbertura', 'intnull', c.mesAbertura == null ? '' : c.mesAbertura, { im: 'numeric', hint: 'No ano da abertura o limite é proporcional.' })}
+        ${fld('Faturado fora do app no ano (R$)', 'fatFora', 'num', C.numBR(c.fatFora, 2), { im: 'decimal', full: true, hint: 'Notas já emitidas que não estão nos pregões.' })}</div>
+        <div class="alert info" style="margin-top:6px">${icon('info', 'sm')}<span id="limAplic">Limite aplicável no ano: <b>${C.brl(lim)}</b></span></div>
+        <p class="tiny muted" style="margin-top:8px">Excesso sobre o limite tem regras próprias (até 20% gera DAS complementar; acima disso, desenquadramento). Confirme com um contador.</p></div>
+      <div class="card"><h3>Empresa (cabeçalho da proposta)</h3><div class="formgrid">
+        ${fld('Nome / razão social', 'empresa.nome', 'text', e.nome, { full: true, ph: 'ex.: JOÃO DA SILVA 00000000000' })}
+        ${fld('CNPJ', 'empresa.cnpj', 'text', e.cnpj, { im: 'numeric', ph: '00.000.000/0001-00' })}
+        ${fld('CPF do titular (assinatura)', 'empresa.cpf', 'text', e.cpf, { im: 'numeric', ph: '000.000.000-00' })}
+        ${fld('Nome do titular (assinatura)', 'empresa.responsavel', 'text', e.responsavel, { full: true })}
+        ${fld('Endereço', 'empresa.endereco', 'text', e.endereco, { full: true })}
+        ${fld('Cidade/UF (local da assinatura)', 'empresa.cidade', 'text', e.cidade)}
+        ${fld('Telefone', 'empresa.telefone', 'text', e.telefone, { im: 'tel' })}
+        ${fld('E-mail', 'empresa.email', 'text', e.email, { full: true, im: 'email' })}</div></div>
+      <div class="card"><h3>Dados bancários (na proposta)</h3><div class="formgrid">
+        ${fld('Banco', 'empresa.banco', 'text', e.banco, { ph: '077 - INTER' })}
+        ${fld('Agência', 'empresa.agencia', 'text', e.agencia, { im: 'numeric' })}
+        ${fld('Conta', 'empresa.conta', 'text', e.conta)}
+        ${fld('PIX', 'empresa.pix', 'text', e.pix)}
+        ${fld('Favorecido', 'empresa.favorecido', 'text', e.favorecido, { full: true, hint: 'Vazio = usa o nome da empresa.' })}</div></div>
+      <div class="card"><h3>Dados e backup</h3>
+        <div class="grid2"><button class="btn" data-act="export">${icon('download', 'sm')} Exportar</button><label class="btn" style="cursor:pointer">${icon('plus', 'sm')} Importar<input type="file" accept="application/json,.json" data-import class="hidden"></label></div>
+        <div class="grid2" style="margin-top:10px"><button class="btn" data-act="demo">Dados de exemplo</button><button class="btn danger" data-act="apagar">${icon('trash', 'sm')} Apagar tudo</button></div></div>
+      ${cloudCard()}
+      <div class="card"><h3>Aplicativo</h3><div class="kv-list">
+        <div><span>Versão</span><b>${C.APP_VERSION}</b></div></div>
+        <div style="margin-top:12px"><button class="btn block" data-act="atualizar">${icon('refresh', 'sm')} Buscar atualização</button></div>
+        ${UI.deferredPrompt ? `<button class="btn primary block" style="margin-top:10px" data-act="instalar">Instalar o app</button>` : ''}
+        <p class="tiny muted" style="margin-top:10px">iPhone/iPad: toque em Compartilhar › “Adicionar à Tela de Início”. Android/PC: menu do navegador › “Instalar app”.</p></div></div>`;
+  }
+
+  /* ---------- render geral ---------- */
+  function render() {
+    const main = $('#main');
+    const a = document.activeElement;
+    if (a && main.contains(a) && /INPUT|TEXTAREA|SELECT/.test(a.tagName) && Guard.pending.size) return;
+    const y = window.scrollY;
+    const fn = { painel: renderPainel, pregoes: renderPregoes, itens: renderItens, pdf: renderPDF, config: renderConfig }[UI.tab];
+    main.innerHTML = fn();
+    $$('.nav button').forEach((b) => b.classList.toggle('on', b.dataset.v === UI.tab));
+    const t = TABS.find((x) => x.id === UI.tab);
+    $('#subt').textContent = UI.tab === 'pregoes' && UI.detailId ? 'Detalhe do pregão' : t.title;
+    if (UI.keepScroll) { window.scrollTo(0, y); UI.keepScroll = false; }
+    updateStatusPill();
+  }
+  function setTab(v) {
+    if (Guard.pending.size) commitAllPending();
+    UI.tab = v; if (v !== 'pregoes') UI.detailId = null;
+    saveUI(); render(); window.scrollTo(0, 0);
+  }
+  function updateStatusPill() {
+    const el = $('#pill'); if (!el) return;
+    let cls = '', txt = 'Salvo no aparelho';
+    if (!navigator.onLine) { cls = 'off'; txt = 'Offline · salvo no aparelho'; }
+    if (S.enabled) { txt = S.state === 'sync' ? 'Sincronizando…' : (S.state === 'erro' ? 'Falha no sync' : (navigator.onLine ? 'Sincronizado' : txt)); if (S.state === 'erro') cls = 'err'; }
+    else if (navigator.onLine) txt = 'Salvo no aparelho';
+    el.className = 'pill ' + cls; el.innerHTML = `<span class="dot"></span>${esc(txt)}`;
+  }
+
+  /* ---------- config autosave ---------- */
+  let savedT;
+  function flashSaved() { const el = $('#savedInd'); if (!el) return; el.classList.add('show'); clearTimeout(savedT); savedT = setTimeout(() => el.classList.remove('show'), 1400); }
+  function readCfgValue(el) {
+    const t = el.dataset.type;
+    if (t === 'check') return el.checked;
+    if (t === 'range') return Number(el.value);
+    if (t === 'pctrange') return Number(el.value) / 100;
+    if (t === 'text') return el.value;
+    if (t === 'int') { const n = parseInt(el.value, 10); return isFinite(n) ? n : undefined; }
+    if (t === 'intnull') { const n = parseInt(el.value, 10); return isFinite(n) ? n : null; }
+    if (t === 'pct') { const n = C.parseBR(el.value); return n == null ? undefined : Math.min(95, Math.max(0, n)) / 100; }
+    if (t === 'num') { const n = C.parseBR(el.value); return n == null ? undefined : Math.max(0, n); }
+    return el.value;
+  }
+  function commitCfg(el) {
+    const path = el.dataset.cfg;
+    Guard.pending.delete(path);
+    const v = readCfgValue(el);
+    if (v === undefined) { render(); return; } // valor inválido: volta ao que estava salvo
+    store.setConfigPath(path, v, { silent: true });
+    flashSaved();
+    if (/^(anoRef|limiteCheio|anoAbertura|mesAbertura)$/.test(path)) { const e = $('#limAplic'); if (e) e.innerHTML = `Limite aplicável no ano: <b>${C.brl(C.limiteMEI(store.get().config))}</b>`; }
+    if (path.startsWith('marcaDagua.')) refreshWmPreview();
+  }
+  function refreshWmPreview() {
+    const w = store.get().config.marcaDagua, el = $('#wmPrev'); if (!el) return;
+    if (w.tipo === 'texto') el.innerHTML = `<span style="font-size:${Math.min(40, w.tamanho / 2)}px;opacity:${Math.max(.15, w.opacidade * 3)};transform:rotate(${-w.angulo}deg)">${esc(w.texto || '')}</span>`;
+    else if (w.tipo === 'imagem' && w.imagem) el.innerHTML = `<img alt="" src="${w.imagem}" style="opacity:${Math.max(.15, w.opacidade * 3)};transform:rotate(${-w.angulo}deg)">`;
+  }
+  function downscaleImage(file, max) {
+    return new Promise((resolve, reject) => {
+      const img = new Image(), url = URL.createObjectURL(file);
+      img.onload = () => {
+        const s = Math.min(1, max / Math.max(img.width, img.height));
+        const cv = document.createElement('canvas'); cv.width = Math.round(img.width * s); cv.height = Math.round(img.height * s);
+        cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
+        URL.revokeObjectURL(url);
+        resolve(file.type === 'image/png' ? cv.toDataURL('image/png') : cv.toDataURL('image/jpeg', 0.88));
+      };
+      img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Imagem inválida')); };
+      img.src = url;
+    });
+  }
+
+  /* ---------- eventos ---------- */
+  function onClick(e) {
+    const t = e.target.closest('[data-act]');
+    if (!t) return;
+    const a = t.dataset.act, id = t.dataset.id;
+    switch (a) {
+      case 'tab': setTab(t.dataset.v); break;
+      case 'novo-pregao': openPregaoForm(); break;
+      case 'editar-pregao': openPregaoForm(id); break;
+      case 'abrir-pregao': UI.tab = 'pregoes'; UI.detailId = id; history.pushState({ detail: id }, ''); saveUI(); render(); window.scrollTo(0, 0); break;
+      case 'voltar': if (history.state && history.state.detail) history.back(); else { UI.detailId = null; render(); } break;
+      case 'novo-item': openItemForm(null, t.dataset.pid); break;
+      case 'editar-item': openItemForm(id); break;
+      case 'filtro': UI.filtro = t.dataset.v; UI.keepScroll = true; render(); break;
+      case 'rascunho': openDraft(t.dataset.key); break;
+      case 'demo': store.mergeDemo(); toast('Dados de exemplo carregados'); break;
+      case 'pdf-pregao': UI.pdf.pregaoId = id; UI.pdf.result = null; setTab('pdf'); break;
+      case 'pdf-gerar': gerarPDF(); break;
+      case 'pdf-abrir': if (UI.pdf.result) window.open(UI.pdf.result.url, '_blank'); break;
+      case 'pdf-baixar': baixarPDF(); break;
+      case 'pdf-compartilhar': compartilharPDF(); break;
+      case 'wm-tipo': commitAllPending(); store.setConfigPath('marcaDagua.tipo', t.dataset.v, { silent: true }); UI.keepScroll = true; render(); break;
+      case 'hd-remover': store.setConfigPath('cabecalho.imagem', null, { silent: true }); UI.keepScroll = true; render(); break;
+      case 'wm-remover': store.setConfigPath('marcaDagua.imagem', null, { silent: true }); UI.keepScroll = true; render(); break;
+      case 'export': {
+        const blob = new Blob([store.export()], { type: 'application/json' });
+        const el = document.createElement('a'); el.href = URL.createObjectURL(blob); el.download = `pregoes-mei-backup-${C.hojeISO()}.json`; document.body.appendChild(el); el.click(); el.remove();
+        setTimeout(() => URL.revokeObjectURL(el.href), 4000); toast('Backup exportado'); break;
+      }
+      case 'apagar': confirmar('Apagar todos os dados?', 'Pregões e itens serão removidos deste aparelho (e do servidor, quando a sincronização estiver ligada). Exporte um backup antes se precisar.', 'Apagar tudo', true).then((ok) => { if (ok) { store.clearAll(); toast('Dados apagados'); } }); break;
+      case 'atualizar': checkUpdate(true); break;
+      case 'nuvem-entrar': nuvemEntrar(false); break;
+      case 'nuvem-criar': nuvemEntrar(true); break;
+      case 'nuvem-sair': confirmar('Sair da conta?', 'Os dados continuam neste aparelho, mas deixam de sincronizar até você entrar de novo.', 'Sair', false).then((ok) => { if (ok && window.CloudSync) window.CloudSync.logout(); }); break;
+      case 'nuvem-tentar': iniciarNuvem(true); break;
+      case 'sync-agora': S.run('manual').then((r) => { if (r && r.ok) toast('Sincronizado'); updateStatusPill(); }); break;
+      case 'instalar': if (UI.deferredPrompt) { UI.deferredPrompt.prompt(); UI.deferredPrompt.userChoice.finally(() => { UI.deferredPrompt = null; render(); }); } break;
+      case 'banner-atualizar': location.reload(); break;
+      default: break;
+    }
+  }
+  function onInput(e) {
+    const t = e.target;
+    if (t.id === 'busca') { UI.busca = t.value; $('#plist').innerHTML = pregoesListHtml(); return; }
+    if (t.id === 'buscaI') { UI.buscaI = t.value; $('#ilist').innerHTML = itensListHtml(); return; }
+    if (t.dataset.ui) {
+      if (t.dataset.ui === 'pregaoId' || t.dataset.ui === 'fonte') return; // selects: tratados em change
+      UI.pdf[t.dataset.ui] = t.value; return;
+    }
+    if (t.dataset.cfg) {
+      Guard.pending.add(t.dataset.cfg);
+      if (t.dataset.lb) { const lb = $('#' + t.dataset.lb); if (lb) lb.textContent = t.value + (t.dataset.type === 'pctrange' ? '%' : (t.dataset.suf || '')); }
+    }
+  }
+  function onChange(e) {
+    const t = e.target;
+    if (t.dataset.ui === 'pregaoId') { UI.pdf.pregaoId = t.value; UI.pdf.result = null; saveUI(); UI.keepScroll = true; render(); return; }
+    if (t.dataset.ui === 'fonte') { UI.pdf.fonte = t.value; UI.pdf.result = null; saveUI(); UI.keepScroll = true; render(); return; }
+    if (t.dataset.ui) { UI.pdf[t.dataset.ui] = t.value; return; }
+    if (t.dataset.cfg) { commitCfg(t); return; }
+    if (t.dataset.statusPregao) { store.upsertPregao({ id: t.dataset.statusPregao, status: t.value }); toast('Status: ' + t.value); return; }
+    if (t.hasAttribute('data-hd-file') && t.files && t.files[0]) {
+      downscaleImage(t.files[0], 1800).then((url) => {
+        store.setConfigPath('cabecalho.imagem', url, { silent: true });
+        UI.keepScroll = true; render(); toast('Papel timbrado salvo');
+      }).catch((err) => toast(err.message || 'Não foi possível usar essa imagem'));
+      return;
+    }
+    if (t.hasAttribute('data-wm-file') && t.files && t.files[0]) {
+      downscaleImage(t.files[0], 1000).then((url) => {
+        store.setConfigPath('marcaDagua.imagem', url, { silent: true }); store.setConfigPath('marcaDagua.tipo', 'imagem', { silent: true });
+        UI.keepScroll = true; render(); toast('Imagem da marca d’água salva');
+      }).catch((err) => toast(err.message || 'Não foi possível usar essa imagem'));
+      return;
+    }
+    if (t.hasAttribute('data-import') && t.files && t.files[0]) importarBackup(t.files[0]);
+  }
+  async function importarBackup(file) {
+    try {
+      const data = JSON.parse(await file.text());
+      if (!data || !Array.isArray(data.pregoes) || !Array.isArray(data.itens)) throw new Error('Arquivo não parece um backup do app.');
+      const v = await dialog({ title: 'Importar backup', text: `${data.pregoes.length} pregão(ões) e ${data.itens.length} item(ns).`, buttons: [{ label: 'Mesclar com os dados atuais', value: 'mesclar', cls: 'primary' }, { label: 'Substituir tudo', value: 'subst', cls: 'danger' }, { label: 'Cancelar', value: null, cls: 'ghost' }] });
+      if (v === 'mesclar') { store.mergeFrom(data); S.schedule('importação'); toast('Backup mesclado'); }
+      else if (v === 'subst') { store.replaceAll(data); toast('Backup restaurado'); }
+    } catch (e) { toast(e.message || 'Não foi possível ler o arquivo'); }
+    $$('[data-import]').forEach((i) => { i.value = ''; });
+  }
+
+  /* ---------- atualização forçada (servidor primeiro) ---------- */
+  let hadController = !!(navigator.serviceWorker && navigator.serviceWorker.controller);
+  let swReg = null;
+  function afterClose() { if (UI.reloadPending && !isDirty()) location.reload(); }
+  function showUpdateBanner() {
+    if ($('.banner')) return;
+    const b = document.createElement('div'); b.className = 'banner'; b.setAttribute('role', 'status');
+    b.innerHTML = `<span class="grow">Nova versão instalada. Conclua o que está digitando e atualize.</span><button class="btn sm" data-act="banner-atualizar">Atualizar</button>`;
+    document.body.appendChild(b); b.addEventListener('click', onClick);
+  }
+  function applyUpdate() {
+    if (!isDirty()) location.reload();
+    else { UI.reloadPending = true; showUpdateBanner(); }
+  }
+  async function checkUpdate(manual) {
+    if (!swReg) { if (manual) toast('Atualização automática indisponível neste navegador'); return; }
+    try {
+      await swReg.update();
+      if (manual) setTimeout(() => { if (!UI.reloadPending) toast('Você está na versão mais recente (' + C.APP_VERSION + ')'); }, 1500);
+    } catch (e) { if (manual) toast('Sem conexão para buscar atualização'); }
+  }
+  async function initSW() {
+    if (!('serviceWorker' in navigator) || !/^https?:$/.test(location.protocol)) return;
+    try {
+      swReg = await navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' });
+    } catch (e) { console.warn('SW', e); return; }
+    // servidor primeiro: a cada abertura, volta ao app e reconexão
+    checkUpdate(false);
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) checkUpdate(false); });
+    window.addEventListener('online', () => checkUpdate(false));
+    setInterval(() => checkUpdate(false), 20 * 60 * 1000);
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (!hadController) { hadController = true; return; } // primeira instalação: não recarrega
+      applyUpdate();
+    });
+  }
+
+  /* ---------- conta e sincronização na nuvem ---------- */
+  const Cloud = { estado: 'inicial', erro: '', user: null, ligado: false, ocupado: false };
+
+  function erroAuth(e) {
+    const c = (e && e.code) || '';
+    const m = {
+      'auth/invalid-credential': 'E-mail ou senha incorretos.', 'auth/wrong-password': 'E-mail ou senha incorretos.', 'auth/user-not-found': 'E-mail ou senha incorretos.',
+      'auth/invalid-email': 'E-mail inválido.', 'auth/email-already-in-use': 'Esse e-mail já tem conta. Use “Entrar”.',
+      'auth/weak-password': 'Senha fraca: use ao menos 6 caracteres.', 'auth/too-many-requests': 'Muitas tentativas. Aguarde um pouco e tente de novo.',
+      'auth/network-request-failed': 'Sem internet para falar com o Firebase.',
+      'auth/unauthorized-domain': 'Este endereço não está autorizado no Firebase (Authentication › Configurações › Domínios autorizados).',
+      'auth/operation-not-allowed': 'Login por e-mail/senha não está ligado no Firebase.',
+    };
+    return m[c] || ('Não foi possível entrar' + (c ? ' (' + c + ')' : '.'));
+  }
+
+  function cloudCard() {
+    const u = Cloud.user;
+    let corpo;
+    if (Cloud.estado === 'carregando' || Cloud.estado === 'inicial') corpo = `<p class="small muted">Conectando ao Firebase…</p>`;
+    else if (Cloud.estado === 'erro') corpo = `<div class="alert warn">${icon('alert', 'sm')}<span>${esc(Cloud.erro)}</span></div><button class="btn block" style="margin-top:10px" data-act="nuvem-tentar">Tentar de novo</button><p class="tiny muted" style="margin-top:8px">O app funciona normalmente sem a nuvem; seus dados ficam salvos no aparelho.</p>`;
+    else if (u) corpo = `<div class="kv-list"><div><span>Conta</span><b>${esc(u.email || '')}</b></div><div><span>Situação</span><b id="syncMsg">${esc(S.message)}</b></div></div>
+      <div class="grid2" style="margin-top:12px"><button class="btn" data-act="sync-agora">${icon('cloud', 'sm')} Sincronizar</button><button class="btn danger" data-act="nuvem-sair">Sair</button></div>
+      <p class="tiny muted" style="margin-top:10px">Papel timbrado e marca d’água ficam só neste aparelho (envie a imagem em cada aparelho).</p>`;
+    else corpo = `<p class="small muted" style="margin-bottom:12px">Entre com a mesma conta em todos os aparelhos para manter os dados iguais.</p>
+      <div class="field"><label for="cEmail">E-mail</label><input class="input" id="cEmail" type="email" inputmode="email" autocomplete="username" autocapitalize="none"></div>
+      <div class="field"><label for="cSenha">Senha</label><input class="input" id="cSenha" type="password" autocomplete="current-password"></div>
+      <div class="grid2"><button class="btn primary" data-act="nuvem-entrar">Entrar</button><button class="btn" data-act="nuvem-criar">Criar conta</button></div>`;
+    return `<div class="card"><h3>${icon('cloud', 'sm')} Conta e sincronização</h3>${corpo}</div>`;
+  }
+
+  async function nuvemEntrar(criar) {
+    const email = ($('#cEmail') || {}).value, senha = ($('#cSenha') || {}).value;
+    if (!email || !senha) { toast('Preencha e-mail e senha'); return; }
+    if (!window.CloudSync) { toast('Firebase ainda não carregou'); return; }
+    try { await window.CloudSync[criar ? 'cadastrar' : 'login'](email.trim(), senha); toast(criar ? 'Conta criada' : 'Conectado'); }
+    catch (e) { toast(erroAuth(e)); }
+  }
+
+  // sincroniza: lê o servidor, mescla e grava numa transação (aparelho desatualizado nunca sobrescreve o servidor)
+  function adaptadorFirebase(uid) {
+    return {
+      sync: (local) => window.CloudSync.mesclarNaNuvem(uid, (remoto) => {
+        const merged = C.mergeState(local, remoto || {});
+        const dados = C.paraNuvem(merged);
+        const tam = JSON.stringify(dados).length;
+        if (tam > 950000) throw new Error('Dados passaram do limite de 1 MB do documento da nuvem. Exporte um backup e apague pregões antigos.');
+        const gravar = !remoto || C.diffState(remoto, dados);
+        dados.atualizadoEm = Date.now();
+        return { gravar, dados, resultado: merged };
+      }),
+    };
+  }
+
+  async function aoEntrar(user) {
+    const cs = window.CloudSync;
+    const ultimo = localStorage.getItem('mp.cloud.uid');
+    if (ultimo && ultimo !== user.uid && store.hasData()) {
+      const v = await dialog({
+        title: 'Dados de outra conta neste aparelho',
+        text: 'Este aparelho tem pregões salvos de outra conta. O que fazer com eles?',
+        buttons: [
+          { label: 'Apagar os daqui e usar os desta conta', value: 'limpar', cls: 'primary' },
+          { label: 'Mesclar com esta conta', value: 'mesclar' },
+          { label: 'Sair da conta', value: 'sair', cls: 'danger' },
+        ],
+      });
+      if (v === 'sair') { await cs.logout(); return; }
+      if (v === 'limpar') store.replaceAll(C.emptyState());
+    }
+    localStorage.setItem('mp.cloud.uid', user.uid);
+    S.configure(adaptadorFirebase(user.uid));
+    // atualização ao vivo: mudanças feitas em outro aparelho chegam aqui (não reenvia: kind 'remote')
+    cs.ouvirMudancas(user.uid, (dados) => {
+      store.mergeFrom(dados);
+      // se a nuvem está sem algo que este aparelho tem (gravação perdida ou atrasada), reconcilia sozinho
+      if (C.diffState(dados, C.paraNuvem(store.get()))) S.schedule('reconciliar', 1200);
+    });
+  }
+  function aoSair() {
+    if (window.CloudSync) window.CloudSync.pararDeOuvir();
+    S.configure(null);
+  }
+
+  async function iniciarNuvem(manual) {
+    if (Cloud.ligado) return;
+    Cloud.estado = 'carregando'; if (UI.tab === 'config') render();
+    try {
+      const cs = await window.carregarCloudSync();
+      Cloud.ligado = true; Cloud.estado = 'pronto';
+      cs.onAuthStateChanged(async (user) => {
+        Cloud.user = user || null;
+        try { if (user) await aoEntrar(user); else aoSair(); } catch (e) { console.error(e); }
+        updateStatusPill(); if (UI.tab === 'config') render();
+      });
+    } catch (e) {
+      Cloud.estado = 'erro';
+      Cloud.erro = navigator.onLine ? 'Não consegui carregar o Firebase. Tente de novo em instantes.' : 'Sem internet: a conta e a sincronização voltam quando você estiver online.';
+      if (manual) toast(Cloud.erro);
+      if (UI.tab === 'config') render();
+    }
+  }
+
+  /* ---------- inicialização ---------- */
+  function buildShell() {
+    $('#app').innerHTML = `<div class="shell">
+      <header class="topbar"><img class="logo" src="icons/icon-96.png" alt="" width="34" height="34"><div class="grow"><h1>Pregões MEI</h1><div class="sub" id="subt"></div></div><span class="pill" id="pill"></span></header>
+      <nav class="nav" aria-label="Seções">${TABS.map((t) => `<button data-v="${t.id}" aria-label="${t.t}">${icon(t.id)}<span>${t.t}</span></button>`).join('')}</nav>
+      <main class="main" id="main" tabindex="-1"></main></div>`;
+    $('.nav').addEventListener('click', (e) => { const b = e.target.closest('button[data-v]'); if (b) setTab(b.dataset.v); });
+    const main = $('#main');
+    main.addEventListener('click', onClick);
+    main.addEventListener('input', onInput);
+    main.addEventListener('change', onChange);
+    main.addEventListener('keydown', (e) => { if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('article[data-act]')) { e.preventDefault(); e.target.click(); } });
+  }
+
+  function boot() {
+    buildShell();
+    store.on((kind) => {
+      if (kind === 'error') { toast('Armazenamento do aparelho cheio. Exporte um backup e libere espaço.'); return; }
+      if (kind !== 'remote') S.schedule('alteração');   // 'remote' = veio da nuvem: não reenvia (evita laço)
+      if (kind === 'change' || kind === 'remote') render(); else updateStatusPill();
+    });
+    S.on(() => { updateStatusPill(); const m = $('#syncMsg'); if (m) m.textContent = S.message; });
+    window.addEventListener('online', updateStatusPill); window.addEventListener('offline', updateStatusPill);
+    window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); UI.deferredPrompt = e; if (UI.tab === 'config') render(); });
+    window.addEventListener('appinstalled', () => { UI.deferredPrompt = null; toast('App instalado'); });
+
+    // atalhos do manifesto (?acao=novo-pregao / ?tab=pdf)
+    const q = new URLSearchParams(location.search);
+    if (q.get('tab') && TABS.some((t) => t.id === q.get('tab'))) UI.tab = q.get('tab');
+    render();
+    if (q.get('acao') === 'novo-pregao') openPregaoForm();
+    if (q.has('tab') || q.has('acao') || q.has('source')) history.replaceState(null, '', location.pathname);
+    initSW();
+    iniciarNuvem(false);                                   // carrega o Firebase sem travar a abertura
+    window.addEventListener('online', () => { if (!Cloud.ligado) iniciarNuvem(false); });
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
+  window.__app = { store, UI, render, openPregaoForm, openItemForm, Guard, Sheet, Draft }; // facilita testes/depuração
+})();
+
+</script>
+</body>
+</html>
