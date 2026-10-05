@@ -2,7 +2,7 @@
  * Estratégia "servidor primeiro": HTML, JS, CSS e manifesto vêm SEMPRE da rede (ignorando o cache HTTP);
  * o cache só é usado se estiver offline. Ícones e a biblioteca de PDF ficam em cache.
  * >>> A cada publicação, mude VERSION abaixo (e APP_VERSION dentro do index.html) para os aparelhos atualizarem. <<< */
-const VERSION = '1.2.0';
+const VERSION = '1.3.0';
 const CACHE = 'pregoes-mei-' + VERSION;
 const BASE = self.registration.scope;
 const u = (p) => new URL(p, BASE).toString();
