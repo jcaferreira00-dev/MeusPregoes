@@ -245,6 +245,17 @@ input[type=range] { width: 100%; accent-color: var(--blue); }
 @media print { .nav, .topbar, .fab { display: none !important; } }
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
 
+/* ---------- pregão com cor própria: cartão da lista e caixa na aba Itens ---------- */
+.pcard { border-left: 6px solid var(--gc, var(--line)); }
+.gbox { --gc: var(--blue); border: 1px solid var(--line); border-left: 7px solid var(--gc); border-radius: var(--r); background: color-mix(in srgb, var(--gc) 7%, var(--card)); padding: 12px; box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.ghead { display: flex; gap: 10px; align-items: flex-start; }
+.gnum { color: var(--gc); font-weight: 800; font-size: 11.5px; letter-spacing: .5px; }
+.ghead h3 { font-size: 16.5px; text-transform: none; letter-spacing: 0; color: var(--ink); margin: 2px 0 0; font-weight: 800; }
+.gmeta { font-size: 12.5px; color: var(--muted); padding-bottom: 8px; border-bottom: 1px dashed color-mix(in srgb, var(--gc) 35%, var(--line)); }
+.gmeta b { color: var(--ink); }
+.gbox .icard { background: var(--card); border-left: 4px solid color-mix(in srgb, var(--gc) 70%, transparent); }
+#ilist.page { gap: 16px; }
+
 </style>
 </head>
 <body>
@@ -257,7 +268,7 @@ input[type=range] { width: 100%; accent-color: var(--blue); }
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.1.1';
+  const APP_VERSION = '1.2.0';
   const STATUS = ['Analisando', 'Proposta enviada', 'Em disputa', 'Ganhou', 'Faturado', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti'];
   const DECL_PADRAO =
@@ -334,8 +345,13 @@ input[type=range] { width: 100%; accent-color: var(--blue); }
       validadeDias: 60, condPagamento: '30 dias', textoDeclaracao: DECL_PADRAO, cor: '#FFC000',
       incluirExtenso: true, incluirBancarios: true, incluirDeclaracao: false, incluirLocalData: false,
     },
-    cabecalho: { imagem: null },
-    marcaDagua: { tipo: 'texto', texto: 'PROPOSTA COMERCIAL', imagem: null, opacidade: 0.12, angulo: 0, tamanho: 64 },
+    // pos: 'direita' | 'centro' | 'esquerda'; altura em pontos do PDF; offX/offY em pontos (ajuste fino); opacidade 0..1
+    cabecalho: { imagem: null, mostrarNome: true, pos: 'direita', altura: 60, offX: 0, offY: 0, opacidade: 1 },
+    marcaDagua: { tipo: 'texto', texto: 'PROPOSTA COMERCIAL', imagem: null, opacidade: 0.12, angulo: 0, tamanho: 64, offX: 0, offY: 0 },
+    // tributos: MEI paga DAS fixo por mês (não é % da venda). impostoPct só se sair do MEI (Simples: alíquota efetiva)
+    salarioMinimo: 1621,
+    atividadeMei: 'comercio',   // 'comercio' (+R$ 1 ICMS) | 'servicos' (+R$ 5 ISS) | 'ambos' (+R$ 6)
+    impostoPct: 0,
     updatedAt: 0,
   });
 
@@ -364,34 +380,52 @@ input[type=range] { width: 100%; accent-color: var(--blue); }
     return (n0(p.km) / consumo * n0(cfg.combustivel) + n0(p.km) * n0(cfg.desgaste) + n0(p.pedagio)) * n0(p.viagens);
   }
 
+  const compraBase = (it) => n0(it.qtd) * n0(it.custo) * (1 + n0(it.impostoCompraPct)) + n0(it.frete);
+
   function calcItem(it, pst, cfg) {
     const qtd = n0(it.qtd), custo = n0(it.custo), frete = n0(it.frete);
-    const compra = qtd * custo + frete;
+    const impostoCompra = qtd * custo * n0(it.impostoCompraPct);   // ICMS-ST/antecipação pago na compra
+    const compra = compraBase(it);
+    const impPct = Math.max(0, n0(cfg.impostoPct));
     const entrega = pst && pst.base > 0 ? pst.viagem * compra / pst.base : 0;
     const custoTotal = compra + entrega;
     const custoUnit = qtd > 0 ? custoTotal / qtd : null;
     const margem = (it.margem !== null && it.margem !== undefined) ? it.margem : cfg.margemPadrao;
-    const minimo = (custoUnit !== null && margem < 1) ? ceil2(custoUnit / (1 - margem)) : null;
+    const den = 1 - margem - impPct;   // a margem desejada é depois do imposto sobre a venda
+    const minimo = (custoUnit !== null && den > 0) ? ceil2(custoUnit / den) : null;
     const teto = (it.teto !== null && it.teto !== undefined) ? it.teto : null;
     const lance = (it.lanceFinal !== null && it.lanceFinal !== undefined) ? it.lanceFinal : null;
     const folgaRs = (minimo !== null && teto !== null) ? teto - minimo : null;
     const folgaPct = (minimo !== null && teto !== null && teto > 0) ? 1 - minimo / teto : null;
     let totalVenda = null;
     if (lance !== null) totalVenda = qtd * lance; else if (teto !== null) totalVenda = qtd * teto;
-    const lucro = totalVenda !== null ? totalVenda - custoTotal : null;
+    const imposto = totalVenda !== null ? totalVenda * impPct : 0;        // imposto sobre a venda (% da config)
+    const lucro = totalVenda !== null ? totalVenda - custoTotal - imposto : null;
     let situacao = '', sitTipo = '';
     if (minimo !== null && teto !== null) {
       if (minimo > teto) { situacao = 'Inviável: mínimo acima do teto'; sitTipo = 'bad'; }
       else if (lance !== null && lance < minimo) { situacao = 'Lance abaixo do mínimo'; sitTipo = 'bad'; }
       else { situacao = 'OK'; sitTipo = 'ok'; }
     }
-    return { compra, entrega, custoTotal, custoUnit, margem, minimo, teto, lance, folgaRs, folgaPct, totalVenda, lucro, situacao, sitTipo, produtos: qtd * custo, frete };
+    return { compra, entrega, custoTotal, custoUnit, margem, minimo, teto, lance, folgaRs, folgaPct, totalVenda, lucro, situacao, sitTipo, produtos: qtd * custo, frete, impostoCompra, imposto, impostoTotal: impostoCompra + imposto };
   }
 
   function limiteMEI(cfg) {
     const ab = Number(cfg.anoAbertura), mes = Number(cfg.mesAbertura);
     if (ab && mes >= 1 && mes <= 12 && ab === Number(cfg.anoRef)) return round2(n0(cfg.limiteCheio) / 12 * (13 - mes));
     return n0(cfg.limiteCheio);
+  }
+
+  // DAS-MEI mensal = 5% do salário mínimo (INSS) + R$ 1 (ICMS, comércio) e/ou R$ 5 (ISS, serviços)
+  function dasMensal(cfg) {
+    const inss = round2(0.05 * n0(cfg.salarioMinimo));
+    const fixo = cfg.atividadeMei === 'servicos' ? 5 : (cfg.atividadeMei === 'ambos' ? 6 : 1);
+    return round2(inss + fixo);
+  }
+  // meses de DAS no ano de referência (no ano da abertura, do mês de abertura até dezembro)
+  function mesesAtivos(cfg) {
+    const ab = Number(cfg.anoAbertura), mes = Number(cfg.mesAbertura);
+    return (ab && mes >= 1 && mes <= 12 && ab === Number(cfg.anoRef)) ? 13 - mes : 12;
   }
 
   function computeAll(state) {
@@ -407,15 +441,15 @@ input[type=range] { width: 100%; accent-color: var(--blue); }
     for (const p of pregoes) {
       const list = byP.get(p.id) || [];
       let base = 0;
-      for (const it of list) base += n0(it.qtd) * n0(it.custo) + n0(it.frete);
-      pMap.set(p.id, { p, viagem: custoViagem(p, cfg), base, itens: list, nItens: list.length, venda: 0, custo: 0, lucro: 0, margem: null });
+      for (const it of list) base += compraBase(it);
+      pMap.set(p.id, { p, viagem: custoViagem(p, cfg), base, itens: list, nItens: list.length, venda: 0, custo: 0, lucro: 0, imposto: 0, margem: null });
     }
     const iMap = new Map();
     for (const it of itens) {
       const pst = pMap.get(it.pregaoId) || null;
       const c = calcItem(it, pst, cfg);
       iMap.set(it.id, c);
-      if (pst) { pst.custo += c.custoTotal; pst.venda += c.totalVenda || 0; pst.lucro += c.lucro || 0; }
+      if (pst) { pst.custo += c.custoTotal; pst.venda += c.totalVenda || 0; pst.lucro += c.lucro || 0; pst.imposto += c.impostoTotal; }
     }
     for (const pst of pMap.values()) pst.margem = pst.venda > 0 ? pst.lucro / pst.venda : null;
 
@@ -447,14 +481,18 @@ input[type=range] { width: 100%; accent-color: var(--blue); }
     });
 
     // composição do preço (pregões ativos)
-    const comp = { produtos: 0, frete: 0, entrega: 0, lucro: 0, venda: 0 };
+    const comp = { produtos: 0, frete: 0, entrega: 0, impostos: 0, impostoVenda: 0, impostoCompra: 0, lucro: 0, venda: 0 };
     for (const it of itens) {
       const pst = pMap.get(it.pregaoId);
       if (!pst || INATIVOS.includes(pst.p.status)) continue;
       const c = iMap.get(it.id);
       comp.produtos += c.produtos; comp.frete += c.frete; comp.entrega += c.entrega; comp.lucro += c.lucro || 0;
+      comp.impostoVenda += c.imposto; comp.impostoCompra += c.impostoCompra;
     }
-    comp.venda = comp.produtos + comp.frete + comp.entrega + comp.lucro;
+    comp.impostos = comp.impostoVenda + comp.impostoCompra;
+    comp.venda = comp.produtos + comp.frete + comp.entrega + comp.impostos + comp.lucro;
+    const das = dasMensal(cfg), meses = mesesAtivos(cfg);
+    const tributos = { das, meses, dasAno: round2(das * meses), impostoVenda: comp.impostoVenda, impostoCompra: comp.impostoCompra, lucroLiquido: comp.lucro - das * meses };
 
     // próximas sessões
     const agora = Date.now();
@@ -465,7 +503,7 @@ input[type=range] { width: 100%; accent-color: var(--blue); }
       .sort((a, b) => a.t - b.t)
       .map((o) => o.x);
 
-    return { pMap, iMap, mei, statusRows, comp, proximas, lucroPrevisto: comp.lucro };
+    return { pMap, iMap, mei, statusRows, comp, tributos, proximas, lucroPrevisto: comp.lucro };
   }
 
   // calcula um item "em edição" (ainda não salvo), recalculando o rateio da entrega do pregão
@@ -689,7 +727,7 @@ input[type=range] { width: 100%; accent-color: var(--blue); }
   const api = {
     APP_VERSION, STATUS, INATIVOS, DECL_PADRAO, uid, n0, round2, ceil2, parseBR, brl, brl0, pct, numBR, qtdBR,
     fmtSessao, dataExtensa, hojeISO, defaultConfig, emptyState, migrate, custoViagem, calcItem, limiteMEI,
-    computeAll, previewItem, linhasProposta, mergeState, diffState, paraNuvem, createStore, demoState,
+    computeAll, dasMensal, mesesAtivos, previewItem, linhasProposta, mergeState, diffState, paraNuvem, createStore, demoState,
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   root.Core = api;
@@ -1047,13 +1085,25 @@ input[type=range] { width: 100%; accent-color: var(--blue); }
       } catch (e) { return null; }
     };
 
-    /* ===== PAPEL TIMBRADO (imagem do topo, em todas as páginas) ===== */
-    const hdImg = await embedImg(o.cabecalho && o.cabecalho.imagem);
-    let hdW = 0, hdH = 0;
+    /* ===== CABEÇALHO (em todas as páginas): nome escrito à esquerda + imagem (posição/tamanho/opacidade ajustáveis) ===== */
+    const hc = Object.assign({ mostrarNome: true, pos: 'direita', altura: 60, offX: 0, offY: 0, opacidade: 1 }, o.cabecalho || {});
+    const hdImg = await embedImg(hc.imagem);
+    const nomeEmp = emp.nome || 'SUA EMPRESA (preencha em Config)';
+    const linhasEmp = [emp.cnpj ? 'CNPJ: ' + emp.cnpj : '', emp.endereco || '', [emp.telefone, emp.email].filter(Boolean).join('  ·  ')].filter(Boolean);
+    const TOPO = 22;                                                       // distância do topo da página
+    let imgW = 0, imgH = 0;
     if (hdImg) {
-      const s = Math.min(CW / hdImg.width, 78 / hdImg.height);
-      hdW = hdImg.width * s; hdH = hdImg.height * s;
+      imgH = Math.max(16, Number(hc.altura) || 60);
+      imgW = hdImg.width * (imgH / hdImg.height);
+      const maxW = hc.mostrarNome ? CW * 0.5 : CW;                         // com o nome ao lado, a imagem usa no máximo metade
+      if (imgW > maxW) { imgH *= maxW / imgW; imgW = maxW; }
     }
+    const nomeLinhas = hc.mostrarNome ? wrap(nomeEmp, bold, 15, CW * (hdImg && hc.pos === 'direita' ? 0.55 : 0.8)) : [];
+    const textoH = hc.mostrarNome ? nomeLinhas.length * 17 + linhasEmp.length * 11 + 2 : 0;
+    const headerH = (hc.mostrarNome || hdImg) ? Math.max(textoH, imgH, 20) + 14 : 0;
+    // posição da imagem (esquerda/centro/direita) + ajuste fino
+    const imgX = hc.pos === 'esquerda' ? M : hc.pos === 'centro' ? (PW - imgW) / 2 : PW - M - imgW;
+    const textoX = (hdImg && hc.pos === 'esquerda' && hc.mostrarNome) ? M + imgW + 12 : M;
 
     /* ===== MARCA D'ÁGUA (troque aqui: texto ou imagem, opacidade, ângulo, tamanho) ===== */
     const wm = o.marcaDagua || {};
@@ -1061,7 +1111,7 @@ input[type=range] { width: 100%; accent-color: var(--blue); }
     function desenharMarca(page) {
       const op = Math.min(1, Math.max(0.02, Number(wm.opacidade) || 0.1));
       const ang = Number(wm.angulo) || 0, rad = ang * Math.PI / 180;
-      const cx = PW / 2, cy = PH / 2;
+      const cx = PW / 2 + (Number(wm.offX) || 0), cy = PH / 2 + (Number(wm.offY) || 0);
       if (wm.tipo === 'texto' && wm.texto) {
         const txt = safe(wm.texto).split('\n')[0];
         let size = Number(wm.tamanho) || 64;
@@ -1085,11 +1135,25 @@ input[type=range] { width: 100%; accent-color: var(--blue); }
     /* ===== controle de páginas ===== */
     const pages = [];
     let page, y;
-    const topo = () => (hdImg ? PH - 20 - hdH - 8 : PH - M);
+    function desenharCabecalho(pg) {
+      if (!hc.mostrarNome && !hdImg) return;
+      if (hdImg) {
+        pg.drawImage(hdImg, {
+          x: imgX + (Number(hc.offX) || 0), y: PH - TOPO - imgH + (Number(hc.offY) || 0), width: imgW, height: imgH,
+          opacity: Math.min(1, Math.max(0.05, Number(hc.opacidade) || 1)),
+        });
+      }
+      if (hc.mostrarNome) {
+        let yy = PH - TOPO - 14;
+        nomeLinhas.forEach((l) => { pg.drawText(safe(l), { x: textoX, y: yy, size: 15, font: bold, color: ACCT }); yy -= 17; });
+        yy += 17 - 13;
+        linhasEmp.forEach((l) => { pg.drawText(safe(l), { x: textoX, y: yy, size: 8.5, font, color: GRAY }); yy -= 11; });
+      }
+      pg.drawLine({ start: { x: M, y: PH - TOPO - headerH + 8 }, end: { x: PW - M, y: PH - TOPO - headerH + 8 }, thickness: 1.2, color: ACC });
+    }
     function novaPagina() {
-      page = doc.addPage([PW, PH]); pages.push(page); desenharMarca(page);
-      if (hdImg) page.drawImage(hdImg, { x: (PW - hdW) / 2, y: PH - 20 - hdH, width: hdW, height: hdH });
-      y = topo();
+      page = doc.addPage([PW, PH]); pages.push(page); desenharMarca(page); desenharCabecalho(page);
+      y = headerH ? PH - TOPO - headerH - 4 : PH - M;
     }
     const garantir = (h) => { if (y - h < BOTTOM) { novaPagina(); return true; } return false; };
     const T = (t, x, yy, size, f, color) => page.drawText(safe(t), { x, y: yy, size, font: f || font, color: color || INK });
@@ -1098,16 +1162,6 @@ input[type=range] { width: 100%; accent-color: var(--blue); }
     const box = (x, yy, w, h, fill) => page.drawRectangle({ x, y: yy, width: w, height: h, borderColor: ACC, borderWidth: 1, color: fill, opacity: fill ? 1 : undefined });
 
     novaPagina();
-
-    /* ===== 1) CABEÇALHO (sem papel timbrado: texto simples) ===== */
-    if (!hdImg) {
-      T(emp.nome || 'SUA EMPRESA (preencha em Config)', M, y - 14, 15, bold, ACCT);
-      let yl = y - 27;
-      [emp.cnpj ? 'CNPJ: ' + emp.cnpj : '', emp.endereco || '', [emp.telefone, emp.email].filter(Boolean).join('  ·  ')]
-        .filter(Boolean).forEach((l) => { T(l, M, yl, 8.5, font, GRAY); yl -= 11; });
-      page.drawLine({ start: { x: M, y: yl - 2 }, end: { x: PW - M, y: yl - 2 }, thickness: 1.2, color: ACC });
-      y = yl - 12;
-    }
 
     /* ===== 2) GRADE DE DADOS (órgão, processo, validade, pagamento, entrega) ===== */
     function grade(pares) {
@@ -1566,6 +1620,7 @@ input[type=range] { width: 100%; accent-color: var(--blue); }
       qtd: it.qtd == null ? '' : C.numBR(it.qtd, 3), onde: it.onde || '',
       custo: it.custo == null ? '' : C.numBR(it.custo), teto: it.teto == null ? '' : C.numBR(it.teto), frete: it.frete ? C.numBR(it.frete) : '',
       margem: it.margem == null ? '' : C.numBR(it.margem * 100, 2), lanceFinal: it.lanceFinal == null ? '' : C.numBR(it.lanceFinal),
+      impostoCompra: it.impostoCompraPct ? C.numBR(it.impostoCompraPct * 100, 2) : '',
     };
   }
   function itemFromForm(x, id) {
@@ -1574,6 +1629,7 @@ input[type=range] { width: 100%; accent-color: var(--blue); }
       id: id || 'new', pregaoId: x.pregaoId, itemEdital: x.itemEdital.trim(), descricao: x.descricao.trim(), descEdital: x.descEdital.trim(), marca: x.marca.trim(), unidade: x.unidade.trim() || 'Un',
       qtd: C.parseBR(x.qtd), onde: x.onde.trim(), custo: C.parseBR(x.custo), teto: C.parseBR(x.teto), frete: C.parseBR(x.frete) || 0,
       margem: m == null ? null : m / 100, lanceFinal: C.parseBR(x.lanceFinal),
+      impostoCompraPct: (C.parseBR(x.impostoCompra) || 0) / 100 || null,
     };
   }
   function openItemForm(id, pregaoId) {
@@ -1595,8 +1651,9 @@ input[type=range] { width: 100%; accent-color: var(--blue); }
         ${field({ label: 'Custo unit. (R$) *', name: 'custo', value: v.custo, inputmode: 'decimal', hint: 'O que eu vou pagar' })}
         ${field({ label: 'Valor unit. do edital (teto)', name: 'teto', value: v.teto, inputmode: 'decimal', hint: 'Máximo que o órgão aceita' })}
         ${field({ label: 'Frete do fornecedor (R$, total do item)', name: 'frete', value: v.frete, inputmode: 'decimal' })}
+        ${field({ label: 'Imposto na compra (%)', name: 'impostoCompra', value: v.impostoCompra, inputmode: 'decimal', hint: 'ICMS-ST/antecipação, se você paga' })}
         ${field({ label: 'Minha margem (%)', name: 'margem', value: v.margem, inputmode: 'decimal', ph: 'padrão: ' + C.numBR(cfg.margemPadrao * 100, 2).replace(',00', '') + '%', hint: 'Vazio = margem padrão' })}
-        ${field({ label: 'Lance final (R$ unit., opcional)', name: 'lanceFinal', value: v.lanceFinal, inputmode: 'decimal', full: true, hint: 'Preencha depois de disputar. Vazio = conta pelo teto.' })}
+        ${field({ label: 'Lance final (R$ unit., opcional)', name: 'lanceFinal', value: v.lanceFinal, inputmode: 'decimal', hint: 'Depois de disputar. Vazio = conta pelo teto.' })}
         ${field({ label: 'Descrição completa do edital (vai no PDF)', name: 'descEdital', type: 'textarea', value: v.descEdital, full: true, ph: 'Cole aqui a descrição do item como está no edital', hint: 'Se ficar vazia, o PDF usa o nome do item.' })}
       </div>`;
         openForm({
@@ -1609,7 +1666,8 @@ input[type=range] { width: 100%; accent-color: var(--blue); }
         const bad = c.sitTipo === 'bad';
         el.innerHTML = `<div class="minbox ${bad ? 'bad' : ''}"><div><div class="t">Valor mínimo p/ proposta (unit.)</div><div class="tiny muted">margem ${C.pct(c.margem, 1)} sobre o preço</div></div><div class="v">${C.brl(c.minimo)}</div></div>
           <div class="kv"><span>Custo unit. final <b>${C.brl(c.custoUnit)}</b></span><span>Entrega rateada <b>${C.brl(c.entrega)}</b></span>
-          <span>Posso baixar do teto <b>${c.folgaRs != null ? C.brl(c.folgaRs) + ' (' + C.pct(c.folgaPct, 0) + ')' : '—'}</b></span></div>
+          <span>Posso baixar do teto <b>${c.folgaRs != null ? C.brl(c.folgaRs) + ' (' + C.pct(c.folgaPct, 0) + ')' : '—'}</b></span>
+          ${c.impostoTotal > 0 ? `<span>Impostos <b>${C.brl(c.impostoTotal)}</b></span>` : ''}</div>
           ${c.situacao ? `<div><span class="badge ${c.sitTipo}">${esc(c.situacao)}</span> <span class="tiny muted">Lucro previsto ${C.brl(c.lucro)}</span></div>` : ''}`;
       },
       onSave: (x, form) => {
@@ -1637,6 +1695,13 @@ input[type=range] { width: 100%; accent-color: var(--blue); }
   }
 
   /* ---------- telas ---------- */
+  // cada pregão tem uma cor fixa (pela ordem de cadastro) para não confundir itens de pregões diferentes
+  const PALETA = ['#2e75b6', '#2f8f5b', '#d9822b', '#8e44ad', '#c0392b', '#16a2b8', '#b7791f', '#5c6bc0', '#d6457a', '#6d8b2f'];
+  function corDe(id) {
+    const ordem = store.get().pregoes.filter((p) => !p.deleted).sort((a, b) => ((a.createdAt || 0) - (b.createdAt || 0)) || String(a.id).localeCompare(String(b.id)));
+    const i = ordem.findIndex((p) => p.id === id);
+    return PALETA[(i < 0 ? 0 : i) % PALETA.length];
+  }
   const badgeStatus = (s) => `<span class="badge st-${slugClass(s)}">${esc(s)}</span>`;
 
   function draftDesc(key) {
@@ -1672,7 +1737,7 @@ input[type=range] { width: 100%; accent-color: var(--blue); }
     const meter = (p) => `<div class="meter ${p >= 1 ? 'red' : ''}"><div style="width:${Math.min(100, p * 100).toFixed(1)}%"></div></div>`;
     const maxV = Math.max(1, ...R.statusRows.map((r) => r.venda));
     const comp = R.comp, tot = comp.venda || 1;
-    const segs = [['Custo dos produtos', comp.produtos, '#5b6b82'], ['Frete do fornecedor', comp.frete, '#e8a76b'], ['Entrega de carro', comp.entrega, '#f2cf5b'], ['Lucro', comp.lucro, '#4caf66']];
+    const segs = [['Custo dos produtos', comp.produtos, '#5b6b82'], ['Frete do fornecedor', comp.frete, '#e8a76b'], ['Entrega de carro', comp.entrega, '#f2cf5b'], ['Impostos', comp.impostos, '#8e6bbf'], ['Lucro', comp.lucro, '#4caf66']];
     const CIRC = 2 * Math.PI * 54;
     let acc = 0;
     const arcs = segs.map(([, v, col]) => {
@@ -1704,6 +1769,13 @@ input[type=range] { width: 100%; accent-color: var(--blue); }
         <div class="alert ${m.alerta}" style="margin-top:14px">${icon(m.alerta === 'ok' ? 'check' : 'alert', 'sm')}<span>${alertTxt}</span></div>
         <p class="tiny muted" style="margin-top:10px">O total de cada pregão usa o lance final; sem lance, usa o valor do edital (pior caso para o teto).</p>
       </div>
+      <div class="card"><h3>Tributos do MEI</h3><div class="kv-list">
+        <div><span>DAS mensal</span><b>${C.brl(R.tributos.das)} <span class="tiny muted" style="font-weight:500">fixo, não muda com as vendas</span></b></div>
+        <div><span>DAS no ano (${R.tributos.meses} meses)</span><b>${C.brl(R.tributos.dasAno)}</b></div>
+        <div><span>Imposto sobre vendas</span><b>${C.brl(R.tributos.impostoVenda)}${st.config.impostoPct > 0 ? ' (' + C.pct(st.config.impostoPct, 1) + ')' : ''}</b></div>
+        <div><span>Imposto na compra</span><b>${C.brl(R.tributos.impostoCompra)}</b></div>
+        <div><span>Lucro depois do DAS</span><b style="color:${R.tributos.lucroLiquido < 0 ? 'var(--red)' : 'var(--green)'}">${C.brl(R.tributos.lucroLiquido)}</b></div></div>
+        <p class="tiny muted" style="margin-top:10px">Lucro previsto dos pregões ativos menos o DAS do ano. MEI não paga percentual sobre a venda (dentro do limite). Optante do Simples/MEI em geral não sofre retenção de IR, PIS, Cofins e CSLL do órgão público: se o órgão pedir, apresente a declaração do Anexo IV da IN RFB 1.234/2012. Ajuste em Config › Tributos.</p></div>
       <div class="two-col">
         <div class="card"><h3>Pregões por status</h3>${R.statusRows.map((r) => `<div class="strow"><div class="row">${badgeStatus(r.status)}<span class="small muted">${r.count} pregão(ões)</span></div><b>${C.brl0(r.venda)}</b><div class="bar"><div style="width:${(r.venda / maxV * 100).toFixed(1)}%"></div></div></div>`).join('')}</div>
         <div class="card"><h3>De onde vem o preço de venda</h3><div class="donut-wrap">
@@ -1717,8 +1789,8 @@ input[type=range] { width: 100%; accent-color: var(--blue); }
   function pregaoCard(pst) {
     const p = pst.p;
     const chips = pst.itens.slice(0, 3).map((i) => `<span class="chip">${esc(i.descricao)}</span>`).join('') + (pst.itens.length > 3 ? `<span class="chip">+${pst.itens.length - 3}</span>` : '');
-    return `<article class="pcard" data-act="abrir-pregao" data-id="${p.id}" tabindex="0" role="button">
-      <div class="row between"><span class="num">COMPRA Nº ${esc(p.numero)}</span>${badgeStatus(p.status)}</div>
+    return `<article class="pcard" style="--gc:${corDe(p.id)}" data-act="abrir-pregao" data-id="${p.id}" tabindex="0" role="button">
+      <div class="row between"><span class="num" style="color:var(--gc)">COMPRA Nº ${esc(p.numero)}</span>${badgeStatus(p.status)}</div>
       <h4>${esc(p.orgao)}</h4>
       <div class="small muted row wrap" style="gap:4px 14px">${p.cidadeUf ? `<span class="row" style="gap:4px">${icon('pin', 'sm')}${esc(p.cidadeUf)}</span>` : ''}${p.sessao ? `<span class="row" style="gap:4px">${icon('calendar', 'sm')}${esc(C.fmtSessao(p.sessao))}</span>` : ''}</div>
       <div class="chips">${chips || '<span class="chip">Sem itens ainda</span>'}</div>
@@ -1755,7 +1827,7 @@ input[type=range] { width: 100%; accent-color: var(--blue); }
       ${opt.showOrg && p ? `<div class="chips"><span class="chip org">#${esc(p.numero)} · ${esc(p.orgao)}</span></div>` : ''}
       <div class="small muted">${C.qtdBR(it.qtd)} ${esc(it.unidade || 'Un')} · custo ${C.brl(it.custo)} · teto ${C.brl(c.teto)}${it.marca ? ' · ' + esc(it.marca) : ''}</div>
       <div class="minbox ${c.sitTipo === 'bad' ? 'bad' : ''}"><div><div class="t">Valor mínimo p/ proposta (unit.)</div><div class="tiny muted">margem ${C.pct(c.margem, 0)} · custo final ${C.brl(c.custoUnit)}</div></div><div class="v">${C.brl(c.minimo)}</div></div>
-      <div class="row between small muted"><span>Posso baixar do teto: <b style="color:var(--ink)">${c.folgaRs != null ? C.brl(c.folgaRs) + ' (' + C.pct(c.folgaPct, 0) + ')' : '—'}</b></span><span>Lucro: <b style="color:var(--ink)">${C.brl(c.lucro)}</b></span></div></article>`;
+      <div class="row between small muted"><span>Posso baixar do teto: <b style="color:var(--ink)">${c.folgaRs != null ? C.brl(c.folgaRs) + ' (' + C.pct(c.folgaPct, 0) + ')' : '—'}</b></span><span>${c.impostoTotal > 0 ? 'Impostos ' + C.brl(c.impostoTotal) + ' · ' : ''}Lucro: <b style="color:var(--ink)">${C.brl(c.lucro)}</b></span></div></article>`;
   }
 
   function renderDetail() {
@@ -1772,7 +1844,7 @@ input[type=range] { width: 100%; accent-color: var(--blue); }
         <select class="input" id="stsel" data-status-pregao="${p.id}">${C.STATUS.map((s) => `<option${s === p.status ? ' selected' : ''}>${esc(s)}</option>`).join('')}</select></div></div>
       <div class="kpis">
         <div class="kpi"><div class="l">Total de venda</div><div class="v">${C.brl0(pst.venda)}</div></div>
-        <div class="kpi" style="--c:#667489"><div class="l">Custo total</div><div class="v" style="color:var(--ink)">${C.brl0(pst.custo)}</div><div class="s">entrega ${C.brl0(pst.viagem)}</div></div>
+        <div class="kpi" style="--c:#667489"><div class="l">Custo total</div><div class="v" style="color:var(--ink)">${C.brl0(pst.custo)}</div><div class="s">entrega ${C.brl0(pst.viagem)}${pst.imposto > 0 ? ' · impostos ' + C.brl0(pst.imposto) : ''}</div></div>
         <div class="kpi" style="--c:#2f7d3a"><div class="l">Lucro</div><div class="v">${C.brl0(pst.lucro)}</div></div>
         <div class="kpi" style="--c:#b7791f"><div class="l">Margem real</div><div class="v">${C.pct(pst.margem, 1)}</div></div>
       </div>
@@ -1795,7 +1867,10 @@ input[type=range] { width: 100%; accent-color: var(--blue); }
       const its = g.itens.filter((i) => !q || (i.descricao + ' ' + (i.marca || '') + ' ' + (i.onde || '') + ' ' + g.p.orgao + ' ' + g.p.numero).toLowerCase().includes(q));
       if (!its.length) continue;
       n += its.length;
-      html += `<div class="grp"><h3>#${esc(g.p.numero)} · ${esc(g.p.orgao)}</h3>${badgeStatus(g.p.status)}</div><div class="list">${its.map((it) => itemCard(it, R.iMap.get(it.id), { pst: g, showOrg: true })).join('')}</div>`;
+      html += `<section class="gbox" style="--gc:${corDe(g.p.id)}">
+        <header class="ghead"><div class="grow"><div class="gnum">COMPRA Nº ${esc(g.p.numero)}</div><h3>${esc(g.p.orgao)}</h3></div>${badgeStatus(g.p.status)}</header>
+        <div class="gmeta">${g.itens.length} ${g.itens.length === 1 ? 'item' : 'itens'}${its.length !== g.itens.length ? ' (' + its.length + ' na busca)' : ''} · venda <b>${C.brl0(g.venda)}</b> · lucro <b>${C.brl0(g.lucro)}</b></div>
+        <div class="list">${its.map((it) => itemCard(it, R.iMap.get(it.id), { pst: g, showOrg: false })).join('')}</div></section>`;
     }
     return n ? html : `<div class="card empty"><p class="muted">Nenhum item encontrado.</p></div>`;
   }
@@ -1808,6 +1883,14 @@ input[type=range] { width: 100%; accent-color: var(--blue); }
 
   /* ---------- tela PDF ---------- */
   const FONTES = [['auto', 'Lance final; sem lance, valor mínimo'], ['minimo', 'Sempre o valor mínimo (custo + margem)'], ['teto', 'Valor do edital (teto)'], ['lance', 'Só o lance final']];
+  function hdPreviewHtml(h, emp) {
+    const nome = esc(emp.nome || 'SUA EMPRESA'), linhas = [emp.cnpj ? 'CNPJ: ' + emp.cnpj : '', emp.endereco || ''].filter(Boolean).map(esc).join('<br>');
+    const justify = h.pos === 'esquerda' ? 'flex-start' : h.pos === 'centro' ? 'center' : 'flex-end';
+    const img = h.imagem ? `<img alt="" src="${h.imagem}" style="height:${Math.round(h.altura * 0.75)}px;max-width:48%;opacity:${h.opacidade};transform:translate(${Math.round((h.offX || 0) * 0.75)}px,${Math.round(-(h.offY || 0) * 0.75)}px)">` : '';
+    const txt = h.mostrarNome ? `<div style="min-width:0"><div style="font-weight:800;color:#b8860b;font-size:14px">${nome}</div><div style="font-size:11px;color:#6b7280;line-height:1.35">${linhas}</div></div>` : '';
+    const ordem = h.pos === 'esquerda' ? img + txt : txt + img;
+    return `<div style="display:flex;align-items:center;gap:10px;justify-content:${h.pos === 'direita' && h.mostrarNome ? 'space-between' : (h.mostrarNome && h.pos === 'esquerda' ? 'flex-start' : justify)};border-bottom:2px solid #ffc000;padding-bottom:8px;min-height:36px;text-align:left">${ordem || '<span class="small muted">Cabeçalho vazio</span>'}</div>`;
+  }
   const wmTexto = (w) => (w.tipo === 'texto' ? esc(w.texto || '') : '');
   const wmPrevSize = (w) => Math.max(12, Math.min(w.tamanho / 2, 300 / Math.max(6, String(w.texto || '').length) * 1.4));
 
@@ -1845,9 +1928,18 @@ input[type=range] { width: 100%; accent-color: var(--blue); }
         <label class="switch"><span>Declaração de preços</span><input type="checkbox" data-cfg="proposta.incluirDeclaracao" data-type="check" ${p.incluirDeclaracao ? 'checked' : ''}></label>
         ${p.incluirDeclaracao ? `<div class="field"><label>Texto da declaração</label><textarea class="input" rows="3" data-cfg="proposta.textoDeclaracao" data-type="text">${esc(p.textoDeclaracao)}</textarea></div>` : ''}
         <div class="field" style="margin-top:6px"><label>Cor do modelo (faixas, bordas e rótulos)</label><input class="input" type="color" style="padding:4px;height:46px" ${cf('proposta.cor', 'text', p.cor)}></div></div>
-      <div class="card"><h3>3 · Papel timbrado (imagem do topo) <span class="grow"></span><span class="saved-ind" id="savedInd">Salvo</span></h3>
-        ${hd.imagem ? `<div class="wm-prev" style="height:auto;padding:8px;margin-bottom:12px"><img alt="Papel timbrado" src="${hd.imagem}" style="max-width:100%;max-height:90px"></div>` : `<p class="small muted" style="margin-bottom:12px">Opcional. Sem imagem, o cabeçalho sai em texto com os dados da empresa.</p>`}
-        <div class="row"><label class="btn sm grow" style="cursor:pointer">${icon('image', 'sm')} ${hd.imagem ? 'Trocar imagem' : 'Escolher imagem do cabeçalho'}<input type="file" accept="image/png,image/jpeg" data-hd-file class="hidden"></label>${hd.imagem ? `<button type="button" class="btn sm danger" data-act="hd-remover">${icon('trash', 'sm')}</button>` : ''}</div></div>
+      <div class="card"><h3>3 · Cabeçalho <span class="grow"></span><span class="saved-ind" id="savedInd">Salvo</span></h3>
+        <div class="wm-prev" id="hdPrev" style="height:auto;padding:10px 12px;margin-bottom:12px;display:block">${hdPreviewHtml(hd, cfg.empresa)}</div>
+        <label class="switch"><span>Nome e dados da empresa escritos</span><input type="checkbox" data-cfg="cabecalho.mostrarNome" data-type="check" ${hd.mostrarNome ? 'checked' : ''}></label>
+        <div class="row" style="margin:6px 0 12px"><label class="btn sm grow" style="cursor:pointer">${icon('image', 'sm')} ${hd.imagem ? 'Trocar imagem' : 'Escolher imagem (logo)'}<input type="file" accept="image/png,image/jpeg" data-hd-file class="hidden"></label>${hd.imagem ? `<button type="button" class="btn sm danger" data-act="hd-remover">${icon('trash', 'sm')}</button>` : ''}</div>
+        ${hd.imagem ? `<div class="lbl" style="margin-bottom:6px">Posição da imagem</div>
+        <div class="seg-ctl">${[['esquerda', 'Esquerda'], ['centro', 'Centro'], ['direita', 'Direita']].map(([v, l]) => `<button type="button" data-act="hd-pos" data-v="${v}" class="${hd.pos === v ? 'on' : ''}">${l}</button>`).join('')}</div>
+        <div style="height:12px"></div>
+        <div class="field"><label>Tamanho (altura): <span id="lbHa">${hd.altura}</span></label><input type="range" min="20" max="120" step="2" data-cfg="cabecalho.altura" data-type="range" data-lb="lbHa" value="${hd.altura}"></div>
+        <div class="field"><label>Opacidade: <span id="lbHo">${Math.round(hd.opacidade * 100)}%</span></label><input type="range" min="10" max="100" step="5" data-cfg="cabecalho.opacidade" data-type="pctrange" data-lb="lbHo" value="${Math.round(hd.opacidade * 100)}"></div>
+        <div class="field"><label>Ajuste horizontal: <span id="lbHx">${hd.offX}</span></label><input type="range" min="-150" max="150" step="2" data-cfg="cabecalho.offX" data-type="range" data-lb="lbHx" value="${hd.offX}"></div>
+        <div class="field"><label>Ajuste vertical: <span id="lbHy">${hd.offY}</span></label><input type="range" min="-40" max="40" step="1" data-cfg="cabecalho.offY" data-type="range" data-lb="lbHy" value="${hd.offY}"></div>` : `<p class="small muted">Sem imagem, o cabeçalho sai só com o nome e os dados da empresa.</p>`}
+      </div>
       <div class="card"><h3>4 · Marca d’água</h3>
         <div class="seg-ctl" role="tablist">${[['nenhuma', 'Nenhuma'], ['texto', 'Texto'], ['imagem', 'Imagem']].map(([v, l]) => `<button type="button" data-act="wm-tipo" data-v="${v}" class="${w.tipo === v ? 'on' : ''}">${l}</button>`).join('')}</div>
         <div style="height:12px"></div>
@@ -1857,7 +1949,9 @@ input[type=range] { width: 100%; accent-color: var(--blue); }
         ${w.tipo === 'imagem' ? `<div class="row" style="margin-bottom:12px"><label class="btn sm grow" style="cursor:pointer">${icon('image', 'sm')} ${w.imagem ? 'Trocar imagem' : 'Escolher imagem'}<input type="file" accept="image/png,image/jpeg" data-wm-file class="hidden"></label>${w.imagem ? `<button type="button" class="btn sm danger" data-act="wm-remover">${icon('trash', 'sm')}</button>` : ''}</div>` : ''}
         ${w.tipo !== 'nenhuma' ? `<div class="field"><label>Opacidade: <span id="lbOp">${Math.round(w.opacidade * 100)}%</span></label><input type="range" min="2" max="60" step="1" data-cfg="marcaDagua.opacidade" data-type="pctrange" data-lb="lbOp" value="${Math.round(w.opacidade * 100)}"></div>
         <div class="field"><label>Ângulo: <span id="lbAn">${w.angulo}°</span></label><input type="range" min="-90" max="90" step="5" data-cfg="marcaDagua.angulo" data-type="range" data-lb="lbAn" data-suf="°" value="${w.angulo}"></div>
-        <div class="field"><label>Tamanho: <span id="lbTm">${w.tamanho}</span></label><input type="range" min="20" max="140" step="2" data-cfg="marcaDagua.tamanho" data-type="range" data-lb="lbTm" value="${w.tamanho}"></div>` : ''}
+        <div class="field"><label>Tamanho: <span id="lbTm">${w.tamanho}</span></label><input type="range" min="20" max="140" step="2" data-cfg="marcaDagua.tamanho" data-type="range" data-lb="lbTm" value="${w.tamanho}"></div>
+        <div class="field"><label>Ajuste horizontal: <span id="lbWx">${w.offX || 0}</span></label><input type="range" min="-150" max="150" step="2" data-cfg="marcaDagua.offX" data-type="range" data-lb="lbWx" value="${w.offX || 0}"></div>
+        <div class="field"><label>Ajuste vertical: <span id="lbWy">${w.offY || 0}</span></label><input type="range" min="-200" max="200" step="2" data-cfg="marcaDagua.offY" data-type="range" data-lb="lbWy" value="${w.offY || 0}"></div>` : ''}
       </div>
       ${empOk ? '' : `<div class="alert info">${icon('info', 'sm')}<div class="grow">Preencha o nome e o CNPJ da empresa em <b>Config</b> para sair no cabeçalho da proposta.</div><button class="btn sm" data-act="tab" data-v="config">Abrir</button></div>`}
       <button class="btn primary block" data-act="pdf-gerar" ${UI.pdf.busy ? 'disabled' : ''}>${icon('pdf')} ${UI.pdf.busy ? 'Gerando…' : 'Gerar PDF da proposta'}</button>
@@ -1933,6 +2027,14 @@ input[type=range] { width: 100%; accent-color: var(--blue); }
         ${fld('Faturado fora do app no ano (R$)', 'fatFora', 'num', C.numBR(c.fatFora, 2), { im: 'decimal', full: true, hint: 'Notas já emitidas que não estão nos pregões.' })}</div>
         <div class="alert info" style="margin-top:6px">${icon('info', 'sm')}<span id="limAplic">Limite aplicável no ano: <b>${C.brl(lim)}</b></span></div>
         <p class="tiny muted" style="margin-top:8px">Excesso sobre o limite tem regras próprias (até 20% gera DAS complementar; acima disso, desenquadramento). Confirme com um contador.</p></div>
+      <div class="card"><h3>Tributos</h3>
+        <div class="field"><label for="ativMei">Atividade do MEI</label><select class="input" id="ativMei" data-cfg="atividadeMei" data-type="text">
+          ${[['comercio', 'Comércio / indústria (ICMS R$ 1)'], ['servicos', 'Serviços (ISS R$ 5)'], ['ambos', 'Comércio e serviços (R$ 6)']].map(([v, l]) => `<option value="${v}"${c.atividadeMei === v ? ' selected' : ''}>${l}</option>`).join('')}</select></div>
+        <div class="formgrid">
+        ${fld('Salário mínimo (R$)', 'salarioMinimo', 'num', C.numBR(c.salarioMinimo, 2), { im: 'decimal', hint: 'Base do INSS do MEI (5%). Atualize todo ano.' })}
+        ${fld('Imposto sobre a venda (%)', 'impostoPct', 'pct', C.numBR(c.impostoPct * 100, 2), { im: 'decimal', hint: 'MEI: deixe 0. Use só se sair do MEI (alíquota do Simples).' })}</div>
+        <div class="alert info" style="margin-top:6px">${icon('info', 'sm')}<span id="dasInfo">DAS mensal: <b>${C.brl(C.dasMensal(c))}</b> (5% do salário mínimo + ICMS/ISS)</span></div>
+        <p class="tiny muted" style="margin-top:8px">Em 2026: INSS R$ 81,05 + ICMS R$ 1,00 (comércio) e/ou ISS R$ 5,00 (serviços). Com o imposto sobre a venda acima de 0, o valor mínimo da proposta já o considera. O DAS é fixo e aparece no Painel.</p></div>
       <div class="card"><h3>Empresa (cabeçalho da proposta)</h3><div class="formgrid">
         ${fld('Nome / razão social', 'empresa.nome', 'text', e.nome, { full: true, ph: 'ex.: JOÃO DA SILVA 00000000000' })}
         ${fld('CNPJ', 'empresa.cnpj', 'text', e.cnpj, { im: 'numeric', ph: '00.000.000/0001-00' })}
@@ -2009,23 +2111,45 @@ input[type=range] { width: 100%; accent-color: var(--blue); }
     if (v === undefined) { render(); return; } // valor inválido: volta ao que estava salvo
     store.setConfigPath(path, v, { silent: true });
     flashSaved();
+    if (/^(salarioMinimo|atividadeMei|impostoPct)$/.test(path)) { const d = $('#dasInfo'); if (d) d.innerHTML = `DAS mensal: <b>${C.brl(C.dasMensal(store.get().config))}</b> (5% do salário mínimo + ICMS/ISS)`; }
     if (/^(anoRef|limiteCheio|anoAbertura|mesAbertura)$/.test(path)) { const e = $('#limAplic'); if (e) e.innerHTML = `Limite aplicável no ano: <b>${C.brl(C.limiteMEI(store.get().config))}</b>`; }
     if (path.startsWith('marcaDagua.')) refreshWmPreview();
+    if (path.startsWith('cabecalho.')) refreshHdPreview();
+  }
+  function refreshHdPreview(live) {
+    const el = $('#hdPrev'); if (!el) return;
+    const h = Object.assign({}, store.get().config.cabecalho);
+    if (live) { const v = readCfgValue(live); if (v !== undefined) h[live.dataset.cfg.split('.')[1]] = v; }
+    el.innerHTML = hdPreviewHtml(h, store.get().config.empresa);
   }
   function refreshWmPreview() {
     const w = store.get().config.marcaDagua, el = $('#wmPrev'); if (!el) return;
     if (w.tipo === 'texto') el.innerHTML = `<span style="font-size:${wmPrevSize(w)}px;opacity:${Math.max(.15, w.opacidade * 3)};transform:rotate(${-w.angulo}deg)">${esc(w.texto || '')}</span>`;
     else if (w.tipo === 'imagem' && w.imagem) el.innerHTML = `<img alt="" src="${w.imagem}" style="opacity:${Math.max(.15, w.opacidade * 3)};transform:rotate(${-w.angulo}deg)">`;
   }
+  // reduz a imagem e CORTA as margens vazias (transparentes ou brancas), para o que se vê ficar mesmo centralizado/alinhado
   function downscaleImage(file, max) {
     return new Promise((resolve, reject) => {
       const img = new Image(), url = URL.createObjectURL(file);
       img.onload = () => {
         const s = Math.min(1, max / Math.max(img.width, img.height));
-        const cv = document.createElement('canvas'); cv.width = Math.round(img.width * s); cv.height = Math.round(img.height * s);
-        cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
+        let cv = document.createElement('canvas'); cv.width = Math.max(1, Math.round(img.width * s)); cv.height = Math.max(1, Math.round(img.height * s));
+        let ctx = cv.getContext('2d'); ctx.drawImage(img, 0, 0, cv.width, cv.height);
         URL.revokeObjectURL(url);
-        resolve(file.type === 'image/png' ? cv.toDataURL('image/png') : cv.toDataURL('image/jpeg', 0.88));
+        const png = file.type === 'image/png';
+        try {
+          const d = ctx.getImageData(0, 0, cv.width, cv.height).data, W = cv.width, H = cv.height;
+          const vazio = (i) => (png ? d[i + 3] < 12 : (d[i + 3] < 12 || (d[i] > 244 && d[i + 1] > 244 && d[i + 2] > 244)));
+          let x0 = W, y0 = H, x1 = -1, y1 = -1;
+          for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (!vazio((y * W + x) * 4)) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+          if (x1 >= x0 && y1 >= y0 && ((x1 - x0 + 1) < W - 2 || (y1 - y0 + 1) < H - 2)) {
+            const pad = 2; x0 = Math.max(0, x0 - pad); y0 = Math.max(0, y0 - pad); x1 = Math.min(W - 1, x1 + pad); y1 = Math.min(H - 1, y1 + pad);
+            const c2 = document.createElement('canvas'); c2.width = x1 - x0 + 1; c2.height = y1 - y0 + 1;
+            c2.getContext('2d').drawImage(cv, x0, y0, c2.width, c2.height, 0, 0, c2.width, c2.height);
+            cv = c2;
+          }
+        } catch (e) { /* sem corte: segue com a imagem inteira */ }
+        resolve(png ? cv.toDataURL('image/png') : cv.toDataURL('image/jpeg', 0.88));
       };
       img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Imagem inválida')); };
       img.src = url;
@@ -2054,6 +2178,7 @@ input[type=range] { width: 100%; accent-color: var(--blue); }
       case 'pdf-baixar': baixarPDF(); break;
       case 'pdf-compartilhar': compartilharPDF(); break;
       case 'wm-tipo': commitAllPending(); store.setConfigPath('marcaDagua.tipo', t.dataset.v, { silent: true }); UI.keepScroll = true; render(); break;
+      case 'hd-pos': store.setConfigPath('cabecalho.pos', t.dataset.v, { silent: true }); UI.keepScroll = true; render(); break;
       case 'hd-remover': store.setConfigPath('cabecalho.imagem', null, { silent: true }); UI.keepScroll = true; render(); break;
       case 'wm-remover': store.setConfigPath('marcaDagua.imagem', null, { silent: true }); UI.keepScroll = true; render(); break;
       case 'export': {
@@ -2084,6 +2209,7 @@ input[type=range] { width: 100%; accent-color: var(--blue); }
     if (t.dataset.cfg) {
       Guard.pending.add(t.dataset.cfg);
       if (t.dataset.lb) { const lb = $('#' + t.dataset.lb); if (lb) lb.textContent = t.value + (t.dataset.type === 'pctrange' ? '%' : (t.dataset.suf || '')); }
+      if (t.dataset.cfg.startsWith('cabecalho.') && t.type === 'range') refreshHdPreview(t);
     }
   }
   function onChange(e) {
@@ -2298,7 +2424,7 @@ input[type=range] { width: 100%; accent-color: var(--blue); }
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
-  window.__app = { store, UI, render, openPregaoForm, openItemForm, Guard, Sheet, Draft }; // facilita testes/depuração
+  window.__app = { store, UI, render, openPregaoForm, openItemForm, Guard, Sheet, Draft, downscaleImage }; // facilita testes/depuração
 })();
 
 </script>
