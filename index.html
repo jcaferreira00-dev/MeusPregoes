@@ -97,7 +97,7 @@ svg.i.sm { width: 16px; height: 16px; }
 @media (min-width: 700px) { .kpis { grid-template-columns: repeat(4, 1fr); } .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; align-items: start; } }
 .kpi { background: var(--card); border-radius: var(--r); padding: 14px; box-shadow: var(--shadow); border: 1px solid var(--line); border-top: 3px solid var(--c, var(--blue)); }
 .kpi .l { font-size: 10.5px; text-transform: uppercase; letter-spacing: .5px; color: var(--muted); font-weight: 700; }
-.kpi .v { font-size: 20px; font-weight: 800; margin-top: 4px; color: var(--c, var(--blue)); font-variant-numeric: tabular-nums; }
+.kpi { min-width: 0; } .kpi .v { overflow-wrap: anywhere; font-size: 20px; font-weight: 800; margin-top: 4px; color: var(--c, var(--blue)); font-variant-numeric: tabular-nums; }
 .kpi .s { font-size: 11.5px; color: var(--muted); margin-top: 2px; }
 
 .badge { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 99px; background: var(--blue-soft); color: var(--blue); white-space: nowrap; }
@@ -140,30 +140,31 @@ svg.i.sm { width: 16px; height: 16px; }
 .alert { display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; border-radius: 12px; font-weight: 700; font-size: 13.5px; }
 .alert.ok { background: var(--green-soft); color: var(--green); } .alert.warn { background: var(--amber-soft); color: var(--amber); } .alert.bad { background: var(--red-soft); color: var(--red); }
 .alert.info { background: var(--blue-soft); color: var(--blue); }
-.strow { display: grid; grid-template-columns: 1fr auto; gap: 4px 10px; align-items: center; padding: 8px 0; border-bottom: 1px dashed var(--line); }
+.strow { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 10px; align-items: center; padding: 8px 0; border-bottom: 1px dashed var(--line); }
+.strow > div { min-width: 0; overflow-wrap: anywhere; } .strow > b { white-space: nowrap; font-variant-numeric: tabular-nums; }
 .strow:last-child { border-bottom: 0; }
 .strow .bar { grid-column: 1 / -1; height: 6px; border-radius: 99px; background: var(--line); overflow: hidden; }
 .strow .bar > div { height: 100%; background: var(--blue); border-radius: 99px; }
 .donut-wrap { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
 .donut-wrap svg { width: 150px; height: 150px; flex: none; }
 .donut-leg { flex: 1; min-width: 160px; display: flex; flex-direction: column; gap: 8px; font-size: 13px; }
-.donut-leg div { display: flex; align-items: center; gap: 8px; } .donut-leg b { margin-left: auto; font-variant-numeric: tabular-nums; }
+.donut-leg div { display: flex; align-items: center; gap: 8px; min-width: 0; } .donut-leg b { margin-left: auto; padding-left: 8px; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .donut-leg i { width: 11px; height: 11px; border-radius: 3px; flex: none; }
 
 /* listas / cards */
 .list { display: flex; flex-direction: column; gap: 12px; }
 .pcard, .icard { background: var(--card); border: 1px solid var(--line); border-radius: var(--r); padding: 14px; box-shadow: var(--shadow); cursor: pointer; display: flex; flex-direction: column; gap: 8px; text-align: left; width: 100%; }
 .pcard:active, .icard:active { transform: scale(.995); }
-.pcard h4, .icard h4 { font-size: 15.5px; font-weight: 700; }
+.pcard h4, .icard h4 { font-size: 15.5px; font-weight: 700; overflow-wrap: anywhere; }
 .pcard .num { font-size: 12px; color: var(--muted); font-weight: 700; letter-spacing: .3px; }
-.nums { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding-top: 8px; border-top: 1px dashed var(--line); }
+.nums { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; padding-top: 8px; border-top: 1px dashed var(--line); }
 .nums div { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .4px; font-weight: 700; }
-.nums b { display: block; font-size: 14px; color: var(--ink); text-transform: none; letter-spacing: 0; margin-top: 2px; font-variant-numeric: tabular-nums; }
+.nums b { display: block; overflow-wrap: anywhere; font-size: 14px; color: var(--ink); text-transform: none; letter-spacing: 0; margin-top: 2px; font-variant-numeric: tabular-nums; }
 .minbox { display: flex; justify-content: space-between; align-items: center; gap: 10px; background: var(--green-soft); border-radius: 12px; padding: 10px 12px; }
 .minbox.bad { background: var(--red-soft); }
-.minbox .t { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .4px; color: var(--green); }
+.minbox > div:first-child { min-width: 0; } .minbox .t { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .4px; color: var(--green); }
 .minbox.bad .t { color: var(--red); }
-.minbox .v { font-size: 19px; font-weight: 800; color: var(--green); font-variant-numeric: tabular-nums; }
+.minbox .v { font-size: 19px; font-weight: 800; color: var(--green); font-variant-numeric: tabular-nums; white-space: nowrap; flex: none; }
 .minbox.bad .v { color: var(--red); }
 .grp { margin-top: 6px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .grp h3 { font-size: 14px; text-transform: none; letter-spacing: 0; color: var(--ink); margin: 0; }
@@ -227,14 +228,17 @@ input[type=range] { width: 100%; accent-color: var(--blue); }
 /* detalhe do pregão e PDF */
 .back { display: inline-flex; align-items: center; gap: 4px; border: 0; background: none; color: var(--blue); font-weight: 700; font-size: 14px; padding: 4px 0; cursor: pointer; }
 .hero { background: linear-gradient(135deg, var(--navy), #2a4f87); color: #fff; border-radius: var(--r); padding: 16px; display: flex; flex-direction: column; gap: 6px; box-shadow: var(--shadow); }
-.hero .num { font-size: 12px; opacity: .8; font-weight: 700; letter-spacing: .4px; } .hero h2 { font-size: 20px; } .hero .m { font-size: 12.5px; opacity: .85; display: flex; flex-wrap: wrap; gap: 4px 14px; }
+.hero .num { font-size: 12px; opacity: .8; font-weight: 700; letter-spacing: .4px; } .hero h2 { font-size: 20px; overflow-wrap: anywhere; } .hero .m { font-size: 12.5px; opacity: .85; display: flex; flex-wrap: wrap; gap: 4px 14px; }
 .kv-list { display: flex; flex-direction: column; gap: 10px; font-size: 14px; }
-.kv-list div { display: flex; gap: 10px; } .kv-list span { color: var(--muted); min-width: 118px; font-size: 12.5px; padding-top: 1px; } .kv-list b { font-weight: 600; word-break: break-word; }
-.tbl { width: 100%; border-collapse: collapse; font-size: 13px; }
-.tbl th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .4px; color: var(--muted); padding: 6px 4px; border-bottom: 1px solid var(--line); }
-.tbl td { padding: 8px 4px; border-bottom: 1px dashed var(--line); vertical-align: top; }
-.tbl .r { text-align: right; font-variant-numeric: tabular-nums; } .tbl tfoot td { font-weight: 800; border-bottom: 0; }
-.tbl-scroll { overflow-x: auto; }
+.kv-list > div { display: flex; gap: 10px; align-items: baseline; min-width: 0; } .kv-list > div > span { color: var(--muted); flex: none; width: 118px; font-size: 12.5px; } .kv-list > div > b { flex: 1; min-width: 0; font-weight: 600; overflow-wrap: anywhere; }
+.tbl { width: 100%; min-width: 360px; border-collapse: collapse; font-size: 13px; }
+.tbl th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .4px; color: var(--muted); padding: 6px 6px; border-bottom: 1px solid var(--line); vertical-align: bottom; white-space: nowrap; }
+.tbl td { padding: 8px 6px; border-bottom: 1px dashed var(--line); vertical-align: middle; overflow-wrap: anywhere; }
+.tbl th:first-child, .tbl td:first-child { padding-left: 2px; width: 100%; }
+.tbl th.r, .tbl td.r { text-align: right; white-space: nowrap; width: 1%; font-variant-numeric: tabular-nums; }
+.tbl td .badge { margin-top: 4px; }
+.tbl tfoot td { font-weight: 800; border-bottom: 0; border-top: 1px solid var(--line); }
+.tbl-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 .wm-prev { height: 120px; border-radius: 12px; border: 1px dashed var(--line); display: grid; place-items: center; overflow: hidden; position: relative; background: #fff; }
 .wm-prev span { font-weight: 800; color: #738094; white-space: nowrap; max-width: 96%; }
 .wm-prev img { max-width: 70%; max-height: 90%; }
@@ -247,6 +251,14 @@ input[type=range] { width: 100%; accent-color: var(--blue); }
 
 /* ---------- pregão com cor própria: cartão da lista e caixa na aba Itens ---------- */
 .pcard { border-left: 6px solid var(--gc, var(--line)); }
+.pcard.prz-warn { border-top-color: var(--amber); border-right-color: var(--amber); border-bottom-color: var(--amber); background: color-mix(in srgb, var(--amber) 10%, var(--card)); box-shadow: 0 0 0 2px color-mix(in srgb, var(--amber) 35%, transparent), var(--shadow); }
+.pcard.prz-bad { border-top-color: var(--red); border-right-color: var(--red); border-bottom-color: var(--red); background: color-mix(in srgb, var(--red) 9%, var(--card)); box-shadow: 0 0 0 2px color-mix(in srgb, var(--red) 40%, transparent), var(--shadow); }
+.egrow { border: 1px solid var(--line); border-radius: 12px; padding: 10px 10px 4px; margin-bottom: 10px; background: var(--card); }
+.egtit { display: flex; justify-content: space-between; gap: 8px; margin-bottom: 8px; font-size: 13px; } .egtit > span:first-child { min-width: 0; overflow-wrap: anywhere; } .egcusto { font-weight: 800; white-space: nowrap; }
+.eg3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; } .eg3 .field { margin-bottom: 6px; } .eg3 .input { padding: 9px 10px; }
+.egstat { margin: 0 0 8px; overflow-wrap: anywhere; }
+.prazo { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 8px; background: var(--blue-soft); color: var(--blue); max-width: 100%; }
+.prazo.warn { background: var(--amber-soft); color: var(--amber); } .prazo.bad { background: var(--red-soft); color: var(--red); } .prazo.off { background: var(--line); color: var(--muted); }
 .gbox { --gc: var(--blue); border: 1px solid var(--line); border-left: 7px solid var(--gc); border-radius: var(--r); background: color-mix(in srgb, var(--gc) 7%, var(--card)); padding: 12px; box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 10px; min-width: 0; }
 .ghead { display: flex; gap: 10px; align-items: flex-start; }
 .gnum { color: var(--gc); font-weight: 800; font-size: 11.5px; letter-spacing: .5px; }
@@ -394,6 +406,12 @@ input[type=color].input { padding: 4px; height: 46px; }
   }
 
   /* ---------- cálculo (espelha a planilha) ---------- */
+  // local de entrega usado por padrão (tela do pregão e proposta): o local do pregão, ou os locais de entrega quando marcado "outro local"
+  function localEntregaPadrao(p) {
+    if (!p) return '';
+    if (p.entregaDiferente && String(p.locaisEntrega || '').trim()) return String(p.locaisEntrega).split('\n').map((x) => x.trim()).filter(Boolean).join('; ');
+    return p.cidadeUf || '';
+  }
   function custoViagem(p, cfg) {
     const consumo = n0(cfg.consumo);
     if (consumo === 0) return 0;
@@ -407,7 +425,12 @@ input[type=color].input { padding: 4px; height: 46px; }
     const impostoCompra = qtd * custo * n0(it.impostoCompraPct);   // ICMS-ST/antecipação pago na compra
     const compra = compraBase(it);
     const impPct = Math.max(0, n0(cfg.impostoPct));
-    const entrega = pst && pst.base > 0 ? pst.viagem * compra / pst.base : 0;
+    let entrega = 0;
+    if (pst && pst.ents) {
+      const x = pst.entOf(it);
+      if (x && x.base > 0) entrega += x.custo * compra / x.base;
+      if (pst.pool > 0 && pst.base > 0) entrega += pst.pool * compra / pst.base;
+    } else if (pst && pst.base > 0) entrega = pst.viagem * compra / pst.base;
     const custoTotal = compra + entrega;
     const custoUnit = qtd > 0 ? custoTotal / qtd : null;
     const margem = (it.margem !== null && it.margem !== undefined) ? it.margem : cfg.margemPadrao;
@@ -462,7 +485,15 @@ input[type=color].input { padding: 4px; height: 46px; }
       const list = byP.get(p.id) || [];
       let base = 0;
       for (const it of list) base += compraBase(it);
-      pMap.set(p.id, { p, viagem: custoViagem(p, cfg), base, itens: list, nItens: list.length, venda: 0, custo: 0, lucro: 0, imposto: 0, margem: null });
+      // entregas separadas: cada viagem/local tem custo próprio, dividido só entre os itens daquela entrega
+      const ents = (p.entregaDiferente && Array.isArray(p.entregas) && p.entregas.length) ? p.entregas.map((e) => ({ e, id: e.id, local: e.local, custo: custoViagem(e, cfg), base: 0, nItens: 0 })) : null;
+      const entOf = (it) => { if (!ents) return null; const i = ents.findIndex((x) => x.id === it.entregaId); return ents[i < 0 ? 0 : i]; };
+      let pool = 0;
+      if (ents) {
+        for (const it of list) { const x = entOf(it); x.base += compraBase(it); x.nItens += 1; }
+        pool = ents.filter((x) => x.base === 0).reduce((a, x) => a + x.custo, 0);   // viagem sem itens: o custo é dividido entre todos
+      }
+      pMap.set(p.id, { p, viagem: ents ? ents.reduce((a, x) => a + x.custo, 0) : custoViagem(p, cfg), ents, entOf, pool, base, itens: list, nItens: list.length, venda: 0, custo: 0, lucro: 0, imposto: 0, margem: null });
     }
     const iMap = new Map();
     for (const it of itens) {
@@ -848,7 +879,7 @@ input[type=color].input { padding: 4px; height: 46px; }
 
   const api = {
     APP_VERSION, STATUS, INATIVOS, DECL_PADRAO, uid, n0, round2, ceil2, parseBR, brl, brl0, pct, numBR, qtdBR,
-    fmtSessao, dataExtensa, hojeISO, defaultConfig, emptyState, migrate, custoViagem, calcItem, limiteMEI,
+    fmtSessao, dataExtensa, hojeISO, defaultConfig, emptyState, migrate, custoViagem, localEntregaPadrao, calcItem, limiteMEI,
     computeAll, dasMensal, mesesAtivos, previewItem, linhasProposta, resolverPdfOpts, numerarClausulas, montarClausulas, CLAUSULAS_PADRAO, NOMES_CLAUSULAS, COLUNAS_DESC, CAMPOS_FORNECEDOR, mergeState, diffState, paraNuvem, createStore, demoState,
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
@@ -1163,6 +1194,13 @@ input[type=color].input { padding: 4px; height: 46px; }
     return out;
   }
 
+  // reduz a fonte (até um mínimo) para o texto caber em uma linha na largura da coluna
+  function fitSize(text, f, size, maxW, min) {
+    const w = f.widthOfTextAtSize(safe(text), size);
+    if (w <= maxW) return size;
+    return Math.max(min || 6.5, size * maxW / w);
+  }
+
   function dataUrlToBytes(url) {
     const b64 = url.split(',')[1] || '';
     const bin = (root.atob || atob)(b64);
@@ -1367,7 +1405,7 @@ input[type=color].input { padding: 4px; height: 46px; }
       grade([
         ['ÓRGÃO / CLIENTE', preg.orgao], ['PROCESSO', preg.numero],
         ['VALIDADE DA PROPOSTA', (o.validadeDias || 60) + ' dias'], ['PRAZO DE PAGAMENTO', o.condPagamento || 'Conforme edital'],
-        ['LOCAL DE ENTREGA', o.localEntrega || preg.cidadeUf], ['PRAZO DE ENTREGA', prazoEnt],
+        ['LOCAL DE ENTREGA', o.localEntrega || C.localEntregaPadrao(preg)], ['PRAZO DE ENTREGA', prazoEnt],
       ]);
       y -= 10;
     }
@@ -1412,7 +1450,8 @@ input[type=color].input { padding: 4px; height: 46px; }
       page.drawRectangle({ x: M, y: y - hHead, width: CW, height: hHead, color: ACC, borderColor: ACC, borderWidth: 1 });
       heads.forEach((t, k) => {
         const [x, w] = cx[k];
-        if (k <= 1) T(t, x + 4, y - 13, 9.5, bold, WHITE); else TC(t, x + w / 2, y - 13, 9.5, bold, WHITE);
+        const fs = fitSize(t, bold, 9.5, w - 8, 6);
+        if (k <= 1) T(t, x + 4, y - 13.2 + (9.5 - fs) / 2, fs, bold, WHITE); else TC(t, x + w / 2, y - 13.2 + (9.5 - fs) / 2, fs, bold, WHITE);
       });
       y -= hHead;
       // linha principal
@@ -1423,7 +1462,8 @@ input[type=color].input { padding: 4px; height: 46px; }
       vals.forEach((t, k) => {
         const [x, w] = cx[k];
         const f = k === 1 ? bold : font;
-        if (k <= 1) T(t, x + 4, y - 16, 10, f, ACCT); else TC(t, x + w / 2, y - 16, 10, f, ACCT);
+        const fs = fitSize(t, f, 10, w - 8, 6);
+        if (k <= 1) T(t, x + 4, y - 16 + (10 - fs) / 2, fs, f, ACCT); else TC(t, x + w / 2, y - 16 + (10 - fs) / 2, fs, f, ACCT);
       });
       y -= hRow;
       // descrição completa
@@ -1538,13 +1578,16 @@ input[type=color].input { padding: 4px; height: 46px; }
         vub: bT(ln.unit), vtb: bT(ln.total), vus: bT(ln.unitS), vts: bT(ln.totalS), aliq: fN(ln.aliq * 100) + '%',
       })[c.id];
       const cabecalhoTab = () => {
-        const hs = cols.map((c) => wrap(rotC[c.id], bold, 9, c.pw - 6));
+        // fonte do cabeçalho: a maior palavra precisa caber inteira na coluna (sem quebrar no meio da palavra)
+        const hfs = (c) => Math.min(...safe(rotC[c.id]).split(/\s+/).map((wd) => fitSize(wd, bold, 9, c.pw - 6, 6)));
+        const hs = cols.map((c) => wrap(rotC[c.id], bold, hfs(c), c.pw - 6));
         const h = Math.max(...hs.map((x) => x.length)) * 11 + 9;
         garantir(h + 30);
         let x = M;
         cols.forEach((c, k) => {
           page.drawRectangle({ x, y: y - h, width: c.pw, height: h, color: AZUL, borderColor: BLK, borderWidth: 0.9 });
-          hs[k].forEach((l, j) => TC(l, x + c.pw / 2, y - 12 - j * 11 - (h - 9 - hs[k].length * 11) / 2, 9, bold, BLK));
+          const fs = hfs(c), off = (h - hs[k].length * 11) / 2;      // centraliza o bloco de texto na vertical
+          hs[k].forEach((l, j) => TC(l, x + c.pw / 2, y - off - 7.5 - j * 11, fs, bold, BLK));
           x += c.pw;
         });
         y -= h;
@@ -1552,17 +1595,19 @@ input[type=color].input { padding: 4px; height: 46px; }
       if (cols.length) {
         cabecalhoTab();
         L.linhas.forEach((ln) => {
-          const cells = cols.map((c) => wrap(String(cellTxt(c, ln)), c.id === 'desc' ? font : font, 9, c.pw - 8));
+          const fsz = cols.map((c) => (c.id === 'desc' || c.id === 'marca') ? 9 : fitSize(String(cellTxt(c, ln)), font, 9, c.pw - 8, 6.5));
+          const cells = cols.map((c, k) => wrap(String(cellTxt(c, ln)), font, fsz[k], c.pw - 8));
           const h = Math.max(...cells.map((x) => x.length)) * 11 + 8;
           if (y - h < BOTTOM) { novaPagina(); cabecalhoTab(); }
           let x = M;
           cols.forEach((c, k) => {
             page.drawRectangle({ x, y: y - h, width: c.pw, height: h, borderColor: BLK, borderWidth: 0.9 });
+            const off = (h - cells[k].length * 11) / 2;                 // centraliza na vertical quando a linha tem mais altura
             cells[k].forEach((l, j) => {
-              const w = font.widthOfTextAtSize(safe(l), 9);
+              const w = font.widthOfTextAtSize(safe(l), fsz[k]);
               const left = c.id === 'desc' || c.id === 'marca';
               const tx = left ? x + 4 : x + (c.pw - w) / 2;
-              T(l, tx, y - 11 - j * 11, 9, font, BLK);
+              T(l, tx, y - off - 7.5 - j * 11, fsz[k], font, BLK);
             });
             x += c.pw;
           });
@@ -1875,12 +1920,85 @@ input[type=color].input { padding: 4px; height: 46px; }
 
   function pregaoValues(p) {
     return {
-      numero: p.numero || '', orgao: p.orgao || '', cidadeUf: p.cidadeUf || '', sessao: p.sessao || '', intervaloMin: p.intervaloMin || '',
+      numero: p.numero || '', orgao: p.orgao || '', cidadeUf: p.cidadeUf || '', sessao: p.sessao || '', prazoPropostas: p.prazoPropostas || '',
       prazoEntregaDias: p.prazoEntregaDias == null ? '' : String(p.prazoEntregaDias), exigencias: p.exigencias || '', status: p.status || 'Analisando',
       km: p.km ? C.numBR(p.km, 1) : '', viagens: p.viagens == null ? '1' : String(p.viagens), pedagio: p.pedagio ? C.numBR(p.pedagio) : '',
+      entregaDiferente: !!p.entregaDiferente, locaisEntrega: p.locaisEntrega || '',
       link: p.link || '', obs: p.obs || '',
     };
   }
+  /* ---------- trajeto automático (OpenStreetMap: Nominatim para achar o local, OSRM para a distância por estrada) ---------- */
+  const Rota = (() => {
+    const KEY = 'mp.geo';
+    let cache = {}; try { cache = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { cache = {}; }
+    const salvar = () => { try { localStorage.setItem(KEY, JSON.stringify(cache)); } catch (e) { /* ignora */ } };
+    let ultima = 0;
+    async function geocodar(txt) {
+      const q = String(txt || '').replace(/\s*\/\s*/g, ', ').replace(/\s+/g, ' ').trim();
+      if (!q) return null;
+      const k = q.toLowerCase();
+      if (cache[k]) return cache[k];
+      const espera = ultima + 1100 - Date.now();
+      if (espera > 0) await new Promise((r) => setTimeout(r, espera));
+      ultima = Date.now();
+      const r = await fetch('https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&countrycodes=br&accept-language=pt-BR&q=' + encodeURIComponent(q));
+      if (!r.ok) throw new Error('geo');
+      const j = await r.json();
+      if (!j.length) return null;
+      const pt = { lat: Number(j[0].lat), lon: Number(j[0].lon) };
+      cache[k] = pt; salvar();
+      return pt;
+    }
+    async function calcular(emp, destinos) {
+      emp = emp || {};
+      const cidade = [emp.cidade, emp.uf].filter(Boolean).join(', ');
+      if (!cidade && !emp.endereco) throw new Error('Preencha a cidade da sua empresa em Config › Empresa para calcular o trajeto.');
+      try {
+        let o = null;
+        if (emp.endereco && cidade) o = await geocodar([emp.endereco, emp.bairro, cidade].filter(Boolean).join(', '));
+        if (!o && cidade) o = await geocodar(cidade);
+        if (!o) throw new Error('Não encontrei o endereço da sua empresa no mapa. Confira Config › Empresa.');
+        const pts = [o];
+        for (const d of destinos) {
+          const g = await geocodar(d);
+          if (!g) throw new Error('Não encontrei “' + d + '” no mapa. Confira o nome da cidade e a UF.');
+          pts.push(g);
+        }
+        pts.push(o);
+        const coords = pts.map((x) => x.lon.toFixed(6) + ',' + x.lat.toFixed(6)).join(';');
+        const r = await fetch('https://router.project-osrm.org/route/v1/driving/' + coords + '?overview=false');
+        if (!r.ok) throw new Error('rota');
+        const j = await r.json();
+        if (!j.routes || !j.routes[0]) throw new Error('Não foi encontrada rota de carro até esse local.');
+        const nome = emp.cidade ? [emp.cidade, emp.uf].filter(Boolean).join('/') : 'sua empresa';
+        return { km: Math.round(j.routes[0].distance / 100) / 10, rotulo: [nome].concat(destinos, [nome]).join(' → ') };
+      } catch (e) {
+        if (e && e.message && e.message.length > 6 && e.message !== 'geo' && e.message !== 'rota') throw e;
+        throw new Error('Não foi possível calcular o trajeto agora (sem internet ou serviço indisponível). Informe o km manualmente.');
+      }
+    }
+    return { calcular };
+  })();
+
+  /* ---------- prazo de envio das propostas: cor muda com 2 dias (amarelo) e 1 dia ou menos (vermelho) ---------- */
+  function prazoInfo(p) {
+    if (!p || !p.prazoPropostas) return null;
+    const alvo = new Date(p.prazoPropostas);
+    if (!isFinite(alvo.getTime())) return null;
+    const ini = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+    const agora = new Date();
+    const dias = Math.round((ini(alvo) - ini(agora)) / 86400000);
+    const quando = C.fmtSessao(p.prazoPropostas);
+    const hora = (/T(\d{2}:\d{2})/.exec(p.prazoPropostas) || [])[1];
+    const pendente = ['Analisando'].includes(p.status);   // só alerta enquanto a proposta ainda não foi enviada
+    if (!pendente) return { nivel: 'ok', texto: 'Propostas até ' + quando };
+    if (alvo.getTime() < agora.getTime()) return { nivel: 'off', texto: 'Prazo de propostas encerrado (' + quando + ')' };
+    if (dias <= 0) return { nivel: 'bad', texto: 'Propostas: hoje' + (hora ? ' até ' + hora : '') };
+    if (dias === 1) return { nivel: 'bad', texto: 'Propostas: falta 1 dia (' + quando + ')' };
+    if (dias === 2) return { nivel: 'warn', texto: 'Propostas: faltam 2 dias (' + quando + ')' };
+    return { nivel: 'ok', texto: 'Propostas até ' + quando };
+  }
+
   function openPregaoForm(id) {
     const cur = id ? store.get().pregoes.find((p) => p.id === id && !p.deleted) : null;
     const v = pregaoValues(cur || { status: 'Analisando', viagens: 1 });
@@ -1890,28 +2008,134 @@ input[type=color].input { padding: 4px; height: 46px; }
         ${field({ label: 'Nº da compra *', name: 'numero', value: v.numero, ph: 'ex.: 90001/2026' })}
         ${field({ label: 'Status', name: 'status', type: 'select', value: v.status, options: C.STATUS.map((s) => ({ v: s, l: s })) })}
         ${field({ label: 'Órgão / entidade *', name: 'orgao', value: v.orgao, full: true, ph: 'ex.: Universidade de Londrina' })}
-        ${field({ label: 'Cidade/UF', name: 'cidadeUf', value: v.cidadeUf, ph: 'Londrina/PR' })}
+        ${field({ label: 'Local do pregão (cidade/UF)', name: 'cidadeUf', value: v.cidadeUf, full: true, ph: 'Londrina/PR', hint: 'Ao preencher, o trajeto de ida e volta a partir do endereço da sua empresa é calculado sozinho.' })}
         ${field({ label: 'Data e hora da sessão', name: 'sessao', type: 'datetime-local', value: v.sessao })}
-        ${field({ label: 'Intervalo mín. entre lances', name: 'intervaloMin', value: v.intervaloMin, ph: 'R$ 0,10 ou 0,5%' })}
+        ${field({ label: 'Envio das propostas até', name: 'prazoPropostas', type: 'datetime-local', value: v.prazoPropostas, hint: 'Na lista, o cartão muda de cor quando faltar 2 dias (amarelo) e 1 dia (vermelho).' })}
         ${field({ label: 'Prazo de entrega (dias)', name: 'prazoEntregaDias', value: v.prazoEntregaDias, inputmode: 'numeric' })}
         ${field({ label: 'Exigências (IE, certidões)', name: 'exigencias', type: 'textarea', value: v.exigencias, full: true, ph: 'SICAF, CND estadual…' })}
       </div>
       <div class="sect">${icon('pin', 'sm')} Entrega de carro</div>
       <div class="formgrid">
-        ${field({ label: 'Km (ida e volta)', name: 'km', value: v.km, inputmode: 'decimal', ph: '0 = não vou de carro' })}
-        ${field({ label: 'Nº de viagens', name: 'viagens', value: v.viagens, inputmode: 'numeric' })}
-        ${field({ label: 'Pedágio/outros por viagem (R$)', name: 'pedagio', value: v.pedagio, inputmode: 'decimal' })}
-        <div class="field"><label>Custo da entrega</label><div class="input" id="viagemCusto" style="display:flex;align-items:center;font-weight:800">—</div></div>
+        <div class="full"><label class="switch"><span>Entrega em outro local ou em mais de um local<small class="hint" style="display:block;font-weight:500">Deixe desmarcado se a entrega for no próprio local do pregão.</small></span><input type="checkbox" name="entregaDiferente"${v.entregaDiferente ? ' checked' : ''}></label></div>
+        <div class="full" id="boxEntregas">
+          ${field({ label: 'Locais de entrega (um por linha = uma viagem)', name: 'locaisEntrega', type: 'textarea', value: v.locaisEntrega, full: true, ph: 'Cuiabá/MT\nVárzea Grande/MT', hint: 'Cada linha é uma viagem com custo próprio, dividido só entre os itens daquela entrega. Para levar mais de uma vez ao mesmo lugar, aumente “Nº de viagens” da linha. Estes locais também vão para a proposta.' })}
+          <div id="egList"></div>
+        </div>
+        <div class="full" id="boxUnico"><div class="formgrid">
+          ${field({ label: 'Km (ida e volta)', name: 'km', value: v.km, inputmode: 'decimal', ph: '0 = não vou de carro' })}
+          ${field({ label: 'Nº de viagens', name: 'viagens', value: v.viagens, inputmode: 'numeric' })}
+          ${field({ label: 'Pedágio/outros por viagem (R$)', name: 'pedagio', value: v.pedagio, inputmode: 'decimal' })}
+        </div><div class="hint" style="margin:-4px 0 12px">Entrega única: o custo é dividido entre todos os itens do pregão.</div></div>
+        <div class="field full"><label>Custo total da entrega</label><div class="input" id="viagemCusto" style="display:flex;align-items:center;font-weight:800">—</div></div>
+        <div class="full field" style="margin-top:-4px"><div class="hint" id="rotaInfo" role="status" aria-live="polite"></div><button type="button" class="btn sm" data-rota="calc" style="margin-top:8px;align-self:flex-start">Recalcular trajeto</button></div>
       </div>
       <div class="sect">Outros</div>
       ${field({ label: 'Link do edital', name: 'link', type: 'url', value: v.link, ph: 'https://…' })}
       ${field({ label: 'Observações', name: 'obs', type: 'textarea', value: v.obs })}`;
     openForm({
       key: 'pregao:' + (id || 'novo'), title: id ? 'Editar pregão' : 'Novo pregão', body, values: v,
+      onMount: (form) => {
+        // trajeto automático: recalcula quando muda o local do pregão ou os locais de entrega
+        let seq = 0, timer = null, ajustando = false, seqE = 0;
+        const novoId = () => 'e' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+        const egList = $('#egList', form);
+        const lerEntregas = () => $$('.egrow', form).map((r) => ({
+          id: r.dataset.id, local: r.dataset.local,
+          km: C.parseBR($('[data-eg=km]', r).value) || 0, viagens: C.parseBR($('[data-eg=viagens]', r).value) || 0, pedagio: C.parseBR($('[data-eg=pedagio]', r).value) || 0,
+          kmManual: r.dataset.manual === '1',
+        }));
+        form._lerEntregas = lerEntregas;
+        const linhasLocais = () => String($('[name=locaisEntrega]', form).value || '').split('\n').map((t) => t.trim()).filter(Boolean);
+        const rowHtml = (e, i) => `<div class="egrow" data-id="${esc(e.id)}" data-local="${esc(e.local)}"${e.kmManual ? ' data-manual="1"' : ''}>
+          <div class="egtit"><span><b>Viagem ${i + 1}</b> · ${esc(e.local)}</span><span class="egcusto">—</span></div>
+          <div class="eg3">
+            <div class="field"><label>Km (ida e volta)</label><input class="input" data-eg="km" inputmode="decimal" autocomplete="off" value="${esc(e.km ? C.numBR(e.km, 1) : '')}"></div>
+            <div class="field"><label>Nº de viagens</label><input class="input" data-eg="viagens" inputmode="numeric" autocomplete="off" value="${esc(e.viagens == null ? 1 : e.viagens)}"></div>
+            <div class="field"><label>Pedágio (R$)</label><input class="input" data-eg="pedagio" inputmode="decimal" autocomplete="off" value="${esc(e.pedagio ? C.numBR(e.pedagio) : '')}"></div>
+          </div><div class="tiny muted egstat"></div></div>`;
+        async function calcLinha(row, forcar) {
+          if (row.dataset.manual === '1' && !forcar) return;
+          if (forcar) delete row.dataset.manual;
+          const stat = $('.egstat', row), kmIn = $('[data-eg=km]', row);
+          stat.style.color = ''; stat.textContent = 'Calculando trajeto…';
+          try {
+            const r = await Rota.calcular(store.get().config.empresa, [row.dataset.local]);
+            if (!row.isConnected) return;
+            ajustando = true; kmIn.value = C.numBR(r.km, 1); kmIn.dispatchEvent(new Event('input', { bubbles: true })); ajustando = false;
+            stat.style.color = 'var(--green)'; stat.textContent = `Trajeto: ${r.rotulo} = ${C.numBR(r.km, 1)} km (ida e volta).`;
+          } catch (e) {
+            if (!row.isConnected) return;
+            stat.style.color = 'var(--red)'; stat.textContent = e && e.message ? e.message : 'Não foi possível calcular. Informe o km manualmente.';
+          }
+        }
+        async function montarEntregas() {
+          const antes = lerEntregas(), base = (cur && cur.entregas) || [], locais = linhasLocais();
+          const lista = locais.map((l, i) => {
+            const a = antes[i] || base[i] || {};
+            const igual = a.local === l;
+            return { id: a.id || novoId(), local: l, km: igual ? a.km : 0, viagens: igual && a.viagens != null ? a.viagens : 1, pedagio: igual ? a.pedagio : 0, kmManual: igual ? a.kmManual : false };
+          });
+          const n = ++seqE;
+          egList.innerHTML = lista.map(rowHtml).join('');
+          form.dispatchEvent(new Event('input', { bubbles: true }));
+          for (const row of $$('.egrow', form)) {
+            if (n !== seqE || !form.isConnected) return;
+            if (!(C.parseBR($('[data-eg=km]', row).value) > 0)) await calcLinha(row, false);
+          }
+        }
+        egList.addEventListener('input', (e) => { const r = e.target.closest('.egrow'); if (r && e.target.dataset.eg === 'km' && !ajustando) r.dataset.manual = '1'; });
+        const info = $('#rotaInfo', form), kmEl = $('[name=km]', form);
+        const viagensEl = $('[name=viagens]', form);
+        const setInfo = (t, cls) => { info.textContent = t; info.style.color = cls === 'err' ? 'var(--red)' : cls === 'ok' ? 'var(--green)' : ''; };
+        kmEl.addEventListener('input', () => { if (!ajustando) form.dataset.kmManual = '1'; });
+        async function calcular(forcar) {
+          const x = readForm(form), cfg = store.get().config;
+          if (x.entregaDiferente) { for (const row of $$('.egrow', form)) await calcLinha(row, !!forcar); return; }
+          if (forcar) delete form.dataset.kmManual;
+          const destinos = x.entregaDiferente ? String(x.locaisEntrega || '').split('\n').map((t) => t.trim()).filter(Boolean) : [String(x.cidadeUf || '').trim()].filter(Boolean);
+          if (!destinos.length) { setInfo(x.entregaDiferente ? 'Informe os locais de entrega para calcular o trajeto.' : 'Informe o local do pregão para calcular o trajeto.'); return; }
+          if (form.dataset.kmManual === '1' && !forcar) { setInfo('Km informado por você. Toque em “Recalcular trajeto” para usar o cálculo automático.'); return; }
+          const n = ++seq;
+          setInfo('Calculando trajeto…');
+          try {
+            const r = await Rota.calcular(cfg.empresa, destinos);
+            if (n !== seq || !form.isConnected) return;
+            ajustando = true;
+            kmEl.value = C.numBR(r.km, 1);
+            if (!String(viagensEl.value).trim() || C.parseBR(viagensEl.value) === 0) viagensEl.value = '1';
+            kmEl.dispatchEvent(new Event('input', { bubbles: true }));
+            ajustando = false;
+            setInfo(`Trajeto: ${r.rotulo} = ${C.numBR(r.km, 1)} km (ida e volta). Pode ajustar o km manualmente.`, 'ok');
+          } catch (e) {
+            if (n !== seq || !form.isConnected) return;
+            setInfo(e && e.message ? e.message : 'Não foi possível calcular o trajeto agora. Informe o km manualmente.', 'err');
+          }
+        }
+        const agendar = () => { clearTimeout(timer); timer = setTimeout(() => calcular(false), 500); };
+        form.addEventListener('change', (e) => {
+          const n = e.target && e.target.name, ligado = !!$('[name=entregaDiferente]', form).checked;
+          if (n === 'cidadeUf' && !ligado) agendar();
+          else if (n === 'entregaDiferente') { if (ligado) montarEntregas(); else agendar(); }
+          else if (n === 'locaisEntrega' && ligado) montarEntregas();
+        });
+        form.addEventListener('click', (e) => { if (e.target.closest('[data-rota="calc"]')) calcular(true); });
+        if (kmEl.value && cur && cur.kmManual) form.dataset.kmManual = '1';
+        if ($('[name=entregaDiferente]', form).checked) montarEntregas();
+        else if (!kmEl.value && v.cidadeUf) agendar();
+      },
       onInput: (form) => {
         const x = readForm(form), cfg = store.get().config;
-        const custo = C.custoViagem({ km: C.parseBR(x.km), viagens: C.parseBR(x.viagens), pedagio: C.parseBR(x.pedagio) }, cfg);
+        let custo;
+        if (x.entregaDiferente) {
+          custo = 0;
+          $$('.egrow', form).forEach((r) => {
+            const c = C.custoViagem({ km: C.parseBR($('[data-eg=km]', r).value), viagens: C.parseBR($('[data-eg=viagens]', r).value), pedagio: C.parseBR($('[data-eg=pedagio]', r).value) }, cfg);
+            $('.egcusto', r).textContent = C.brl(c); custo += c;
+          });
+        } else custo = C.custoViagem({ km: C.parseBR(x.km), viagens: C.parseBR(x.viagens), pedagio: C.parseBR(x.pedagio) }, cfg);
         $('#viagemCusto', form).textContent = C.brl(custo);
+        $('#boxEntregas', form).classList.toggle('hidden', !x.entregaDiferente);
+        $('#boxUnico', form).classList.toggle('hidden', !!x.entregaDiferente);
       },
       onSave: (x, form) => {
         $$('.input.err', form).forEach((e) => e.classList.remove('err'));
@@ -1920,11 +2144,16 @@ input[type=color].input { padding: 4px; height: 46px; }
         if (!x.orgao.trim()) miss.push('orgao');
         if (miss.length) { miss.forEach((n) => $('[name=' + n + ']', form).classList.add('err')); return 'Preencha o número da compra e o órgão.'; }
         const km = C.parseBR(x.km) || 0;
+        const ent = x.entregaDiferente && form._lerEntregas ? form._lerEntregas() : [];
+        if (x.entregaDiferente && !ent.length) { $('[name=locaisEntrega]', form).classList.add('err'); return 'Informe ao menos um local de entrega ou desmarque a opção.'; }
         const data = {
-          numero: x.numero.trim(), orgao: x.orgao.trim(), cidadeUf: x.cidadeUf.trim(), sessao: x.sessao || '', intervaloMin: x.intervaloMin.trim(),
+          numero: x.numero.trim(), orgao: x.orgao.trim(), cidadeUf: x.cidadeUf.trim(), sessao: x.sessao || '', prazoPropostas: x.prazoPropostas || '',
+          entregaDiferente: !!x.entregaDiferente, kmManual: form.dataset.kmManual === '1',
           prazoEntregaDias: x.prazoEntregaDias ? parseInt(x.prazoEntregaDias, 10) : null, exigencias: x.exigencias.trim(), status: x.status,
-          km, viagens: x.viagens === '' ? (km > 0 ? 1 : 0) : (C.parseBR(x.viagens) || 0), pedagio: C.parseBR(x.pedagio) || 0, link: x.link.trim(), obs: x.obs.trim(),
+          link: x.link.trim(), obs: x.obs.trim(),
         };
+        if (x.entregaDiferente) { data.entregas = ent; data.locaisEntrega = ent.map((e) => e.local).join('\n'); }
+        else Object.assign(data, { entregas: [], locaisEntrega: '', km, viagens: x.viagens === '' ? (km > 0 ? 1 : 0) : (C.parseBR(x.viagens) || 0), pedagio: C.parseBR(x.pedagio) || 0 });
         if (id) data.id = id;
         const nid = store.upsertPregao(data);
         toast(id ? 'Pregão atualizado' : 'Pregão cadastrado');
@@ -1947,6 +2176,7 @@ input[type=color].input { padding: 4px; height: 46px; }
       margem: it.margem == null ? '' : C.numBR(it.margem * 100, 2), lanceFinal: it.lanceFinal == null ? '' : C.numBR(it.lanceFinal),
       impostoCompra: it.impostoCompraPct ? C.numBR(it.impostoCompraPct * 100, 2) : '',
       icmsAliq: it.icmsAliq == null ? '' : C.numBR(it.icmsAliq * 100, 2),
+      entregaId: it.entregaId || '',
     };
   }
   function itemFromForm(x, id) {
@@ -1957,7 +2187,15 @@ input[type=color].input { padding: 4px; height: 46px; }
       margem: m == null ? null : m / 100, lanceFinal: C.parseBR(x.lanceFinal),
       impostoCompraPct: (C.parseBR(x.impostoCompra) || 0) / 100 || null,
       icmsAliq: C.parseBR(x.icmsAliq) == null ? null : C.parseBR(x.icmsAliq) / 100,
+      entregaId: x.entregaId || '',
     };
+  }
+  // seletor "em qual entrega este item vai": só aparece quando o pregão tem entregas separadas
+  function entregaSelectHtml(pid, sel) {
+    const p = store.get().pregoes.find((x) => x.id === pid && !x.deleted);
+    if (!p || !p.entregaDiferente || !Array.isArray(p.entregas) || !p.entregas.length) return '';
+    const ok = p.entregas.some((e) => e.id === sel);
+    return `<div class="field"><label for="f_entregaId">Em qual entrega este item vai?</label><select class="input" id="f_entregaId" name="entregaId">${p.entregas.map((e, i) => `<option value="${esc(e.id)}"${(ok ? e.id === sel : i === 0) ? ' selected' : ''}>Viagem ${i + 1} · ${esc(e.local)}</option>`).join('')}</select><div class="hint">O custo da viagem é dividido só entre os itens desta entrega.</div></div>`;
   }
   function openItemForm(id, pregaoId) {
     const list = activePregoes();
@@ -1968,6 +2206,7 @@ input[type=color].input { padding: 4px; height: 46px; }
     const body = `
       <div class="preview" id="prev"></div>
       ${field({ label: 'Pregão / órgão *', name: 'pregaoId', type: 'select', value: v.pregaoId, options: list.map((p) => ({ v: p.id, l: pregaoLabel(p) })) })}
+      <div id="boxEntrega" data-pid="${esc(v.pregaoId)}">${entregaSelectHtml(v.pregaoId, v.entregaId)}</div>
       ${field({ label: 'Item que vou comprar *', name: 'descricao', value: v.descricao, ph: 'ex.: Caixa organizadora plástica 30 L' })}
       <div class="formgrid">
         ${field({ label: 'Nº do item no edital', name: 'itemEdital', value: v.itemEdital, ph: 'ex.: 04', hint: 'Sai como “ITEM 04” no PDF' })}
@@ -1987,7 +2226,9 @@ input[type=color].input { padding: 4px; height: 46px; }
         openForm({
       key: 'item:' + (id || 'novo'), title: id ? 'Editar item' : 'Novo item', body, values: v,
       onInput: (form) => {
-        const x = readForm(form);
+        let x = readForm(form);
+        const bx = $('#boxEntrega', form);
+        if (bx && bx.dataset.pid !== x.pregaoId) { bx.dataset.pid = x.pregaoId; bx.innerHTML = entregaSelectHtml(x.pregaoId, ''); x = readForm(form); }
         const c = C.previewItem(store.get(), itemFromForm(x, id));
         const el = $('#prev', form);
         if (!c || c.minimo == null) { el.innerHTML = `<div class="small muted">Informe quantidade e custo para ver o valor mínimo da proposta.</div>`; return; }
@@ -2117,10 +2358,13 @@ input[type=color].input { padding: 4px; height: 46px; }
   function pregaoCard(pst) {
     const p = pst.p;
     const chips = pst.itens.slice(0, 3).map((i) => `<span class="chip">${esc(i.descricao)}</span>`).join('') + (pst.itens.length > 3 ? `<span class="chip">+${pst.itens.length - 3}</span>` : '');
-    return `<article class="pcard" style="--gc:${corDe(p.id)}" data-act="abrir-pregao" data-id="${p.id}" tabindex="0" role="button">
+    const pz = prazoInfo(p);
+    const pzCls = pz && (pz.nivel === 'warn' || pz.nivel === 'bad') ? ' prz-' + pz.nivel : '';
+    return `<article class="pcard${pzCls}" style="--gc:${corDe(p.id)}" data-act="abrir-pregao" data-id="${p.id}" tabindex="0" role="button">
       <div class="row between"><span class="num" style="color:var(--gc)">COMPRA Nº ${esc(p.numero)}</span>${badgeStatus(p.status)}</div>
       <h4>${esc(p.orgao)}</h4>
       <div class="small muted row wrap" style="gap:4px 14px">${p.cidadeUf ? `<span class="row" style="gap:4px">${icon('pin', 'sm')}${esc(p.cidadeUf)}</span>` : ''}${p.sessao ? `<span class="row" style="gap:4px">${icon('calendar', 'sm')}${esc(C.fmtSessao(p.sessao))}</span>` : ''}</div>
+      ${pz ? `<div><span class="prazo ${pz.nivel}">${icon(pz.nivel === 'ok' ? 'calendar' : 'alert', 'sm')}${esc(pz.texto)}</span></div>` : ''}
       <div class="chips">${chips || '<span class="chip">Sem itens ainda</span>'}</div>
       <div class="nums"><div>Venda<b>${C.brl0(pst.venda)}</b></div><div>Lucro<b>${C.brl0(pst.lucro)}</b></div><div>Margem<b>${C.pct(pst.margem, 0)}</b></div></div></article>`;
   }
@@ -2155,7 +2399,7 @@ input[type=color].input { padding: 4px; height: 46px; }
       ${opt.showOrg && p ? `<div class="chips"><span class="chip org">#${esc(p.numero)} · ${esc(p.orgao)}</span></div>` : ''}
       <div class="small muted">${C.qtdBR(it.qtd)} ${esc(it.unidade || 'Un')} · custo ${C.brl(it.custo)} · teto ${C.brl(c.teto)}${it.marca ? ' · ' + esc(it.marca) : ''}</div>
       <div class="minbox ${c.sitTipo === 'bad' ? 'bad' : ''}"><div><div class="t">Valor mínimo p/ proposta (unit.)</div><div class="tiny muted">margem ${C.pct(c.margem, 0)} · custo final ${C.brl(c.custoUnit)}</div></div><div class="v">${C.brl(c.minimo)}</div></div>
-      <div class="row between small muted"><span>Posso baixar do teto: <b style="color:var(--ink)">${c.folgaRs != null ? C.brl(c.folgaRs) + ' (' + C.pct(c.folgaPct, 0) + ')' : '—'}</b></span><span>${c.impostoTotal > 0 ? 'Impostos ' + C.brl(c.impostoTotal) + ' · ' : ''}Lucro: <b style="color:var(--ink)">${C.brl(c.lucro)}</b></span></div></article>`;
+      <div class="row between wrap small muted" style="gap:4px 10px"><span>Posso baixar do teto: <b style="color:var(--ink)">${c.folgaRs != null ? C.brl(c.folgaRs) + ' (' + C.pct(c.folgaPct, 0) + ')' : '—'}</b></span><span>${c.impostoTotal > 0 ? 'Impostos ' + C.brl(c.impostoTotal) + ' · ' : ''}Lucro: <b style="color:var(--ink)">${C.brl(c.lucro)}</b></span></div></article>`;
   }
 
   function renderDetail() {
@@ -2179,8 +2423,9 @@ input[type=color].input { padding: 4px; height: 46px; }
       <div class="card"><h3><span class="grow">Itens deste pregão (${pst.nItens})</span><button class="btn sm primary" data-act="novo-item" data-pid="${p.id}">${icon('plus', 'sm')} Item</button></h3>
         ${pst.itens.length ? `<div class="list">${pst.itens.map((it) => itemCard(it, R.iMap.get(it.id), { pst, showOrg: false })).join('')}</div>` : `<p class="muted small">Nenhum item ainda. Toque em “Item” para adicionar o primeiro.</p>`}</div>
       <div class="card"><h3>Dados do pregão</h3><div class="kv-list">
-        ${kv('Intervalo mín. lances', esc(p.intervaloMin))}${kv('Prazo de entrega', p.prazoEntregaDias ? esc(p.prazoEntregaDias) + ' dias' : '')}${kv('Exigências', esc(p.exigencias))}
-        ${kv('Entrega de carro', p.km ? `${C.numBR(p.km, 1)} km · ${p.viagens || 0} viagem(ns)${p.pedagio ? ' · pedágio ' + C.brl(p.pedagio) : ''} = ${C.brl(pst.viagem)}` : '')}
+        ${(() => { const z = prazoInfo(p); return z ? kv('Envio das propostas', `<span class="prazo ${z.nivel}">${esc(z.texto)}</span>`) : ''; })()}${kv('Local de entrega', esc(C.localEntregaPadrao(p)))}${kv('Intervalo mín. lances', esc(p.intervaloMin))}${kv('Prazo de entrega', p.prazoEntregaDias ? esc(p.prazoEntregaDias) + ' dias' : '')}${kv('Exigências', esc(p.exigencias))}
+        ${pst.ents ? kv('Entregas', pst.ents.map((x, i) => `${i + 1}. ${esc(x.local)} · ${C.numBR(x.e.km || 0, 1)} km · ${x.e.viagens || 0} viagem(ns)${x.e.pedagio ? ' · pedágio ' + C.brl(x.e.pedagio) : ''} = <b>${C.brl(x.custo)}</b> · ${x.nItens} ${x.nItens === 1 ? 'item' : 'itens'}`).join('<br>') + (pst.ents.length > 1 ? `<br>Total: ${C.brl(pst.viagem)}` : '')) : ''}
+        ${!pst.ents ? kv('Entrega de carro', p.km ? `${C.numBR(p.km, 1)} km (ida e volta) · ${p.viagens || 0} viagem(ns)${p.pedagio ? ' · pedágio ' + C.brl(p.pedagio) : ''} = ${C.brl(pst.viagem)}` : '') : ''}
         ${kv('Link do edital', p.link ? `<a href="${esc(p.link)}" target="_blank" rel="noopener">${esc(p.link)}</a>` : '')}${kv('Observações', esc(p.obs))}</div></div>
       <div class="grid2"><button class="btn" data-act="editar-pregao" data-id="${p.id}">${icon('edit', 'sm')} Editar dados</button>
         <button class="btn navy" data-act="pdf-pregao" data-id="${p.id}">${icon('pdf', 'sm')} Proposta PDF</button></div></div>`;
@@ -2285,7 +2530,7 @@ input[type=color].input { padding: 4px; height: 46px; }
           ${fp(o, 'validade', 'Validade (dias)', { type: 'int', im: 'numeric' })}
           ${fp(o, 'pagamento', 'Prazo de pagamento')}
           ${fp(o, 'prazoEntrega', 'Prazo de entrega', { ph: pz.prazoEntregaDias ? pz.prazoEntregaDias + ' dias (do pregão)' : 'ex.: 10 dias' })}
-          ${fp(o, 'localEntrega', 'Local de entrega', { ph: pz.cidadeUf || 'cidade do pregão' })}
+          ${fp(o, 'localEntrega', 'Local de entrega', { ph: C.localEntregaPadrao(pz) || 'local do pregão', hint: 'Em branco = usa o local do pregão. Escreva aqui só para mudar.' })}
           ${fp(o, 'observacoes', 'Observações (saem no PDF)', { area: true, rows: 2, full: true })}
           <div class="field full"><label>Data do documento</label><input class="input" type="date" data-ui="data" value="${esc(UI.pdf.data)}"></div>
           <div class="field full"><label>Texto da declaração</label><textarea class="input" rows="3" data-cfg="proposta.textoDeclaracao" data-type="text">${esc(cfg.proposta.textoDeclaracao)}</textarea></div>
@@ -2336,7 +2581,7 @@ input[type=color].input { padding: 4px; height: 46px; }
         <div class="field"><label for="pdfp">Pregão</label><select class="input" id="pdfp" data-ui="pregaoId">${list.map((x) => `<option value="${x.id}"${x.id === UI.pdf.pregaoId ? ' selected' : ''}>${esc(pregaoLabel(x))}</option>`).join('')}</select></div>
         <div class="field"><label for="pdff">Qual valor entra na proposta?</label><select class="input" id="pdff" data-ui="fonte">${FONTES.map(([v, l]) => `<option value="${v}"${v === UI.pdf.fonte ? ' selected' : ''}>${l}</option>`).join('')}</select></div>
         <div class="tbl-scroll"><table class="tbl"><thead><tr><th>Item</th><th class="r">Qtd</th><th class="r">Unit.</th><th class="r">Total</th></tr></thead><tbody>
-          ${L.linhas.map((x) => `<tr><td>${esc(x.descricao)}${x.acimaTeto ? ' <span class="badge bad">acima do teto</span>' : ''}</td><td class="r">${C.qtdBR(x.qtd)}</td><td class="r">${x.unit != null ? C.brl(x.unit) : '<span class="badge bad">sem valor</span>'}</td><td class="r">${x.total != null ? C.brl(x.total) : '—'}</td></tr>`).join('') || '<tr><td colspan="4" class="muted">Nenhum item neste pregão.</td></tr>'}
+          ${L.linhas.map((x) => `<tr><td>${esc(x.descricao)}${x.acimaTeto ? '<br><span class="badge bad">acima do teto</span>' : ''}</td><td class="r">${C.qtdBR(x.qtd)}</td><td class="r">${x.unit != null ? C.brl(x.unit) : '<span class="badge bad">sem valor</span>'}</td><td class="r">${x.total != null ? C.brl(x.total) : '—'}</td></tr>`).join('') || '<tr><td colspan="4" class="muted">Nenhum item neste pregão.</td></tr>'}
           </tbody><tfoot><tr><td colspan="3">Total da proposta</td><td class="r">${C.brl(L.total)}</td></tr></tfoot></table></div>
         ${L.semValor ? `<div class="alert warn" style="margin-top:10px">${icon('alert', 'sm')}<span>${L.semValor} item(ns) sem valor nesta opção. Preencha o teto ou o lance final, ou troque a opção acima.</span></div>` : ''}
       </div>
