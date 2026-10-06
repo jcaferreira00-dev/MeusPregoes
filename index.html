@@ -283,7 +283,7 @@ input[type=color].input { padding: 4px; height: 46px; }
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.3.0';
+  const APP_VERSION = '1.3.1';
   const STATUS = ['Analisando', 'Proposta enviada', 'Em disputa', 'Ganhou', 'Faturado', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti'];
   const DECL_PADRAO =
@@ -361,8 +361,8 @@ input[type=color].input { padding: 4px; height: 46px; }
       incluirExtenso: true, incluirBancarios: true, incluirDeclaracao: false, incluirLocalData: false,
     },
     // pos: 'direita' | 'centro' | 'esquerda'; altura em pontos do PDF; offX/offY em pontos (ajuste fino); opacidade 0..1
-    cabecalho: { imagem: null, mostrarNome: true, pos: 'direita', altura: 60, offX: 0, offY: 0, opacidade: 1 },
-    marcaDagua: { tipo: 'texto', texto: 'PROPOSTA COMERCIAL', imagem: null, opacidade: 0.12, angulo: 0, tamanho: 64, offX: 0, offY: 0 },
+    cabecalho: { imagem: null, imagemEm: 0, mostrarNome: true, pos: 'direita', altura: 60, offX: 0, offY: 0, opacidade: 1 },
+    marcaDagua: { tipo: 'texto', texto: 'PROPOSTA COMERCIAL', imagem: null, imagemEm: 0, opacidade: 0.12, angulo: 0, tamanho: 64, offX: 0, offY: 0 },
     // tributos: MEI paga DAS fixo por mês (não é % da venda). impostoPct só se sair do MEI (Simples: alíquota efetiva)
     salarioMinimo: 1621,
     atividadeMei: 'comercio',   // 'comercio' (+R$ 1 ICMS) | 'servicos' (+R$ 5 ISS) | 'ambos' (+R$ 6)
@@ -670,8 +670,8 @@ input[type=color].input { padding: 4px; height: 46px; }
     if (config === r.config) {
       // as imagens (papel timbrado e marca d'água) ficam só no aparelho: nunca perdê-las ao aceitar a config da nuvem
       config = Object.assign({}, r.config, {
-        cabecalho: Object.assign({}, r.config.cabecalho, { imagem: l.config.cabecalho.imagem || r.config.cabecalho.imagem }),
-        marcaDagua: Object.assign({}, r.config.marcaDagua, { imagem: l.config.marcaDagua.imagem || r.config.marcaDagua.imagem }),
+        cabecalho: Object.assign({}, r.config.cabecalho, { imagem: l.config.cabecalho.imagem || r.config.cabecalho.imagem, imagemEm: l.config.cabecalho.imagemEm || r.config.cabecalho.imagemEm || 0 }),
+        marcaDagua: Object.assign({}, r.config.marcaDagua, { imagem: l.config.marcaDagua.imagem || r.config.marcaDagua.imagem, imagemEm: l.config.marcaDagua.imagemEm || r.config.marcaDagua.imagemEm || 0 }),
       });
     }
     return { version: 1, config, pregoes: mergeById(l.pregoes, r.pregoes), itens: mergeById(l.itens, r.itens) };
@@ -693,8 +693,8 @@ input[type=color].input { padding: 4px; height: 46px; }
   // cópia limpa para a nuvem: sem 'undefined' e sem as imagens (só locais)
   function paraNuvem(state) {
     const s = JSON.parse(JSON.stringify(migrate(state)));
-    s.config.cabecalho.imagem = null;
-    s.config.marcaDagua.imagem = null;
+    s.config.cabecalho.imagem = null; delete s.config.cabecalho.imagemEm;
+    s.config.marcaDagua.imagem = null; delete s.config.marcaDagua.imagemEm;
     return s;
   }
 
@@ -780,6 +780,11 @@ input[type=color].input { padding: 4px; height: 46px; }
         persist(opts && opts.silent);
       },
       replaceAll(next) { state = migrate(next); persist(); },
+      // aplica uma imagem vinda da nuvem sem mexer na data da config (não gera novo envio da config)
+      setImagem(chave, imagem, em) {
+        const c = state.config[chave]; if (!c) return;
+        c.imagem = imagem || null; c.imagemEm = em || 0; persist('remote');
+      },
       // mescla dados vindos de fora (nuvem/backup). Só grava e avisa se algo realmente mudou ('remote' não dispara novo envio)
       mergeFrom(remote) {
         const merged = mergeState(state, remote);
@@ -969,6 +974,9 @@ input[type=color].input { padding: 4px; height: 46px; }
 
   // Coleção exclusiva deste app: cada app da mesma conta Firebase usa o seu próprio nome.
   const COLECAO = 'pregoesmei_usuarios';
+  // Imagens (papel timbrado e marca d'água) ficam numa coleção separada, para não estourar o limite de 1 MB do documento principal.
+  // O nome da coleção é curinga nas suas regras (/{collection}/{userId}), então não precisa mexer nas regras.
+  const COLECAO_IMG = 'pregoesmei_imagens';
 
   const firebaseConfig = {
     apiKey: 'AIzaSyCQBwZU8NK9YTGrnI-1-XDUhRGcmn3vMHs',
@@ -1003,6 +1011,8 @@ input[type=color].input { padding: 4px; height: 46px; }
 
       let pararDeOuvirSnapshot = null;
       const referenciaDoUsuario = (uid) => mFs.doc(db, COLECAO, uid);
+      const referenciaImagens = (uid) => mFs.doc(db, COLECAO_IMG, uid);
+      let pararDeOuvirImagens = null;
 
       root.CloudSync = {
         onAuthStateChanged(callback) { return mAuth.onAuthStateChanged(auth, callback); },
@@ -1028,6 +1038,23 @@ input[type=color].input { padding: 4px; height: 46px; }
           });
         },
 
+        // imagens: lê, deixa o app decidir qual é mais nova e grava só se preciso (transação)
+        mesclarImagens(uid, mesclar) {
+          const ref = referenciaImagens(uid);
+          return mFs.runTransaction(db, async (tx) => {
+            const snap = await tx.get(ref);
+            const r = mesclar(snap.exists() ? snap.data() : null);
+            if (r.gravar) tx.set(ref, r.dados);
+            return r.resultado;
+          });
+        },
+        ouvirImagens(uid, callback) {
+          if (pararDeOuvirImagens) pararDeOuvirImagens();
+          pararDeOuvirImagens = mFs.onSnapshot(referenciaImagens(uid), (snap) => {
+            if (snap.exists()) callback(snap.data());
+          }, (err) => console.warn('[cloud] escuta de imagens interrompida:', err && err.code));
+        },
+
         ouvirMudancas(uid, callback) {
           if (pararDeOuvirSnapshot) pararDeOuvirSnapshot();
           pararDeOuvirSnapshot = mFs.onSnapshot(referenciaDoUsuario(uid), (snap) => {
@@ -1036,6 +1063,7 @@ input[type=color].input { padding: 4px; height: 46px; }
         },
         pararDeOuvir() {
           if (pararDeOuvirSnapshot) { pararDeOuvirSnapshot(); pararDeOuvirSnapshot = null; }
+          if (pararDeOuvirImagens) { pararDeOuvirImagens(); pararDeOuvirImagens = null; }
         },
       };
 
@@ -2521,18 +2549,19 @@ input[type=color].input { padding: 4px; height: 46px; }
     if (w.tipo === 'texto') el.innerHTML = `<span style="font-size:${wmPrevSize(w)}px;opacity:${Math.max(.15, w.opacidade * 3)};transform:rotate(${-w.angulo}deg)">${esc(w.texto || '')}</span>`;
     else if (w.tipo === 'imagem' && w.imagem) el.innerHTML = `<img alt="" src="${w.imagem}" style="opacity:${Math.max(.15, w.opacidade * 3)};transform:rotate(${-w.angulo}deg)">`;
   }
-  // reduz a imagem e CORTA as margens vazias (transparentes ou brancas), para o que se vê ficar mesmo centralizado/alinhado
+  // reduz a imagem, CORTA as margens vazias (transparentes ou brancas) e reencolhe até caber no orçamento da nuvem
+  const ORCAMENTO_IMG = 450000; // caracteres do data URL por imagem (2 imagens + folga < 1 MB do documento)
   function downscaleImage(file, max) {
     return new Promise((resolve, reject) => {
       const img = new Image(), url = URL.createObjectURL(file);
       img.onload = () => {
-        const s = Math.min(1, max / Math.max(img.width, img.height));
-        let cv = document.createElement('canvas'); cv.width = Math.max(1, Math.round(img.width * s)); cv.height = Math.max(1, Math.round(img.height * s));
-        let ctx = cv.getContext('2d'); ctx.drawImage(img, 0, 0, cv.width, cv.height);
-        URL.revokeObjectURL(url);
         const png = file.type === 'image/png';
+        const s0 = Math.min(1, max / Math.max(img.width, img.height));
+        let cv = document.createElement('canvas'); cv.width = Math.max(1, Math.round(img.width * s0)); cv.height = Math.max(1, Math.round(img.height * s0));
+        cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
+        URL.revokeObjectURL(url);
         try {
-          const d = ctx.getImageData(0, 0, cv.width, cv.height).data, W = cv.width, H = cv.height;
+          const ctx = cv.getContext('2d'), W = cv.width, H = cv.height, d = ctx.getImageData(0, 0, W, H).data;
           const vazio = (i) => (png ? d[i + 3] < 12 : (d[i + 3] < 12 || (d[i] > 244 && d[i + 1] > 244 && d[i + 2] > 244)));
           let x0 = W, y0 = H, x1 = -1, y1 = -1;
           for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (!vazio((y * W + x) * 4)) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
@@ -2543,11 +2572,52 @@ input[type=color].input { padding: 4px; height: 46px; }
             cv = c2;
           }
         } catch (e) { /* sem corte: segue com a imagem inteira */ }
-        resolve(png ? cv.toDataURL('image/png') : cv.toDataURL('image/jpeg', 0.88));
+        const codifica = () => (png ? cv.toDataURL('image/png') : cv.toDataURL('image/jpeg', 0.85));
+        let out = codifica();
+        // grande demais para a nuvem: reduz 20% por vez (mínimo de 200 px no maior lado)
+        while (out.length > ORCAMENTO_IMG && Math.max(cv.width, cv.height) > 200) {
+          const c3 = document.createElement('canvas'); c3.width = Math.max(1, Math.round(cv.width * 0.8)); c3.height = Math.max(1, Math.round(cv.height * 0.8));
+          c3.getContext('2d').drawImage(cv, 0, 0, c3.width, c3.height); cv = c3; out = codifica();
+        }
+        if (out.length > ORCAMENTO_IMG) reject(new Error('Imagem pesada demais. Use uma mais simples.')); else resolve(out);
       };
       img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Imagem inválida')); };
       img.src = url;
     });
+  }
+
+  /* ---------- sincronização das imagens (papel timbrado e marca d'água) ---------- */
+  const IMG_CHAVES = [['cab', 'cabecalho'], ['marca', 'marcaDagua']];
+  function imgLocal() { const c = store.get().config; return { cab: { img: c.cabecalho.imagem || null, em: c.cabecalho.imagemEm || 0 }, marca: { img: c.marcaDagua.imagem || null, em: c.marcaDagua.imagemEm || 0 } }; }
+  function imgRemoto(r) { return { cab: { img: (r && r.cab) || null, em: (r && r.cabEm) || 0 }, marca: { img: (r && r.marca) || null, em: (r && r.marcaEm) || 0 } }; }
+  function aplicarImagensRemotas(R) {
+    const L = imgLocal(); let mudou = false;
+    for (const [k, path] of IMG_CHAVES) if (R[k].em > L[k].em) { store.setImagem(path, R[k].img, R[k].em); mudou = true; }
+    return mudou;
+  }
+  async function sincronizarImagens() {
+    const cs = window.CloudSync, u = Cloud.user;
+    if (!cs || !u || !navigator.onLine || Cloud.imgBusy) return;
+    Cloud.imgBusy = true;
+    try {
+      // imagens de antes desta função (sem data) valem "agora" na primeira vez: não são sobrescritas pela nuvem
+      for (const [, path] of IMG_CHAVES) { const c = store.get().config[path]; if (c.imagem && !c.imagemEm) store.setImagem(path, c.imagem, Date.now()); }
+      const aplicar = await cs.mesclarImagens(u.uid, (remoto) => {
+        const L = imgLocal(), R = imgRemoto(remoto);
+        const dados = { cab: R.cab.img, cabEm: R.cab.em, marca: R.marca.img, marcaEm: R.marca.em };
+        let gravar = false;
+        for (const k of ['cab', 'marca']) if (L[k].em > R[k].em) { dados[k] = L[k].img; dados[k + 'Em'] = L[k].em; gravar = true; }
+        if (JSON.stringify(dados).length > 960000) throw new Error('As imagens passaram do limite da nuvem. Troque por imagens menores.');
+        return { gravar, dados, resultado: R };
+      });
+      if (aplicarImagensRemotas(aplicar)) { UI.keepScroll = true; if (UI.tab === 'pdf') render(); }
+    } catch (e) { console.warn('[imagens]', e); if (e && /limite/.test(e.message || '')) toast(e.message); }
+    finally { Cloud.imgBusy = false; }
+  }
+  // chamado quando você troca ou remove uma imagem: carimba a data e envia
+  function imagemMudou(path) {
+    store.setConfigPath(path + '.imagemEm', Date.now(), { silent: true });
+    sincronizarImagens();
   }
 
   /* ---------- eventos ---------- */
@@ -2580,8 +2650,8 @@ input[type=color].input { padding: 4px; height: 46px; }
       case 'clausula-padrao': patchClausula(id, 'texto', C.CLAUSULAS_PADRAO.find((d) => d.id === id).texto); UI.keepScroll = true; render(); break;
       case 'wm-tipo': commitAllPending(); store.setConfigPath('marcaDagua.tipo', t.dataset.v, { silent: true }); UI.keepScroll = true; render(); break;
       case 'hd-pos': store.setConfigPath('cabecalho.pos', t.dataset.v, { silent: true }); UI.keepScroll = true; render(); break;
-      case 'hd-remover': store.setConfigPath('cabecalho.imagem', null, { silent: true }); UI.keepScroll = true; render(); break;
-      case 'wm-remover': store.setConfigPath('marcaDagua.imagem', null, { silent: true }); UI.keepScroll = true; render(); break;
+      case 'hd-remover': store.setConfigPath('cabecalho.imagem', null, { silent: true }); imagemMudou('cabecalho'); UI.keepScroll = true; render(); break;
+      case 'wm-remover': store.setConfigPath('marcaDagua.imagem', null, { silent: true }); imagemMudou('marcaDagua'); UI.keepScroll = true; render(); break;
       case 'export': {
         const blob = new Blob([store.export()], { type: 'application/json' });
         const el = document.createElement('a'); el.href = URL.createObjectURL(blob); el.download = `pregoes-mei-backup-${C.hojeISO()}.json`; document.body.appendChild(el); el.click(); el.remove();
@@ -2593,7 +2663,7 @@ input[type=color].input { padding: 4px; height: 46px; }
       case 'nuvem-criar': nuvemEntrar(true); break;
       case 'nuvem-sair': confirmar('Sair da conta?', 'Os dados continuam neste aparelho, mas deixam de sincronizar até você entrar de novo.', 'Sair', false).then((ok) => { if (ok && window.CloudSync) window.CloudSync.logout(); }); break;
       case 'nuvem-tentar': iniciarNuvem(true); break;
-      case 'sync-agora': S.run('manual').then((r) => { if (r && r.ok) toast('Sincronizado'); updateStatusPill(); }); break;
+      case 'sync-agora': sincronizarImagens(); S.run('manual').then((r) => { if (r && r.ok) toast('Sincronizado'); updateStatusPill(); }); break;
       case 'instalar': if (UI.deferredPrompt) { UI.deferredPrompt.prompt(); UI.deferredPrompt.userChoice.finally(() => { UI.deferredPrompt = null; render(); }); } break;
       case 'banner-atualizar': location.reload(); break;
       default: break;
@@ -2624,15 +2694,15 @@ input[type=color].input { padding: 4px; height: 46px; }
     if (t.dataset.statusPregao) { store.upsertPregao({ id: t.dataset.statusPregao, status: t.value }); toast('Status: ' + t.value); return; }
     if (t.hasAttribute('data-hd-file') && t.files && t.files[0]) {
       downscaleImage(t.files[0], 1800).then((url) => {
-        store.setConfigPath('cabecalho.imagem', url, { silent: true });
-        UI.keepScroll = true; render(); toast('Papel timbrado salvo');
+        store.setConfigPath('cabecalho.imagem', url, { silent: true }); imagemMudou('cabecalho');
+        UI.keepScroll = true; render(); toast(Cloud.user ? 'Imagem do cabeçalho salva e enviada' : 'Imagem do cabeçalho salva');
       }).catch((err) => toast(err.message || 'Não foi possível usar essa imagem'));
       return;
     }
     if (t.hasAttribute('data-wm-file') && t.files && t.files[0]) {
       downscaleImage(t.files[0], 1000).then((url) => {
-        store.setConfigPath('marcaDagua.imagem', url, { silent: true }); store.setConfigPath('marcaDagua.tipo', 'imagem', { silent: true });
-        UI.keepScroll = true; render(); toast('Imagem da marca d’água salva');
+        store.setConfigPath('marcaDagua.imagem', url, { silent: true }); store.setConfigPath('marcaDagua.tipo', 'imagem', { silent: true }); imagemMudou('marcaDagua');
+        UI.keepScroll = true; render(); toast(Cloud.user ? 'Marca d’água salva e enviada' : 'Marca d’água salva');
       }).catch((err) => toast(err.message || 'Não foi possível usar essa imagem'));
       return;
     }
@@ -2709,7 +2779,7 @@ input[type=color].input { padding: 4px; height: 46px; }
     else if (Cloud.estado === 'erro') corpo = `<div class="alert warn">${icon('alert', 'sm')}<span>${esc(Cloud.erro)}</span></div><button class="btn block" style="margin-top:10px" data-act="nuvem-tentar">Tentar de novo</button><p class="tiny muted" style="margin-top:8px">O app funciona normalmente sem a nuvem; seus dados ficam salvos no aparelho.</p>`;
     else if (u) corpo = `<div class="kv-list"><div><span>Conta</span><b>${esc(u.email || '')}</b></div><div><span>Situação</span><b id="syncMsg">${esc(S.message)}</b></div></div>
       <div class="grid2" style="margin-top:12px"><button class="btn" data-act="sync-agora">${icon('cloud', 'sm')} Sincronizar</button><button class="btn danger" data-act="nuvem-sair">Sair</button></div>
-      <p class="tiny muted" style="margin-top:10px">Papel timbrado e marca d’água ficam só neste aparelho (envie a imagem em cada aparelho).</p>`;
+      <p class="tiny muted" style="margin-top:10px">Papel timbrado e marca d’água também sincronizam (a imagem mais recente vale; cada uma é reduzida para ~450 KB).</p>`;
     else corpo = `<p class="small muted" style="margin-bottom:12px">Entre com a mesma conta em todos os aparelhos para manter os dados iguais.</p>
       <div class="field"><label for="cEmail">E-mail</label><input class="input" id="cEmail" type="email" inputmode="email" autocomplete="username" autocapitalize="none"></div>
       <div class="field"><label for="cSenha">Senha</label><input class="input" id="cSenha" type="password" autocomplete="current-password"></div>
@@ -2759,6 +2829,8 @@ input[type=color].input { padding: 4px; height: 46px; }
     localStorage.setItem('mp.cloud.uid', user.uid);
     S.configure(adaptadorFirebase(user.uid));
     // atualização ao vivo: mudanças feitas em outro aparelho chegam aqui (não reenvia: kind 'remote')
+    sincronizarImagens();
+    cs.ouvirImagens(user.uid, (dados) => { if (aplicarImagensRemotas(imgRemoto(dados))) { UI.keepScroll = true; if (UI.tab === 'pdf') render(); } });
     cs.ouvirMudancas(user.uid, (dados) => {
       store.mergeFrom(dados);
       // se a nuvem está sem algo que este aparelho tem (gravação perdida ou atrasada), reconcilia sozinho
@@ -2824,7 +2896,7 @@ input[type=color].input { padding: 4px; height: 46px; }
     if (q.has('tab') || q.has('acao') || q.has('source')) history.replaceState(null, '', location.pathname);
     initSW();
     iniciarNuvem(false);                                   // carrega o Firebase sem travar a abertura
-    window.addEventListener('online', () => { if (!Cloud.ligado) iniciarNuvem(false); });
+    window.addEventListener('online', () => { if (!Cloud.ligado) iniciarNuvem(false); else sincronizarImagens(); });
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
