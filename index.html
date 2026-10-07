@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Pregões MEI</title>
+<title>Meus Pregões</title>
 <meta name="description" content="Controle de pregões, itens, valor mínimo da proposta, limite do MEI e geração de proposta em PDF.">
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" content="#1f3864" media="(prefers-color-scheme: light)">
@@ -27,7 +27,8 @@
 <!-- modo app (iOS / Android) -->
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Pregões MEI">
+<meta name="apple-mobile-web-app-title" content="Meus Pregões">
+<meta name="application-name" content="Meus Pregões">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="format-detection" content="telephone=no">
 
@@ -248,6 +249,21 @@ input[type=range] { width: 100%; accent-color: var(--blue); }
 .seg-ctl button.on { background: var(--card); color: var(--blue); box-shadow: 0 1px 3px rgba(0,0,0,.12); }
 .hidden { display: none !important; }
 @media print { .nav, .topbar, .fab { display: none !important; } }
+/* datas no formulário: nunca estouram a coluna no celular */
+input.input[type=datetime-local], input.input[type=date] { display: block; -webkit-appearance: none; appearance: none; width: 100%; max-width: 100%; min-width: 0; text-align: left; }
+input.input[type=datetime-local]::-webkit-date-and-time-value, input.input[type=date]::-webkit-date-and-time-value { text-align: left; min-width: 0; }
+
+/* Falta dados: borda laranja pulsando */
+@keyframes faltaPulse {
+  0%, 100% { box-shadow: 0 0 0 2px rgba(245,124,0,.95), 0 0 0 0 rgba(245,124,0,.55), var(--shadow); }
+  50%      { box-shadow: 0 0 0 3px rgba(245,124,0,1), 0 0 14px 5px rgba(245,124,0,.45), var(--shadow); }
+}
+.pcard.falta-dados { border-color: #f57c00; animation: faltaPulse 1.6s ease-in-out infinite; }
+.pcard.falta-dados.prz-warn, .pcard.falta-dados.prz-bad { border-color: #f57c00; }
+.pcard .lkrow { padding-top: 8px; border-top: 1px dashed var(--line); }
+.pcard .lk { text-decoration: none; color: var(--blue); min-width: 0; }
+@media (prefers-reduced-motion: reduce) { .pcard.falta-dados { animation: none !important; box-shadow: 0 0 0 3px #f57c00, var(--shadow); } }
+
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
 
 /* ---------- pregão com cor própria: cartão da lista e caixa na aba Itens ---------- */
@@ -1260,9 +1276,9 @@ input[type=color].input { padding: 4px; height: 46px; }
 
     const doc = await PDFDocument.create();
     doc.setTitle('Proposta comercial — ' + (preg.numero || ''));
-    doc.setAuthor(emp.nome || 'Pregões MEI');
-    doc.setCreator('Pregões MEI');
-    doc.setProducer('Pregões MEI (pdf-lib)');
+    doc.setAuthor(emp.nome || 'Meus Pregões');
+    doc.setCreator('Meus Pregões');
+    doc.setProducer('Meus Pregões (pdf-lib)');
     const font = await doc.embedFont(StandardFonts.Helvetica);
     const bold = await doc.embedFont(StandardFonts.HelveticaBold);
     const ital = await doc.embedFont(StandardFonts.HelveticaOblique);
@@ -1905,7 +1921,7 @@ input[type=color].input { padding: 4px; height: 46px; }
       prazoEntregaDias: p.prazoEntregaDias == null ? '' : String(p.prazoEntregaDias), exigencias: p.exigencias || '', status: p.status || 'Falta dados',
       km: p.km ? C.numBR(p.km, 1) : '', viagens: p.viagens == null ? '1' : String(p.viagens), pedagio: p.pedagio ? C.numBR(p.pedagio) : '',
       entregaDiferente: !!p.entregaDiferente, locaisEntrega: p.locaisEntrega || '',
-      link: p.link || '', obs: p.obs || '',
+      link: p.link || '', linkProposta: p.linkProposta || '', linkLicitacao: p.linkLicitacao || '', obs: p.obs || '',
     };
   }
   /* ---------- trajeto automático (OpenStreetMap: Nominatim para achar o local, OSRM para a distância por estrada) ---------- */
@@ -1991,8 +2007,10 @@ input[type=color].input { padding: 4px; height: 46px; }
         ${field({ label: 'Órgão / entidade *', name: 'orgao', value: v.orgao, full: true, ph: 'ex.: Universidade de Londrina' })}
         ${field({ label: 'Local do pregão (cidade/UF)', name: 'cidadeUf', value: v.cidadeUf, full: true, ph: 'Londrina/PR', hint: 'Ao preencher, o trajeto de ida e volta a partir do endereço da sua empresa é calculado sozinho.' })}
         ${field({ label: 'Link do edital', name: 'link', type: 'url', value: v.link, full: true, ph: 'https://…' })}
-        ${field({ label: 'Data e hora final para envio das propostas', name: 'prazoPropostas', type: 'datetime-local', value: v.prazoPropostas, hint: 'Na lista, o cartão fica amarelo faltando 2 dias e vermelho faltando 1 dia.' })}
-        ${field({ label: 'Data e hora da sessão', name: 'sessao', type: 'datetime-local', value: v.sessao })}
+        ${field({ label: 'Site para enviar a proposta (ex.: BLL)', name: 'linkProposta', type: 'url', value: v.linkProposta, full: true, ph: 'https://…', hint: 'Aparece como botão no cartão da guia Pregões.' })}
+        ${field({ label: 'Site que lista a licitação (ex.: PNCP)', name: 'linkLicitacao', type: 'url', value: v.linkLicitacao, full: true, ph: 'https://…', hint: 'Aparece como botão no cartão da guia Pregões.' })}
+        ${field({ label: 'Data e hora final para envio das propostas', name: 'prazoPropostas', type: 'datetime-local', value: v.prazoPropostas, full: true, hint: 'Na lista, o cartão fica amarelo faltando 2 dias e vermelho faltando 1 dia.' })}
+        ${field({ label: 'Data e hora da sessão', name: 'sessao', type: 'datetime-local', value: v.sessao, full: true })}
         ${field({ label: 'Prazo de entrega (dias)', name: 'prazoEntregaDias', value: v.prazoEntregaDias, inputmode: 'numeric' })}
         ${field({ label: 'Exigências (IE, certidões)', name: 'exigencias', type: 'textarea', value: v.exigencias, full: true, ph: 'SICAF, CND estadual…' })}
       </div>
@@ -2131,7 +2149,7 @@ input[type=color].input { padding: 4px; height: 46px; }
           numero: x.numero.trim(), orgao: x.orgao.trim(), cidadeUf: x.cidadeUf.trim(), sessao: x.sessao || '', prazoPropostas: x.prazoPropostas || '',
           entregaDiferente: !!x.entregaDiferente, kmManual: form.dataset.kmManual === '1',
           prazoEntregaDias: x.prazoEntregaDias ? parseInt(x.prazoEntregaDias, 10) : null, exigencias: x.exigencias.trim(), status: x.status,
-          link: x.link.trim(), obs: x.obs.trim(),
+          link: x.link.trim(), linkProposta: (x.linkProposta || '').trim(), linkLicitacao: (x.linkLicitacao || '').trim(), obs: x.obs.trim(),
         };
         if (x.entregaDiferente) { data.entregas = ent; data.locaisEntrega = ent.map((e) => e.local).join('\n'); }
         else Object.assign(data, { entregas: [], locaisEntrega: '', km, viagens: x.viagens === '' ? (km > 0 ? 1 : 0) : (C.parseBR(x.viagens) || 0), pedagio: C.parseBR(x.pedagio) || 0 });
@@ -2308,7 +2326,7 @@ input[type=color].input { padding: 4px; height: 46px; }
   }
 
   function emptyWelcome() {
-    return `<div class="page"><div class="card empty">${icon('pregoes')}<h2>Bem-vindo ao Pregões MEI</h2>
+    return `<div class="page"><div class="card empty">${icon('pregoes')}<h2>Bem-vindo ao Meus Pregões</h2>
       <p class="muted">Cadastre um pregão, adicione os itens que vai vender e veja na hora o <b>valor mínimo</b> da proposta e quanto falta para o teto do MEI.</p>
       <button class="btn primary block" data-act="novo-pregao">${icon('plus')} Cadastrar primeiro pregão</button>
       <button class="btn ghost block" data-act="demo">Ver com dados de exemplo</button></div></div>`;
@@ -2384,14 +2402,18 @@ input[type=color].input { padding: 4px; height: 46px; }
     const p = pst.p;
     const chips = pst.itens.slice(0, 3).map((i) => `<span class="chip">${esc(i.descricao)}</span>`).join('') + (pst.itens.length > 3 ? `<span class="chip">+${pst.itens.length - 3}</span>` : '');
     const pz = prazoInfo(p);
-    const pzCls = pz && (pz.nivel === 'warn' || pz.nivel === 'bad') ? ' prz-' + pz.nivel : '';
+    const pzCls = (pz && (pz.nivel === 'warn' || pz.nivel === 'bad') ? ' prz-' + pz.nivel : '') + (p.status === 'Falta dados' ? ' falta-dados' : '');
+    const url = (u) => { u = String(u || '').trim(); return u ? (/^https?:\/\//i.test(u) ? u : 'https://' + u) : ''; };
+    const btn = (u, txt) => u ? `<a class="btn sm grow lk" href="${esc(u)}" target="_blank" rel="noopener noreferrer" data-act="link-externo">${icon('link', 'sm')} ${txt}</a>` : '';
+    const botoes = btn(url(p.linkProposta), 'Enviar proposta') + btn(url(p.linkLicitacao), 'Licitações');
     return `<article class="pcard${pzCls}" style="--gc:${corDe(p.id)}" data-act="abrir-pregao" data-id="${p.id}" tabindex="0" role="button">
       <div class="row between"><span class="num" style="color:var(--gc)">PREGÃO Nº ${esc(p.numero)}</span>${badgeStatus(p.status)}</div>
       <h4>${esc(p.orgao)}</h4>
       <div class="small muted row wrap" style="gap:4px 14px">${p.cidadeUf ? `<span class="row" style="gap:4px">${icon('pin', 'sm')}${esc(p.cidadeUf)}</span>` : ''}${p.sessao ? `<span class="row" style="gap:4px">${icon('calendar', 'sm')}${esc(C.fmtSessao(p.sessao))}</span>` : ''}</div>
       ${pz ? `<div><span class="prazo ${pz.nivel}">${icon(pz.nivel === 'ok' ? 'calendar' : 'alert', 'sm')}${esc(pz.texto)}</span></div>` : ''}
       <div class="chips">${chips || '<span class="chip">Sem itens ainda</span>'}</div>
-      <div class="nums"><div>Venda<b>${C.brl0(pst.venda)}</b></div><div>Lucro<b>${C.brl0(pst.lucro)}</b></div><div>Margem<b>${C.pct(pst.margem, 0)}</b></div></div></article>`;
+      <div class="nums"><div>Venda<b>${C.brl0(pst.venda)}</b></div><div>Lucro<b>${C.brl0(pst.lucro)}</b></div><div>Margem<b>${C.pct(pst.margem, 0)}</b></div></div>
+      ${botoes ? `<div class="row lkrow" style="gap:8px">${botoes}</div>` : ''}</article>`;
   }
 
   function pregoesListHtml() {
@@ -2914,6 +2936,7 @@ input[type=color].input { padding: 4px; height: 46px; }
     const a = t.dataset.act, id = t.dataset.id;
     switch (a) {
       case 'tab': setTab(t.dataset.v); break;
+      case 'link-externo': e.stopPropagation(); break;   // deixa o link abrir sem abrir o cartão
       case 'novo-pregao': openPregaoForm(); break;
       case 'editar-pregao': openPregaoForm(id); break;
       case 'abrir-pregao': UI.tab = 'pregoes'; UI.detailId = id; history.pushState({ detail: id }, ''); saveUI(); render(); window.scrollTo(0, 0); break;
@@ -3151,7 +3174,7 @@ input[type=color].input { padding: 4px; height: 46px; }
   /* ---------- inicialização ---------- */
   function buildShell() {
     $('#app').innerHTML = `<div class="shell">
-      <header class="topbar"><img class="logo" src="icons/icon-96.png" alt="" width="34" height="34"><div class="grow"><h1>Pregões MEI</h1><div class="sub" id="subt"></div></div><span class="pill" id="pill"></span></header>
+      <header class="topbar"><img class="logo" src="icons/icon-96.png" alt="" width="34" height="34"><div class="grow"><h1>Meus Pregões</h1><div class="sub" id="subt"></div></div><span class="pill" id="pill"></span></header>
       <nav class="nav" aria-label="Seções">${TABS.map((t) => `<button data-v="${t.id}" aria-label="${t.t}">${icon(t.id)}<span>${t.t}</span></button>`).join('')}</nav>
       <main class="main" id="main" tabindex="-1"></main></div>`;
     $('.nav').addEventListener('click', (e) => { const b = e.target.closest('button[data-v]'); if (b) setTab(b.dataset.v); });
