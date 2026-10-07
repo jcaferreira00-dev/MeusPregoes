@@ -1,7 +1,7 @@
 {
   "id": "./",
-  "name": "Pregões MEI",
-  "short_name": "Pregões MEI",
+  "name": "Meus Pregões",
+  "short_name": "Meus Pregões",
   "description": "Controle de pregões, valor mínimo da proposta, limite do MEI e proposta em PDF.",
   "lang": "pt-BR",
   "dir": "ltr",
