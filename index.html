@@ -296,7 +296,7 @@ input[type=color].input { padding: 4px; height: 46px; }
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.3.4';
+  const APP_VERSION = '1.3.2';
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Em disputa', 'Ganhou', 'Faturado', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti'];
   const DECL_PADRAO =
@@ -606,21 +606,22 @@ input[type=color].input { padding: 4px; height: 46px; }
   const CAMPOS_FORNECEDOR = [
     ['fornecedor', 'Fornecedor', true], ['cnpj', 'CNPJ/CPF', true], ['ie', 'Inscrição Estadual', true], ['endereco', 'Endereço', true], ['bairro', 'Bairro', true],
     ['cep', 'CEP', true], ['cidade', 'Cidade', true], ['uf', 'Estado', true], ['telefone', 'Telefone', true], ['email', 'e-mail', true],
-    ['banco', 'Banco', true], ['agencia', 'Agência', true], ['conta', 'Conta-corrente', true], ['pix', 'PIX', false],
   ];
+  const CAMPOS_BANCO = [['banco', 'Banco', true], ['agencia', 'Agência', true], ['conta', 'Conta-corrente', true], ['pix', 'PIX', true], ['favorecido', 'Favorecido', true], ['cnpj', 'CNPJ da empresa', true]];
 
   function pdfOptsBase(cfg) {
     const p = cfg.proposta || {};
     const colunas = {}; COLUNAS_DESC.forEach(([id, , , on]) => { colunas[id] = on; });
     const campos = {}; CAMPOS_FORNECEDOR.forEach(([id, , on]) => { campos[id] = on; });
+    const bancoCampos = {}; CAMPOS_BANCO.forEach(([id, , on]) => { bancoCampos[id] = on; });
     return {
-      modelo: 'comercial',          // 'comercial' (dourado) | 'descritivo' (anexo do edital)
+      modelo: 'unico',              // modelo único: tudo ligado por padrão, cada bloco tem uma chavinha
       cabecalho: null, marca: null, // null = padrão do modelo (comercial usa, descritivo não)
       validade: p.validadeDias || 60, prorrogacao: 30, pagamento: p.condPagamento || 'Conforme edital',
-      prazoEntrega: '', localEntrega: '', observacoes: '', icmsAliq: 0,
+      prazoEntrega: '', localEntrega: '', observacoes: '', icmsAliq: 0, bancoCampos,
       com: {
-        grade: true, fornecedor: false, bancarios: p.incluirBancarios !== false, itens: true, resumo: true, extenso: p.incluirExtenso !== false,
-        observacoes: true, declaracao: !!p.incluirDeclaracao, localData: !!p.incluirLocalData, assinatura: true, assinaturaNome: true, assinaturaDoc: true,
+        grade: true, fornecedor: false, bancarios: true, itens: true, resumo: true, extenso: true,
+        observacoes: true, declaracao: true, localData: true, assinatura: true, assinaturaNome: true, assinaturaDoc: true,
       },
       desc: {
         titulo: true, titulo1: 'ANEXO III', titulo2: 'MODELO DE DESCRITIVO DA PROPOSTA DE PREÇOS',
@@ -631,7 +632,7 @@ input[type=color].input { padding: 4px; height: 46px; }
         total: false, extenso: false,
         clausulas: [],
         localData: true, localDataModo: 'preenchido',
-        assinatura: true, assinaturaRotulo: 'Representante Legal', assinaturaNome: false, assinaturaDoc: false,
+        assinatura: true, assinaturaRotulo: 'Representante Legal', assinaturaNome: true, assinaturaDoc: true,
       },
     };
   }
@@ -656,9 +657,9 @@ input[type=color].input { padding: 4px; height: 46px; }
   function resolverPdfOpts(pregao, cfg) {
     const pad = cfg.pdfPadrao || {}, ov = (pregao && pregao.pdfOpts) || {};
     const m = deepMerge(deepMerge(pdfOptsBase(cfg), pad), ov);
-    m.modelo = m.modelo === 'descritivo' ? 'descritivo' : 'comercial';
-    if (m.cabecalho === null || m.cabecalho === undefined) m.cabecalho = m.modelo === 'comercial';
-    if (m.marca === null || m.marca === undefined) m.marca = m.modelo === 'comercial';
+    m.modelo = 'unico';
+    if (m.cabecalho === null || m.cabecalho === undefined) m.cabecalho = true;
+    if (m.marca === null || m.marca === undefined) m.marca = true;
     m.desc.clausulas = montarClausulas((ov.desc && ov.desc.clausulas) || (pad.desc && pad.desc.clausulas) || []);
     return m;
   }
@@ -903,7 +904,7 @@ input[type=color].input { padding: 4px; height: 46px; }
   const api = {
     APP_VERSION, STATUS, INATIVOS, DECL_PADRAO, uid, n0, round2, ceil2, parseBR, brl, brl0, pct, numBR, qtdBR,
     fmtSessao, dataExtensa, hojeISO, defaultConfig, emptyState, migrate, custoViagem, localEntregaPadrao, calcItem, limiteMEI,
-    computeAll, dasMensal, mesesAtivos, previewItem, linhasProposta, resolverPdfOpts, numerarClausulas, montarClausulas, CLAUSULAS_PADRAO, NOMES_CLAUSULAS, COLUNAS_DESC, CAMPOS_FORNECEDOR, mergeState, diffState, paraNuvem, createStore, demoState,
+    computeAll, dasMensal, mesesAtivos, previewItem, linhasProposta, resolverPdfOpts, numerarClausulas, montarClausulas, CLAUSULAS_PADRAO, NOMES_CLAUSULAS, COLUNAS_DESC, CAMPOS_FORNECEDOR, CAMPOS_BANCO, mergeState, diffState, paraNuvem, createStore, demoState,
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   root.Core = api;
@@ -1378,40 +1379,39 @@ input[type=color].input { padding: 4px; height: 46px; }
       return lines.length ? lines : [[]];
     }
     function drawMixed(line, x, yy, size, color) { let cx = x; for (const tk of line) { page.drawText(tk.t, { x: cx, y: yy, size, font: tk.f, color: color || rgb(0, 0, 0) }); cx += tk.f.widthOfTextAtSize(tk.t, size); } }
-    // quadro "DADOS DO FORNECEDOR" (usado nos dois modelos). campos = {id: true/false}; borda = cor da moldura
-    function blocoFornecedor(campos, borda) {
-      const val = { fornecedor: emp.nome, cnpj: emp.cnpj || emp.cpf, ie: emp.ie, endereco: emp.endereco, bairro: emp.bairro, cep: emp.cep, cidade: emp.cidade, uf: emp.uf, telefone: emp.telefone, email: emp.email, banco: emp.banco, agencia: emp.agencia, conta: emp.conta, pix: emp.pix };
-      const rot = { fornecedor: 'Fornecedor:', cnpj: 'CNPJ/CPF:', ie: 'Inscrição Estadual:', endereco: 'Endereço:', bairro: 'Bairro:', cep: 'CEP:', cidade: 'Cidade:', uf: 'Estado:', telefone: 'Telefone:', email: 'e-mail:', banco: 'Banco:', agencia: 'Agência:', conta: 'Conta-corrente:', pix: 'PIX:' };
-      const posX = { fornecedor: 0, cnpj: 0, ie: 0.46, endereco: 0, bairro: 0, cep: 0, cidade: 0.335, uf: 0.59, telefone: 0, email: 0.46, banco: 0, agencia: 0.335, conta: 0.59, pix: 0 };
-      const rowsDef = [['fornecedor'], ['cnpj', 'ie'], ['endereco'], ['bairro'], ['cep', 'cidade', 'uf'], ['telefone', 'email'], ['banco', 'agencia', 'conta'], ['pix']];
-      const inner = CW - 16, preto = rgb(0, 0, 0);
-      const rows = rowsDef.map((r) => r.filter((f) => campos[f])).filter((r) => r.length).map((r) => {
-        const cells = r.map((f, k) => {
-          const x = M + 8 + posX[f] * inner;
-          const nx = k + 1 < r.length ? M + 8 + posX[r[k + 1]] * inner : M + CW - 8;
-          const ls = wrapMixed([{ t: rot[f] + ' ', f: font }, { t: val[f] || '', f: bold }], 10.5, Math.max(40, nx - x - 8));
-          return { x, ls };
-        });
-        return { cells, h: Math.max(...cells.map((c) => c.ls.length)) * 13 + 8 };
-      });
-      if (!rows.length) return;
-      const total = rows.reduce((a, r) => a + r.h, 0) + 8;
-      garantir(total + 22);
-      TC('DADOS DO FORNECEDOR', PW / 2, y - 11, 11.5, font, preto); y -= 18;
-      page.drawRectangle({ x: M, y: y - total, width: CW, height: total, borderColor: borda, borderWidth: 1 });
-      let yy = y - 4;
-      rows.forEach((r) => { r.cells.forEach((c) => c.ls.forEach((l, j) => drawMixed(l, c.x, yy - 12 - j * 13, 10.5, preto))); yy -= r.h; });
-      y -= total + 14;
-    }
-
     novaPagina();
 
-    if (op.modelo !== 'descritivo') {
-    /* ===== 2) GRADE DE DADOS (órgão, processo, validade, pagamento, entrega) ===== */
+    const D = op.desc, BLK = rgb(0, 0, 0), CINZA = rgb(0.9, 0.9, 0.9), AZUL = rgb(0.72, 0.78, 0.89);
+    const fN = (n) => new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n);
+    const bT = (n) => (n === null || n === undefined) ? '—' : 'R$ ' + fN(n);
+    const subst = (t, c) => safe(t)
+      .replace(/\{validade\}/g, `${op.validade} (${inteiroExtenso(Number(op.validade) || 0)}) dias`)
+      .replace(/\{prorrogacao\}/g, `${op.prorrogacao} (${inteiroExtenso(Number(op.prorrogacao) || 0)}) dias`)
+      .replace(/\{numero\}/g, preg.numero || '').replace(/\{orgao\}/g, preg.orgao || '').replace(/\{pai\}/g, (c && c.paiRotulo) || '4');
+
+    // --- títulos e faixa do edital
+    if (D.titulo) {
+      [D.titulo1, D.titulo2].filter(Boolean).forEach((t) => { garantir(20); TC(subst(t), PW / 2, y - 12, 12.5, bold, BLK); y -= 16; });
+      y -= 6;
+    }
+    if (D.faixa && D.faixaTexto) {
+      garantir(30);
+      page.drawRectangle({ x: M, y: y - 22, width: CW, height: 22, color: CINZA, borderColor: BLK, borderWidth: 1 });
+      TC(subst(D.faixaTexto), PW / 2, y - 15, 11.5, bold, BLK);
+      y -= 22 + 14;
+    }
+
+    /* ===== GRADE DE DADOS (rótulo colorido + valor). Item com 3º valor true ocupa a linha inteira ===== */
     function grade(pares) {
-      for (let i = 0; i < pares.length; i += 2) {
-        const par = pares.slice(i, i + 2);
-        const cw = CW / 2;
+      const rows = []; let tmp = null;
+      for (const it of pares) {
+        if (it[2]) { if (tmp) { rows.push([tmp]); tmp = null; } rows.push([it]); }
+        else if (tmp) { rows.push([tmp, it]); tmp = null; }
+        else tmp = it;
+      }
+      if (tmp) rows.push([tmp]);
+      for (const par of rows) {
+        const cw = par.length === 1 ? CW : CW / 2;
         const lines = par.map(([, v]) => wrap(v || '—', font, 11, cw - 10));
         const h = Math.max(40, 24 + Math.max(...lines.map((l) => l.length)) * 13);
         garantir(h + 2);
@@ -1434,22 +1434,36 @@ input[type=color].input { padding: 4px; height: 46px; }
       y -= 10;
     }
 
-    /* ===== 2b) DADOS DO FORNECEDOR (opcional no modelo comercial) ===== */
-    if (op.com.fornecedor) {
-      const cf = Object.assign({}, op.desc.campos);
-      if (op.com.bancarios) { cf.banco = false; cf.agencia = false; cf.conta = false; cf.pix = false; }
-      blocoFornecedor(cf, ACC);
+    /* ===== DADOS DO FORNECEDOR (mesmo formato e cor dos demais dados; 2 colunas sempre alinhadas) ===== */
+    if (D.fornecedor) {
+      const cf = D.campos || {};
+      const defs = [['fornecedor', 'FORNECEDOR', emp.nome, true], ['cnpj', 'CNPJ / CPF', emp.cnpj || emp.cpf], ['ie', 'INSCRIÇÃO ESTADUAL', emp.ie], ['endereco', 'ENDEREÇO', emp.endereco, true],
+        ['bairro', 'BAIRRO', emp.bairro], ['cep', 'CEP', emp.cep], ['cidade', 'CIDADE', emp.cidade], ['uf', 'ESTADO', emp.uf], ['telefone', 'TELEFONE', emp.telefone], ['email', 'E-MAIL', emp.email]];
+      const pares = defs.filter(([id]) => cf[id]).map(([, l, v, full]) => [l, v, full]);
+      if (pares.length) {
+        garantir(24 + 40);
+        T('DADOS DO FORNECEDOR', M + 8, y - 12, 12, font, INK); y -= 18;
+        grade(pares);
+        y -= 10;
+      }
     }
-    /* ===== 3) DADOS BANCÁRIOS ===== */
-    const temBanco = o.incluirBancarios && [emp.banco, emp.agencia, emp.conta, emp.pix, emp.favorecido].some(Boolean);
+
+    /* ===== DADOS BANCÁRIOS (cada campo tem chavinha) ===== */
+    const bcOn = op.bancoCampos || {};
+    const bancoPares = [['banco', 'BANCO', emp.banco], ['agencia', 'AGÊNCIA', emp.agencia], ['conta', 'CONTA', emp.conta], ['pix', 'PIX', emp.pix], ['favorecido', 'FAVORECIDO', emp.favorecido || emp.nome], ['cnpj', 'CNPJ DA EMPRESA', emp.cnpj]]
+      .filter(([id]) => bcOn[id] !== false).map(([, l, v]) => [l, v]);
+    const temBanco = op.com.bancarios && bancoPares.length && [emp.banco, emp.agencia, emp.conta, emp.pix, emp.favorecido].some(Boolean);
     if (temBanco) {
-      garantir(24 + 3 * 40);
+      garantir(24 + 40 * Math.ceil(bancoPares.length / 2));
       T('DADOS BANCÁRIOS', M + 8, y - 12, 12, font, INK); y -= 18;
-      grade([
-        ['BANCO', emp.banco], ['AGÊNCIA', emp.agencia],
-        ['CONTA', emp.conta], ['PIX', emp.pix],
-        ['FAVORECIDO', emp.favorecido || emp.nome], ['CNPJ DA EMPRESA', emp.cnpj],
-      ]);
+      grade(bancoPares);
+      y -= 10;
+    }
+
+    // --- objeto da licitação
+    if (D.objeto && D.objetoTexto) {
+      wrapMixed([{ t: (D.objetoPrefixo ? D.objetoPrefixo + ' ' : ''), f: font }, { t: D.objetoTexto, f: bold }], 11, CW - 4)
+        .forEach((l) => { garantir(15); drawMixed(l, M + 2, y - 11, 11); y -= 14.5; });
       y -= 10;
     }
 
@@ -1501,97 +1515,9 @@ input[type=color].input { padding: 4px; height: 46px; }
     }
 
     }
-    /* ===== 5) RESUMO COMERCIAL ===== */
-    garantir(80);
-    y -= 12;
-    if (op.com.resumo) {
-      T('Resumo Comercial', M, y - 12, 12.5, bold, ACC); y -= 18;
-      box(M, y - 18, CW, 18);
-      T('Valor global da proposta', M + 4, y - 12.5, 10.5, bold, ACCT);
-      TR(brlTxt(L.total), PW - M - 6, y - 12.5, 10.5, bold, ACCT);
-      y -= 18 + 8;
-    }
-    if (o.incluirExtenso && L.total > 0) {
-      const ln = wrap('Valor por extenso: ' + cap(valorExtenso(L.total)) + '.', font, 11.5, CW - 30);
-      ln.forEach((l, i) => {
-        garantir(14);
-        if (i === 0) { T('Valor por extenso:', M + 14, y - 11, 11.5, bold, INK); T(l.slice('Valor por extenso:'.length), M + 14 + bold.widthOfTextAtSize('Valor por extenso:', 11.5), y - 11, 11.5, font, INK); }
-        else T(l, M + 14, y - 11, 11.5, font, INK);
-        y -= 14;
-      });
-      y -= 4;
-    }
-    if (L.semValor > 0) {
-      const ln = wrap('Atenção: ' + L.semValor + ' item(ns) sem valor definido nesta proposta.', bold, 9.5, CW);
-      ln.forEach((l) => { garantir(14); T(l, M, y - 10, 9.5, bold, rgb(0.75, 0.2, 0.1)); y -= 13; });
-    }
-    if (op.com.observacoes && o.observacoes) {
-      y -= 4; garantir(30);
-      T('Observações:', M + 14, y - 10, 10.5, bold, INK); y -= 15;
-      wrap(o.observacoes, font, 10.5, CW - 30).forEach((l) => { garantir(14); T(l, M + 14, y - 10, 10.5, font, INK); y -= 13.5; });
-    }
-
-    /* ===== 6) DECLARAÇÃO (opcional) ===== */
-    if (o.incluirDeclaracao && o.textoDeclaracao) {
-      y -= 8; garantir(50);
-      wrap(o.textoDeclaracao, font, 10, CW - 30).forEach((l) => { garantir(14); T(l, M + 14, y - 10, 10, font, INK); y -= 13; });
-    }
-
-    /* ===== 7) LOCAL/DATA (opcional) E ASSINATURA ===== */
-    if (o.incluirLocalData || op.com.assinatura) {
-      garantir(o.incluirLocalData ? 120 : 96);
-      y -= 14;
-      if (o.incluirLocalData) {
-        T([o.local, C.dataExtensa(o.data)].filter(Boolean).join(', ') + '.', M + 14, y - 10, 10.5, font, INK); y -= 34;
-      } else y -= 20;
-    }
-    if (op.com.assinatura) {
-      const sigW = 250, sx = (PW - sigW) / 2;
-      page.drawLine({ start: { x: sx, y }, end: { x: sx + sigW, y }, thickness: 1, color: INK });
-      const nome = (emp.responsavel || emp.nome || '').toUpperCase();
-      const doc2 = emp.cpf ? 'CPF: ' + emp.cpf : (emp.cnpj ? 'CNPJ: ' + emp.cnpj : '');
-      if (nome && op.com.assinaturaNome) TC(nome, PW / 2, y - 13, 10.5, bold, INK);
-      if (doc2 && op.com.assinaturaDoc) TC(doc2, PW / 2, y - 26, 10.5, bold, INK);
-      y -= 34;
-    }
-
-    } else {
-    /* =====================================================================
-     * MODELO "DESCRITIVO DO EDITAL" (ex.: Anexo III - Modelo de descritivo da proposta de preços)
-     * Cada bloco abaixo tem uma chavinha em op.desc.* (aba Proposta). Para mudar o layout, mexa aqui.
-     * ===================================================================== */
-    const D = op.desc, BLK = rgb(0, 0, 0), CINZA = rgb(0.9, 0.9, 0.9), AZUL = rgb(0.72, 0.78, 0.89);
-    const fN = (n) => new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n);
-    const bT = (n) => (n === null || n === undefined) ? '—' : 'R$ ' + fN(n);
-    const subst = (t, c) => safe(t)
-      .replace(/\{validade\}/g, `${op.validade} (${inteiroExtenso(Number(op.validade) || 0)}) dias`)
-      .replace(/\{prorrogacao\}/g, `${op.prorrogacao} (${inteiroExtenso(Number(op.prorrogacao) || 0)}) dias`)
-      .replace(/\{numero\}/g, preg.numero || '').replace(/\{orgao\}/g, preg.orgao || '').replace(/\{pai\}/g, (c && c.paiRotulo) || '4');
-
-    // --- títulos e faixa do edital
-    if (D.titulo) {
-      [D.titulo1, D.titulo2].filter(Boolean).forEach((t) => { garantir(20); TC(subst(t), PW / 2, y - 12, 12.5, bold, BLK); y -= 16; });
-      y -= 6;
-    }
-    if (D.faixa && D.faixaTexto) {
-      garantir(30);
-      page.drawRectangle({ x: M, y: y - 22, width: CW, height: 22, color: CINZA, borderColor: BLK, borderWidth: 1 });
-      TC(subst(D.faixaTexto), PW / 2, y - 15, 11.5, bold, BLK);
-      y -= 22 + 14;
-    }
-
-    // --- dados do fornecedor (cada campo liga/desliga; posições fixas para manter o alinhamento)
-    if (D.fornecedor) blocoFornecedor(D.campos, BLK);
-
-    // --- objeto da licitação
-    if (D.objeto && D.objetoTexto) {
-      wrapMixed([{ t: (D.objetoPrefixo ? D.objetoPrefixo + ' ' : ''), f: font }, { t: D.objetoTexto, f: bold }], 11, CW - 4)
-        .forEach((l) => { garantir(15); drawMixed(l, M + 2, y - 11, 11); y -= 14.5; });
-      y -= 10;
-    }
-
     // --- tabela de especificações técnicas (cada coluna liga/desliga)
     if (D.tabela) {
+      if (op.com.itens) y -= 14;
       if (D.tabelaTitulo) { garantir(40); T(D.tabelaTitulo, M + 2, y - 11, 11.5, bold, BLK); y -= 17; }
       const rotC = { lote: D.rotuloItem || 'Lote', desc: 'Descrição', marca: 'Marca/Modelo', un: 'Unid.', qtd: 'Quantidade', vub: 'Valor Unitário Bruto', vtb: 'Valor Total Bruto', vus: 'Valor Unitário s/ ICMS', vts: 'Valor Total s/ ICMS', aliq: 'Alíquota % ICMS' };
       const cols = C.COLUNAS_DESC.filter(([id]) => D.colunas[id]).map(([id, , w]) => ({ id, w }));
@@ -1640,18 +1566,50 @@ input[type=color].input { padding: 4px; height: 46px; }
         if (!L.linhas.length) { garantir(20); T('Nenhum item cadastrado neste pregão.', M + 4, y - 14, 9.5, ital, GRAY); y -= 22; }
       }
       y -= 6;
-      if (D.total) {
-        garantir(30);
-        const partes = ['Valor total da proposta: ' + bT(L.total)];
-        if (D.colunas.vts) partes.push('Valor total s/ ICMS: ' + bT(L.totalS));
-        partes.forEach((t) => { garantir(16); TR(t, PW - M - 2, y - 11, 10.5, bold, BLK); y -= 15; });
-        if (D.extenso && L.total > 0) {
-          wrap('Valor por extenso: ' + cap(valorExtenso(L.total)) + '.', font, 10.5, CW - 10).forEach((l) => { garantir(14); T(l, M + 2, y - 11, 10.5, font, BLK); y -= 13.5; });
-        }
-        y -= 4;
-      }
-      if (L.semValor > 0) { garantir(16); T('Atenção: ' + L.semValor + ' item(ns) sem valor definido nesta proposta.', M + 2, y - 11, 9.5, bold, rgb(0.75, 0.2, 0.1)); y -= 16; }
       y -= 6;
+    }
+
+    /* ===== 5) RESUMO COMERCIAL ===== */
+    garantir(80);
+    y -= 12;
+    if (op.com.resumo) {
+      T('Resumo Comercial', M, y - 12, 12.5, bold, ACC); y -= 18;
+      box(M, y - 18, CW, 18);
+      T('Valor global da proposta', M + 4, y - 12.5, 10.5, bold, ACCT);
+      TR(brlTxt(L.total), PW - M - 6, y - 12.5, 10.5, bold, ACCT);
+      y -= 18;
+      if (D.tabela && D.colunas && D.colunas.vts) {
+        box(M, y - 18, CW, 18);
+        T('Valor total s/ ICMS', M + 4, y - 12.5, 10.5, bold, ACCT);
+        TR(brlTxt(L.totalS), PW - M - 6, y - 12.5, 10.5, bold, ACCT);
+        y -= 18;
+      }
+      y -= 8;
+    }
+    if (o.incluirExtenso && L.total > 0) {
+      const ln = wrap('Valor por extenso: ' + cap(valorExtenso(L.total)) + '.', font, 11.5, CW - 30);
+      ln.forEach((l, i) => {
+        garantir(14);
+        if (i === 0) { T('Valor por extenso:', M + 14, y - 11, 11.5, bold, INK); T(l.slice('Valor por extenso:'.length), M + 14 + bold.widthOfTextAtSize('Valor por extenso:', 11.5), y - 11, 11.5, font, INK); }
+        else T(l, M + 14, y - 11, 11.5, font, INK);
+        y -= 14;
+      });
+      y -= 4;
+    }
+    if (L.semValor > 0) {
+      const ln = wrap('Atenção: ' + L.semValor + ' item(ns) sem valor definido nesta proposta.', bold, 9.5, CW);
+      ln.forEach((l) => { garantir(14); T(l, M, y - 10, 9.5, bold, rgb(0.75, 0.2, 0.1)); y -= 13; });
+    }
+    if (op.com.observacoes && o.observacoes) {
+      y -= 4; garantir(30);
+      T('Observações:', M + 14, y - 10, 10.5, bold, INK); y -= 15;
+      wrap(o.observacoes, font, 10.5, CW - 30).forEach((l) => { garantir(14); T(l, M + 14, y - 10, 10.5, font, INK); y -= 13.5; });
+    }
+
+    /* ===== 6) DECLARAÇÃO (opcional) ===== */
+    if (o.incluirDeclaracao && o.textoDeclaracao) {
+      y -= 8; garantir(50);
+      wrap(o.textoDeclaracao, font, 10, CW - 30).forEach((l) => { garantir(14); T(l, M + 14, y - 10, 10, font, INK); y -= 13; });
     }
 
     // --- cláusulas numeradas (2, 3, 4, 4.1, 4.2, 5, 6…): cada uma liga/desliga e o texto é editável
@@ -1684,7 +1642,6 @@ input[type=color].input { padding: 4px; height: 46px; }
       if (D.assinaturaNome && nm) { TC(nm, PW / 2, yy, 10.5, bold, BLK); yy -= 13; }
       if (D.assinaturaDoc && dc) { TC(dc, PW / 2, yy, 10.5, font, BLK); yy -= 13; }
       y = yy;
-    }
     }
 
     /* ===== numeração de páginas (só se houver mais de uma) ===== */
@@ -2015,12 +1972,12 @@ input[type=color].input { padding: 4px; height: 46px; }
     const quando = C.fmtSessao(p.prazoPropostas);
     const hora = (/T(\d{2}:\d{2})/.exec(p.prazoPropostas) || [])[1];
     const pendente = ['Falta dados', 'Analisando'].includes(p.status);   // só alerta enquanto a proposta ainda não foi enviada
-    if (!pendente) return { nivel: 'ok', texto: 'Propostas até ' + quando };
-    if (alvo.getTime() < agora.getTime()) return { nivel: 'off', texto: 'Prazo de propostas encerrado (' + quando + ')' };
-    if (dias <= 0) return { nivel: 'bad', texto: 'Propostas: hoje' + (hora ? ' até ' + hora : '') };
-    if (dias === 1) return { nivel: 'bad', texto: 'Propostas: falta 1 dia (' + quando + ')' };
-    if (dias === 2) return { nivel: 'warn', texto: 'Propostas: faltam 2 dias (' + quando + ')' };
-    return { nivel: 'ok', texto: 'Propostas até ' + quando };
+    if (!pendente) return { nivel: 'ok', texto: 'Propostas até ' + quando, curto: quando };
+    if (alvo.getTime() < agora.getTime()) return { nivel: 'off', texto: 'Prazo de propostas encerrado (' + quando + ')', curto: 'Encerrado', vencidoDias: -dias };
+    if (dias <= 0) return { nivel: 'bad', texto: 'Propostas: hoje' + (hora ? ' até ' + hora : ''), curto: 'Hoje' + (hora ? ' ' + hora : '') };
+    if (dias === 1) return { nivel: 'bad', texto: 'Propostas: falta 1 dia (' + quando + ')', curto: 'Falta 1 dia' };
+    if (dias === 2) return { nivel: 'warn', texto: 'Propostas: faltam 2 dias (' + quando + ')', curto: 'Faltam 2 dias' };
+    return { nivel: 'ok', texto: 'Propostas até ' + quando, curto: quando };
   }
 
   function openPregaoForm(id) {
@@ -2380,6 +2337,9 @@ input[type=color].input { padding: 4px; height: 46px; }
     }).join('');
     const margemTot = comp.venda > 0 ? comp.lucro / comp.venda : null;
     const prox = R.proximas.slice(0, 4);
+    const aEnviar = store.get().pregoes.filter((x) => !x.deleted).map((x) => ({ p: x, z: prazoInfo(x) }))
+      .filter((x) => x.z && (x.z.nivel === 'warn' || x.z.nivel === 'bad' || (x.z.nivel === 'off' && x.z.vencidoDias <= 2)))
+      .sort((a, b) => new Date(a.p.prazoPropostas) - new Date(b.p.prazoPropostas));
 
     return `<div class="page">
       ${drafts.length ? `<div class="alert warn">${icon('alert', 'sm')}<div class="grow">Você tem preenchimento não salvo: ${esc(drafts.slice(0, 2).map((x) => draftDesc(x.key)).join(', '))}.</div><button class="btn sm" data-act="rascunho" data-key="${esc(drafts[0].key)}">Continuar</button></div>` : ''}
@@ -2389,6 +2349,7 @@ input[type=color].input { padding: 4px; height: 46px; }
         <div class="kpi" style="--c:${m.saldoAgora < 0 ? '#c0392b' : '#2f7d3a'}"><div class="l">Saldo disponível</div><div class="v">${C.brl0(m.saldoAgora)}</div><div class="s">se ganhar tudo: ${C.brl0(m.saldoSeGanhar)}</div></div>
         <div class="kpi" style="--c:#b7791f"><div class="l">Lucro previsto</div><div class="v">${C.brl0(R.lucroPrevisto)}</div><div class="s">pregões ativos</div></div>
       </div>
+      ${aEnviar.length ? `<div class="card"><h3>${icon('alert', 'sm')} Propostas a enviar</h3>${aEnviar.map((x) => `<div class="strow" data-act="abrir-pregao" data-id="${x.p.id}" style="cursor:pointer"><div><b>${esc(x.p.orgao)}</b><div class="tiny muted">#${esc(x.p.numero)} · ${esc(C.fmtSessao(x.p.prazoPropostas))}</div></div><span class="prazo ${x.z.nivel}" style="white-space:nowrap">${esc(x.z.curto)}</span></div>`).join('')}</div>` : ''}
       ${prox.length ? `<div class="card"><h3>${icon('calendar', 'sm')} Próximas sessões</h3>${prox.map((x) => `<div class="strow" data-act="abrir-pregao" data-id="${x.p.id}" style="cursor:pointer"><div><b>${esc(x.p.orgao)}</b><div class="tiny muted">#${esc(x.p.numero)} · ${esc(C.fmtSessao(x.p.sessao))}</div></div>${badgeStatus(x.p.status)}</div>`).join('')}</div>` : ''}
       <div class="card"><h3>Uso do limite do MEI</h3>
         <div class="stack" role="img" aria-label="Uso do limite">
@@ -2552,11 +2513,9 @@ input[type=color].input { padding: 4px; height: 46px; }
   function faltasEmpresa(o, emp) {
     const val = { fornecedor: emp.nome, cnpj: emp.cnpj || emp.cpf, endereco: emp.endereco, bairro: emp.bairro, cep: emp.cep, cidade: emp.cidade, uf: emp.uf, telefone: emp.telefone, email: emp.email, banco: emp.banco, agencia: emp.agencia, conta: emp.conta, pix: emp.pix };
     const nomes = { fornecedor: 'Nome', cnpj: 'CNPJ', endereco: 'Endereço', bairro: 'Bairro', cep: 'CEP', cidade: 'Cidade', uf: 'UF', telefone: 'Telefone', email: 'E-mail', banco: 'Banco', agencia: 'Agência', conta: 'Conta', pix: 'PIX' };
-    const desc = o.modelo === 'descritivo';
     const quer = { fornecedor: true, cnpj: true };                       // nome e CNPJ sempre servem (cabeçalho, assinatura)
-    if (desc ? o.desc.fornecedor : o.com.fornecedor) Object.keys(o.desc.campos).forEach((k) => { if (o.desc.campos[k]) quer[k] = true; });
-    if (!desc && o.com.bancarios) { quer.banco = true; quer.agencia = true; quer.conta = true; }
-    if (!desc && o.com.fornecedor && o.com.bancarios) { delete quer.pix; }
+    if (o.desc.fornecedor) Object.keys(o.desc.campos).forEach((k) => { if (o.desc.campos[k]) quer[k] = true; });
+    if (o.com.bancarios) ['banco', 'agencia', 'conta', 'pix'].forEach((k) => { if ((o.bancoCampos || {})[k] !== false) quer[k] = true; });
     return Object.keys(nomes).filter((k) => quer[k] && !String(val[k] || '').trim()).map((k) => nomes[k]);
   }
   function faltaEmpresaHtml(o, emp) {
@@ -2566,66 +2525,51 @@ input[type=color].input { padding: 4px; height: 46px; }
   }
 
   function pdfModelCards(o, cfg, pz) {
-    const desc = o.modelo === 'descritivo';
-    const campos = C.CAMPOS_FORNECEDOR.map(([id, nome]) => swp(o, 'desc.campos.' + id, nome)).join('');
-    const cab = `
-      <div class="card"><h3>2 · Modelo do documento <span class="grow"></span><span class="saved-ind" id="savedInd">Salvo</span></h3>
-        <div class="seg-ctl">${[['comercial', 'Comercial'], ['descritivo', 'Descritivo do edital']].map(([v, l]) => `<button type="button" data-act="pdf-modelo" data-v="${v}" class="${o.modelo === v ? 'on' : ''}">${l}</button>`).join('')}</div>
-        <p class="tiny muted" style="margin:8px 0 4px">${desc ? 'Segue o anexo do edital (dados do fornecedor, tabela com ICMS, cláusulas numeradas).' : 'Proposta com faixas coloridas, dados do órgão, bancários e itens.'} As chavinhas abaixo valem só para este pregão.</p>
-        ${swp(o, 'cabecalho', 'Cabeçalho (nome e imagem)', 'Aparece em todas as páginas')}
-        ${swp(o, 'marca', 'Marca d’água')}
-        <div class="grid2" style="margin-top:6px"><button type="button" class="btn sm" data-act="pdf-padrao">Usar como padrão</button><button type="button" class="btn sm" data-act="pdf-reset">Voltar ao padrão</button></div>
-      </div>`;
-    if (!desc) {
-      const c = `
-        ${swp(o, 'com.grade', 'Dados do órgão e do processo')}
-        ${swp(o, 'com.fornecedor', 'Dados do fornecedor (como no anexo)', 'Nome, CNPJ, endereço, bairro, CEP, cidade…')}
-        ${swp(o, 'com.bancarios', 'Dados bancários')}
-        ${swp(o, 'com.itens', 'Itens da proposta')}
-        ${swp(o, 'com.resumo', 'Resumo comercial (valor global)')}
-        ${swp(o, 'com.extenso', 'Valor por extenso')}
-        ${swp(o, 'com.observacoes', 'Observações')}
-        ${swp(o, 'com.declaracao', 'Declaração de preços')}
-        ${swp(o, 'com.localData', 'Local e data acima da assinatura')}
-        ${swp(o, 'com.assinatura', 'Assinatura')}
-        ${swp(o, 'com.assinaturaNome', '↳ nome do titular')}
-        ${swp(o, 'com.assinaturaDoc', '↳ CPF ou CNPJ')}
-        ${acc('acc-forn-com', 'Campos do fornecedor', `<div class="swgrid">${campos}</div><p class="tiny muted">Banco, agência, conta e PIX só entram aqui se “Dados bancários” estiver desligado. Os dados vêm de Config › Empresa.</p>`)}
-        <div class="formgrid" style="margin-top:10px">
-          ${fp(o, 'validade', 'Validade (dias)', { type: 'int', im: 'numeric' })}
-          ${fp(o, 'pagamento', 'Prazo de pagamento')}
-          ${fp(o, 'prazoEntrega', 'Prazo de entrega', { ph: pz.prazoEntregaDias ? pz.prazoEntregaDias + ' dias (do pregão)' : 'ex.: 10 dias' })}
-          ${fp(o, 'localEntrega', 'Local de entrega', { ph: C.localEntregaPadrao(pz, store.get().itens.filter((i) => i.pregaoId === pz.id && !i.deleted)) || 'local do pregão', hint: 'Em branco = usa o local do pregão. Escreva aqui só para mudar.' })}
-          ${fp(o, 'observacoes', 'Observações (saem no PDF)', { area: true, rows: 2, full: true })}
-          <div class="field full"><label>Data do documento</label><input class="input" type="date" data-ui="data" value="${esc(UI.pdf.data)}"></div>
-          <div class="field full"><label>Texto da declaração</label><textarea class="input" rows="3" data-cfg="proposta.textoDeclaracao" data-type="text">${esc(cfg.proposta.textoDeclaracao)}</textarea></div>
-          <div class="field full"><label>Cor do modelo (faixas, bordas e rótulos)</label><input class="input" type="color" data-cfg="proposta.cor" data-type="text" value="${esc(cfg.proposta.cor)}"></div>
-        </div>`;
-      return cab + `<div class="card"><h3>3 · O que aparece (comercial)</h3>${c}</div>`;
-    }
     const D = o.desc;
+    const campos = C.CAMPOS_FORNECEDOR.map(([id, nome]) => swp(o, 'desc.campos.' + id, nome)).join('');
+    const camposBanco = C.CAMPOS_BANCO.map(([id, nome]) => swp(o, 'bancoCampos.' + id, nome)).join('');
     const colunas = C.COLUNAS_DESC.map(([id, nome]) => swp(o, 'desc.colunas.' + id, nome)).join('');
     const cls = D.clausulas.map((c) => `<div class="clause">
         <label class="switch"><span><b>${esc(c.custom ? 'Cláusula livre' : c.nome)}</b></span><input type="checkbox" data-clausula="${esc(c.id)}" data-field="ativo" data-type="check" ${c.ativo ? 'checked' : ''}></label>
         <textarea class="input" rows="${c.custom ? 3 : 4}" data-clausula="${esc(c.id)}" data-field="texto" data-type="text" placeholder="Texto da cláusula">${esc(c.texto)}</textarea>
         ${c.custom ? `<button type="button" class="btn sm danger" data-act="clausula-del" data-id="${esc(c.id)}">${icon('trash', 'sm')} Remover</button>` : (c.texto !== c.padrao ? `<button type="button" class="btn sm" data-act="clausula-padrao" data-id="${esc(c.id)}">Voltar ao texto original</button>` : '')}
       </div>`).join('');
+    const cab = `
+      <div class="card"><h3>2 · Documento da proposta <span class="grow"></span><span class="saved-ind" id="savedInd">Salvo</span></h3>
+        <p class="tiny muted" style="margin:0 0 8px">Um único modelo, com tudo ligado por padrão. Desligue na chavinha o que não quiser na proposta. As chavinhas valem só para este pregão.</p>
+        ${swp(o, 'cabecalho', 'Cabeçalho (nome e imagem)', 'Aparece em todas as páginas')}
+        ${swp(o, 'marca', 'Marca d’água')}
+        <div class="field full" style="margin-top:8px"><label>Cor do documento (rótulos, faixas e bordas)</label><input class="input" type="color" data-cfg="proposta.cor" data-type="text" value="${esc(cfg.proposta.cor)}"></div>
+        <div class="grid2" style="margin-top:6px"><button type="button" class="btn sm" data-act="pdf-padrao">Usar como padrão</button><button type="button" class="btn sm" data-act="pdf-reset">Voltar ao padrão</button></div>
+      </div>`;
     const corpo = [
       acc('acc-tit', 'Títulos e faixa do edital',
         `${swp(o, 'desc.titulo', 'Títulos (ANEXO / modelo)')}<div class="formgrid">${fp(o, 'desc.titulo1', 'Título 1')}${fp(o, 'desc.titulo2', 'Título 2')}</div>
          ${swp(o, 'desc.faixa', 'Faixa com o número do edital')}${fp(o, 'desc.faixaTexto', 'Texto da faixa', { hint: '{numero} vira o “Nº do pregão”' })}`),
+      acc('acc-grade', 'Dados do órgão e do processo', `${swp(o, 'com.grade', 'Mostrar órgão, processo, validade, pagamento e entrega')}
+        <div class="formgrid" style="margin-top:8px">
+          ${fp(o, 'validade', 'Validade (dias)', { type: 'int', im: 'numeric' })}
+          ${fp(o, 'pagamento', 'Prazo de pagamento')}
+          ${fp(o, 'prazoEntrega', 'Prazo de entrega', { ph: pz.prazoEntregaDias ? pz.prazoEntregaDias + ' dias (do pregão)' : 'ex.: 10 dias' })}
+          ${fp(o, 'localEntrega', 'Local de entrega', { ph: C.localEntregaPadrao(pz, store.get().itens.filter((i) => i.pregaoId === pz.id && !i.deleted)) || 'local do pregão', hint: 'Em branco = usa o local do pregão. Escreva aqui só para mudar.' })}
+        </div>`),
       acc('acc-forn', 'Dados do fornecedor', `${swp(o, 'desc.fornecedor', 'Mostrar o quadro “Dados do fornecedor”')}<div class="swgrid">${campos}</div><p class="tiny muted">Os dados vêm de Config › Empresa. Campo desligado some do quadro.</p>`),
+      acc('acc-banco', 'Dados bancários', `${swp(o, 'com.bancarios', 'Mostrar o quadro “Dados bancários”')}<div class="swgrid">${camposBanco}</div>`),
       acc('acc-obj', 'Objeto da licitação', `${swp(o, 'desc.objeto', 'Mostrar o objeto')}${fp(o, 'desc.objetoPrefixo', 'Prefixo')}${fp(o, 'desc.objetoTexto', 'Objeto (copie do edital)', { area: true, rows: 4, ph: 'aquisição de …' })}`),
+      acc('acc-itens', 'Itens da proposta (um bloco por item)', `${swp(o, 'com.itens', 'Mostrar os itens em blocos, com descrição e marca')}`),
       acc('acc-tab', 'Tabela de especificações', `${swp(o, 'desc.tabela', 'Mostrar a tabela')}<div class="formgrid">${fp(o, 'desc.tabelaTitulo', 'Título da tabela')}${fp(o, 'desc.rotuloItem', 'Nome da coluna do item', { hint: 'Lote, Item…' })}${fp(o, 'icmsAliq', 'Alíquota ICMS padrão (%)', { type: 'pct', im: 'decimal', hint: 'MEI: 0. Por item, edite o item.' })}</div>
-         <div class="lbl" style="margin:6px 0">Colunas</div><div class="swgrid">${colunas}</div>${swp(o, 'desc.total', 'Valor total da proposta')}${swp(o, 'desc.extenso', '↳ por extenso')}`),
-      acc('acc-cl', 'Cláusulas numeradas', `<div class="formgrid">${fp(o, 'validade', 'Validade (dias)', { type: 'int', im: 'numeric', hint: 'Entra no texto {validade}' })}${fp(o, 'prorrogacao', 'Prorrogação (dias)', { type: 'int', im: 'numeric', hint: 'Entra no texto {prorrogacao}' })}</div>
+         <div class="lbl" style="margin:6px 0">Colunas</div><div class="swgrid">${colunas}</div>`),
+      acc('acc-resumo', 'Valor total', `${swp(o, 'com.resumo', 'Resumo comercial (valor global)', 'Com a coluna “Valor total s/ ICMS” ligada, mostra também esse total')}${swp(o, 'com.extenso', 'Valor por extenso')}`),
+      acc('acc-obs', 'Observações e declaração', `${swp(o, 'com.observacoes', 'Observações')}${fp(o, 'observacoes', 'Texto das observações (saem no PDF)', { area: true, rows: 2, full: true })}
+         ${swp(o, 'com.declaracao', 'Declaração de preços')}<div class="field full"><label>Texto da declaração</label><textarea class="input" rows="3" data-cfg="proposta.textoDeclaracao" data-type="text">${esc(cfg.proposta.textoDeclaracao)}</textarea></div>`),
+      acc('acc-cl', 'Cláusulas numeradas', `<div class="formgrid">${fp(o, 'prorrogacao', 'Prorrogação (dias)', { type: 'int', im: 'numeric', hint: 'Entra no texto {prorrogacao}. A validade fica em “Dados do órgão”.' })}</div>
          <p class="tiny muted">A numeração é automática (2, 3, 4, 4.1…) e se ajusta ao que você ligar ou desligar.</p>${cls}<button type="button" class="btn sm block" data-act="clausula-add">${icon('plus', 'sm')} Adicionar cláusula</button>`),
       acc('acc-fim', 'Local, data e assinatura',
         `${swp(o, 'desc.localData', 'Local e data')}<div class="seg-ctl" style="margin:4px 0 10px">${[['preenchido', 'Preenchido'], ['branco', 'Em branco']].map(([v, l]) => `<button type="button" data-act="pdf-datamodo" data-v="${v}" class="${D.localDataModo === v ? 'on' : ''}">${l}</button>`).join('')}</div>
          <div class="field"><label>Data do documento</label><input class="input" type="date" data-ui="data" value="${esc(UI.pdf.data)}"></div>
          ${swp(o, 'desc.assinatura', 'Linha de assinatura')}${fp(o, 'desc.assinaturaRotulo', 'Texto abaixo da linha')}${swp(o, 'desc.assinaturaNome', '↳ nome do titular')}${swp(o, 'desc.assinaturaDoc', '↳ CPF ou CNPJ')}`),
     ].join('');
-    return cab + `<div class="card"><h3>3 · O que aparece (descritivo do edital)</h3>${corpo}</div>`;
+    return cab + `<div class="card"><h3>3 · O que aparece na proposta</h3>${corpo}</div>`;
   }
 
   function renderPDF() {
@@ -2644,6 +2588,9 @@ input[type=color].input { padding: 4px; height: 46px; }
     return `<div class="page">
       <div class="card"><h3>1 · Qual pregão?</h3>
         <div class="field"><label for="pdfp">Pregão</label><select class="input" id="pdfp" data-ui="pregaoId">${list.map((x) => `<option value="${x.id}"${x.id === UI.pdf.pregaoId ? ' selected' : ''}>${esc(pregaoLabel(x))}</option>`).join('')}</select></div>
+        ${pz0.status !== 'Proposta enviada' ? (pz0.link
+          ? `<a class="btn block" style="margin-bottom:12px" href="${esc(/^https?:\/\//i.test(pz0.link) ? pz0.link : 'https://' + pz0.link)}" target="_blank" rel="noopener noreferrer">${icon('eye', 'sm')} Abrir edital</a>`
+          : `<div class="alert warn" style="margin-bottom:12px">${icon('alert', 'sm')}<div class="grow">Este pregão não tem o link do edital cadastrado.</div><button class="btn sm" data-act="editar-pregao" data-id="${pz0.id}">Cadastrar link</button></div>`) : ''}
         <div class="field"><label for="pdff">Qual valor entra na proposta?</label><select class="input" id="pdff" data-ui="fonte">${FONTES.map(([v, l]) => `<option value="${v}"${v === UI.pdf.fonte ? ' selected' : ''}>${l}</option>`).join('')}</select></div>
         <div class="tbl-scroll"><table class="tbl"><thead><tr><th>Item</th><th class="r">Qtd</th><th class="r">Unit.</th><th class="r">Total</th></tr></thead><tbody>
           ${L.linhas.map((x) => `<tr><td>${esc(x.descricao)}${x.acimaTeto ? '<br><span class="badge bad">acima do teto</span>' : ''}</td><td class="r">${C.qtdBR(x.qtd)}</td><td class="r">${x.unit != null ? C.brl(x.unit) : '<span class="badge bad">sem valor</span>'}</td><td class="r">${x.total != null ? C.brl(x.total) : '—'}</td></tr>`).join('') || '<tr><td colspan="4" class="muted">Nenhum item neste pregão.</td></tr>'}
