@@ -106,6 +106,7 @@ svg.i.sm { width: 16px; height: 16px; }
 .badge.bad, .st-Perdeu, .st-Desclassificado { background: var(--red-soft); color: var(--red); }
 .st-Desisti { background: var(--line); color: var(--muted); }
 .st-Analisando { background: var(--blue-soft); color: var(--blue); }
+.st-Falta-dados { background: color-mix(in srgb, #8a5cf6 16%, var(--card)); color: #7c4dff; }
 .chip { display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px; padding: 3px 9px; border-radius: 8px; background: var(--bg); color: var(--ink); border: 1px solid var(--line); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .chip.org { background: var(--blue-soft); color: var(--blue); border-color: transparent; font-weight: 600; }
 .chips { display: flex; flex-wrap: wrap; gap: 6px; }
@@ -295,8 +296,8 @@ input[type=color].input { padding: 4px; height: 46px; }
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.3.3';
-  const STATUS = ['Analisando', 'Proposta enviada', 'Em disputa', 'Ganhou', 'Faturado', 'Perdeu', 'Desclassificado', 'Desisti'];
+  const APP_VERSION = '1.3.2';
+  const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Em disputa', 'Ganhou', 'Faturado', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti'];
   const DECL_PADRAO =
     'Declaramos que, nos preços ofertados, estão incluídas todas as despesas com tributos, fretes, embalagens, ' +
@@ -407,11 +408,17 @@ input[type=color].input { padding: 4px; height: 46px; }
 
   /* ---------- cálculo (espelha a planilha) ---------- */
   // local de entrega usado por padrão (tela do pregão e proposta): o local do pregão, ou os locais de entrega quando marcado "outro local"
-  function localEntregaPadrao(p) {
+  function localEntregaPadrao(p, itens) {
     if (!p) return '';
-    if (p.entregaDiferente && String(p.locaisEntrega || '').trim()) return String(p.locaisEntrega).split('\n').map((x) => x.trim()).filter(Boolean).join('; ');
-    return p.cidadeUf || '';
+    let base = p.cidadeUf || '';
+    if (p.entregaDiferente && String(p.locaisEntrega || '').trim()) base = String(p.locaisEntrega).split('\n').map((x) => x.trim()).filter(Boolean).join('; ');
+    // locais próprios de itens entram também (sem repetir)
+    const vistos = new Set(base.split(';').map(normLocal));
+    const extra = [];
+    for (const it of itens || []) { const l = String(it.localEntrega || '').trim(), k = normLocal(l); if (k && !vistos.has(k)) { vistos.add(k); extra.push(l); } }
+    return [base].concat(extra).filter(Boolean).join('; ');
   }
+  const normLocal = (t) => String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/\s*[\/,-]\s*/g, '/').replace(/\s+/g, ' ').trim();
   function custoViagem(p, cfg) {
     const consumo = n0(cfg.consumo);
     if (consumo === 0) return 0;
@@ -426,11 +433,13 @@ input[type=color].input { padding: 4px; height: 46px; }
     const compra = compraBase(it);
     const impPct = Math.max(0, n0(cfg.impostoPct));
     let entrega = 0;
-    if (pst && pst.ents) {
+    const gi = pst && pst.grupoOf ? pst.grupoOf(it) : null;
+    if (gi) { if (gi.base > 0) entrega = gi.custo * compra / gi.base; }
+    else if (pst && pst.ents) {
       const x = pst.entOf(it);
       if (x && x.base > 0) entrega += x.custo * compra / x.base;
       if (pst.pool > 0 && pst.base > 0) entrega += pst.pool * compra / pst.base;
-    } else if (pst && pst.base > 0) entrega = pst.viagem * compra / pst.base;
+    } else if (pst && pst.base > 0) entrega = pst.viagemPadrao * compra / pst.base;
     const custoTotal = compra + entrega;
     const custoUnit = qtd > 0 ? custoTotal / qtd : null;
     const margem = (it.margem !== null && it.margem !== undefined) ? it.margem : cfg.margemPadrao;
@@ -483,17 +492,31 @@ input[type=color].input { padding: 4px; height: 46px; }
     const pMap = new Map();
     for (const p of pregoes) {
       const list = byP.get(p.id) || [];
+      // itens com local de entrega próprio formam grupos com rota e custo próprios; os demais usam a rota do pregão
+      const ovr = (it) => { const l = normLocal(it.localEntrega); return !!l && l !== normLocal(p.cidadeUf); };
+      const grupos = new Map();
+      for (const it of list.filter(ovr)) {
+        const k = normLocal(it.localEntrega);
+        const g = grupos.get(k) || { k, local: String(it.localEntrega).trim(), e: { km: 0, viagens: 1, pedagio: 0 }, custo: 0, base: 0, nItens: 0 };
+        if (!(g.e.km > 0) && n0(it.kmEntrega) > 0) g.e = { km: n0(it.kmEntrega), viagens: it.viagensEntrega == null || it.viagensEntrega === '' ? 1 : n0(it.viagensEntrega), pedagio: n0(it.pedagioEntrega) };
+        g.base += compraBase(it); g.nItens += 1;
+        grupos.set(k, g);
+      }
+      for (const g of grupos.values()) g.custo = custoViagem(g.e, cfg);
+      const grupoOf = (it) => (ovr(it) ? grupos.get(normLocal(it.localEntrega)) : null);
+      const padrao = list.filter((it) => !ovr(it));
       let base = 0;
-      for (const it of list) base += compraBase(it);
+      for (const it of padrao) base += compraBase(it);
+      const custoGrupos = [...grupos.values()].reduce((a, g) => a + g.custo, 0);
       // entregas separadas: cada viagem/local tem custo próprio, dividido só entre os itens daquela entrega
       const ents = (p.entregaDiferente && Array.isArray(p.entregas) && p.entregas.length) ? p.entregas.map((e) => ({ e, id: e.id, local: e.local, custo: custoViagem(e, cfg), base: 0, nItens: 0 })) : null;
       const entOf = (it) => { if (!ents) return null; const i = ents.findIndex((x) => x.id === it.entregaId); return ents[i < 0 ? 0 : i]; };
       let pool = 0;
       if (ents) {
-        for (const it of list) { const x = entOf(it); x.base += compraBase(it); x.nItens += 1; }
+        for (const it of padrao) { const x = entOf(it); x.base += compraBase(it); x.nItens += 1; }
         pool = ents.filter((x) => x.base === 0).reduce((a, x) => a + x.custo, 0);   // viagem sem itens: o custo é dividido entre todos
       }
-      pMap.set(p.id, { p, viagem: ents ? ents.reduce((a, x) => a + x.custo, 0) : custoViagem(p, cfg), ents, entOf, pool, base, itens: list, nItens: list.length, venda: 0, custo: 0, lucro: 0, imposto: 0, margem: null });
+      pMap.set(p.id, { p, viagemPadrao: padrao.length ? custoViagem(p, cfg) : 0, viagem: (padrao.length ? (ents ? ents.reduce((a, x) => a + x.custo, 0) : custoViagem(p, cfg)) : 0) + custoGrupos, ents, entOf, pool, base, grupos: [...grupos.values()], grupoOf, itens: list, nItens: list.length, venda: 0, custo: 0, lucro: 0, imposto: 0, margem: null });
     }
     const iMap = new Map();
     for (const it of itens) {
@@ -762,7 +785,7 @@ input[type=color].input { padding: 4px; height: 46px; }
         if (i >= 0) state.pregoes[i] = Object.assign({}, state.pregoes[i], data, { updatedAt: t, deleted: false });
         else {
           const id = data.id || uid();
-          state.pregoes.push(Object.assign({ status: 'Analisando', viagens: 1, km: 0, pedagio: 0 }, data, { id, createdAt: t, updatedAt: t, deleted: false }));
+          state.pregoes.push(Object.assign({ status: 'Falta dados', viagens: 1, km: 0, pedagio: 0 }, data, { id, createdAt: t, updatedAt: t, deleted: false }));
           data = { id };
         }
         persist();
@@ -1232,6 +1255,7 @@ input[type=color].input { padding: 4px; height: 46px; }
     const L = C.linhasProposta(state, pregaoId, o.fonte, op.icmsAliq);
     const preg = L.pregao;
     if (!preg) throw new Error('Pregão não encontrado.');
+    const itensPdf = state.itens.filter((i) => i.pregaoId === pregaoId && !i.deleted);
 
     const doc = await PDFDocument.create();
     doc.setTitle('Proposta comercial — ' + (preg.numero || ''));
@@ -1405,7 +1429,7 @@ input[type=color].input { padding: 4px; height: 46px; }
       grade([
         ['ÓRGÃO / CLIENTE', preg.orgao], ['PROCESSO', preg.numero],
         ['VALIDADE DA PROPOSTA', (o.validadeDias || 60) + ' dias'], ['PRAZO DE PAGAMENTO', o.condPagamento || 'Conforme edital'],
-        ['LOCAL DE ENTREGA', o.localEntrega || C.localEntregaPadrao(preg)], ['PRAZO DE ENTREGA', prazoEnt],
+        ['LOCAL DE ENTREGA', o.localEntrega || C.localEntregaPadrao(preg, itensPdf)], ['PRAZO DE ENTREGA', prazoEnt],
       ]);
       y -= 10;
     }
@@ -1921,7 +1945,7 @@ input[type=color].input { padding: 4px; height: 46px; }
   function pregaoValues(p) {
     return {
       numero: p.numero || '', orgao: p.orgao || '', cidadeUf: p.cidadeUf || '', sessao: p.sessao || '', prazoPropostas: p.prazoPropostas || '',
-      prazoEntregaDias: p.prazoEntregaDias == null ? '' : String(p.prazoEntregaDias), exigencias: p.exigencias || '', status: p.status || 'Analisando',
+      prazoEntregaDias: p.prazoEntregaDias == null ? '' : String(p.prazoEntregaDias), exigencias: p.exigencias || '', status: p.status || 'Falta dados',
       km: p.km ? C.numBR(p.km, 1) : '', viagens: p.viagens == null ? '1' : String(p.viagens), pedagio: p.pedagio ? C.numBR(p.pedagio) : '',
       entregaDiferente: !!p.entregaDiferente, locaisEntrega: p.locaisEntrega || '',
       link: p.link || '', obs: p.obs || '',
@@ -1990,7 +2014,7 @@ input[type=color].input { padding: 4px; height: 46px; }
     const dias = Math.round((ini(alvo) - ini(agora)) / 86400000);
     const quando = C.fmtSessao(p.prazoPropostas);
     const hora = (/T(\d{2}:\d{2})/.exec(p.prazoPropostas) || [])[1];
-    const pendente = ['Analisando'].includes(p.status);   // só alerta enquanto a proposta ainda não foi enviada
+    const pendente = ['Falta dados', 'Analisando'].includes(p.status);   // só alerta enquanto a proposta ainda não foi enviada
     if (!pendente) return { nivel: 'ok', texto: 'Propostas até ' + quando };
     if (alvo.getTime() < agora.getTime()) return { nivel: 'off', texto: 'Prazo de propostas encerrado (' + quando + ')' };
     if (dias <= 0) return { nivel: 'bad', texto: 'Propostas: hoje' + (hora ? ' até ' + hora : '') };
@@ -2001,36 +2025,36 @@ input[type=color].input { padding: 4px; height: 46px; }
 
   function openPregaoForm(id) {
     const cur = id ? store.get().pregoes.find((p) => p.id === id && !p.deleted) : null;
-    const v = pregaoValues(cur || { status: 'Analisando', viagens: 1 });
+    const v = pregaoValues(cur || { status: 'Falta dados', viagens: 1 });
     v._noFocus = false;
     const body = `
       <div class="formgrid">
-        ${field({ label: 'Nº da compra *', name: 'numero', value: v.numero, ph: 'ex.: 90001/2026' })}
-        ${field({ label: 'Status', name: 'status', type: 'select', value: v.status, options: C.STATUS.map((s) => ({ v: s, l: s })) })}
+        ${field({ label: 'Nº do pregão *', name: 'numero', value: v.numero, ph: 'ex.: 90001/2026' })}
+        ${field({ label: 'Status', name: 'status', type: 'select', value: v.status, options: C.STATUS.map((s) => ({ v: s, l: s })), hint: 'Falta dados = ainda preenchendo para ver se vale a pena.' })}
         ${field({ label: 'Órgão / entidade *', name: 'orgao', value: v.orgao, full: true, ph: 'ex.: Universidade de Londrina' })}
         ${field({ label: 'Local do pregão (cidade/UF)', name: 'cidadeUf', value: v.cidadeUf, full: true, ph: 'Londrina/PR', hint: 'Ao preencher, o trajeto de ida e volta a partir do endereço da sua empresa é calculado sozinho.' })}
+        ${field({ label: 'Link do edital', name: 'link', type: 'url', value: v.link, full: true, ph: 'https://…' })}
+        ${field({ label: 'Data e hora final para envio das propostas', name: 'prazoPropostas', type: 'datetime-local', value: v.prazoPropostas, hint: 'Na lista, o cartão fica amarelo faltando 2 dias e vermelho faltando 1 dia.' })}
         ${field({ label: 'Data e hora da sessão', name: 'sessao', type: 'datetime-local', value: v.sessao })}
-        ${field({ label: 'Envio das propostas até', name: 'prazoPropostas', type: 'datetime-local', value: v.prazoPropostas, hint: 'Na lista, o cartão muda de cor quando faltar 2 dias (amarelo) e 1 dia (vermelho).' })}
         ${field({ label: 'Prazo de entrega (dias)', name: 'prazoEntregaDias', value: v.prazoEntregaDias, inputmode: 'numeric' })}
         ${field({ label: 'Exigências (IE, certidões)', name: 'exigencias', type: 'textarea', value: v.exigencias, full: true, ph: 'SICAF, CND estadual…' })}
       </div>
       <div class="sect">${icon('pin', 'sm')} Entrega de carro</div>
       <div class="formgrid">
-        <div class="full"><label class="switch"><span>Entrega em outro local ou em mais de um local<small class="hint" style="display:block;font-weight:500">Deixe desmarcado se a entrega for no próprio local do pregão.</small></span><input type="checkbox" name="entregaDiferente"${v.entregaDiferente ? ' checked' : ''}></label></div>
+        <div class="full"><label class="switch"><span>Vou entregar aos poucos: calcular cada ida separadamente<small class="hint" style="display:block;font-weight:500">Marque quando cada entrega tiver destino ou custo próprio (ex.: 1ª ida para uma cidade, 2ª para outra). Se for tudo no local do pregão, deixe desmarcado.</small></span><input type="checkbox" name="entregaDiferente"${v.entregaDiferente ? ' checked' : ''}></label></div>
         <div class="full" id="boxEntregas">
-          ${field({ label: 'Locais de entrega (um por linha = uma viagem)', name: 'locaisEntrega', type: 'textarea', value: v.locaisEntrega, full: true, ph: 'Cuiabá/MT\nVárzea Grande/MT', hint: 'Cada linha é uma viagem com custo próprio, dividido só entre os itens daquela entrega. Para levar mais de uma vez ao mesmo lugar, aumente “Nº de viagens” da linha. Estes locais também vão para a proposta.' })}
+          ${field({ label: 'Entregas (um local por linha)', name: 'locaisEntrega', type: 'textarea', value: v.locaisEntrega, full: true, ph: 'Cuiabá/MT\nVárzea Grande/MT', hint: 'Cada linha é uma entrega com custo próprio, dividido só entre os itens dela. Se vai levar em partes ao mesmo lugar (ex.: 1.000 fraldas em 2 viagens de 500), escreva o local uma vez e coloque 2 em “Nº de viagens”. Estes locais também vão para a proposta.' })}
           <div id="egList"></div>
         </div>
         <div class="full" id="boxUnico"><div class="formgrid">
           ${field({ label: 'Km (ida e volta)', name: 'km', value: v.km, inputmode: 'decimal', ph: '0 = não vou de carro' })}
           ${field({ label: 'Nº de viagens', name: 'viagens', value: v.viagens, inputmode: 'numeric' })}
           ${field({ label: 'Pedágio/outros por viagem (R$)', name: 'pedagio', value: v.pedagio, inputmode: 'decimal' })}
-        </div><div class="hint" style="margin:-4px 0 12px">Entrega única: o custo é dividido entre todos os itens do pregão.</div></div>
+        </div><div class="hint" style="margin:-4px 0 12px">O custo é dividido entre todos os itens. Vai levar em partes? Ex.: 1.000 fraldas em 2 viagens de 500 = coloque 2 em “Nº de viagens”.</div></div>
         <div class="field full"><label>Custo total da entrega</label><div class="input" id="viagemCusto" style="display:flex;align-items:center;font-weight:800">—</div></div>
         <div class="full field" style="margin-top:-4px"><div class="hint" id="rotaInfo" role="status" aria-live="polite"></div><button type="button" class="btn sm" data-rota="calc" style="margin-top:8px;align-self:flex-start">Recalcular trajeto</button></div>
       </div>
       <div class="sect">Outros</div>
-      ${field({ label: 'Link do edital', name: 'link', type: 'url', value: v.link, ph: 'https://…' })}
       ${field({ label: 'Observações', name: 'obs', type: 'textarea', value: v.obs })}`;
     openForm({
       key: 'pregao:' + (id || 'novo'), title: id ? 'Editar pregão' : 'Novo pregão', body, values: v,
@@ -2047,7 +2071,7 @@ input[type=color].input { padding: 4px; height: 46px; }
         form._lerEntregas = lerEntregas;
         const linhasLocais = () => String($('[name=locaisEntrega]', form).value || '').split('\n').map((t) => t.trim()).filter(Boolean);
         const rowHtml = (e, i) => `<div class="egrow" data-id="${esc(e.id)}" data-local="${esc(e.local)}"${e.kmManual ? ' data-manual="1"' : ''}>
-          <div class="egtit"><span><b>Viagem ${i + 1}</b> · ${esc(e.local)}</span><span class="egcusto">—</span></div>
+          <div class="egtit"><span><b>Entrega ${i + 1}</b> · ${esc(e.local)}</span><span class="egcusto">—</span></div>
           <div class="eg3">
             <div class="field"><label>Km (ida e volta)</label><input class="input" data-eg="km" inputmode="decimal" autocomplete="off" value="${esc(e.km ? C.numBR(e.km, 1) : '')}"></div>
             <div class="field"><label>Nº de viagens</label><input class="input" data-eg="viagens" inputmode="numeric" autocomplete="off" value="${esc(e.viagens == null ? 1 : e.viagens)}"></div>
@@ -2142,7 +2166,7 @@ input[type=color].input { padding: 4px; height: 46px; }
         const miss = [];
         if (!x.numero.trim()) miss.push('numero');
         if (!x.orgao.trim()) miss.push('orgao');
-        if (miss.length) { miss.forEach((n) => $('[name=' + n + ']', form).classList.add('err')); return 'Preencha o número da compra e o órgão.'; }
+        if (miss.length) { miss.forEach((n) => $('[name=' + n + ']', form).classList.add('err')); return 'Preencha o número do pregão e o órgão.'; }
         const km = C.parseBR(x.km) || 0;
         const ent = x.entregaDiferente && form._lerEntregas ? form._lerEntregas() : [];
         if (x.entregaDiferente && !ent.length) { $('[name=locaisEntrega]', form).classList.add('err'); return 'Informe ao menos um local de entrega ou desmarque a opção.'; }
@@ -2177,6 +2201,8 @@ input[type=color].input { padding: 4px; height: 46px; }
       impostoCompra: it.impostoCompraPct ? C.numBR(it.impostoCompraPct * 100, 2) : '',
       icmsAliq: it.icmsAliq == null ? '' : C.numBR(it.icmsAliq * 100, 2),
       entregaId: it.entregaId || '',
+      localEntrega: it.localEntrega || '', kmEntrega: it.kmEntrega ? C.numBR(it.kmEntrega, 1) : '',
+      viagensEntrega: it.viagensEntrega == null ? '' : String(it.viagensEntrega), pedagioEntrega: it.pedagioEntrega ? C.numBR(it.pedagioEntrega) : '',
     };
   }
   function itemFromForm(x, id) {
@@ -2188,6 +2214,8 @@ input[type=color].input { padding: 4px; height: 46px; }
       impostoCompraPct: (C.parseBR(x.impostoCompra) || 0) / 100 || null,
       icmsAliq: C.parseBR(x.icmsAliq) == null ? null : C.parseBR(x.icmsAliq) / 100,
       entregaId: x.entregaId || '',
+      localEntrega: (x.localEntrega || '').trim(), kmEntrega: C.parseBR(x.kmEntrega) || 0,
+      viagensEntrega: x.viagensEntrega === '' || x.viagensEntrega == null ? null : (C.parseBR(x.viagensEntrega) || 0), pedagioEntrega: C.parseBR(x.pedagioEntrega) || 0,
     };
   }
   // seletor "em qual entrega este item vai": só aparece quando o pregão tem entregas separadas
@@ -2195,7 +2223,7 @@ input[type=color].input { padding: 4px; height: 46px; }
     const p = store.get().pregoes.find((x) => x.id === pid && !x.deleted);
     if (!p || !p.entregaDiferente || !Array.isArray(p.entregas) || !p.entregas.length) return '';
     const ok = p.entregas.some((e) => e.id === sel);
-    return `<div class="field"><label for="f_entregaId">Em qual entrega este item vai?</label><select class="input" id="f_entregaId" name="entregaId">${p.entregas.map((e, i) => `<option value="${esc(e.id)}"${(ok ? e.id === sel : i === 0) ? ' selected' : ''}>Viagem ${i + 1} · ${esc(e.local)}</option>`).join('')}</select><div class="hint">O custo da viagem é dividido só entre os itens desta entrega.</div></div>`;
+    return `<div class="field"><label for="f_entregaId">Em qual entrega este item vai?</label><select class="input" id="f_entregaId" name="entregaId">${p.entregas.map((e, i) => `<option value="${esc(e.id)}"${(ok ? e.id === sel : i === 0) ? ' selected' : ''}>Entrega ${i + 1} · ${esc(e.local)}</option>`).join('')}</select><div class="hint">O custo da entrega é dividido só entre os itens dela.</div></div>`;
   }
   function openItemForm(id, pregaoId) {
     const list = activePregoes();
@@ -2207,6 +2235,13 @@ input[type=color].input { padding: 4px; height: 46px; }
       <div class="preview" id="prev"></div>
       ${field({ label: 'Pregão / órgão *', name: 'pregaoId', type: 'select', value: v.pregaoId, options: list.map((p) => ({ v: p.id, l: pregaoLabel(p) })) })}
       <div id="boxEntrega" data-pid="${esc(v.pregaoId)}">${entregaSelectHtml(v.pregaoId, v.entregaId)}</div>
+      ${field({ label: 'Local de entrega deste item', name: 'localEntrega', value: v.localEntrega, ph: 'vazio = local do pregão', hint: 'Por padrão o custo da entrega usa o local do pregão. Preencha só se este item for para outro local (cidade/UF ou endereço).' })}
+      <div id="boxLocalItem" class="hidden"><div class="formgrid">
+        ${field({ label: 'Km (ida e volta)', name: 'kmEntrega', value: v.kmEntrega, inputmode: 'decimal' })}
+        ${field({ label: 'Nº de viagens', name: 'viagensEntrega', value: v.viagensEntrega, inputmode: 'numeric', ph: '1' })}
+        ${field({ label: 'Pedágio por viagem (R$)', name: 'pedagioEntrega', value: v.pedagioEntrega, inputmode: 'decimal' })}
+        <div class="field"><div class="hint" id="rotaItem" role="status" aria-live="polite"></div><button type="button" class="btn sm" data-rota-item="calc" style="margin-top:6px">Recalcular trajeto</button></div>
+      </div><div class="hint" style="margin:-4px 0 12px">Itens com o mesmo local de entrega dividem o custo desta viagem entre si.</div></div>
       ${field({ label: 'Item que vou comprar *', name: 'descricao', value: v.descricao, ph: 'ex.: Caixa organizadora plástica 30 L' })}
       <div class="formgrid">
         ${field({ label: 'Nº do item no edital', name: 'itemEdital', value: v.itemEdital, ph: 'ex.: 04', hint: 'Sai como “ITEM 04” no PDF' })}
@@ -2225,8 +2260,37 @@ input[type=color].input { padding: 4px; height: 46px; }
       </div>`;
         openForm({
       key: 'item:' + (id || 'novo'), title: id ? 'Editar item' : 'Novo item', body, values: v,
+      onMount: (form) => {
+        const loc = $('[name=localEntrega]', form), km = $('[name=kmEntrega]', form), via = $('[name=viagensEntrega]', form), info = $('#rotaItem', form);
+        let seq = 0, ajustando = false;
+        km.addEventListener('input', () => { if (!ajustando) form.dataset.kmManual = '1'; });
+        async function calc(forcar) {
+          const local = loc.value.trim();
+          if (!local) return;
+          if (form.dataset.kmManual === '1' && !forcar) return;
+          delete form.dataset.kmManual;
+          const n = ++seq; info.style.color = ''; info.textContent = 'Calculando trajeto…';
+          try {
+            const r = await Rota.calcular(store.get().config.empresa, [local]);
+            if (n !== seq || !form.isConnected) return;
+            ajustando = true; km.value = C.numBR(r.km, 1);
+            if (!String(via.value).trim()) via.value = '1';
+            km.dispatchEvent(new Event('input', { bubbles: true })); ajustando = false;
+            info.style.color = 'var(--green)'; info.textContent = `Trajeto: ${r.rotulo} = ${C.numBR(r.km, 1)} km (ida e volta).`;
+          } catch (e) {
+            if (n !== seq || !form.isConnected) return;
+            info.style.color = 'var(--red)'; info.textContent = e && e.message ? e.message : 'Não foi possível calcular. Informe o km manualmente.';
+          }
+        }
+        loc.addEventListener('change', () => { delete form.dataset.kmManual; calc(false); });
+        form.addEventListener('click', (e) => { if (e.target.closest('[data-rota-item="calc"]')) calc(true); });
+        if (loc.value.trim() && !km.value) calc(false);
+      },
       onInput: (form) => {
         let x = readForm(form);
+        const bl = $('#boxLocalItem', form); if (bl) bl.classList.toggle('hidden', !String(x.localEntrega || '').trim());
+        const ph = store.get().pregoes.find((q) => q.id === x.pregaoId);
+        const le = $('[name=localEntrega]', form); if (le && ph) le.placeholder = 'vazio = ' + (ph.cidadeUf || 'local do pregão');
         const bx = $('#boxEntrega', form);
         if (bx && bx.dataset.pid !== x.pregaoId) { bx.dataset.pid = x.pregaoId; bx.innerHTML = entregaSelectHtml(x.pregaoId, ''); x = readForm(form); }
         const c = C.previewItem(store.get(), itemFromForm(x, id));
@@ -2361,7 +2425,7 @@ input[type=color].input { padding: 4px; height: 46px; }
     const pz = prazoInfo(p);
     const pzCls = pz && (pz.nivel === 'warn' || pz.nivel === 'bad') ? ' prz-' + pz.nivel : '';
     return `<article class="pcard${pzCls}" style="--gc:${corDe(p.id)}" data-act="abrir-pregao" data-id="${p.id}" tabindex="0" role="button">
-      <div class="row between"><span class="num" style="color:var(--gc)">COMPRA Nº ${esc(p.numero)}</span>${badgeStatus(p.status)}</div>
+      <div class="row between"><span class="num" style="color:var(--gc)">PREGÃO Nº ${esc(p.numero)}</span>${badgeStatus(p.status)}</div>
       <h4>${esc(p.orgao)}</h4>
       <div class="small muted row wrap" style="gap:4px 14px">${p.cidadeUf ? `<span class="row" style="gap:4px">${icon('pin', 'sm')}${esc(p.cidadeUf)}</span>` : ''}${p.sessao ? `<span class="row" style="gap:4px">${icon('calendar', 'sm')}${esc(C.fmtSessao(p.sessao))}</span>` : ''}</div>
       ${pz ? `<div><span class="prazo ${pz.nivel}">${icon(pz.nivel === 'ok' ? 'calendar' : 'alert', 'sm')}${esc(pz.texto)}</span></div>` : ''}
@@ -2410,7 +2474,7 @@ input[type=color].input { padding: 4px; height: 46px; }
     const kv = (k, v) => v ? `<div><span>${k}</span><b>${v}</b></div>` : '';
     return `<div class="page">
       <button class="back" data-act="voltar">${icon('back')} Pregões</button>
-      <div class="hero"><span class="num">COMPRA Nº ${esc(p.numero)}</span><h2>${esc(p.orgao)}</h2>
+      <div class="hero"><span class="num">PREGÃO Nº ${esc(p.numero)}</span><h2>${esc(p.orgao)}</h2>
         <div class="m">${p.cidadeUf ? `<span>${esc(p.cidadeUf)}</span>` : ''}${p.sessao ? `<span>Sessão ${esc(C.fmtSessao(p.sessao))}</span>` : ''}</div></div>
       <div class="card"><div class="field" style="margin:0"><label for="stsel">Status do pregão</label>
         <select class="input" id="stsel" data-status-pregao="${p.id}">${C.STATUS.map((s) => `<option${s === p.status ? ' selected' : ''}>${esc(s)}</option>`).join('')}</select></div></div>
@@ -2425,6 +2489,7 @@ input[type=color].input { padding: 4px; height: 46px; }
       <div class="card"><h3>Dados do pregão</h3><div class="kv-list">
         ${(() => { const z = prazoInfo(p); return z ? kv('Envio das propostas', `<span class="prazo ${z.nivel}">${esc(z.texto)}</span>`) : ''; })()}${kv('Local de entrega', esc(C.localEntregaPadrao(p)))}${kv('Intervalo mín. lances', esc(p.intervaloMin))}${kv('Prazo de entrega', p.prazoEntregaDias ? esc(p.prazoEntregaDias) + ' dias' : '')}${kv('Exigências', esc(p.exigencias))}
         ${pst.ents ? kv('Entregas', pst.ents.map((x, i) => `${i + 1}. ${esc(x.local)} · ${C.numBR(x.e.km || 0, 1)} km · ${x.e.viagens || 0} viagem(ns)${x.e.pedagio ? ' · pedágio ' + C.brl(x.e.pedagio) : ''} = <b>${C.brl(x.custo)}</b> · ${x.nItens} ${x.nItens === 1 ? 'item' : 'itens'}`).join('<br>') + (pst.ents.length > 1 ? `<br>Total: ${C.brl(pst.viagem)}` : '')) : ''}
+        ${pst.grupos && pst.grupos.length ? kv('Itens com local próprio', pst.grupos.map((g) => `${esc(g.local)} · ${C.numBR(g.e.km || 0, 1)} km · ${g.e.viagens == null ? 1 : g.e.viagens} viagem(ns)${g.e.pedagio ? ' · pedágio ' + C.brl(g.e.pedagio) : ''} = <b>${C.brl(g.custo)}</b> · ${g.nItens} ${g.nItens === 1 ? 'item' : 'itens'}`).join('<br>')) : ''}
         ${!pst.ents ? kv('Entrega de carro', p.km ? `${C.numBR(p.km, 1)} km (ida e volta) · ${p.viagens || 0} viagem(ns)${p.pedagio ? ' · pedágio ' + C.brl(p.pedagio) : ''} = ${C.brl(pst.viagem)}` : '') : ''}
         ${kv('Link do edital', p.link ? `<a href="${esc(p.link)}" target="_blank" rel="noopener">${esc(p.link)}</a>` : '')}${kv('Observações', esc(p.obs))}</div></div>
       <div class="grid2"><button class="btn" data-act="editar-pregao" data-id="${p.id}">${icon('edit', 'sm')} Editar dados</button>
@@ -2441,7 +2506,7 @@ input[type=color].input { padding: 4px; height: 46px; }
       if (!its.length) continue;
       n += its.length;
       html += `<section class="gbox" style="--gc:${corDe(g.p.id)}">
-        <header class="ghead"><div class="grow"><div class="gnum">COMPRA Nº ${esc(g.p.numero)}</div><h3>${esc(g.p.orgao)}</h3></div>${badgeStatus(g.p.status)}</header>
+        <header class="ghead"><div class="grow"><div class="gnum">PREGÃO Nº ${esc(g.p.numero)}</div><h3>${esc(g.p.orgao)}</h3></div>${badgeStatus(g.p.status)}</header>
         <div class="gmeta">${g.itens.length} ${g.itens.length === 1 ? 'item' : 'itens'}${its.length !== g.itens.length ? ' (' + its.length + ' na busca)' : ''} · venda <b>${C.brl0(g.venda)}</b> · lucro <b>${C.brl0(g.lucro)}</b></div>
         <div class="list">${its.map((it) => itemCard(it, R.iMap.get(it.id), { pst: g, showOrg: false })).join('')}</div></section>`;
     }
@@ -2530,7 +2595,7 @@ input[type=color].input { padding: 4px; height: 46px; }
           ${fp(o, 'validade', 'Validade (dias)', { type: 'int', im: 'numeric' })}
           ${fp(o, 'pagamento', 'Prazo de pagamento')}
           ${fp(o, 'prazoEntrega', 'Prazo de entrega', { ph: pz.prazoEntregaDias ? pz.prazoEntregaDias + ' dias (do pregão)' : 'ex.: 10 dias' })}
-          ${fp(o, 'localEntrega', 'Local de entrega', { ph: C.localEntregaPadrao(pz) || 'local do pregão', hint: 'Em branco = usa o local do pregão. Escreva aqui só para mudar.' })}
+          ${fp(o, 'localEntrega', 'Local de entrega', { ph: C.localEntregaPadrao(pz, store.get().itens.filter((i) => i.pregaoId === pz.id && !i.deleted)) || 'local do pregão', hint: 'Em branco = usa o local do pregão. Escreva aqui só para mudar.' })}
           ${fp(o, 'observacoes', 'Observações (saem no PDF)', { area: true, rows: 2, full: true })}
           <div class="field full"><label>Data do documento</label><input class="input" type="date" data-ui="data" value="${esc(UI.pdf.data)}"></div>
           <div class="field full"><label>Texto da declaração</label><textarea class="input" rows="3" data-cfg="proposta.textoDeclaracao" data-type="text">${esc(cfg.proposta.textoDeclaracao)}</textarea></div>
@@ -2548,7 +2613,7 @@ input[type=color].input { padding: 4px; height: 46px; }
     const corpo = [
       acc('acc-tit', 'Títulos e faixa do edital',
         `${swp(o, 'desc.titulo', 'Títulos (ANEXO / modelo)')}<div class="formgrid">${fp(o, 'desc.titulo1', 'Título 1')}${fp(o, 'desc.titulo2', 'Título 2')}</div>
-         ${swp(o, 'desc.faixa', 'Faixa com o número do edital')}${fp(o, 'desc.faixaTexto', 'Texto da faixa', { hint: '{numero} vira o “Nº da compra” do pregão' })}`),
+         ${swp(o, 'desc.faixa', 'Faixa com o número do edital')}${fp(o, 'desc.faixaTexto', 'Texto da faixa', { hint: '{numero} vira o “Nº do pregão”' })}`),
       acc('acc-forn', 'Dados do fornecedor', `${swp(o, 'desc.fornecedor', 'Mostrar o quadro “Dados do fornecedor”')}<div class="swgrid">${campos}</div><p class="tiny muted">Os dados vêm de Config › Empresa. Campo desligado some do quadro.</p>`),
       acc('acc-obj', 'Objeto da licitação', `${swp(o, 'desc.objeto', 'Mostrar o objeto')}${fp(o, 'desc.objetoPrefixo', 'Prefixo')}${fp(o, 'desc.objetoTexto', 'Objeto (copie do edital)', { area: true, rows: 4, ph: 'aquisição de …' })}`),
       acc('acc-tab', 'Tabela de especificações', `${swp(o, 'desc.tabela', 'Mostrar a tabela')}<div class="formgrid">${fp(o, 'desc.tabelaTitulo', 'Título da tabela')}${fp(o, 'desc.rotuloItem', 'Nome da coluna do item', { hint: 'Lote, Item…' })}${fp(o, 'icmsAliq', 'Alíquota ICMS padrão (%)', { type: 'pct', im: 'decimal', hint: 'MEI: 0. Por item, edite o item.' })}</div>
