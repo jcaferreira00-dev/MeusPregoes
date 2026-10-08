@@ -2417,7 +2417,7 @@ input[type=color].input { padding: 4px; height: 46px; }
   function painelCard(pst) {
     const p = pst.p, pz = prazoInfo(p), cor = COR_STATUS[p.status] || '#2e75b6';
     const ds = diasDesde(p.sessao);
-    const ativo = !INATIVOS.includes(p.status) && p.status !== 'Faturado';
+    const ativo = !C.INATIVOS.includes(p.status) && p.status !== 'Faturado';
     const hora = (/T(\d{2}:\d{2})/.exec(p.sessao || '') || [])[1];
     const al = [];
     if (pz && (pz.nivel === 'bad' || pz.nivel === 'warn')) al.push([pz.nivel, 'Propostas: ' + pz.curto]);
