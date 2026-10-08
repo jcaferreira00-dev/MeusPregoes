@@ -267,6 +267,9 @@ input.input[type=datetime-local]::-webkit-date-and-time-value, input.input[type=
 .pcard.falta-dados { border-top-color: #f57c00; border-right-color: #f57c00; border-bottom-color: #f57c00; animation: faltaPulse 1.6s ease-in-out infinite; }
 .pcard.falta-dados .badge.st-Falta-dados { animation: faltaBadge 1.6s ease-in-out infinite; }
 .pcard .lkrow { padding-top: 8px; border-top: 1px dashed var(--line); }
+.pcard .obsline { font-size: 12.5px; font-weight: 600; color: var(--amber); background: var(--amber-soft); border-radius: 8px; padding: 6px 10px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; white-space: pre-wrap; overflow-wrap: anywhere; }
+.obsbox { border-left: 4px solid var(--amber); }
+.obsbox .obstxt { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 14px; line-height: 1.5; }
 .pcard .lk { text-decoration: none; color: var(--blue); min-width: 0; }
 @media (prefers-reduced-motion: reduce) { .pcard.falta-dados { animation: none !important; box-shadow: 0 0 0 2px #f57c00, var(--shadow); } .pcard.falta-dados .badge.st-Falta-dados { animation: none !important; } }
 
@@ -1928,6 +1931,7 @@ input[type=color].input { padding: 4px; height: 46px; }
       km: p.km ? C.numBR(p.km, 1) : '', viagens: p.viagens == null ? '1' : String(p.viagens), pedagio: p.pedagio ? C.numBR(p.pedagio) : '',
       entregaDiferente: !!p.entregaDiferente, locaisEntrega: p.locaisEntrega || '',
       link: p.link || '', linkProposta: p.linkProposta || '', linkLicitacao: p.linkLicitacao || '', obs: p.obs || '',
+      modeloProprio: !!p.modeloProprio, linkModelo: p.linkModelo || '',
     };
   }
   /* ---------- trajeto automático (OpenStreetMap: Nominatim para achar o local, OSRM para a distância por estrada) ---------- */
@@ -2017,6 +2021,10 @@ input[type=color].input { padding: 4px; height: 46px; }
         ${field({ label: 'Site que lista a licitação (ex.: PNCP)', name: 'linkLicitacao', type: 'url', value: v.linkLicitacao, full: true, ph: 'https://…', hint: 'Aparece como botão no cartão da guia Pregões.' })}
         ${field({ label: 'Data e hora final para envio das propostas', name: 'prazoPropostas', type: 'datetime-local', value: v.prazoPropostas, full: true, hint: 'Na lista, o cartão fica amarelo faltando 2 dias e vermelho faltando 1 dia.' })}
         ${field({ label: 'Data e hora da sessão', name: 'sessao', type: 'datetime-local', value: v.sessao, full: true })}
+        <div class="full"><div class="sect" style="margin-top:6px">${icon('alert', 'sm')} Modelo de proposta e observações</div></div>
+        <div class="full"><label class="switch"><span>Este edital tem modelo próprio de proposta<small class="hint" style="display:block;font-weight:500">Marque quando o órgão exigir que a proposta siga um formato específico. O aviso fica em destaque no cartão e no início do pregão.</small></span><input type="checkbox" name="modeloProprio"${v.modeloProprio ? ' checked' : ''}></label></div>
+        ${field({ label: 'Link do modelo de proposta ou documento adicional', name: 'linkModelo', type: 'url', value: v.linkModelo, full: true, ph: 'https://…', hint: 'Cole o link do arquivo (Google Drive, site do órgão etc.). Vira o botão “Modelo de proposta”.' })}
+        ${field({ label: 'Observações importantes', name: 'obs', type: 'textarea', value: v.obs, full: true, ph: 'Ex.: enviar amostra, exigem atestado de capacidade técnica, ligar para o pregoeiro, prazo para esclarecimentos…', hint: 'Anotações para não esquecer. Aparecem em destaque no início do pregão.' })}
         ${field({ label: 'Prazo de entrega (dias)', name: 'prazoEntregaDias', value: v.prazoEntregaDias, inputmode: 'numeric' })}
         ${field({ label: 'Exigências (IE, certidões)', name: 'exigencias', type: 'textarea', value: v.exigencias, full: true, ph: 'SICAF, CND estadual…' })}
       </div>
@@ -2035,8 +2043,7 @@ input[type=color].input { padding: 4px; height: 46px; }
         <div class="field full"><label>Custo total da entrega</label><div class="input" id="viagemCusto" style="display:flex;align-items:center;font-weight:800">—</div></div>
         <div class="full field" style="margin-top:-4px"><div class="hint" id="rotaInfo" role="status" aria-live="polite"></div><button type="button" class="btn sm" data-rota="calc" style="margin-top:8px;align-self:flex-start">Recalcular trajeto</button></div>
       </div>
-      <div class="sect">Outros</div>
-      ${field({ label: 'Observações', name: 'obs', type: 'textarea', value: v.obs })}`;
+`;
     openForm({
       key: 'pregao:' + (id || 'novo'), title: id ? 'Editar pregão' : 'Novo pregão', body, values: v,
       onMount: (form) => {
@@ -2156,6 +2163,7 @@ input[type=color].input { padding: 4px; height: 46px; }
           entregaDiferente: !!x.entregaDiferente, kmManual: form.dataset.kmManual === '1',
           prazoEntregaDias: x.prazoEntregaDias ? parseInt(x.prazoEntregaDias, 10) : null, exigencias: x.exigencias.trim(), status: x.status,
           link: x.link.trim(), linkProposta: (x.linkProposta || '').trim(), linkLicitacao: (x.linkLicitacao || '').trim(), obs: x.obs.trim(),
+          modeloProprio: !!x.modeloProprio, linkModelo: (x.linkModelo || '').trim(),
         };
         if (x.entregaDiferente) { data.entregas = ent; data.locaisEntrega = ent.map((e) => e.local).join('\n'); }
         else Object.assign(data, { entregas: [], locaisEntrega: '', km, viagens: x.viagens === '' ? (km > 0 ? 1 : 0) : (C.parseBR(x.viagens) || 0), pedagio: C.parseBR(x.pedagio) || 0 });
@@ -2411,12 +2419,14 @@ input[type=color].input { padding: 4px; height: 46px; }
     const pzCls = (pz && (pz.nivel === 'warn' || pz.nivel === 'bad') ? ' prz-' + pz.nivel : '') + (p.status === 'Falta dados' ? ' falta-dados' : '');
     const url = (u) => { u = String(u || '').trim(); return u ? (/^https?:\/\//i.test(u) ? u : 'https://' + u) : ''; };
     const btn = (u, txt) => u ? `<a class="btn sm grow lk" href="${esc(u)}" target="_blank" rel="noopener noreferrer" data-act="link-externo">${icon('link', 'sm')} ${txt}</a>` : '';
-    const botoes = btn(url(p.linkProposta), 'Enviar proposta') + btn(url(p.linkLicitacao), 'Licitações');
+    const botoes = btn(url(p.linkModelo), 'Modelo de proposta') + btn(url(p.linkProposta), 'Enviar proposta') + btn(url(p.linkLicitacao), 'Licitações');
     return `<article class="pcard${pzCls}" style="--gc:${corDe(p.id)}" data-act="abrir-pregao" data-id="${p.id}" tabindex="0" role="button">
       <div class="row between"><span class="num" style="color:var(--gc)">PREGÃO Nº ${esc(p.numero)}</span>${badgeStatus(p.status)}</div>
       <h4>${esc(p.orgao)}</h4>
       <div class="small muted row wrap" style="gap:4px 14px">${p.cidadeUf ? `<span class="row" style="gap:4px">${icon('pin', 'sm')}${esc(p.cidadeUf)}</span>` : ''}${p.sessao ? `<span class="row" style="gap:4px">${icon('calendar', 'sm')}${esc(C.fmtSessao(p.sessao))}</span>` : ''}</div>
       ${pz ? `<div><span class="prazo ${pz.nivel}">${icon(pz.nivel === 'ok' ? 'calendar' : 'alert', 'sm')}${esc(pz.texto)}</span></div>` : ''}
+      ${p.modeloProprio ? `<div><span class="prazo warn">${icon('alert', 'sm')}Modelo próprio de proposta</span></div>` : ''}
+      ${p.obs ? `<div class="obsline">${esc(p.obs)}</div>` : ''}
       <div class="chips">${chips || '<span class="chip">Sem itens ainda</span>'}</div>
       <div class="nums"><div>Venda<b>${C.brl0(pst.venda)}</b></div><div>Lucro<b>${C.brl0(pst.lucro)}</b></div><div>Margem<b>${C.pct(pst.margem, 0)}</b></div></div>
       ${botoes ? `<div class="row lkrow" style="gap:8px">${botoes}</div>` : ''}</article>`;
@@ -2465,6 +2475,14 @@ input[type=color].input { padding: 4px; height: 46px; }
       <button class="back" data-act="voltar">${icon('back')} Pregões</button>
       <div class="hero"><span class="num">PREGÃO Nº ${esc(p.numero)}</span><h2>${esc(p.orgao)}</h2>
         <div class="m">${p.cidadeUf ? `<span>${esc(p.cidadeUf)}</span>` : ''}${p.sessao ? `<span>Sessão ${esc(C.fmtSessao(p.sessao))}</span>` : ''}</div></div>
+      ${(() => {
+        if (!p.modeloProprio && !p.linkModelo && !p.obs) return '';
+        const u = String(p.linkModelo || '').trim(), href = u ? (/^https?:\/\//i.test(u) ? u : 'https://' + u) : '';
+        return `<div class="card obsbox"><h3>${icon('alert', 'sm')} <span class="grow">Atenção neste edital</span><button class="btn sm" data-act="editar-pregao" data-id="${p.id}">${icon('edit', 'sm')} Editar</button></h3>
+          ${p.modeloProprio ? `<div class="alert warn" style="margin-bottom:10px">${icon('alert', 'sm')}<div class="grow">Este edital tem modelo próprio de proposta. Use o documento do órgão em vez do modelo padrão.</div></div>` : ''}
+          ${href ? `<a class="btn block" style="margin-bottom:10px" href="${esc(href)}" target="_blank" rel="noopener noreferrer">${icon('link', 'sm')} Abrir modelo de proposta / documento adicional</a>` : ''}
+          ${p.obs ? `<div class="obstxt">${esc(p.obs)}</div>` : ''}</div>`;
+      })()}
       <div class="card"><div class="field" style="margin:0"><label for="stsel">Status do pregão</label>
         <select class="input" id="stsel" data-status-pregao="${p.id}">${C.STATUS.map((s) => `<option${s === p.status ? ' selected' : ''}>${esc(s)}</option>`).join('')}</select></div></div>
       <div class="kpis">
@@ -2480,7 +2498,7 @@ input[type=color].input { padding: 4px; height: 46px; }
         ${pst.ents ? kv('Entregas', pst.ents.map((x, i) => `${i + 1}. ${esc(x.local)} · ${C.numBR(x.e.km || 0, 1)} km · ${x.e.viagens || 0} viagem(ns)${x.e.pedagio ? ' · pedágio ' + C.brl(x.e.pedagio) : ''} = <b>${C.brl(x.custo)}</b> · ${x.nItens} ${x.nItens === 1 ? 'item' : 'itens'}`).join('<br>') + (pst.ents.length > 1 ? `<br>Total: ${C.brl(pst.viagem)}` : '')) : ''}
         ${pst.grupos && pst.grupos.length ? kv('Itens com local próprio', pst.grupos.map((g) => `${esc(g.local)} · ${C.numBR(g.e.km || 0, 1)} km · ${g.e.viagens == null ? 1 : g.e.viagens} viagem(ns)${g.e.pedagio ? ' · pedágio ' + C.brl(g.e.pedagio) : ''} = <b>${C.brl(g.custo)}</b> · ${g.nItens} ${g.nItens === 1 ? 'item' : 'itens'}`).join('<br>')) : ''}
         ${!pst.ents ? kv('Entrega de carro', p.km ? `${C.numBR(p.km, 1)} km (ida e volta) · ${p.viagens || 0} viagem(ns)${p.pedagio ? ' · pedágio ' + C.brl(p.pedagio) : ''} = ${C.brl(pst.viagem)}` : '') : ''}
-        ${kv('Link do edital', p.link ? `<a href="${esc(p.link)}" target="_blank" rel="noopener">${esc(p.link)}</a>` : '')}${kv('Observações', esc(p.obs))}</div></div>
+        ${kv('Link do edital', p.link ? `<a href="${esc(p.link)}" target="_blank" rel="noopener">${esc(p.link)}</a>` : '')}</div></div>
       <div class="grid2"><button class="btn" data-act="editar-pregao" data-id="${p.id}">${icon('edit', 'sm')} Editar dados</button>
         <button class="btn navy" data-act="pdf-pregao" data-id="${p.id}">${icon('pdf', 'sm')} Proposta PDF</button></div></div>`;
   }
@@ -2616,6 +2634,7 @@ input[type=color].input { padding: 4px; height: 46px; }
     return `<div class="page">
       <div class="card"><h3>1 · Qual pregão?</h3>
         <div class="field"><label for="pdfp">Pregão</label><select class="input" id="pdfp" data-ui="pregaoId">${list.map((x) => `<option value="${x.id}"${x.id === UI.pdf.pregaoId ? ' selected' : ''}>${esc(pregaoLabel(x))}</option>`).join('')}</select></div>
+        ${(pz0.modeloProprio || pz0.linkModelo) ? `<div class="alert warn" style="margin-bottom:12px">${icon('alert', 'sm')}<div class="grow">Este edital tem modelo próprio de proposta.${pz0.obs ? '<br><span style="font-weight:600;white-space:pre-wrap">' + esc(pz0.obs) + '</span>' : ''}</div>${pz0.linkModelo ? `<a class="btn sm" href="${esc(/^https?:\/\//i.test(pz0.linkModelo) ? pz0.linkModelo : 'https://' + pz0.linkModelo)}" target="_blank" rel="noopener noreferrer">Abrir modelo</a>` : ''}</div>` : ''}
         ${pz0.status !== 'Proposta enviada' ? (pz0.link
           ? `<a class="btn block" style="margin-bottom:12px" href="${esc(/^https?:\/\//i.test(pz0.link) ? pz0.link : 'https://' + pz0.link)}" target="_blank" rel="noopener noreferrer">${icon('eye', 'sm')} Abrir edital</a>`
           : `<div class="alert warn" style="margin-bottom:12px">${icon('alert', 'sm')}<div class="grow">Este pregão não tem o link do edital cadastrado.</div><button class="btn sm" data-act="editar-pregao" data-id="${pz0.id}">Cadastrar link</button></div>`) : ''}
