@@ -348,6 +348,7 @@ input[type=color].input { padding: 4px; height: 46px; }
 .pgc.p-warn { --pc: #e0a010; border-color: #e0a010; border-left-color: #e0a010; animation: pgcPulse 1.6s ease-in-out infinite; }
 .pgc.p-falta { --pc: #f57c00; animation: pgcPulse 1.6s ease-in-out infinite; }
 .pgc.p-disputa { animation: pgcPulse 2.4s ease-in-out infinite; }
+.pgc.enviada { border: 2px solid var(--green); }
 @media (prefers-reduced-motion: reduce) { .pgc.p-bad, .pgc.p-warn, .pgc.p-falta, .pgc.p-disputa { box-shadow: 0 0 0 2px var(--pc), var(--shadow); } }
 
 /* nº do item no edital (facilita achar no PDF do edital) */
@@ -364,7 +365,7 @@ input[type=color].input { padding: 4px; height: 46px; }
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.3.4';
+  const APP_VERSION = '1.3.5';
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Em disputa', 'Ganhou', 'Faturado', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti'];
   const DECL_PADRAO =
@@ -2393,6 +2394,9 @@ input[type=color].input { padding: 4px; height: 46px; }
   }
 
   /* ---------- Painel: cards dos pregões ---------- */
+  // ordem dos cards: Falta dados, Analisando, Proposta enviada, depois o resto
+  const ORDEM_STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Em disputa', 'Ganhou', 'Faturado', 'Perdeu', 'Desclassificado', 'Desisti'];
+  const rankStatus = (s) => { const i = ORDEM_STATUS.indexOf(s); return i < 0 ? ORDEM_STATUS.length : i; };
   const COR_STATUS = { 'Falta dados': '#f57c00', 'Analisando': '#2e75b6', 'Proposta enviada': '#5c6bc0', 'Em disputa': '#d99a1c', 'Ganhou': '#2f8f3a', 'Faturado': '#0f8b78', 'Perdeu': '#c0392b', 'Desclassificado': '#8e2a2a', 'Desisti': '#7b8798' };
   const DIA_MS = 86400000;
   const iniDia = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
@@ -2428,15 +2432,16 @@ input[type=color].input { padding: 4px; height: 46px; }
     const ds = diasDesde(p.sessao);
     const ativo = !C.INATIVOS.includes(p.status) && p.status !== 'Faturado';
     const hora = (/T(\d{2}:\d{2})/.exec(p.sessao || '') || [])[1];
+    const enviada = p.status === 'Proposta enviada';
     const al = [];
-    if (pz && (pz.nivel === 'bad' || pz.nivel === 'warn')) al.push([pz.nivel, 'Propostas: ' + pz.curto]);
-    else if (pz && pz.nivel === 'off') al.push(['off', 'Propostas encerradas']);
+    if (!enviada && pz && (pz.nivel === 'bad' || pz.nivel === 'warn')) al.push([pz.nivel, 'Propostas: ' + pz.curto]);
+    else if (!enviada && pz && pz.nivel === 'off') al.push(['off', 'Propostas encerradas']);
     if (ativo && ds === 0) al.push(['bad', 'Sessão hoje' + (hora ? ' ' + hora : '')]);
     else if (ativo && ds === -1) al.push(['warn', 'Sessão amanhã' + (hora ? ' ' + hora : '')]);
     const pulse = al.some((a) => a[0] === 'bad') ? 'p-bad' : al.some((a) => a[0] === 'warn') ? 'p-warn' : p.status === 'Falta dados' ? 'p-falta' : p.status === 'Em disputa' ? 'p-disputa' : '';
     const meta = (p.cidadeUf ? `<span>${icon('pin', 'sm')}${esc(p.cidadeUf)}</span>` : '')
       + (p.sessao ? `<span>${icon('calendar', 'sm')}${esc(C.fmtSessao(p.sessao))}</span>` : (p.prazoPropostas ? `<span>${icon('calendar', 'sm')}Propostas até ${esc(C.fmtSessao(p.prazoPropostas))}</span>` : ''));
-    return `<article class="pgc ${pulse}" style="--sc:${cor}" data-act="abrir-pregao" data-id="${p.id}" tabindex="0" role="button" aria-label="Abrir pregão ${esc(p.numero)} ${esc(p.orgao)}">
+    return `<article class="pgc ${pulse}${enviada ? ' enviada' : ''}" style="--sc:${cor}" data-act="abrir-pregao" data-id="${p.id}" tabindex="0" role="button" aria-label="Abrir pregão ${esc(p.numero)} ${esc(p.orgao)}">
       <button type="button" class="pgc-x" data-act="ocultar-painel" data-id="${p.id}" title="Tirar do painel (não exclui o pregão)" aria-label="Tirar do painel">${icon('x', 'sm')}</button>
       <span class="pgc-num">Nº ${esc(p.numero)}</span>
       <h4>${esc(p.orgao)}</h4>
@@ -2446,7 +2451,7 @@ input[type=color].input { padding: 4px; height: 46px; }
   }
   function painelPregoesHtml(R) {
     const todos = [...R.pMap.values()];
-    const vis = todos.filter((x) => !painelOculto(x.p)).sort(ordemPainel);
+    const vis = todos.filter((x) => !painelOculto(x.p)).sort((a, b) => (rankStatus(a.p.status) - rankStatus(b.p.status)) || ordemPainel(a, b));
     const oc = todos.filter((x) => painelOculto(x.p)).sort(ordemPainel);
     const lista = oc.map((x) => {
       const manual = painelOculto(x.p) === 'manual';
@@ -2546,9 +2551,7 @@ input[type=color].input { padding: 4px; height: 46px; }
     const q = UI.busca.trim().toLowerCase();
     if (q) list = list.filter((x) => (x.p.numero + ' ' + x.p.orgao + ' ' + (x.p.cidadeUf || '') + ' ' + x.itens.map((i) => i.descricao).join(' ')).toLowerCase().includes(q));
     // ordem: Falta dados, Analisando, Proposta enviada, depois o resto; dentro de cada status, o mais novo primeiro
-    const ORDEM = ['Falta dados', 'Analisando', 'Proposta enviada', 'Em disputa', 'Ganhou', 'Faturado', 'Perdeu', 'Desclassificado', 'Desisti'];
-    const rank = (s) => { const i = ORDEM.indexOf(s); return i < 0 ? ORDEM.length : i; };
-    list.sort((a, b) => (rank(a.p.status) - rank(b.p.status)) || ((b.p.createdAt || 0) - (a.p.createdAt || 0)));
+    list.sort((a, b) => (rankStatus(a.p.status) - rankStatus(b.p.status)) || ((b.p.createdAt || 0) - (a.p.createdAt || 0)));
     if (!list.length) return `<div class="card empty"><p class="muted">Nenhum pregão encontrado.</p></div>`;
     return `<div class="list">${list.map(pregaoCard).join('')}</div>`;
   }
