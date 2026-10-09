@@ -284,6 +284,7 @@ input.input[type=datetime-local]::-webkit-date-and-time-value, input.input[type=
 .pcard { border-left: 6px solid var(--gc, var(--line)); }
 .pcard.prz-warn { border-top-color: var(--amber); border-right-color: var(--amber); border-bottom-color: var(--amber); background: color-mix(in srgb, var(--amber) 10%, var(--card)); box-shadow: 0 0 0 2px color-mix(in srgb, var(--amber) 35%, transparent), var(--shadow); }
 .pcard.prz-bad { border-top-color: var(--red); border-right-color: var(--red); border-bottom-color: var(--red); background: color-mix(in srgb, var(--red) 9%, var(--card)); box-shadow: 0 0 0 2px color-mix(in srgb, var(--red) 40%, transparent), var(--shadow); }
+.pcard.enviada { border: 2px solid var(--green); }
 .egrow { border: 1px solid var(--line); border-radius: 12px; padding: 10px 10px 4px; margin-bottom: 10px; background: var(--card); }
 .egtit { display: flex; justify-content: space-between; gap: 8px; margin-bottom: 8px; font-size: 13px; } .egtit > span:first-child { min-width: 0; overflow-wrap: anywhere; } .egcusto { font-weight: 800; white-space: nowrap; }
 .eg3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; } .eg3 .field { margin-bottom: 6px; } .eg3 .input { padding: 9px 10px; }
@@ -363,7 +364,7 @@ input[type=color].input { padding: 4px; height: 46px; }
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.3.3';
+  const APP_VERSION = '1.3.4';
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Em disputa', 'Ganhou', 'Faturado', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti'];
   const DECL_PADRAO =
@@ -2521,7 +2522,8 @@ input[type=color].input { padding: 4px; height: 46px; }
     const p = pst.p;
     const chips = porItemEdital(pst.itens).slice(0, 3).map((i) => `<span class="chip">${esc(i.descricao)}</span>`).join('') + (pst.itens.length > 3 ? `<span class="chip">+${pst.itens.length - 3}</span>` : '');
     const pz = prazoInfo(p);
-    const pzCls = (pz && (pz.nivel === 'warn' || pz.nivel === 'bad') ? ' prz-' + pz.nivel : '') + (p.status === 'Falta dados' ? ' falta-dados' : '');
+    const enviada = p.status === 'Proposta enviada';
+    const pzCls = (!enviada && pz && (pz.nivel === 'warn' || pz.nivel === 'bad') ? ' prz-' + pz.nivel : '') + (p.status === 'Falta dados' ? ' falta-dados' : '') + (enviada ? ' enviada' : '');
     const url = (u) => { u = String(u || '').trim(); return u ? (/^https?:\/\//i.test(u) ? u : 'https://' + u) : ''; };
     const btn = (u, txt) => u ? `<a class="btn sm grow lk" href="${esc(u)}" target="_blank" rel="noopener noreferrer" data-act="link-externo">${icon('link', 'sm')} ${txt}</a>` : '';
     const botoes = btn(url(p.linkModelo), 'Modelo de proposta') + btn(url(p.linkProposta), 'Enviar proposta') + btn(url(p.linkLicitacao), 'Licitações');
@@ -2543,7 +2545,10 @@ input[type=color].input { padding: 4px; height: 46px; }
     if (UI.filtro !== 'todos') list = list.filter((x) => x.p.status === UI.filtro);
     const q = UI.busca.trim().toLowerCase();
     if (q) list = list.filter((x) => (x.p.numero + ' ' + x.p.orgao + ' ' + (x.p.cidadeUf || '') + ' ' + x.itens.map((i) => i.descricao).join(' ')).toLowerCase().includes(q));
-    list.sort((a, b) => (b.p.createdAt || 0) - (a.p.createdAt || 0));
+    // ordem: Falta dados, Analisando, Proposta enviada, depois o resto; dentro de cada status, o mais novo primeiro
+    const ORDEM = ['Falta dados', 'Analisando', 'Proposta enviada', 'Em disputa', 'Ganhou', 'Faturado', 'Perdeu', 'Desclassificado', 'Desisti'];
+    const rank = (s) => { const i = ORDEM.indexOf(s); return i < 0 ? ORDEM.length : i; };
+    list.sort((a, b) => (rank(a.p.status) - rank(b.p.status)) || ((b.p.createdAt || 0) - (a.p.createdAt || 0)));
     if (!list.length) return `<div class="card empty"><p class="muted">Nenhum pregão encontrado.</p></div>`;
     return `<div class="list">${list.map(pregaoCard).join('')}</div>`;
   }
