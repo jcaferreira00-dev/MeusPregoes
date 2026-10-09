@@ -259,24 +259,24 @@ input[type=range] { width: 100%; accent-color: var(--blue); }
 input.input[type=datetime-local], input.input[type=date] { display: block; -webkit-appearance: none; appearance: none; width: 100%; max-width: 100%; min-width: 0; text-align: left; }
 input.input[type=datetime-local]::-webkit-date-and-time-value, input.input[type=date]::-webkit-date-and-time-value { text-align: left; min-width: 0; }
 
-/* Falta dados: borda laranja pulsando */
+/* Falta dados: borda vermelha pulsando */
 @keyframes faltaPulse {
-  0%, 100% { box-shadow: 0 0 0 2px rgba(245,124,0,.9), 0 0 0 0 rgba(245,124,0,.5), var(--shadow); }
-  50%      { box-shadow: 0 0 0 2px rgba(245,124,0,1), 0 0 12px 4px rgba(245,124,0,.5), var(--shadow); }
+  0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--red) 55%, transparent), var(--shadow); }
+  50%      { box-shadow: 0 0 0 5px transparent, 0 0 14px 3px color-mix(in srgb, var(--red) 50%, transparent), var(--shadow); }
 }
 @keyframes faltaBadge {
   0%, 100% { box-shadow: 0 0 0 0 rgba(245,124,0,.6); background: color-mix(in srgb, #f57c00 18%, var(--card)); }
   50%      { box-shadow: 0 0 0 4px rgba(245,124,0,.0), 0 0 10px 2px rgba(245,124,0,.55); background: color-mix(in srgb, #f57c00 38%, var(--card)); }
 }
 /* só top/right/bottom: a faixa da esquerda (cor do grupo) continua do mesmo tamanho */
-.pcard.falta-dados { border-top-color: #f57c00; border-right-color: #f57c00; border-bottom-color: #f57c00; animation: faltaPulse 1.6s ease-in-out infinite; }
+.pcard.falta-dados { animation: faltaPulse 1.6s ease-in-out infinite; }
 .pcard.falta-dados .badge.st-Falta-dados { animation: faltaBadge 1.6s ease-in-out infinite; }
 .pcard .lkrow { padding-top: 8px; border-top: 1px dashed var(--line); }
 .pcard .obsline { font-size: 12.5px; font-weight: 600; color: var(--amber); background: var(--amber-soft); border-radius: 8px; padding: 6px 10px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; white-space: pre-wrap; overflow-wrap: anywhere; }
 .obsbox { border-left: 4px solid var(--amber); }
 .obsbox .obstxt { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 14px; line-height: 1.5; }
 .pcard .lk { text-decoration: none; color: var(--blue); min-width: 0; }
-@media (prefers-reduced-motion: reduce) { .pcard.falta-dados { animation: none !important; box-shadow: 0 0 0 2px #f57c00, var(--shadow); } .pcard.falta-dados .badge.st-Falta-dados { animation: none !important; } }
+@media (prefers-reduced-motion: reduce) { .pcard.falta-dados { animation: none !important; box-shadow: 0 0 0 2px var(--red), var(--shadow); } .pcard.falta-dados .badge.st-Falta-dados { animation: none !important; } }
 
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
 
@@ -285,6 +285,7 @@ input.input[type=datetime-local]::-webkit-date-and-time-value, input.input[type=
 .pcard.prz-warn { border-top-color: var(--amber); border-right-color: var(--amber); border-bottom-color: var(--amber); background: color-mix(in srgb, var(--amber) 10%, var(--card)); box-shadow: 0 0 0 2px color-mix(in srgb, var(--amber) 35%, transparent), var(--shadow); }
 .pcard.prz-bad { border-top-color: var(--red); border-right-color: var(--red); border-bottom-color: var(--red); background: color-mix(in srgb, var(--red) 9%, var(--card)); box-shadow: 0 0 0 2px color-mix(in srgb, var(--red) 40%, transparent), var(--shadow); }
 .pcard.enviada { border: 2px solid var(--green); }
+.pcard.falta-dados { border: 3px solid var(--red); }
 .egrow { border: 1px solid var(--line); border-radius: 12px; padding: 10px 10px 4px; margin-bottom: 10px; background: var(--card); }
 .egtit { display: flex; justify-content: space-between; gap: 8px; margin-bottom: 8px; font-size: 13px; } .egtit > span:first-child { min-width: 0; overflow-wrap: anywhere; } .egcusto { font-weight: 800; white-space: nowrap; }
 .eg3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; } .eg3 .field { margin-bottom: 6px; } .eg3 .input { padding: 9px 10px; }
@@ -346,9 +347,10 @@ input[type=color].input { padding: 4px; height: 46px; }
 @keyframes dotPulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.6); opacity: .45; } }
 .pgc.p-bad { --pc: #d62d20; border-color: #d62d20; border-left-color: #d62d20; animation: pgcPulse 1.2s ease-in-out infinite; }
 .pgc.p-warn { --pc: #e0a010; border-color: #e0a010; border-left-color: #e0a010; animation: pgcPulse 1.6s ease-in-out infinite; }
-.pgc.p-falta { --pc: #f57c00; animation: pgcPulse 1.6s ease-in-out infinite; }
+.pgc.p-falta { --pc: var(--red); animation: pgcPulse 1.6s ease-in-out infinite; }
 .pgc.p-disputa { animation: pgcPulse 2.4s ease-in-out infinite; }
 .pgc.enviada { border: 2px solid var(--green); }
+.pgc.falta { --pc: var(--red); border: 3px solid var(--red); }
 @media (prefers-reduced-motion: reduce) { .pgc.p-bad, .pgc.p-warn, .pgc.p-falta, .pgc.p-disputa { box-shadow: 0 0 0 2px var(--pc), var(--shadow); } }
 
 /* nº do item no edital (facilita achar no PDF do edital) */
@@ -365,7 +367,7 @@ input[type=color].input { padding: 4px; height: 46px; }
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.3.5';
+  const APP_VERSION = '1.3.6';
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Em disputa', 'Ganhou', 'Faturado', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti'];
   const DECL_PADRAO =
@@ -2441,7 +2443,7 @@ input[type=color].input { padding: 4px; height: 46px; }
     const pulse = al.some((a) => a[0] === 'bad') ? 'p-bad' : al.some((a) => a[0] === 'warn') ? 'p-warn' : p.status === 'Falta dados' ? 'p-falta' : p.status === 'Em disputa' ? 'p-disputa' : '';
     const meta = (p.cidadeUf ? `<span>${icon('pin', 'sm')}${esc(p.cidadeUf)}</span>` : '')
       + (p.sessao ? `<span>${icon('calendar', 'sm')}${esc(C.fmtSessao(p.sessao))}</span>` : (p.prazoPropostas ? `<span>${icon('calendar', 'sm')}Propostas até ${esc(C.fmtSessao(p.prazoPropostas))}</span>` : ''));
-    return `<article class="pgc ${pulse}${enviada ? ' enviada' : ''}" style="--sc:${cor}" data-act="abrir-pregao" data-id="${p.id}" tabindex="0" role="button" aria-label="Abrir pregão ${esc(p.numero)} ${esc(p.orgao)}">
+    return `<article class="pgc ${pulse}${enviada ? ' enviada' : ''}${p.status === 'Falta dados' ? ' falta' : ''}" style="--sc:${cor}" data-act="abrir-pregao" data-id="${p.id}" tabindex="0" role="button" aria-label="Abrir pregão ${esc(p.numero)} ${esc(p.orgao)}">
       <button type="button" class="pgc-x" data-act="ocultar-painel" data-id="${p.id}" title="Tirar do painel (não exclui o pregão)" aria-label="Tirar do painel">${icon('x', 'sm')}</button>
       <span class="pgc-num">Nº ${esc(p.numero)}</span>
       <h4>${esc(p.orgao)}</h4>
