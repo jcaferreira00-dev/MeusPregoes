@@ -249,6 +249,11 @@ input[type=range] { width: 100%; accent-color: var(--blue); }
 .seg-ctl button { flex: 1; border: 0; background: transparent; padding: 9px 6px; border-radius: 9px; font-weight: 700; font-size: 13px; color: var(--muted); cursor: pointer; }
 .seg-ctl button.on { background: var(--card); color: var(--blue); box-shadow: 0 1px 3px rgba(0,0,0,.12); }
 .hidden { display: none !important; }
+.cert-list { display: flex; flex-direction: column; gap: 10px; }
+.cert-row { display: flex; gap: 8px; align-items: stretch; min-width: 0; }
+.cert-lk { justify-content: flex-start; text-align: left; text-decoration: none; color: var(--blue); min-width: 0; }
+.cert-lk span { min-width: 0; overflow-wrap: anywhere; }
+.cert-ed { flex: none; padding: 11px 14px; }
 @media print { .nav, .topbar, .fab { display: none !important; } }
 /* datas no formulário: nunca estouram a coluna no celular */
 input.input[type=datetime-local], input.input[type=date] { display: block; -webkit-appearance: none; appearance: none; width: 100%; max-width: 100%; min-width: 0; text-align: left; }
@@ -358,7 +363,7 @@ input[type=color].input { padding: 4px; height: 46px; }
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.3.2';
+  const APP_VERSION = '1.3.3';
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Em disputa', 'Ganhou', 'Faturado', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti'];
   const DECL_PADRAO =
@@ -442,6 +447,7 @@ input[type=color].input { padding: 4px; height: 46px; }
     salarioMinimo: 1621,
     atividadeMei: 'comercio',   // 'comercio' (+R$ 1 ICMS) | 'servicos' (+R$ 5 ISS) | 'ambos' (+R$ 6)
     impostoPct: 0,
+    certidoes: null,   // [{ id, nome, url }]; null = lista inicial do app
     updatedAt: 0,
   });
 
@@ -1764,6 +1770,7 @@ input[type=color].input { padding: 4px; height: 46px; }
     eye: '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z"/><circle cx="12" cy="12" r="3"/>',
     image: '<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/>',
     info: '<circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/>',
+    certidoes: '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/>',
     link: '<path d="M10 13a5 5 0 0 0 7.1 0l3-3a5 5 0 0 0-7.1-7.1l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.1 0l-3 3A5 5 0 0 0 11 21.1l1.7-1.7"/>',
   };
   const icon = (n, cls) => `<svg class="i ${cls || ''}" viewBox="0 0 24 24" aria-hidden="true">${ICONS[n] || ''}</svg>`;
@@ -1787,6 +1794,7 @@ input[type=color].input { padding: 4px; height: 46px; }
     { id: 'pregoes', t: 'Pregões', title: 'Pregões e compras' },
     { id: 'itens', t: 'Itens', title: 'Itens e valor mínimo' },
     { id: 'pdf', t: 'Proposta', title: 'Proposta em PDF' },
+    { id: 'certidoes', t: 'Certidões', title: 'Onde baixar as certidões' },
     { id: 'config', t: 'Config', title: 'Configurações' },
   ];
 
@@ -2926,13 +2934,73 @@ input[type=color].input { padding: 4px; height: 46px; }
         <p class="tiny muted" style="margin-top:10px">iPhone/iPad: toque em Compartilhar › “Adicionar à Tela de Início”. Android/PC: menu do navegador › “Instalar app”.</p></div></div>`;
   }
 
+  /* ---------- certidões: botões para os sites onde baixo cada uma ---------- */
+  const CERT_PADRAO = [
+    { id: 'cert-federal', nome: 'CND Federal (Receita/PGFN)', url: 'https://solucoes.receita.fazenda.gov.br/Servicos/certidaointernet/PJ/Emitir' },
+    { id: 'cert-fgts', nome: 'CRF - FGTS (Caixa)', url: 'https://consulta-crf.caixa.gov.br/consultacrf/pages/consultaEmpregador.jsf' },
+    { id: 'cert-cndt', nome: 'CNDT - Trabalhista (TST)', url: 'https://cndt-certidao.tst.jus.br/inicio.faces' },
+  ];
+  // enquanto você não mexer, mostra a lista inicial; no primeiro incluir/editar/excluir ela passa a ser sua (e sincroniza)
+  const certidoes = () => { const c = store.get().config.certidoes; return Array.isArray(c) ? c : CERT_PADRAO; };
+  const salvarCertidoes = (lista) => store.setConfigPath('certidoes', lista);
+  // devolve o link com https://, '' se vazio, ou null se o endereço não for de site (ex.: javascript:)
+  const certUrl = (u) => {
+    u = String(u || '').trim();
+    if (!u) return '';
+    if (/^(javascript|data|vbscript|file|blob):/i.test(u)) return null;
+    return /^https?:\/\//i.test(u) ? u : 'https://' + u;
+  };
+
+  function renderCertidoes() {
+    const lista = certidoes();
+    const linhas = lista.map((c) => `<div class="cert-row">
+        <a class="btn grow cert-lk" href="${esc(certUrl(c.url) || '#')}" target="_blank" rel="noopener noreferrer" data-act="link-externo">${icon('link', 'sm')}<span>${esc(c.nome)}</span></a>
+        <button type="button" class="btn ghost cert-ed" data-act="editar-certidao" data-id="${esc(c.id)}" aria-label="Editar ${esc(c.nome)}">${icon('edit', 'sm')}</button></div>`).join('');
+    return `<div class="page"><div class="card"><h3>${icon('certidoes', 'sm')}<span class="grow">Onde baixar as certidões</span></h3>
+        ${lista.length ? `<div class="cert-list">${linhas}</div>` : `<p class="muted small">Nenhum botão ainda. Toque em “Incluir certidão” para adicionar.</p>`}</div>
+      <button type="button" class="btn primary block" data-act="nova-certidao">${icon('plus')} Incluir certidão</button></div>`;
+  }
+
+  function openCertidaoForm(id) {
+    const c = id ? certidoes().find((x) => x.id === id) : null;
+    if (id && !c) return;
+    openForm({
+      key: 'certidao:' + (id || 'nova'),
+      title: id ? 'Editar certidão' : 'Incluir certidão',
+      values: { certNome: c ? c.nome : '', certUrl: c ? c.url : '' },
+      body: `<div class="formgrid">
+        ${field({ label: 'Nome da certidão', name: 'certNome', value: c ? c.nome : '', full: true, ph: 'Ex.: CND Estadual (PR)' })}
+        ${field({ label: 'Link do site onde baixa', name: 'certUrl', type: 'url', value: c ? c.url : '', full: true, ph: 'https://…', inputmode: 'url', hint: 'Vira um botão na guia Certidões.' })}</div>`,
+      saveLabel: id ? 'Salvar' : 'Incluir',
+      deleteLabel: 'Excluir botão',
+      onSave: (x) => {
+        const nome = (x.certNome || '').trim();
+        if (!nome) return 'Informe o nome da certidão.';
+        if (!(x.certUrl || '').trim()) return 'Informe o link do site.';
+        const link = certUrl(x.certUrl);
+        if (link === null) return 'Link inválido. Use um endereço de site (http ou https).';
+        const lista = certidoes().map((o) => Object.assign({}, o));
+        if (id) { const i = lista.findIndex((o) => o.id === id); if (i >= 0) lista[i] = Object.assign({}, lista[i], { nome, url: link }); }
+        else lista.push({ id: C.uid(), nome, url: link });
+        salvarCertidoes(lista);
+        toast(id ? 'Certidão atualizada' : 'Certidão incluída');
+        return true;
+      },
+      onDelete: id ? async () => {
+        const ok = await confirmar('Excluir este botão?', 'Só o botão some da guia. Nada é apagado no site da certidão.', 'Excluir', true);
+        if (ok) { salvarCertidoes(certidoes().filter((o) => o.id !== id)); toast('Botão excluído'); }
+        return ok;
+      } : null,
+    });
+  }
+
   /* ---------- render geral ---------- */
   function render() {
     const main = $('#main');
     const a = document.activeElement;
     if (a && main.contains(a) && /INPUT|TEXTAREA|SELECT/.test(a.tagName) && Guard.pending.size) return;
     const y = window.scrollY;
-    const fn = { painel: renderPainel, pregoes: renderPregoes, itens: renderItens, pdf: renderPDF, config: renderConfig }[UI.tab];
+    const fn = { painel: renderPainel, pregoes: renderPregoes, itens: renderItens, pdf: renderPDF, certidoes: renderCertidoes, config: renderConfig }[UI.tab];
     main.innerHTML = fn();
     $$('.nav button').forEach((b) => b.classList.toggle('on', b.dataset.v === UI.tab));
     const t = TABS.find((x) => x.id === UI.tab);
@@ -3078,6 +3146,8 @@ input[type=color].input { padding: 4px; height: 46px; }
       case 'mostrar-painel': UI.keepScroll = true; store.upsertPregao({ id, ocultoPainel: false }); toast('De volta ao painel'); break;
       case 'painel-ocultos': UI.mostrarOcultos = !UI.mostrarOcultos; UI.keepScroll = true; render(); break;
       case 'voltar': if (history.state && history.state.detail) history.back(); else { UI.detailId = null; render(); } break;
+      case 'nova-certidao': openCertidaoForm(); break;
+      case 'editar-certidao': openCertidaoForm(id); break;
       case 'novo-item': openItemForm(null, t.dataset.pid); break;
       case 'editar-item': openItemForm(id); break;
       case 'filtro': UI.filtro = t.dataset.v; UI.keepScroll = true; render(); break;
