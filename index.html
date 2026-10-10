@@ -340,6 +340,13 @@ input.input[type=datetime-local]::-webkit-date-and-time-value, input.input[type=
 .vrow { display: flex; gap: 10px; align-items: center; padding: 8px 0; border-bottom: 1px dashed var(--line); min-width: 0; }
 .vrow:last-of-type { border-bottom: 0; }
 .vrow .grow b { display: block; font-size: 13.5px; } .vrow .tiny { display: block; }
+/* encerrados (perdeu, desclassificado, desisti): cinza e mínimo */
+.mini-p { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--card); color: var(--muted); font-size: 13px; cursor: pointer; min-width: 0; filter: grayscale(1); opacity: .85; }
+.mini-p .mp-num { font-weight: 700; font-size: 12px; white-space: nowrap; }
+.mini-p .mp-org { flex: 1; min-width: 0; }
+.mini-p .mp-st { flex: none; font-size: 11px; font-weight: 700; padding: 2px 9px; border-radius: 99px; border: 1px solid var(--line); background: color-mix(in srgb, var(--muted) 12%, transparent); white-space: nowrap; }
+.mini-list { display: flex; flex-direction: column; gap: 6px; }
+.mini-hd { margin: 14px 2px 8px; font-size: 11px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
 /* iPhone e telas estreitas: cartões resumidos (a conta completa fica no PC) */
 @media (max-width: 600px) {
   .hide-m { display: none !important; }
@@ -434,7 +441,7 @@ input[type=color].input { padding: 4px; height: 46px; }
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.5.0';
+  const APP_VERSION = '1.5.1';
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Em disputa', 'Ganhou', 'Faturado', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti'];
   const DECL_PADRAO =
@@ -1848,7 +1855,7 @@ input[type=color].input { padding: 4px; height: 46px; }
 
   /* ---------- estado da interface ---------- */
   const UI = {
-    tab: 'painel', detailId: null, filtro: 'todos', busca: '', buscaI: '', mostrarOcultos: false,
+    tab: 'painel', detailId: null, filtro: 'todos', busca: '', buscaI: '', mostrarOcultos: false, mostrarEnc: false,
     pdf: { pregaoId: null, fonte: 'auto', data: C.hojeISO(), busy: false, result: null }, acc: new Set(['acc-forn']),
     ignorePop: 0, deferredPrompt: null, reloadPending: false, updateBanner: false,
   };
@@ -2598,8 +2605,12 @@ input[type=color].input { padding: 4px; height: 46px; }
     return Math.round((iniDia(new Date()) - iniDia(d)) / DIA_MS);
   }
   // fora do painel? 'manual' (você tirou) | 'auto' (2 dias após a sessão ou 3 dias após o fim do prazo de propostas) | null
+  function miniPregao(p) {
+    return `<article class="mini-p" data-act="abrir-pregao" data-id="${p.id}" tabindex="0" role="button" aria-label="Abrir pregão ${esc(p.numero)} ${esc(p.orgao)}"><span class="mp-num">Nº ${esc(p.numero)}</span><span class="mp-org ell">${esc(p.orgao)}</span><span class="mp-st">${esc(p.status)}</span></article>`;
+  }
   function painelOculto(p) {
     if (p.ocultoPainel) return 'manual';
+    if (C.INATIVOS.includes(p.status)) return null;     // perdeu/desistiu: vai para o fim do painel, só com o básico
     if (posPendente(p)) return null;                    // ganhou e ainda não recebeu: fica no painel até o pagamento
     const ds = diasDesde(p.sessao), dp = diasDesde(p.prazoPropostas);
     if (ds !== null && ds < 0) return null;            // sessão ainda por vir: não some sozinho
@@ -2646,12 +2657,15 @@ input[type=color].input { padding: 4px; height: 46px; }
     const todos = [...R.pMap.values()];
     const vis = todos.filter((x) => !painelOculto(x.p)).sort((a, b) => (rankStatus(a.p.status) - rankStatus(b.p.status)) || ordemPainel(a, b));
     const oc = todos.filter((x) => painelOculto(x.p)).sort(ordemPainel);
+    const ativosV = vis.filter((x) => !C.INATIVOS.includes(x.p.status)), enc = vis.filter((x) => C.INATIVOS.includes(x.p.status));
+    const encHtml = enc.length ? `<div class="mini-hd">Encerrados (${enc.length})</div><div class="mini-list">${(UI.mostrarEnc ? enc : enc.slice(0, 5)).map((x) => miniPregao(x.p)).join('')}</div>${enc.length > 5 ? `<button class="btn sm ghost" style="margin-top:8px" data-act="painel-encerrados">${UI.mostrarEnc ? 'Mostrar menos' : 'Ver todos (' + enc.length + ')'}</button>` : ''}` : '';
     const lista = oc.map((x) => {
       const manual = painelOculto(x.p) === 'manual';
       return `<div class="strow"><div><b>${esc(x.p.orgao)}</b><div class="tiny muted">Nº ${esc(x.p.numero)} · ${manual ? 'tirado do painel por você' : 'prazo já passou'}</div></div>${manual ? `<button class="btn sm" data-act="mostrar-painel" data-id="${x.p.id}">Voltar ao painel</button>` : `<button class="btn sm" data-act="abrir-pregao" data-id="${x.p.id}">Abrir</button>`}</div>`;
     }).join('');
-    return `<div class="card"><h3><span class="grow">Pregões (${vis.length})</span>${oc.length ? `<button class="btn sm" data-act="painel-ocultos">${icon('eye', 'sm')} ${UI.mostrarOcultos ? 'Esconder' : 'Ver'} ocultos (${oc.length})</button>` : ''}</h3>
-      ${vis.length ? `<div class="pgrid">${vis.map(painelCard).join('')}</div>` : `<p class="muted small">Nenhum pregão no painel agora. Os cadastrados continuam na aba Pregões.</p>`}
+    return `<div class="card"><h3><span class="grow">Pregões (${ativosV.length})</span>${oc.length ? `<button class="btn sm" data-act="painel-ocultos">${icon('eye', 'sm')} ${UI.mostrarOcultos ? 'Esconder' : 'Ver'} ocultos (${oc.length})</button>` : ''}</h3>
+      ${ativosV.length ? `<div class="pgrid">${ativosV.map(painelCard).join('')}</div>` : (enc.length ? '' : `<p class="muted small">Nenhum pregão no painel agora. Os cadastrados continuam na aba Pregões.</p>`)}
+      ${encHtml}
       ${UI.mostrarOcultos && oc.length ? `<div class="pgoc"><div class="small muted" style="margin-bottom:6px">Fora do painel (continuam na aba Pregões)</div>${lista}</div>` : ''}</div>`;
   }
 
@@ -2787,6 +2801,7 @@ input[type=color].input { padding: 4px; height: 46px; }
 
   function pregaoCard(pst) {
     const p = pst.p;
+    if (C.INATIVOS.includes(p.status)) return miniPregao(p);
     const chips = porItemEdital(pst.itens).slice(0, 3).map((i) => `<span class="chip">${esc(i.descricao)}</span>`).join('') + (pst.itens.length > 3 ? `<span class="chip">+${pst.itens.length - 3}</span>` : '');
     const pz = prazoInfo(p), po = posInfo(p);
     const enviada = p.status === 'Proposta enviada';
@@ -2924,12 +2939,14 @@ input[type=color].input { padding: 4px; height: 46px; }
   function itensListHtml() {
     const R = C.computeAll(store.get());
     const q = UI.buscaI.trim().toLowerCase();
-    const groups = [...R.pMap.values()].sort((a, b) => (b.p.createdAt || 0) - (a.p.createdAt || 0));
+    const enc = (g) => (C.INATIVOS.includes(g.p.status) ? 1 : 0);
+    const groups = [...R.pMap.values()].sort((a, b) => (enc(a) - enc(b)) || (b.p.createdAt || 0) - (a.p.createdAt || 0));   // encerrados sempre no fim
     let html = '', n = 0;
     for (const g of groups) {
       const its = porItemEdital(g.itens).filter((i) => !q || (i.descricao + ' ' + (i.marca || '') + ' ' + (i.onde || '') + ' ' + g.p.orgao + ' ' + g.p.numero).toLowerCase().includes(q));
       if (!its.length) continue;
       n += its.length;
+      if (enc(g)) { html += miniPregao(g.p); continue; }
       html += `<section class="gbox" style="--gc:${corDe(g.p.id)}">
         <header class="ghead"><div class="grow"><div class="gnum">PREGÃO Nº ${esc(g.p.numero)}</div><h3>${esc(g.p.orgao)}</h3></div>${badgeStatus(g.p.status)}</header>
         <div class="gmeta">${g.itens.length} ${g.itens.length === 1 ? 'item' : 'itens'}${its.length !== g.itens.length ? ' (' + its.length + ' na busca)' : ''}<span class="g-fin"> · venda <b>${C.brl0(g.venda)}</b> · lucro <b>${C.brl0(g.lucro)}</b></span></div>
@@ -3461,6 +3478,7 @@ input[type=color].input { padding: 4px; height: 46px; }
       case 'abrir-pregao': UI.tab = 'pregoes'; UI.detailId = id; history.pushState({ detail: id }, ''); saveUI(); render(); window.scrollTo(0, 0); break;
       case 'ocultar-painel': e.stopPropagation(); UI.keepScroll = true; store.upsertPregao({ id, ocultoPainel: true }); toast('Tirado do painel. Continua na aba Pregões'); break;
       case 'mostrar-painel': UI.keepScroll = true; store.upsertPregao({ id, ocultoPainel: false }); toast('De volta ao painel'); break;
+      case 'painel-encerrados': UI.mostrarEnc = !UI.mostrarEnc; UI.keepScroll = true; render(); break;
       case 'painel-ocultos': UI.mostrarOcultos = !UI.mostrarOcultos; UI.keepScroll = true; render(); break;
       case 'voltar': if (history.state && history.state.detail) history.back(); else { UI.detailId = null; render(); } break;
       case 'nova-certidao': openCertidaoForm(); break;
