@@ -286,6 +286,28 @@ input.input[type=datetime-local]::-webkit-date-and-time-value, input.input[type=
 .pcard.prz-bad { border-top-color: var(--red); border-right-color: var(--red); border-bottom-color: var(--red); background: color-mix(in srgb, var(--red) 9%, var(--card)); box-shadow: 0 0 0 2px color-mix(in srgb, var(--red) 40%, transparent), var(--shadow); }
 .pcard.enviada { border: 2px solid var(--green); }
 .pcard.falta-dados { border: 3px solid var(--red); }
+/* onde comprar: link vira botão */
+.comprar { display: flex; min-width: 0; }
+.comprar .chip { max-width: 100%; }
+.comprar-btn { min-width: 0; max-width: 100%; justify-content: flex-start; text-decoration: none; color: var(--blue); }
+.comprar-btn svg { flex: none; }
+.ell { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.icard .lk { text-decoration: none; }
+.linkrow { display: flex; gap: 8px; align-items: stretch; }
+.linkrow .input { flex: 1; min-width: 0; }
+.linkrow .btn { flex: none; min-height: 46px; text-decoration: none; color: var(--blue); }
+.pcard .p-itens { display: none; font-size: 12.5px; color: var(--muted); font-weight: 600; }
+/* iPhone e telas estreitas: cartões resumidos (a conta completa fica no PC) */
+@media (max-width: 600px) {
+  .pcard .nums, .pcard .chips, .icard .i-min, .icard .i-fin, .icard .i-teto, .gmeta .g-fin { display: none; }
+  .pcard .p-itens { display: block; }
+  .pcard, .icard { padding: 12px; gap: 6px; }
+  .pcard h4, .icard h4 { font-size: 15px; line-height: 1.25; }
+  .pcard .lkrow .btn { flex: 1 1 calc(50% - 4px); }
+  .pcard .lkrow .btn, .comprar-btn { min-height: 40px; }
+  .gbox { padding: 10px; gap: 8px; }
+  .gmeta { padding-bottom: 6px; }
+}
 .egrow { border: 1px solid var(--line); border-radius: 12px; padding: 10px 10px 4px; margin-bottom: 10px; background: var(--card); }
 .egtit { display: flex; justify-content: space-between; gap: 8px; margin-bottom: 8px; font-size: 13px; } .egtit > span:first-child { min-width: 0; overflow-wrap: anywhere; } .egcusto { font-weight: 800; white-space: nowrap; }
 .eg3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; } .eg3 .field { margin-bottom: 6px; } .eg3 .input { padding: 9px 10px; }
@@ -367,7 +389,7 @@ input[type=color].input { padding: 4px; height: 46px; }
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.3.6';
+  const APP_VERSION = '1.4.0';
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Em disputa', 'Ganhou', 'Faturado', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti'];
   const DECL_PADRAO =
@@ -2230,10 +2252,26 @@ input[type=color].input { padding: 4px; height: 46px; }
     });
   }
 
+  // "Onde comprar": link vira botão. Vale o campo "Link de compra"; se o "Onde compro" já for um endereço, ele também serve.
+  const urlSeg = (u) => {
+    u = String(u || '').trim();
+    if (!u || /\s/.test(u) || /^(javascript|data|vbscript|file|blob):/i.test(u)) return '';
+    return /^https?:\/\//i.test(u) ? u : 'https://' + u;
+  };
+  const pareceUrl = (s) => /^(https?:\/\/\S+|www\.\S+|[a-z0-9-]+(\.[a-z0-9-]+)*\.[a-z]{2,}(\/\S*)?)$/i.test(String(s || '').trim());
+  function compraInfo(it) {
+    const nome = String(it.onde || '').trim();
+    const href = urlSeg(it.ondeLink) || (pareceUrl(nome) ? urlSeg(nome) : '');
+    if (!href && !nome) return null;
+    let label = nome && !pareceUrl(nome) ? nome : '';
+    if (!label && href) { try { label = new URL(href).hostname.replace(/^www\./, ''); } catch (_) { label = 'link'; } }
+    return { href, label, nome };
+  }
+
   function itemValues(it) {
     return {
       pregaoId: it.pregaoId || '', itemEdital: it.itemEdital || '', descricao: it.descricao || '', descEdital: it.descEdital || '', marca: it.marca || '', unidade: it.unidade || 'Un',
-      qtd: it.qtd == null ? '' : C.numBR(it.qtd, 3), onde: it.onde || '',
+      qtd: it.qtd == null ? '' : C.numBR(it.qtd, 3), onde: it.onde || '', ondeLink: it.ondeLink || '',
       custo: it.custo == null ? '' : C.numBR(it.custo), teto: it.teto == null ? '' : C.numBR(it.teto), frete: it.frete ? C.numBR(it.frete) : '',
       margem: it.margem == null ? '' : C.numBR(it.margem * 100, 2), lanceFinal: it.lanceFinal == null ? '' : C.numBR(it.lanceFinal),
       impostoCompra: it.impostoCompraPct ? C.numBR(it.impostoCompraPct * 100, 2) : '',
@@ -2247,7 +2285,7 @@ input[type=color].input { padding: 4px; height: 46px; }
     const m = C.parseBR(x.margem);
     return {
       id: id || 'new', pregaoId: x.pregaoId, itemEdital: x.itemEdital.trim(), descricao: x.descricao.trim(), descEdital: x.descEdital.trim(), marca: x.marca.trim(), unidade: x.unidade.trim() || 'Un',
-      qtd: C.parseBR(x.qtd), onde: x.onde.trim(), custo: C.parseBR(x.custo), teto: C.parseBR(x.teto), frete: C.parseBR(x.frete) || 0,
+      qtd: C.parseBR(x.qtd), onde: x.onde.trim(), ondeLink: urlSeg(x.ondeLink), custo: C.parseBR(x.custo), teto: C.parseBR(x.teto), frete: C.parseBR(x.frete) || 0,
       margem: m == null ? null : m / 100, lanceFinal: C.parseBR(x.lanceFinal),
       impostoCompraPct: (C.parseBR(x.impostoCompra) || 0) / 100 || null,
       icmsAliq: C.parseBR(x.icmsAliq) == null ? null : C.parseBR(x.icmsAliq) / 100,
@@ -2286,8 +2324,12 @@ input[type=color].input { padding: 4px; height: 46px; }
         ${field({ label: 'Unidade', name: 'unidade', value: v.unidade, ph: 'Un, Cx, Resma…' })}
         ${field({ label: 'Marca / modelo', name: 'marca', value: v.marca, full: true, ph: 'ex.: SONE/Bico RN Anatômico' })}
         ${field({ label: 'Quantidade *', name: 'qtd', value: v.qtd, inputmode: 'decimal' })}
-        ${field({ label: 'Onde compro', name: 'onde', value: v.onde })}
         ${field({ label: 'Custo unit. (R$) *', name: 'custo', value: v.custo, inputmode: 'decimal', hint: 'O que eu vou pagar' })}
+        ${field({ label: 'Onde compro', name: 'onde', value: v.onde, full: true, ph: 'Loja ou site (ex.: Mercado Livre)' })}
+        <div class="field full"><label for="f_ondeLink">Link de compra</label>
+          <div class="linkrow"><input class="input" id="f_ondeLink" name="ondeLink" type="url" value="${esc(v.ondeLink)}" placeholder="https://…" inputmode="url" autocomplete="off" autocapitalize="none">
+            <a class="btn" id="goOnde" href="#" target="_blank" rel="noopener noreferrer" style="display:none">${icon('link', 'sm')} Abrir</a></div>
+          <div class="hint">Cole o link do produto ou da loja. Vira o botão “Comprar” no cartão do item.</div></div>
         ${field({ label: 'Valor unit. do edital (teto)', name: 'teto', value: v.teto, inputmode: 'decimal', hint: 'Máximo que o órgão aceita' })}
         ${field({ label: 'Frete do fornecedor (R$, total do item)', name: 'frete', value: v.frete, inputmode: 'decimal' })}
         ${field({ label: 'Imposto na compra (%)', name: 'impostoCompra', value: v.impostoCompra, inputmode: 'decimal', hint: 'ICMS-ST/antecipação, se você paga' })}
@@ -2326,6 +2368,8 @@ input[type=color].input { padding: 4px; height: 46px; }
       },
       onInput: (form) => {
         let x = readForm(form);
+        const go = $('#goOnde', form), ci = compraInfo({ onde: x.onde, ondeLink: x.ondeLink });
+        if (go) { go.style.display = ci && ci.href ? '' : 'none'; if (ci && ci.href) go.href = ci.href; }
         const bl = $('#boxLocalItem', form); if (bl) bl.classList.toggle('hidden', !String(x.localEntrega || '').trim());
         const ph = store.get().pregoes.find((q) => q.id === x.pregaoId);
         const le = $('[name=localEntrega]', form); if (le && ph) le.placeholder = 'vazio = ' + (ph.cidadeUf || 'local do pregão');
@@ -2350,6 +2394,7 @@ input[type=color].input { padding: 4px; height: 46px; }
         if (!(it.qtd > 0)) miss.push('qtd');
         if (it.custo == null || it.custo < 0) miss.push('custo');
         if (miss.length) { miss.forEach((n) => $('[name=' + n + ']', form).classList.add('err')); return 'Preencha pregão, item, quantidade e custo.'; }
+        if ((x.ondeLink || '').trim() && !it.ondeLink) { $('[name=ondeLink]', form).classList.add('err'); return 'Link de compra inválido. Cole o endereço completo, sem espaços.'; }
         if (it.margem != null && it.margem >= 1) { $('[name=margem]', form).classList.add('err'); return 'A margem precisa ser menor que 100%.'; }
         const data = Object.assign({}, it); delete data.id;
         if (id) data.id = id;
@@ -2533,7 +2578,7 @@ input[type=color].input { padding: 4px; height: 46px; }
     const pzCls = (!enviada && pz && (pz.nivel === 'warn' || pz.nivel === 'bad') ? ' prz-' + pz.nivel : '') + (p.status === 'Falta dados' ? ' falta-dados' : '') + (enviada ? ' enviada' : '');
     const url = (u) => { u = String(u || '').trim(); return u ? (/^https?:\/\//i.test(u) ? u : 'https://' + u) : ''; };
     const btn = (u, txt) => u ? `<a class="btn sm grow lk" href="${esc(u)}" target="_blank" rel="noopener noreferrer" data-act="link-externo">${icon('link', 'sm')} ${txt}</a>` : '';
-    const botoes = btn(url(p.linkModelo), 'Modelo de proposta') + btn(url(p.linkProposta), 'Enviar proposta') + btn(url(p.linkLicitacao), 'Licitações');
+    const botoes = btn(url(p.link), 'Edital') + btn(url(p.linkModelo), 'Modelo de proposta') + btn(url(p.linkProposta), 'Enviar proposta') + btn(url(p.linkLicitacao), 'Licitações');
     return `<article class="pcard${pzCls}" style="--gc:${corDe(p.id)}" data-act="abrir-pregao" data-id="${p.id}" tabindex="0" role="button">
       <div class="row between"><span class="num" style="color:var(--gc)">PREGÃO Nº ${esc(p.numero)}</span>${badgeStatus(p.status)}</div>
       <h4>${esc(p.orgao)}</h4>
@@ -2542,6 +2587,7 @@ input[type=color].input { padding: 4px; height: 46px; }
       ${p.modeloProprio ? `<div><span class="prazo warn">${icon('alert', 'sm')}Modelo próprio de proposta</span></div>` : ''}
       ${p.obs ? `<div class="obsline">${esc(p.obs)}</div>` : ''}
       <div class="chips">${chips || '<span class="chip">Sem itens ainda</span>'}</div>
+      <div class="p-itens">${pst.itens.length ? pst.itens.length + (pst.itens.length === 1 ? ' item' : ' itens') : 'Sem itens ainda'}</div>
       <div class="nums"><div>Venda<b>${C.brl0(pst.venda)}</b></div><div>Lucro<b>${C.brl0(pst.lucro)}</b></div><div>Margem<b>${C.pct(pst.margem, 0)}</b></div></div>
       ${botoes ? `<div class="row lkrow" style="gap:8px">${botoes}</div>` : ''}</article>`;
   }
@@ -2584,12 +2630,15 @@ input[type=color].input { padding: 4px; height: 46px; }
 
   function itemCard(it, c, opt) {
     const p = opt.pst && opt.pst.p;
+    const cp = compraInfo(it);
+    const compra = cp ? `<div class="comprar">${cp.href ? `<a class="btn sm lk comprar-btn" href="${esc(cp.href)}" target="_blank" rel="noopener noreferrer" data-act="link-externo">${icon('link', 'sm')}<span class="ell">Comprar em ${esc(cp.label)}</span></a>` : `<span class="chip">${icon('pin', 'sm')}${esc(cp.nome)}</span>`}</div>` : '';
     return `<article class="icard" data-act="editar-item" data-id="${it.id}" tabindex="0" role="button">
       <div class="row between" style="align-items:flex-start"><h4 class="grow">${String(it.itemEdital || '').trim() ? `<span class="itag">Item ${esc(String(it.itemEdital).trim())}</span>` : ''}${esc(it.descricao)}</h4>${c.situacao ? `<span class="badge ${c.sitTipo}">${esc(c.situacao)}</span>` : ''}</div>
       ${opt.showOrg && p ? `<div class="chips"><span class="chip org">#${esc(p.numero)} · ${esc(p.orgao)}</span></div>` : ''}
-      <div class="small muted">${C.qtdBR(it.qtd)} ${esc(it.unidade || 'Un')} · custo ${C.brl(it.custo)} · teto ${C.brl(c.teto)}${it.marca ? ' · ' + esc(it.marca) : ''}</div>
-      <div class="minbox ${c.sitTipo === 'bad' ? 'bad' : ''}"><div><div class="t">Valor mínimo p/ proposta (unit.)</div><div class="tiny muted">margem ${C.pct(c.margem, 0)} · custo final ${C.brl(c.custoUnit)}</div></div><div class="v">${C.brl(c.minimo)}</div></div>
-      <div class="row between wrap small muted" style="gap:4px 10px"><span>Posso baixar do teto: <b style="color:var(--ink)">${c.folgaRs != null ? C.brl(c.folgaRs) + ' (' + C.pct(c.folgaPct, 0) + ')' : '—'}</b></span><span>${c.impostoTotal > 0 ? 'Impostos ' + C.brl(c.impostoTotal) + ' · ' : ''}Lucro: <b style="color:var(--ink)">${C.brl(c.lucro)}</b></span></div></article>`;
+      <div class="small muted">${C.qtdBR(it.qtd)} ${esc(it.unidade || 'Un')} · custo ${C.brl(it.custo)}<span class="i-teto"> · teto ${C.brl(c.teto)}</span>${it.marca ? ' · ' + esc(it.marca) : ''}</div>
+      ${compra}
+      <div class="minbox i-min ${c.sitTipo === 'bad' ? 'bad' : ''}"><div><div class="t">Valor mínimo p/ proposta (unit.)</div><div class="tiny muted">margem ${C.pct(c.margem, 0)} · custo final ${C.brl(c.custoUnit)}</div></div><div class="v">${C.brl(c.minimo)}</div></div>
+      <div class="row between wrap small muted i-fin" style="gap:4px 10px"><span>Posso baixar do teto: <b style="color:var(--ink)">${c.folgaRs != null ? C.brl(c.folgaRs) + ' (' + C.pct(c.folgaPct, 0) + ')' : '—'}</b></span><span>${c.impostoTotal > 0 ? 'Impostos ' + C.brl(c.impostoTotal) + ' · ' : ''}Lucro: <b style="color:var(--ink)">${C.brl(c.lucro)}</b></span></div></article>`;
   }
 
   function renderDetail() {
@@ -2641,7 +2690,7 @@ input[type=color].input { padding: 4px; height: 46px; }
       n += its.length;
       html += `<section class="gbox" style="--gc:${corDe(g.p.id)}">
         <header class="ghead"><div class="grow"><div class="gnum">PREGÃO Nº ${esc(g.p.numero)}</div><h3>${esc(g.p.orgao)}</h3></div>${badgeStatus(g.p.status)}</header>
-        <div class="gmeta">${g.itens.length} ${g.itens.length === 1 ? 'item' : 'itens'}${its.length !== g.itens.length ? ' (' + its.length + ' na busca)' : ''} · venda <b>${C.brl0(g.venda)}</b> · lucro <b>${C.brl0(g.lucro)}</b></div>
+        <div class="gmeta">${g.itens.length} ${g.itens.length === 1 ? 'item' : 'itens'}${its.length !== g.itens.length ? ' (' + its.length + ' na busca)' : ''}<span class="g-fin"> · venda <b>${C.brl0(g.venda)}</b> · lucro <b>${C.brl0(g.lucro)}</b></span></div>
         <div class="list">${its.map((it) => itemCard(it, R.iMap.get(it.id), { pst: g, showOrg: false })).join('')}</div></section>`;
     }
     return n ? html : `<div class="card empty"><p class="muted">Nenhum item encontrado.</p></div>`;
