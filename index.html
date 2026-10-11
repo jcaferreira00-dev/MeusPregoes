@@ -95,6 +95,7 @@ svg.i.sm { width: 16px; height: 16px; }
 .grid2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; }
 .grid2 > * { min-width: 0; }
 .kpis { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; }
+@media (max-width: 699px) { .two-col { display: contents; } }
 @media (min-width: 700px) { .kpis { grid-template-columns: repeat(4, 1fr); } .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; align-items: start; } }
 .kpi { background: var(--card); border-radius: var(--r); padding: 14px; box-shadow: var(--shadow); border: 1px solid var(--line); border-top: 3px solid var(--c, var(--blue)); }
 .kpi .l { font-size: 10.5px; text-transform: uppercase; letter-spacing: .5px; color: var(--muted); font-weight: 700; }
@@ -377,7 +378,10 @@ input.input[type=datetime-local]::-webkit-date-and-time-value, input.input[type=
   .pcard .p-itens { display: block; }
   .pcard, .icard { padding: 12px; gap: 6px; }
   .pcard h4, .icard h4 { font-size: 15px; line-height: 1.25; }
-  .pcard .lkrow .btn { flex: 1 1 calc(50% - 4px); }
+  .pcard .lkrow .btn { flex: 1 1 100%; }
+  .pcard .lkrow .btn:not(.btn-edital) { display: none; }
+  .pcard .lkrow:not(.has-ed) { display: none; }
+  .m-hide { display: none !important; }
   .pcard .lkrow .btn, .comprar-btn { min-height: 40px; }
   .gbox { padding: 10px; gap: 8px; }
   .gmeta { padding-bottom: 6px; }
@@ -463,7 +467,7 @@ input[type=color].input { padding: 4px; height: 46px; }
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.6.3';
+  const APP_VERSION = '1.6.4';
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Em disputa', 'Ganhou', 'Faturado', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti'];
   const DECL_PADRAO =
@@ -2731,7 +2735,7 @@ input[type=color].input { padding: 4px; height: 46px; }
     const prox = R.proximas[0], sess = prox && prox.p.sessao ? String(prox.p.sessao).slice(0, 10) : '';
     const antes = sess ? infos.filter((o) => o.ci.venc && o.ci.venc < sess) : [];
     const chips = infos.map((o) => `<button type="button" class="cchip ${o.ci.nivel}" data-act="tab" data-v="certidoes"><i></i>${esc(curto(o))}<span class="muted">${esc(o.ci.curto)}</span></button>`).join('');
-    return `<div class="card"><h3>${icon('certidoes', 'sm')}<span class="grow">Certidões</span>${atencao ? `<span class="prazo ${infos.some((o) => o.ci.nivel === 'bad') ? 'bad' : 'warn'}">${atencao} pedindo atenção</span>` : ''}<button class="btn sm" data-act="tab" data-v="certidoes">Abrir</button></h3>
+    return `<div class="card m-hide"><h3>${icon('certidoes', 'sm')}<span class="grow">Certidões</span>${atencao ? `<span class="prazo ${infos.some((o) => o.ci.nivel === 'bad') ? 'bad' : 'warn'}">${atencao} pedindo atenção</span>` : ''}<button class="btn sm" data-act="tab" data-v="certidoes">Abrir</button></h3>
       <div class="cchips">${chips}</div>
       ${antes.length ? `<div class="alert warn" style="margin-top:12px">${icon('alert', 'sm')}<span>Vence antes da próxima sessão (Nº ${esc(prox.p.numero)}, ${esc(fmtDM(sess))}): ${esc(antes.map(curto).join(', '))}.</span></div>` : ''}
       ${infos.every((o) => !o.ci.venc) ? `<p class="tiny muted" style="margin-top:10px">Na guia Certidões, toque em ✓ ao baixar uma certidão para o app calcular o vencimento.</p>` : ''}</div>`;
@@ -2811,7 +2815,7 @@ input[type=color].input { padding: 4px; height: 46px; }
       ${painelPregoesHtml(R)}
       <div class="two-col">${painelCertidoesHtml(R)}${painelResultadosHtml(R)}</div>
       ${painelVencedorHtml(R, st)}
-      <div class="card"><h3>Uso do limite do MEI</h3>
+      <div class="card m-hide"><h3>Uso do limite do MEI</h3>
         <div class="stack" role="img" aria-label="Uso do limite">
           <div class="seg" style="width:${w(f)};background:#1f3864"></div><div class="seg" style="width:${w(a)};background:#2e75b6"></div>
           <div class="seg" style="width:${w(d)};background:#f4b183"></div><div class="seg" style="width:${w(livre)};background:#a9d18e"></div>
@@ -2823,7 +2827,7 @@ input[type=color].input { padding: 4px; height: 46px; }
         <div class="alert ${m.alerta}" style="margin-top:14px">${icon(m.alerta === 'ok' ? 'check' : 'alert', 'sm')}<span>${alertTxt}</span></div>
         <p class="tiny muted" style="margin-top:10px">O total de cada pregão usa o lance final; sem lance, usa o valor do edital (pior caso para o teto).</p>
       </div>
-      <div class="card"><h3>Tributos do MEI</h3><div class="kv-list">
+      <div class="card m-hide"><h3>Tributos do MEI</h3><div class="kv-list">
         <div><span>DAS mensal</span><b>${C.brl(R.tributos.das)} <span class="tiny muted" style="font-weight:500">fixo, não muda com as vendas</span></b></div>
         <div><span>DAS no ano (${R.tributos.meses} meses)</span><b>${C.brl(R.tributos.dasAno)}</b></div>
         <div><span>Imposto sobre vendas</span><b>${C.brl(R.tributos.impostoVenda)}${st.config.impostoPct > 0 ? ' (' + C.pct(st.config.impostoPct, 1) + ')' : ''}</b></div>
@@ -2849,7 +2853,7 @@ input[type=color].input { padding: 4px; height: 46px; }
     const pzCls = (!enviada && pz && (pz.nivel === 'warn' || pz.nivel === 'bad') ? ' prz-' + pz.nivel : '') + (p.status === 'Falta dados' ? ' falta-dados' : '') + (enviada ? ' enviada' : '');
     const url = (u) => { u = String(u || '').trim(); return u ? (/^https?:\/\//i.test(u) ? u : 'https://' + u) : ''; };
     const btn = (u, txt) => u ? `<a class="btn sm grow lk" href="${esc(u)}" target="_blank" rel="noopener noreferrer" data-act="link-externo">${icon('link', 'sm')} ${txt}</a>` : '';
-    const botoes = btn(url(p.link), 'Edital') + btn(url(p.linkModelo), 'Modelo de proposta') + btn(url(p.linkProposta), 'Enviar proposta') + btn(url(p.linkLicitacao), 'Licitações');
+    const botoes = btn(url(p.link), 'Edital').replace('class="btn sm grow lk"', 'class="btn sm grow lk btn-edital"') + btn(url(p.linkModelo), 'Modelo de proposta') + btn(url(p.linkProposta), 'Enviar proposta') + btn(url(p.linkLicitacao), 'Licitações');
     return `<article class="pcard${pzCls}" style="--gc:${corDe(p.id)}" data-act="abrir-pregao" data-id="${p.id}" tabindex="0" role="button">
       <div class="row between"><span class="num" style="color:var(--gc)">PREGÃO Nº ${esc(p.numero)}</span>${badgeStatus(p.status)}</div>
       <h4>${esc(p.orgao)}</h4>
@@ -2862,7 +2866,7 @@ input[type=color].input { padding: 4px; height: 46px; }
       <div class="chips">${chips || '<span class="chip">Sem itens ainda</span>'}</div>
       <div class="p-itens">${pst.itens.length ? pst.itens.length + (pst.itens.length === 1 ? ' item' : ' itens') : 'Sem itens ainda'}</div>
       <div class="nums"><div>Venda<b>${C.brl0(pst.venda)}</b></div><div>Lucro<b>${C.brl0(pst.lucro)}</b></div><div>Margem<b>${C.pct(pst.margem, 0)}</b></div></div>
-      ${botoes ? `<div class="row lkrow" style="gap:8px">${botoes}</div>` : ''}</article>`;
+      ${botoes ? `<div class="row lkrow${url(p.link) ? ' has-ed' : ''}" style="gap:8px">${botoes}</div>` : ''}</article>`;
   }
 
   function pregoesListHtml() {
