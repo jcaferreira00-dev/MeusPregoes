@@ -371,7 +371,9 @@ input.input[type=datetime-local]::-webkit-date-and-time-value, input.input[type=
 @media (max-width: 600px) {
   .hide-m { display: none !important; }
   .cchip { padding: 5px 9px; }
-  .pcard .nums, .pcard .chips { display: none; }
+  .pcard .nums, .pcard .chips, .icard .i-min, .icard .i-fin, .icard .i-teto, .gmeta .g-fin { display: none; }
+  .i-vals { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .i-vals .v-mintot { display: none; }
   .pcard .p-itens { display: block; }
   .pcard, .icard { padding: 12px; gap: 6px; }
   .pcard h4, .icard h4 { font-size: 15px; line-height: 1.25; }
@@ -461,7 +463,7 @@ input[type=color].input { padding: 4px; height: 46px; }
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.6.2';
+  const APP_VERSION = '1.6.3';
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Em disputa', 'Ganhou', 'Faturado', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti'];
   const DECL_PADRAO =
@@ -2924,7 +2926,7 @@ input[type=color].input { padding: 4px; height: 46px; }
     }).join('')}</div>` : '';
     const venc = Number(it.vencedor) > 0 ? `<div><span class="chip venc">${icon('alert', 'sm')}Venceu por ${C.brl(it.vencedor)}</span></div>` : '';
     const obs = String(it.obs || '').trim() ? `<div class="obsline item">${esc(it.obs)}</div>` : '';
-    const vals = `<div class="i-vals"><div><span>Custo total</span><b>${it.custo > 0 && it.qtd > 0 ? C.brl(c.produtos) : '—'}</b></div><div><span>Mín. total</span><b>${C.brl(c.minTotal)}</b></div><div><span>Edital total</span><b>${c.tetoTotal != null ? C.brl(c.tetoTotal) : '—'}</b></div></div>`;
+    const vals = `<div class="i-vals"><div><span>Custo total</span><b>${it.custo > 0 && it.qtd > 0 ? C.brl(c.produtos) : '—'}</b></div><div class="v-mintot"><span>Mín. total</span><b>${C.brl(c.minTotal)}</b></div><div><span>Edital total</span><b>${c.tetoTotal != null ? C.brl(c.tetoTotal) : '—'}</b></div></div>`;
     return `<article class="icard" data-act="editar-item" data-id="${it.id}" tabindex="0" role="button">
       <div class="row between" style="align-items:flex-start"><h4 class="grow">${tag}${esc(it.descricao)}</h4><div class="rcol">${c.situacao ? `<span class="badge ${c.sitTipo}">${esc(c.situacao)}</span>` : ''}${estrelasHtml(c)}</div></div>
       ${opt.showOrg && p ? `<div class="chips"><span class="chip org">#${esc(p.numero)} · ${esc(p.orgao)}</span></div>` : ''}
