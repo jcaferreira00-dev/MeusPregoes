@@ -297,6 +297,7 @@ input.input[type=datetime-local]::-webkit-date-and-time-value, input.input[type=
 .linkrow { display: flex; gap: 8px; align-items: stretch; }
 .linkrow .input { flex: 1; min-width: 0; }
 .linkrow .btn { flex: none; min-height: 46px; text-decoration: none; color: var(--blue); }
+.pcard .p-prop { display: none; }
 .pcard .p-itens { display: none; font-size: 12.5px; color: var(--muted); font-weight: 600; }
 .comprar-btn.barato { border-color: var(--green); color: var(--green); }
 .chip.venc { background: var(--red-soft); color: var(--red); border-color: transparent; font-weight: 700; }
@@ -376,6 +377,7 @@ input.input[type=datetime-local]::-webkit-date-and-time-value, input.input[type=
   .i-vals { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .i-vals .v-mintot { display: none; }
   .pcard .p-itens { display: block; }
+  .pcard .p-prop { display: inline-flex; min-height: 28px; padding: 2px 10px; font-size: 12px; gap: 5px; }
   .pcard, .icard { padding: 12px; gap: 6px; }
   .pcard h4, .icard h4 { font-size: 15px; line-height: 1.25; }
   .pcard .lkrow .btn { flex: 1 1 100%; }
@@ -467,7 +469,7 @@ input[type=color].input { padding: 4px; height: 46px; }
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.6.4';
+  const APP_VERSION = '1.6.6';
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Em disputa', 'Ganhou', 'Faturado', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti'];
   const DECL_PADRAO =
@@ -862,7 +864,7 @@ input[type=color].input { padding: 4px; height: 46px; }
     const pst = R.pMap.get(pregaoId);
     if (!pst) return { linhas: [], total: 0, semValor: 0 };
     const linhas = [];
-    let total = 0, totalS = 0, semValor = 0, n = 0;
+    let total = 0, totalS = 0, semValor = 0, n = 0, limitados = 0, abaixoMin = 0, reducao = 0;
     for (const it of pst.itens) {
       const c = R.iMap.get(it.id);
       let unit = null;
@@ -870,8 +872,13 @@ input[type=color].input { padding: 4px; height: 46px; }
       else if (fonte === 'teto') unit = c.teto;
       else if (fonte === 'lance') unit = c.lance;
       else unit = c.lance !== null ? c.lance : c.minimo;
+      // margem (ou lance) acima do teto do edital: a proposta vai com o teto, para não ser desclassificada
+      let limitadoTeto = false, unitOriginal = unit;
+      if (unit !== null && c.teto !== null && unit > c.teto + 1e-9) { unit = c.teto; limitadoTeto = true; }
       n += 1;
       const qtd = n0(it.qtd);
+      const abaixoMinimo = limitadoTeto && c.minimo !== null && unit < c.minimo - 1e-9;
+      if (limitadoTeto) { limitados += 1; reducao += round2((unitOriginal - unit) * qtd); if (abaixoMinimo) abaixoMin += 1; }
       const tot = unit !== null ? round2(qtd * unit) : null;
       if (unit === null) semValor += 1; else total += tot;
       const aliq = (it.icmsAliq !== null && it.icmsAliq !== undefined) ? it.icmsAliq : n0(icmsPadrao);
@@ -882,10 +889,10 @@ input[type=color].input { padding: 4px; height: 46px; }
         n, numeroItem: (it.itemEdital && String(it.itemEdital).trim()) || String(n).padStart(2, '0'),
         descricao: it.descricao || '', descEdital: (it.descEdital && it.descEdital.trim()) || it.descricao || '',
         marca: it.marca || '', un: it.unidade || 'Un', qtd,
-        unit, total: tot, aliq, unitS, totalS: totS, teto: c.teto, acimaTeto: (unit !== null && c.teto !== null && unit > c.teto + 1e-9),
+        unit, total: tot, aliq, unitS, totalS: totS, teto: c.teto, acimaTeto: (unit !== null && c.teto !== null && unit > c.teto + 1e-9), limitadoTeto, unitOriginal, abaixoMinimo,
       });
     }
-    return { linhas, total: round2(total), totalS: round2(totalS), semValor, pregao: pst.p };
+    return { linhas, total: round2(total), totalS: round2(totalS), semValor, limitados, abaixoMin, reducao: round2(reducao), pregao: pst.p };
   }
 
   /* ---------- merge (sincronização: sempre puxa antes de empurrar) ---------- */
@@ -2857,7 +2864,7 @@ input[type=color].input { padding: 4px; height: 46px; }
     return `<article class="pcard${pzCls}" style="--gc:${corDe(p.id)}" data-act="abrir-pregao" data-id="${p.id}" tabindex="0" role="button">
       <div class="row between"><span class="num" style="color:var(--gc)">PREGÃO Nº ${esc(p.numero)}</span>${badgeStatus(p.status)}</div>
       <h4>${esc(p.orgao)}</h4>
-      <div class="small muted row wrap" style="gap:4px 14px">${p.cidadeUf ? `<span class="row" style="gap:4px">${icon('pin', 'sm')}${esc(p.cidadeUf)}</span>` : ''}${p.sessao ? `<span class="row" style="gap:4px">${icon('calendar', 'sm')}${esc(C.fmtSessao(p.sessao))}</span>` : ''}</div>
+      <div class="small muted row wrap" style="gap:4px 14px;align-items:center">${url(p.linkProposta) ? `<a class="btn sm lk p-prop" href="${esc(url(p.linkProposta))}" target="_blank" rel="noopener noreferrer" data-act="link-externo">${icon('link', 'sm')} Proposta</a>` : ''}${p.cidadeUf ? `<span class="row" style="gap:4px">${icon('pin', 'sm')}${esc(p.cidadeUf)}</span>` : ''}${p.sessao ? `<span class="row" style="gap:4px">${icon('calendar', 'sm')}${esc(C.fmtSessao(p.sessao))}</span>` : ''}</div>
       ${pz ? `<div><span class="prazo ${pz.nivel}">${icon(pz.nivel === 'ok' ? 'calendar' : 'alert', 'sm')}${esc(pz.texto)}</span></div>` : ''}
       ${po ? `<div><span class="prazo ${nivelCls(po.nivel)}">${icon(po.nivel === 'bad' || po.nivel === 'warn' ? 'alert' : 'calendar', 'sm')}${esc(po.texto)}</span></div>` : ''}
       ${p.modeloProprio ? `<div><span class="prazo warn">${icon('alert', 'sm')}Modelo próprio de proposta</span></div>` : ''}
@@ -3140,8 +3147,9 @@ input[type=color].input { padding: 4px; height: 46px; }
           : `<div class="alert warn" style="margin-bottom:12px">${icon('alert', 'sm')}<div class="grow">Este pregão não tem o link do edital cadastrado.</div><button class="btn sm" data-act="editar-pregao" data-id="${pz0.id}">Cadastrar link</button></div>`) : ''}
         <div class="field"><label for="pdff">Qual valor entra na proposta?</label><select class="input" id="pdff" data-ui="fonte">${FONTES.map(([v, l]) => `<option value="${v}"${v === UI.pdf.fonte ? ' selected' : ''}>${l}</option>`).join('')}</select></div>
         <div class="tbl-scroll"><table class="tbl"><thead><tr><th>Item</th><th class="r">Qtd</th><th class="r">Unit.</th><th class="r">Total</th></tr></thead><tbody>
-          ${L.linhas.map((x) => `<tr><td>${esc(x.descricao)}${x.acimaTeto ? '<br><span class="badge bad">acima do teto</span>' : ''}</td><td class="r">${C.qtdBR(x.qtd)}</td><td class="r">${x.unit != null ? C.brl(x.unit) : '<span class="badge bad">sem valor</span>'}</td><td class="r">${x.total != null ? C.brl(x.total) : '—'}</td></tr>`).join('') || '<tr><td colspan="4" class="muted">Nenhum item neste pregão.</td></tr>'}
+          ${L.linhas.map((x) => `<tr><td>${esc(x.descricao)}${x.acimaTeto ? '<br><span class="badge bad">acima do teto</span>' : ''}${x.limitadoTeto ? '<br><span class="badge warn">limitado ao teto</span>' + (x.abaixoMinimo ? ' <span class="badge bad">abaixo do seu mínimo</span>' : '') : ''}</td><td class="r">${C.qtdBR(x.qtd)}</td><td class="r">${x.unit != null ? C.brl(x.unit) : '<span class="badge bad">sem valor</span>'}</td><td class="r">${x.total != null ? C.brl(x.total) : '—'}</td></tr>`).join('') || '<tr><td colspan="4" class="muted">Nenhum item neste pregão.</td></tr>'}
           </tbody><tfoot><tr><td colspan="3">Total da proposta</td><td class="r">${C.brl(L.total)}</td></tr></tfoot></table></div>
+        ${L.limitados ? `<div class="alert warn" style="margin-top:10px">${icon('alert', 'sm')}<span>${L.limitados} item(ns) passavam do teto do edital e entram na proposta com o valor do teto (${C.brl(L.reducao)} a menos no total), para não desclassificar.${L.abaixoMin ? ' Em ' + L.abaixoMin + ' deles o teto fica abaixo do seu valor mínimo: lucro menor ou prejuízo.' : ''}</span></div>` : ''}
         ${L.semValor ? `<div class="alert warn" style="margin-top:10px">${icon('alert', 'sm')}<span>${L.semValor} item(ns) sem valor nesta opção. Preencha o teto ou o lance final, ou troque a opção acima.</span></div>` : ''}
       </div>
       ${pdfModelCards(opts, cfg, pz)}
