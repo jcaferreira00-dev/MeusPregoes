@@ -347,11 +347,31 @@ input.input[type=datetime-local]::-webkit-date-and-time-value, input.input[type=
 .mini-p .mp-st { flex: none; font-size: 11px; font-weight: 700; padding: 2px 9px; border-radius: 99px; border: 1px solid var(--line); background: color-mix(in srgb, var(--muted) 12%, transparent); white-space: nowrap; }
 .mini-list { display: flex; flex-direction: column; gap: 6px; }
 .mini-hd { margin: 14px 2px 8px; font-size: 11px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+/* item: estrelas, valores, fora da disputa, link */
+.icard .rcol { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex: none; }
+.stars { display: inline-flex; align-items: center; gap: 6px; font-size: 15px; letter-spacing: 1px; line-height: 1; color: #e0a800; white-space: nowrap; }
+.stars small { font-size: 11px; font-weight: 700; letter-spacing: 0; color: var(--muted); }
+.stars.s0 { color: var(--red); } .stars.s1, .stars.s2 { color: var(--amber); }
+.i-vals { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.i-vals > div { border-radius: 10px; padding: 6px 8px; background: color-mix(in srgb, var(--muted) 9%, transparent); min-width: 0; }
+.i-vals span { display: block; font-size: 10px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); }
+.i-vals b { display: block; font-size: 12.5px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.icard .obsline { font-size: 12.5px; font-weight: 600; color: var(--amber); background: var(--amber-soft); border-radius: 8px; padding: 6px 10px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.obsline.item, .pcard .obsline.item { color: var(--blue); background: var(--blue-soft); }
+.pcard .obsline.item b { font-weight: 800; }
+.icard-actions { display: flex; justify-content: flex-end; }
+.icard-actions .btn { min-height: 32px; padding: 4px 12px; font-size: 12.5px; }
+.icard.fora { filter: grayscale(1); opacity: .8; gap: 6px; }
+.icard.fora h4 { font-size: 14px; color: var(--muted); }
+.badge.off { background: color-mix(in srgb, var(--muted) 14%, transparent); color: var(--muted); }
+.linkchip { display: flex; gap: 8px; }
+.linkchip .btn { min-height: 46px; text-decoration: none; color: var(--blue); justify-content: flex-start; min-width: 0; }
+.linkchip .btn:last-child { flex: none; width: 46px; padding: 0; justify-content: center; }
 /* iPhone e telas estreitas: cartões resumidos (a conta completa fica no PC) */
 @media (max-width: 600px) {
   .hide-m { display: none !important; }
   .cchip { padding: 5px 9px; }
-  .pcard .nums, .pcard .chips, .icard .i-min, .icard .i-fin, .icard .i-teto, .gmeta .g-fin { display: none; }
+  .pcard .nums, .pcard .chips { display: none; }
   .pcard .p-itens { display: block; }
   .pcard, .icard { padding: 12px; gap: 6px; }
   .pcard h4, .icard h4 { font-size: 15px; line-height: 1.25; }
@@ -441,7 +461,7 @@ input[type=color].input { padding: 4px; height: 46px; }
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.5.1';
+  const APP_VERSION = '1.6.2';
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Em disputa', 'Ganhou', 'Faturado', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti'];
   const DECL_PADRAO =
@@ -605,7 +625,13 @@ input[type=color].input { padding: 4px; height: 46px; }
       else if (lance !== null && lance < minimo) { situacao = 'Lance abaixo do mínimo'; sitTipo = 'bad'; }
       else { situacao = 'OK'; sitTipo = 'ok'; }
     }
-    return { compra, entrega, custoTotal, custoUnit, margem, minimo, teto, lance, folgaRs, folgaPct, totalVenda, lucro, situacao, sitTipo, produtos: qtd * custo, frete, impostoCompra, imposto, impostoTotal: impostoCompra + imposto };
+    // classificação por estrelas pelo lucro real sobre a venda (depois de imposto e entrega)
+    const margemReal = (totalVenda !== null && totalVenda > 0) ? lucro / totalVenda : null;
+    let estrelas = null;
+    if (margemReal !== null) estrelas = margemReal <= 0 ? 0 : margemReal >= 0.5 ? 5 : margemReal >= 0.35 ? 4 : margemReal >= 0.25 ? 3 : margemReal >= 0.15 ? 2 : 1;
+    const minTotal = minimo !== null ? round2(minimo * qtd) : null;
+    const tetoTotal = teto !== null ? round2(teto * qtd) : null;
+    return { margemReal, estrelas, minTotal, tetoTotal, compra, entrega, custoTotal, custoUnit, margem, minimo, teto, lance, folgaRs, folgaPct, totalVenda, lucro, situacao, sitTipo, produtos: qtd * custo, frete, impostoCompra, imposto, impostoTotal: impostoCompra + imposto };
   }
 
   function limiteMEI(cfg) {
@@ -637,7 +663,8 @@ input[type=color].input { padding: 4px; height: 46px; }
     }
     const pMap = new Map();
     for (const p of pregoes) {
-      const list = byP.get(p.id) || [];
+      const listAll = byP.get(p.id) || [];
+      const list = listAll.filter((i) => !i.semLance);   // item que ficou de fora (sem lance) não entra nas contas
       // itens com local de entrega próprio formam grupos com rota e custo próprios; os demais usam a rota do pregão
       const ovr = (it) => { const l = normLocal(it.localEntrega); return !!l && l !== normLocal(p.cidadeUf); };
       const grupos = new Map();
@@ -662,14 +689,15 @@ input[type=color].input { padding: 4px; height: 46px; }
         for (const it of padrao) { const x = entOf(it); x.base += compraBase(it); x.nItens += 1; }
         pool = ents.filter((x) => x.base === 0).reduce((a, x) => a + x.custo, 0);   // viagem sem itens: o custo é dividido entre todos
       }
-      pMap.set(p.id, { p, viagemPadrao: padrao.length ? custoViagem(p, cfg) : 0, viagem: (padrao.length ? (ents ? ents.reduce((a, x) => a + x.custo, 0) : custoViagem(p, cfg)) : 0) + custoGrupos, ents, entOf, pool, base, grupos: [...grupos.values()], grupoOf, itens: list, nItens: list.length, venda: 0, custo: 0, lucro: 0, imposto: 0, margem: null });
+      pMap.set(p.id, { p, viagemPadrao: padrao.length ? custoViagem(p, cfg) : 0, viagem: (padrao.length ? (ents ? ents.reduce((a, x) => a + x.custo, 0) : custoViagem(p, cfg)) : 0) + custoGrupos, ents, entOf, pool, base, grupos: [...grupos.values()], grupoOf, itens: list, todosItens: listAll, nItens: list.length, venda: 0, custo: 0, lucro: 0, imposto: 0, margem: null });
     }
     const iMap = new Map();
     for (const it of itens) {
       const pst = pMap.get(it.pregaoId) || null;
       const c = calcItem(it, pst, cfg);
+      c.fora = !!it.semLance;
       iMap.set(it.id, c);
-      if (pst) { pst.custo += c.custoTotal; pst.venda += c.totalVenda || 0; pst.lucro += c.lucro || 0; pst.imposto += c.impostoTotal; }
+      if (pst && !it.semLance) { pst.custo += c.custoTotal; pst.venda += c.totalVenda || 0; pst.lucro += c.lucro || 0; pst.imposto += c.impostoTotal; }
     }
     for (const pst of pMap.values()) pst.margem = pst.venda > 0 ? pst.lucro / pst.venda : null;
 
@@ -704,7 +732,7 @@ input[type=color].input { padding: 4px; height: 46px; }
     const comp = { produtos: 0, frete: 0, entrega: 0, impostos: 0, impostoVenda: 0, impostoCompra: 0, lucro: 0, venda: 0 };
     for (const it of itens) {
       const pst = pMap.get(it.pregaoId);
-      if (!pst || INATIVOS.includes(pst.p.status)) continue;
+      if (!pst || INATIVOS.includes(pst.p.status) || it.semLance) continue;
       const c = iMap.get(it.id);
       comp.produtos += c.produtos; comp.frete += c.frete; comp.entrega += c.entrega; comp.lucro += c.lucro || 0;
       comp.impostoVenda += c.imposto; comp.impostoCompra += c.impostoCompra;
@@ -2356,7 +2384,7 @@ input[type=color].input { padding: 4px; height: 46px; }
   function itemValues(it) {
     return {
       pregaoId: it.pregaoId || '', itemEdital: it.itemEdital || '', descricao: it.descricao || '', descEdital: it.descEdital || '', marca: it.marca || '', unidade: it.unidade || 'Un',
-      qtd: it.qtd == null ? '' : C.numBR(it.qtd, 3), onde: it.onde || '', ondeLink: it.ondeLink || '', vencedor: it.vencedor == null ? '' : C.numBR(it.vencedor),
+      qtd: it.qtd == null ? '' : C.numBR(it.qtd, 3), onde: pareceUrl(it.onde) ? '' : (it.onde || ''), ondeLink: it.ondeLink || (pareceUrl(it.onde) ? urlSeg(it.onde) : ''), obs: it.obs || '', vencedor: it.vencedor == null ? '' : C.numBR(it.vencedor),
       ...(() => { const o = {}; [0, 1].forEach((n) => { const a = (it.alternativas || [])[n] || {}; o['alt' + n + 'Loja'] = a.loja || ''; o['alt' + n + 'Link'] = a.link || ''; o['alt' + n + 'Custo'] = a.custo == null ? '' : C.numBR(a.custo); }); return o; })(),
       custo: it.custo == null ? '' : C.numBR(it.custo), teto: it.teto == null ? '' : C.numBR(it.teto), frete: it.frete ? C.numBR(it.frete) : '',
       margem: it.margem == null ? '' : C.numBR(it.margem * 100, 2), lanceFinal: it.lanceFinal == null ? '' : C.numBR(it.lanceFinal),
@@ -2371,7 +2399,7 @@ input[type=color].input { padding: 4px; height: 46px; }
     const m = C.parseBR(x.margem);
     return {
       id: id || 'new', pregaoId: x.pregaoId, itemEdital: x.itemEdital.trim(), descricao: x.descricao.trim(), descEdital: x.descEdital.trim(), marca: x.marca.trim(), unidade: x.unidade.trim() || 'Un',
-      qtd: C.parseBR(x.qtd), onde: x.onde.trim(), ondeLink: urlSeg(x.ondeLink), vencedor: C.parseBR(x.vencedor),
+      qtd: C.parseBR(x.qtd), onde: x.onde.trim(), ondeLink: urlSeg(x.ondeLink), obs: String(x.obs || '').trim(), vencedor: C.parseBR(x.vencedor),
       alternativas: [0, 1].map((n) => ({ loja: String(x['alt' + n + 'Loja'] || '').trim(), link: urlSeg(x['alt' + n + 'Link']), custo: C.parseBR(x['alt' + n + 'Custo']) })).filter((a) => a.loja || a.link || a.custo != null),
       custo: C.parseBR(x.custo), teto: C.parseBR(x.teto), frete: C.parseBR(x.frete) || 0,
       margem: m == null ? null : m / 100, lanceFinal: C.parseBR(x.lanceFinal),
@@ -2418,21 +2446,22 @@ input[type=color].input { padding: 4px; height: 46px; }
         ${field({ label: 'Marca / modelo', name: 'marca', value: v.marca, full: true, ph: 'ex.: SONE/Bico RN Anatômico' })}
         ${field({ label: 'Quantidade *', name: 'qtd', value: v.qtd, inputmode: 'decimal' })}
         ${field({ label: 'Custo unit. (R$) *', name: 'custo', value: v.custo, inputmode: 'decimal', hint: 'O que eu vou pagar' })}
-        ${field({ label: 'Onde compro', name: 'onde', value: v.onde, full: true, ph: 'Loja ou site (ex.: Mercado Livre)' })}
-        <div class="field full"><label for="f_ondeLink">Link de compra</label>
-          <div class="linkrow"><input class="input" id="f_ondeLink" name="ondeLink" type="url" value="${esc(v.ondeLink)}" placeholder="https://…" inputmode="url" autocomplete="off" autocapitalize="none">
-            <a class="btn" id="goOnde" href="#" target="_blank" rel="noopener noreferrer" style="display:none">${icon('link', 'sm')} Abrir</a></div>
-          <div class="hint">Cole o link do produto ou da loja. Vira o botão “Comprar” no cartão do item.</div></div>
-        <div class="full"><details class="acc"${altAberto ? ' open' : ''}><summary>Outras opções de compra</summary><div class="acc-body"><div class="formgrid">${altFields(0)}${altFields(1)}</div>
-          <div class="hint">Compare 2 ou 3 fornecedores. Se uma opção sair mais barata, o app avisa e você troca com um toque.</div></div></details></div>
         ${field({ label: 'Valor unit. do edital (teto)', name: 'teto', value: v.teto, inputmode: 'decimal', hint: 'Máximo que o órgão aceita' })}
         ${field({ label: 'Frete do fornecedor (R$, total do item)', name: 'frete', value: v.frete, inputmode: 'decimal' })}
+        ${field({ label: 'Descrição completa do edital (vai no PDF)', name: 'descEdital', type: 'textarea', value: v.descEdital, full: true, ph: 'Cole aqui a descrição do item como está no edital', hint: 'Se ficar vazia, o PDF usa o nome do item.' })}
+        <div class="field full" id="linkBox"><label for="f_ondeLink">Onde comprar (link)</label>
+          <input type="hidden" name="onde" value="${esc(v.onde)}">
+          <input class="input" id="f_ondeLink" name="ondeLink" type="url" value="${esc(v.ondeLink)}" placeholder="Cole o link do produto ou da loja" inputmode="url" autocomplete="off" autocapitalize="none">
+          <div class="linkchip" id="linkChip" style="display:none"><a class="btn grow" id="goOnde" href="#" target="_blank" rel="noopener noreferrer">${icon('link', 'sm')}<span class="ell">Comprar</span></a><button type="button" class="btn ghost" id="editLink" aria-label="Editar link" title="Editar link">${icon('edit', 'sm')}</button></div>
+          <div class="hint">Depois de colar, o link vira um botão. Toque no lápis para trocar.</div></div>
+        <div class="full"><details class="acc"${altAberto ? ' open' : ''}><summary>Outras opções de compra</summary><div class="acc-body"><div class="formgrid">${altFields(0)}${altFields(1)}</div>
+          <div class="hint">Compare 2 ou 3 fornecedores. Se uma opção sair mais barata, o app avisa e você troca com um toque.</div></div></details></div>
+        ${field({ label: 'Observações do item', name: 'obs', type: 'textarea', value: v.obs, full: true, ph: 'Ex.: cotar o frete amanhã; não consegui cotar com o fornecedor Y', hint: 'Aparece no cartão do pregão (guia Pregões) e no cartão do item.' })}
         ${field({ label: 'Imposto na compra (%)', name: 'impostoCompra', value: v.impostoCompra, inputmode: 'decimal', hint: 'ICMS-ST/antecipação, se você paga' })}
         ${field({ label: 'Alíquota ICMS no PDF (%)', name: 'icmsAliq', value: v.icmsAliq, inputmode: 'decimal', hint: 'Só se o edital pedir preço s/ ICMS. Vazio = padrão do pregão (MEI: 0).' })}
         ${field({ label: 'Minha margem (%)', name: 'margem', value: v.margem, inputmode: 'decimal', ph: 'padrão: ' + C.numBR(cfg.margemPadrao * 100, 2).replace(',00', '') + '%', hint: 'Vazio = margem padrão' })}
         ${field({ label: 'Lance final (R$ unit., opcional)', name: 'lanceFinal', value: v.lanceFinal, inputmode: 'decimal', hint: 'Depois de disputar. Vazio = conta pelo teto.' })}
         ${field({ label: 'Valor do vencedor (R$ unit., se perdi)', name: 'vencedor', value: v.vencedor, inputmode: 'decimal', hint: 'Quanto quem ganhou ofertou. Alimenta a análise “Preço de quem ganhou” no Painel.' })}
-        ${field({ label: 'Descrição completa do edital (vai no PDF)', name: 'descEdital', type: 'textarea', value: v.descEdital, full: true, ph: 'Cole aqui a descrição do item como está no edital', hint: 'Se ficar vazia, o PDF usa o nome do item.' })}
       </div>`;
         openForm({
       key: 'item:' + (id || 'novo'), title: id ? 'Editar item' : 'Novo item', body, values: v,
@@ -2466,12 +2495,22 @@ input[type=color].input { padding: 4px; height: 46px; }
           [['onde', 'alt' + n + 'Loja'], ['ondeLink', 'alt' + n + 'Link'], ['custo', 'alt' + n + 'Custo']].forEach(([a, c]) => { const A = g(a), B = g(c), tmp = A.value; A.value = B.value; B.value = tmp; });
           g('custo').dispatchEvent(new Event('input', { bubbles: true }));
         });
+        // link de compra: depois de colar vira um botão clicável (lápis para editar)
+        const linkInp = $('#f_ondeLink', form), chip = $('#linkChip', form), go = $('#goOnde', form);
+        form._syncLink = () => {
+          const h = urlSeg(linkInp.value);
+          if (h) { go.href = h; linkInp.style.display = 'none'; chip.style.display = 'flex'; }
+          else { linkInp.style.display = ''; chip.style.display = 'none'; }
+        };
+        linkInp.addEventListener('change', form._syncLink);
+        linkInp.addEventListener('paste', () => setTimeout(() => { linkInp.dispatchEvent(new Event('input', { bubbles: true })); form._syncLink(); }, 0));
+        $('#editLink', form).addEventListener('click', () => { linkInp.style.display = ''; chip.style.display = 'none'; linkInp.focus(); linkInp.select(); });
+        form._syncLink();
         if (loc.value.trim() && !km.value) calc(false);
       },
       onInput: (form) => {
         let x = readForm(form);
-        const go = $('#goOnde', form), ci = compraInfo({ onde: x.onde, ondeLink: x.ondeLink });
-        if (go) { go.style.display = ci && ci.href ? '' : 'none'; if (ci && ci.href) go.href = ci.href; }
+        { const li = $('#f_ondeLink', form); if (li && form._syncLink && document.activeElement !== li) form._syncLink(); }
         const bl = $('#boxLocalItem', form); if (bl) bl.classList.toggle('hidden', !String(x.localEntrega || '').trim());
         const ph = store.get().pregoes.find((q) => q.id === x.pregaoId);
         const le = $('[name=localEntrega]', form); if (le && ph) le.placeholder = 'vazio = ' + (ph.cidadeUf || 'local do pregão');
@@ -2488,7 +2527,7 @@ input[type=color].input { padding: 4px; height: 46px; }
           <div class="kv"><span>Custo unit. final <b>${C.brl(c.custoUnit)}</b></span><span>Entrega rateada <b>${C.brl(c.entrega)}</b></span>
           <span>Posso baixar do teto <b>${c.folgaRs != null ? C.brl(c.folgaRs) + ' (' + C.pct(c.folgaPct, 0) + ')' : '—'}</b></span>
           ${c.impostoTotal > 0 ? `<span>Impostos <b>${C.brl(c.impostoTotal)}</b></span>` : ''}</div>
-          ${c.situacao ? `<div><span class="badge ${c.sitTipo}">${esc(c.situacao)}</span> <span class="tiny muted">Lucro previsto ${C.brl(c.lucro)}</span></div>` : ''}${dica}`;
+          ${c.situacao ? `<div><span class="badge ${c.sitTipo}">${esc(c.situacao)}</span> ${estrelasHtml(c)} <span class="tiny muted">Lucro previsto ${C.brl(c.lucro)}</span></div>` : ''}${dica}`;
       },
       onSave: (x, form) => {
         $$('.input.err', form).forEach((e) => e.classList.remove('err'));
@@ -2817,6 +2856,7 @@ input[type=color].input { padding: 4px; height: 46px; }
       ${po ? `<div><span class="prazo ${nivelCls(po.nivel)}">${icon(po.nivel === 'bad' || po.nivel === 'warn' ? 'alert' : 'calendar', 'sm')}${esc(po.texto)}</span></div>` : ''}
       ${p.modeloProprio ? `<div><span class="prazo warn">${icon('alert', 'sm')}Modelo próprio de proposta</span></div>` : ''}
       ${p.obs ? `<div class="obsline">${esc(p.obs)}</div>` : ''}
+      ${porItemEdital(pst.itens).filter((i) => String(i.obs || '').trim()).map((i) => `<div class="obsline item"><b>${esc(String(i.itemEdital || '').trim() ? 'Item ' + String(i.itemEdital).trim() : i.descricao)}:</b> ${esc(i.obs)}</div>`).join('')}
       <div class="chips">${chips || '<span class="chip">Sem itens ainda</span>'}</div>
       <div class="p-itens">${pst.itens.length ? pst.itens.length + (pst.itens.length === 1 ? ' item' : ' itens') : 'Sem itens ainda'}</div>
       <div class="nums"><div>Venda<b>${C.brl0(pst.venda)}</b></div><div>Lucro<b>${C.brl0(pst.lucro)}</b></div><div>Margem<b>${C.pct(pst.margem, 0)}</b></div></div>
@@ -2859,24 +2899,43 @@ input[type=color].input { padding: 4px; height: 46px; }
     }).map((x) => x.it);
   }
 
+  function estrelasHtml(c) {
+    if (!c || c.estrelas == null) return '';
+    const n = c.estrelas;
+    return `<span class="stars s${n}" title="Lucro ${C.pct(c.margemReal, 0)} sobre a venda · ${n} de 5 estrelas">${'★'.repeat(n)}${'☆'.repeat(5 - n)}<small>${C.pct(c.margemReal, 0)}</small></span>`;
+  }
+  // itens que ficaram de fora da disputa vão para o fim da lista
+  const foraNoFim = (list, R) => list.slice().sort((a, b) => ((R.iMap.get(a.id) || {}).fora ? 1 : 0) - ((R.iMap.get(b.id) || {}).fora ? 1 : 0));
+
   function itemCard(it, c, opt) {
     const p = opt.pst && opt.pst.p;
+    const tag = String(it.itemEdital || '').trim() ? `<span class="itag">Item ${esc(String(it.itemEdital).trim())}</span>` : '';
+    if (c.fora) {
+      return `<article class="icard fora" data-act="editar-item" data-id="${it.id}" tabindex="0" role="button">
+        <div class="row between" style="align-items:center"><h4 class="grow">${tag}${esc(it.descricao)}</h4><span class="badge off">Fora da disputa</span></div>
+        <div class="icard-actions"><button type="button" class="btn sm ghost" data-act="item-fora" data-id="${it.id}">Voltar para a disputa</button></div></article>`;
+    }
     const cps = comprasDoItem(it);
     const compra = cps.length ? `<div class="comprar">${cps.map((cp) => {
       const custo = !cp.principal && cp.custo != null ? ' · ' + C.brl(cp.custo) : '';
       return cp.href
-        ? `<a class="btn sm lk comprar-btn${cp.barato ? ' barato' : ''}" href="${esc(cp.href)}" target="_blank" rel="noopener noreferrer" data-act="link-externo">${icon('link', 'sm')}<span class="ell">${cp.principal ? 'Comprar em ' : ''}${esc(cp.label)}${custo}</span></a>`
+        ? `<a class="btn sm lk comprar-btn${cp.barato ? ' barato' : ''}" href="${esc(cp.href)}" target="_blank" rel="noopener noreferrer" data-act="link-externo">${icon('link', 'sm')}<span class="ell">${cp.principal ? 'Comprar' : esc(cp.label)}${custo}</span></a>`
         : `<span class="chip">${icon('pin', 'sm')}${esc(cp.nome)}${custo}</span>`;
     }).join('')}</div>` : '';
     const venc = Number(it.vencedor) > 0 ? `<div><span class="chip venc">${icon('alert', 'sm')}Venceu por ${C.brl(it.vencedor)}</span></div>` : '';
+    const obs = String(it.obs || '').trim() ? `<div class="obsline item">${esc(it.obs)}</div>` : '';
+    const vals = `<div class="i-vals"><div><span>Custo total</span><b>${it.custo > 0 && it.qtd > 0 ? C.brl(c.produtos) : '—'}</b></div><div><span>Mín. total</span><b>${C.brl(c.minTotal)}</b></div><div><span>Edital total</span><b>${c.tetoTotal != null ? C.brl(c.tetoTotal) : '—'}</b></div></div>`;
     return `<article class="icard" data-act="editar-item" data-id="${it.id}" tabindex="0" role="button">
-      <div class="row between" style="align-items:flex-start"><h4 class="grow">${String(it.itemEdital || '').trim() ? `<span class="itag">Item ${esc(String(it.itemEdital).trim())}</span>` : ''}${esc(it.descricao)}</h4>${c.situacao ? `<span class="badge ${c.sitTipo}">${esc(c.situacao)}</span>` : ''}</div>
+      <div class="row between" style="align-items:flex-start"><h4 class="grow">${tag}${esc(it.descricao)}</h4><div class="rcol">${c.situacao ? `<span class="badge ${c.sitTipo}">${esc(c.situacao)}</span>` : ''}${estrelasHtml(c)}</div></div>
       ${opt.showOrg && p ? `<div class="chips"><span class="chip org">#${esc(p.numero)} · ${esc(p.orgao)}</span></div>` : ''}
       <div class="small muted">${C.qtdBR(it.qtd)} ${esc(it.unidade || 'Un')} · custo ${C.brl(it.custo)}<span class="i-teto"> · teto ${C.brl(c.teto)}</span>${it.marca ? ' · ' + esc(it.marca) : ''}</div>
+      ${vals}
       ${compra}
+      ${obs}
       ${venc}
       <div class="minbox i-min ${c.sitTipo === 'bad' ? 'bad' : ''}"><div><div class="t">Valor mínimo p/ proposta (unit.)</div><div class="tiny muted">margem ${C.pct(c.margem, 0)} · custo final ${C.brl(c.custoUnit)}</div></div><div class="v">${C.brl(c.minimo)}</div></div>
-      <div class="row between wrap small muted i-fin" style="gap:4px 10px"><span>Posso baixar do teto: <b style="color:var(--ink)">${c.folgaRs != null ? C.brl(c.folgaRs) + ' (' + C.pct(c.folgaPct, 0) + ')' : '—'}</b></span><span>${c.impostoTotal > 0 ? 'Impostos ' + C.brl(c.impostoTotal) + ' · ' : ''}Lucro: <b style="color:var(--ink)">${C.brl(c.lucro)}</b></span></div></article>`;
+      <div class="row between wrap small muted i-fin" style="gap:4px 10px"><span>Posso baixar do teto: <b style="color:var(--ink)">${c.folgaRs != null ? C.brl(c.folgaRs) + ' (' + C.pct(c.folgaPct, 0) + ')' : '—'}</b></span><span>${c.impostoTotal > 0 ? 'Impostos ' + C.brl(c.impostoTotal) + ' · ' : ''}Lucro: <b style="color:var(--ink)">${C.brl(c.lucro)}</b></span></div>
+      <div class="icard-actions"><button type="button" class="btn sm ghost" data-act="item-fora" data-id="${it.id}">Deixar de fora</button></div></article>`;
   }
 
   function posCardHtml(pst) {
@@ -2925,7 +2984,7 @@ input[type=color].input { padding: 4px; height: 46px; }
         <div class="kpi" style="--c:#b7791f"><div class="l">Margem real</div><div class="v">${C.pct(pst.margem, 1)}</div></div>
       </div>
       <div class="card"><h3><span class="grow">Itens deste pregão (${pst.nItens})</span><button class="btn sm primary" data-act="novo-item" data-pid="${p.id}">${icon('plus', 'sm')} Item</button></h3>
-        ${pst.itens.length ? `<div class="list">${porItemEdital(pst.itens).map((it) => itemCard(it, R.iMap.get(it.id), { pst, showOrg: false })).join('')}</div>` : `<p class="muted small">Nenhum item ainda. Toque em “Item” para adicionar o primeiro.</p>`}</div>
+        ${pst.todosItens.length ? `<div class="list">${foraNoFim(porItemEdital(pst.todosItens), R).map((it) => itemCard(it, R.iMap.get(it.id), { pst, showOrg: false })).join('')}</div>` : `<p class="muted small">Nenhum item ainda. Toque em “Item” para adicionar o primeiro.</p>`}</div>
       <div class="card"><h3>Dados do pregão</h3><div class="kv-list">
         ${(() => { const z = prazoInfo(p); return z ? kv('Envio das propostas', `<span class="prazo ${z.nivel}">${esc(z.texto)}</span>`) : ''; })()}${kv('Local de entrega', esc(C.localEntregaPadrao(p)))}${kv('Intervalo mín. lances', esc(p.intervaloMin))}${kv('Prazo de entrega', p.prazoEntregaDias ? esc(p.prazoEntregaDias) + ' dias' : '')}${kv('Exigências', esc(p.exigencias))}
         ${pst.ents ? kv('Entregas', pst.ents.map((x, i) => `${i + 1}. ${esc(x.local)} · ${C.numBR(x.e.km || 0, 1)} km · ${x.e.viagens || 0} viagem(ns)${x.e.pedagio ? ' · pedágio ' + C.brl(x.e.pedagio) : ''} = <b>${C.brl(x.custo)}</b> · ${x.nItens} ${x.nItens === 1 ? 'item' : 'itens'}`).join('<br>') + (pst.ents.length > 1 ? `<br>Total: ${C.brl(pst.viagem)}` : '')) : ''}
@@ -2943,13 +3002,13 @@ input[type=color].input { padding: 4px; height: 46px; }
     const groups = [...R.pMap.values()].sort((a, b) => (enc(a) - enc(b)) || (b.p.createdAt || 0) - (a.p.createdAt || 0));   // encerrados sempre no fim
     let html = '', n = 0;
     for (const g of groups) {
-      const its = porItemEdital(g.itens).filter((i) => !q || (i.descricao + ' ' + (i.marca || '') + ' ' + (i.onde || '') + ' ' + g.p.orgao + ' ' + g.p.numero).toLowerCase().includes(q));
+      const its = foraNoFim(porItemEdital(g.todosItens), R).filter((i) => !q || (i.descricao + ' ' + (i.marca || '') + ' ' + (i.onde || '') + ' ' + g.p.orgao + ' ' + g.p.numero).toLowerCase().includes(q));
       if (!its.length) continue;
       n += its.length;
       if (enc(g)) { html += miniPregao(g.p); continue; }
       html += `<section class="gbox" style="--gc:${corDe(g.p.id)}">
         <header class="ghead"><div class="grow"><div class="gnum">PREGÃO Nº ${esc(g.p.numero)}</div><h3>${esc(g.p.orgao)}</h3></div>${badgeStatus(g.p.status)}</header>
-        <div class="gmeta">${g.itens.length} ${g.itens.length === 1 ? 'item' : 'itens'}${its.length !== g.itens.length ? ' (' + its.length + ' na busca)' : ''}<span class="g-fin"> · venda <b>${C.brl0(g.venda)}</b> · lucro <b>${C.brl0(g.lucro)}</b></span></div>
+        <div class="gmeta">${g.itens.length} ${g.itens.length === 1 ? 'item' : 'itens'}${g.todosItens.length !== g.itens.length ? ' (+' + (g.todosItens.length - g.itens.length) + ' fora)' : ''}${its.length !== g.todosItens.length ? ' (' + its.length + ' na busca)' : ''}<span class="g-fin"> · venda <b>${C.brl0(g.venda)}</b> · lucro <b>${C.brl0(g.lucro)}</b></span></div>
         <div class="list">${its.map((it) => itemCard(it, R.iMap.get(it.id), { pst: g, showOrg: false })).join('')}</div></section>`;
     }
     return n ? html : `<div class="card empty"><p class="muted">Nenhum item encontrado.</p></div>`;
@@ -3463,6 +3522,7 @@ input[type=color].input { padding: 4px; height: 46px; }
     const a = t.dataset.act, id = t.dataset.id;
     switch (a) {
       case 'tab': setTab(t.dataset.v); break;
+      case 'item-fora': { UI.keepScroll = true; const it = store.get().itens.find((i) => i.id === id); const fora = !(it && it.semLance); store.upsertItem({ id, semLance: fora }); toast(fora ? 'Item fora da disputa' : 'Item de volta à disputa'); break; }
       case 'pos-entregue': UI.keepScroll = true; store.upsertPregao({ id, entregueEm: C.hojeISO() }); toast('Entrega registrada'); break;
       case 'pos-pago': UI.keepScroll = true; store.upsertPregao({ id, pagoEm: C.hojeISO() }); toast('Pagamento registrado'); break;
       case 'pos-desfaz-entrega': UI.keepScroll = true; store.upsertPregao({ id, entregueEm: '', pagoEm: '' }); toast('Entrega desfeita'); break;
