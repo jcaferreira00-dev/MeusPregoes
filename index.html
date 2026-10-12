@@ -469,7 +469,7 @@ input[type=color].input { padding: 4px; height: 46px; }
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.6.6';
+  const APP_VERSION = '1.7.0';
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Em disputa', 'Ganhou', 'Faturado', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti'];
   const DECL_PADRAO =
@@ -707,7 +707,11 @@ input[type=color].input { padding: 4px; height: 46px; }
       iMap.set(it.id, c);
       if (pst && !it.semLance) { pst.custo += c.custoTotal; pst.venda += c.totalVenda || 0; pst.lucro += c.lucro || 0; pst.imposto += c.impostoTotal; }
     }
-    for (const pst of pMap.values()) pst.margem = pst.venda > 0 ? pst.lucro / pst.venda : null;
+    for (const pst of pMap.values()) {
+      pst.margem = pst.venda > 0 ? pst.lucro / pst.venda : null;
+      // valor da proposta = o total que sai no PDF (fonte automática): lance final, senão mínimo, limitado ao teto
+      pst.proposta = round2(pst.itens.reduce((s, it) => { const u = unitProposta(iMap.get(it.id), 'auto').unit; return u !== null ? s + round2(n0(it.qtd) * u) : s; }, 0));
+    }
 
     // limite do MEI
     const limite = limiteMEI(cfg);
@@ -857,6 +861,23 @@ input[type=color].input { padding: 4px; height: 46px; }
     return out;
   }
 
+  /* ---------- valor unitário da proposta: a mesma regra para o PDF e para o painel ---------- */
+  // fonte: 'auto' (lance final, senão mínimo) | 'minimo' | 'teto' | 'lance'. O lance final preenchido prevalece sobre tudo;
+  // nos demais casos, o que passar do teto do edital é limitado ao teto (para não desclassificar)
+  function unitProposta(c, fonte) {
+    let unit;
+    if (fonte === 'minimo') unit = c.minimo;
+    else if (fonte === 'teto') unit = c.teto;
+    else if (fonte === 'lance') unit = c.lance;
+    else unit = c.lance !== null ? c.lance : c.minimo;
+    const doLance = c.lance !== null && fonte !== 'minimo' && fonte !== 'teto';
+    const original = unit;
+    let limitado = false;
+    if (!doLance && unit !== null && c.teto !== null && unit > c.teto + 1e-9) { unit = c.teto; limitado = true; }
+    const acima = doLance && unit !== null && c.teto !== null && unit > c.teto + 1e-9;
+    return { unit, original, limitado, doLance, acima };
+  }
+
   /* ---------- linhas da proposta (PDF) ---------- */
   // fonte: 'auto' (lance final, senão mínimo) | 'minimo' | 'teto' | 'lance'
   function linhasProposta(state, pregaoId, fonte, icmsPadrao) {
@@ -864,17 +885,13 @@ input[type=color].input { padding: 4px; height: 46px; }
     const pst = R.pMap.get(pregaoId);
     if (!pst) return { linhas: [], total: 0, semValor: 0 };
     const linhas = [];
-    let total = 0, totalS = 0, semValor = 0, n = 0, limitados = 0, abaixoMin = 0, reducao = 0;
+    let total = 0, totalS = 0, semValor = 0, n = 0, limitados = 0, abaixoMin = 0, reducao = 0, lanceAcima = 0;
     for (const it of pst.itens) {
       const c = R.iMap.get(it.id);
-      let unit = null;
-      if (fonte === 'minimo') unit = c.minimo;
-      else if (fonte === 'teto') unit = c.teto;
-      else if (fonte === 'lance') unit = c.lance;
-      else unit = c.lance !== null ? c.lance : c.minimo;
-      // margem (ou lance) acima do teto do edital: a proposta vai com o teto, para não ser desclassificada
-      let limitadoTeto = false, unitOriginal = unit;
-      if (unit !== null && c.teto !== null && unit > c.teto + 1e-9) { unit = c.teto; limitadoTeto = true; }
+      const up = unitProposta(c, fonte);
+      let unit = up.unit;
+      const limitadoTeto = up.limitado, unitOriginal = up.original;
+      if (up.acima) lanceAcima += 1;
       n += 1;
       const qtd = n0(it.qtd);
       const abaixoMinimo = limitadoTeto && c.minimo !== null && unit < c.minimo - 1e-9;
@@ -892,7 +909,7 @@ input[type=color].input { padding: 4px; height: 46px; }
         unit, total: tot, aliq, unitS, totalS: totS, teto: c.teto, acimaTeto: (unit !== null && c.teto !== null && unit > c.teto + 1e-9), limitadoTeto, unitOriginal, abaixoMinimo,
       });
     }
-    return { linhas, total: round2(total), totalS: round2(totalS), semValor, limitados, abaixoMin, reducao: round2(reducao), pregao: pst.p };
+    return { linhas, total: round2(total), totalS: round2(totalS), semValor, limitados, abaixoMin, lanceAcima, reducao: round2(reducao), pregao: pst.p };
   }
 
   /* ---------- merge (sincronização: sempre puxa antes de empurrar) ---------- */
@@ -2703,7 +2720,7 @@ input[type=color].input { padding: 4px; height: 46px; }
       <h4>${esc(p.orgao)}</h4>
       <div class="pgc-meta">${meta}</div>
       ${al.length ? `<div class="pgc-alertas">${al.map((a) => `<span class="pgc-al ${a[0]}"><i class="dot"></i>${esc(a[1])}</span>`).join('')}</div>` : ''}
-      <div class="pgc-foot"><span class="pgc-st">${esc(p.status)}</span>${pst.nItens ? `<b>${C.brl0(pst.venda)}</b>` : '<span class="tiny muted">Sem itens</span>'}</div></article>`;
+      <div class="pgc-foot"><span class="pgc-st">${esc(p.status)}</span>${pst.nItens ? `<b title="Valor da proposta (igual ao total do PDF)">${pst.proposta > 0 ? C.brl(pst.proposta) : '—'}</b>` : '<span class="tiny muted">Sem itens</span>'}</div></article>`;
   }
   function painelPregoesHtml(R) {
     const todos = [...R.pMap.values()];
@@ -3089,7 +3106,7 @@ input[type=color].input { padding: 4px; height: 46px; }
       </div>`).join('');
     const cab = `
       <div class="card"><h3>2 · Documento da proposta <span class="grow"></span><span class="saved-ind" id="savedInd">Salvo</span></h3>
-        <p class="tiny muted" style="margin:0 0 8px">Um único modelo, com tudo ligado por padrão. Desligue na chavinha o que não quiser na proposta. As chavinhas valem só para este pregão.</p>
+        <p class="tiny muted" style="margin:0 0 8px">Um único modelo, com tudo ligado por padrão. Desligue na chavinha o que não quiser na proposta. O que você mudar aqui (chavinhas e textos) vira o padrão dos próximos pregões; objeto, prazo e local de entrega, observações e ICMS valem só para o pregão.</p>
         ${swp(o, 'cabecalho', 'Cabeçalho (nome e imagem)', 'Aparece em todas as páginas')}
         ${swp(o, 'marca', 'Marca d’água')}
         <div class="field full" style="margin-top:8px"><label>Cor do documento (rótulos, faixas e bordas)</label><input class="input" type="color" data-cfg="proposta.cor" data-type="text" value="${esc(cfg.proposta.cor)}"></div>
@@ -3149,6 +3166,7 @@ input[type=color].input { padding: 4px; height: 46px; }
         <div class="tbl-scroll"><table class="tbl"><thead><tr><th>Item</th><th class="r">Qtd</th><th class="r">Unit.</th><th class="r">Total</th></tr></thead><tbody>
           ${L.linhas.map((x) => `<tr><td>${esc(x.descricao)}${x.acimaTeto ? '<br><span class="badge bad">acima do teto</span>' : ''}${x.limitadoTeto ? '<br><span class="badge warn">limitado ao teto</span>' + (x.abaixoMinimo ? ' <span class="badge bad">abaixo do seu mínimo</span>' : '') : ''}</td><td class="r">${C.qtdBR(x.qtd)}</td><td class="r">${x.unit != null ? C.brl(x.unit) : '<span class="badge bad">sem valor</span>'}</td><td class="r">${x.total != null ? C.brl(x.total) : '—'}</td></tr>`).join('') || '<tr><td colspan="4" class="muted">Nenhum item neste pregão.</td></tr>'}
           </tbody><tfoot><tr><td colspan="3">Total da proposta</td><td class="r">${C.brl(L.total)}</td></tr></tfoot></table></div>
+        ${L.lanceAcima ? `<div class="alert warn" style="margin-top:10px">${icon('alert', 'sm')}<span>${L.lanceAcima} item(ns) com lance final acima do teto do edital. O lance foi mantido, como você definiu.</span></div>` : ''}
         ${L.limitados ? `<div class="alert warn" style="margin-top:10px">${icon('alert', 'sm')}<span>${L.limitados} item(ns) passavam do teto do edital e entram na proposta com o valor do teto (${C.brl(L.reducao)} a menos no total), para não desclassificar.${L.abaixoMin ? ' Em ' + L.abaixoMin + ' deles o teto fica abaixo do seu valor mínimo: lucro menor ou prejuízo.' : ''}</span></div>` : ''}
         ${L.semValor ? `<div class="alert warn" style="margin-top:10px">${icon('alert', 'sm')}<span>${L.semValor} item(ns) sem valor nesta opção. Preencha o teto ou o lance final, ou troque a opção acima.</span></div>` : ''}
       </div>
@@ -3212,24 +3230,50 @@ input[type=color].input { padding: 4px; height: 46px; }
     if (t === 'pct') { const n = C.parseBR(el.value); return n == null ? 0 : Math.min(95, Math.max(0, n)) / 100; }
     return el.value;
   }
+  // o que for alterado na proposta vira o padrão dos próximos pregões (campos próprios de cada edital ficam só no pregão)
+  const PDF_SO_NO_PREGAO = ['prazoEntrega', 'localEntrega', 'observacoes', 'icmsAliq', 'desc.objetoTexto'];
+  const clonar = (x) => JSON.parse(JSON.stringify(x));
+  function lembrarPadraoPdf(path, v) {
+    if (PDF_SO_NO_PREGAO.includes(path)) return;
+    const pad = clonar(store.get().config.pdfPadrao || {});
+    setPathObj(pad, path, v);
+    store.setConfigPath('pdfPadrao', pad, { silent: true });
+  }
+  // cláusulas: parte das que o pregão já tem; se ele ainda não tem as suas, parte do padrão salvo
+  const clausulasAtuais = (p) => {
+    const own = p && p.pdfOpts && p.pdfOpts.desc && p.pdfOpts.desc.clausulas;
+    if (Array.isArray(own)) return own;
+    const pad = store.get().config.pdfPadrao;
+    return pad && pad.desc && Array.isArray(pad.desc.clausulas) ? pad.desc.clausulas : [];
+  };
+  function lembrarClausulas() {
+    const p = store.get().pregoes.find((x) => x.id === UI.pdf.pregaoId);
+    const arr = p && p.pdfOpts && p.pdfOpts.desc && p.pdfOpts.desc.clausulas;
+    if (!Array.isArray(arr)) return;
+    const pad = clonar(store.get().config.pdfPadrao || {});
+    setPathObj(pad, 'desc.clausulas', clonar(arr));
+    store.setConfigPath('pdfPadrao', pad, { silent: true });
+  }
   function commitPdf(el) {
     Guard.pending.delete(pendKey(el));
     const id = UI.pdf.pregaoId; if (!id) return;
     if (el.dataset.clausula) { patchClausula(el.dataset.clausula, el.dataset.field, readPdfValue(el)); flashSaved(); return; }
     const v = readPdfValue(el);
     store.patchPregao(id, (p) => { p.pdfOpts = p.pdfOpts || {}; setPathObj(p.pdfOpts, el.dataset.pdf, v); }, true);
+    lembrarPadraoPdf(el.dataset.pdf, v);
     flashSaved();
   }
   function patchClausula(cid, field, val) {
     store.patchPregao(UI.pdf.pregaoId, (p) => {
       p.pdfOpts = p.pdfOpts || {}; p.pdfOpts.desc = p.pdfOpts.desc || {};
-      const arr = (p.pdfOpts.desc.clausulas || []).map((c) => Object.assign({}, c));
+      const arr = clausulasAtuais(p).map((c) => Object.assign({}, c));
       let c = arr.find((x) => x.id === cid);
       if (!c) { c = { id: cid }; arr.push(c); }
       const def = C.CLAUSULAS_PADRAO.find((d) => d.id === cid);
       if (field === 'texto' && def && val === def.texto) delete c.texto; else c[field] = val;
       p.pdfOpts.desc.clausulas = arr.filter((x) => x.custom || x.ativo !== undefined || x.texto !== undefined);
     }, true);
+    lembrarClausulas();
   }
   function commitAllPending() {
     $$('[data-cfg]').forEach((el) => { if (Guard.pending.has(el.dataset.cfg)) commitCfg(el); });
@@ -3568,11 +3612,11 @@ input[type=color].input { padding: 4px; height: 46px; }
       case 'pdf-baixar': baixarPDF(); break;
       case 'pdf-compartilhar': compartilharPDF(); break;
       case 'pdf-modelo': commitAllPending(); store.patchPregao(UI.pdf.pregaoId, (p) => { p.pdfOpts = p.pdfOpts || {}; p.pdfOpts.modelo = t.dataset.v; }, true); UI.pdf.result = null; UI.keepScroll = true; render(); break;
-      case 'pdf-datamodo': store.patchPregao(UI.pdf.pregaoId, (p) => { p.pdfOpts = p.pdfOpts || {}; setPathObj(p.pdfOpts, 'desc.localDataModo', t.dataset.v); }, true); UI.keepScroll = true; render(); break;
+      case 'pdf-datamodo': store.patchPregao(UI.pdf.pregaoId, (p) => { p.pdfOpts = p.pdfOpts || {}; setPathObj(p.pdfOpts, 'desc.localDataModo', t.dataset.v); }, true); lembrarPadraoPdf('desc.localDataModo', t.dataset.v); UI.keepScroll = true; render(); break;
       case 'pdf-padrao': { commitAllPending(); const p = store.get().pregoes.find((x) => x.id === UI.pdf.pregaoId); store.setConfigPath('pdfPadrao', JSON.parse(JSON.stringify((p && p.pdfOpts) || {})), { silent: true }); toast('Estas opções agora são o padrão dos novos pregões'); break; }
       case 'pdf-reset': confirmar('Voltar ao padrão?', 'As chavinhas e textos deste pregão voltam ao padrão do app (ou ao padrão que você salvou).', 'Voltar ao padrão', false).then((ok) => { if (ok) { store.patchPregao(UI.pdf.pregaoId, (p) => { p.pdfOpts = null; }, true); UI.keepScroll = true; render(); } }); break;
-      case 'clausula-add': commitAllPending(); store.patchPregao(UI.pdf.pregaoId, (p) => { p.pdfOpts = p.pdfOpts || {}; p.pdfOpts.desc = p.pdfOpts.desc || {}; p.pdfOpts.desc.clausulas = (p.pdfOpts.desc.clausulas || []).concat([{ id: 'x' + Date.now().toString(36), custom: true, ativo: true, texto: '' }]); }, true); UI.acc.add('acc-cl'); UI.keepScroll = true; render(); break;
-      case 'clausula-del': store.patchPregao(UI.pdf.pregaoId, (p) => { p.pdfOpts.desc.clausulas = (p.pdfOpts.desc.clausulas || []).filter((c) => c.id !== id); }, true); UI.keepScroll = true; render(); break;
+      case 'clausula-add': commitAllPending(); store.patchPregao(UI.pdf.pregaoId, (p) => { p.pdfOpts = p.pdfOpts || {}; p.pdfOpts.desc = p.pdfOpts.desc || {}; p.pdfOpts.desc.clausulas = clausulasAtuais(p).concat([{ id: 'x' + Date.now().toString(36), custom: true, ativo: true, texto: '' }]); }, true); lembrarClausulas(); UI.acc.add('acc-cl'); UI.keepScroll = true; render(); break;
+      case 'clausula-del': store.patchPregao(UI.pdf.pregaoId, (p) => { p.pdfOpts = p.pdfOpts || {}; p.pdfOpts.desc = p.pdfOpts.desc || {}; p.pdfOpts.desc.clausulas = clausulasAtuais(p).filter((c) => c.id !== id); }, true); lembrarClausulas(); UI.keepScroll = true; render(); break;
       case 'clausula-padrao': patchClausula(id, 'texto', C.CLAUSULAS_PADRAO.find((d) => d.id === id).texto); UI.keepScroll = true; render(); break;
       case 'wm-tipo': commitAllPending(); store.setConfigPath('marcaDagua.tipo', t.dataset.v, { silent: true }); UI.keepScroll = true; render(); break;
       case 'hd-pos': store.setConfigPath('cabecalho.pos', t.dataset.v, { silent: true }); UI.keepScroll = true; render(); break;
@@ -3612,7 +3656,7 @@ input[type=color].input { padding: 4px; height: 46px; }
   }
   function onChange(e) {
     const t = e.target;
-    if (t.dataset.ui === 'pregaoId') { UI.pdf.pregaoId = t.value; UI.pdf.result = null; saveUI(); UI.keepScroll = true; render(); return; }
+    if (t.dataset.ui === 'pregaoId') { commitAllPending(); UI.pdf.pregaoId = t.value; UI.pdf.result = null; saveUI(); UI.keepScroll = true; render(); return; }
     if (t.dataset.ui === 'fonte') { UI.pdf.fonte = t.value; UI.pdf.result = null; saveUI(); UI.keepScroll = true; render(); return; }
     if (t.dataset.ui) { UI.pdf[t.dataset.ui] = t.value; return; }
     if (t.dataset.pdf || t.dataset.clausula) { commitPdf(t); return; }
