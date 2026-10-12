@@ -476,7 +476,7 @@ input[type=color].input { padding: 4px; height: 46px; }
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.8.1';
+  const APP_VERSION = '1.8.2';
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Em disputa', 'Ganhou', 'Faturado', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti'];
   const DECL_PADRAO =
@@ -897,9 +897,10 @@ input[type=color].input { padding: 4px; height: 46px; }
     const pst = R.pMap.get(pregaoId);
     if (!pst) return { linhas: [], total: 0, semValor: 0 };
     const linhas = [];
-    let total = 0, totalS = 0, semValor = 0, n = 0, limitados = 0, abaixoMin = 0, reducao = 0, lanceAcima = 0;
+    let total = 0, totalS = 0, semValor = 0, n = 0, limitados = 0, abaixoMin = 0, reducao = 0, lanceAcima = 0, omitidos = 0;
     for (const it of pst.itens) {
       const c = R.iMap.get(it.id);
+      if (c && c.naoGanhou) { omitidos += 1; continue; }   // pregão ganho: a proposta final leva só os itens ganhos
       const up = unitProposta(c, fonte);
       let unit = up.unit;
       const limitadoTeto = up.limitado, unitOriginal = up.original;
@@ -921,7 +922,7 @@ input[type=color].input { padding: 4px; height: 46px; }
         unit, total: tot, aliq, unitS, totalS: totS, teto: c.teto, acimaTeto: (unit !== null && c.teto !== null && unit > c.teto + 1e-9), limitadoTeto, unitOriginal, abaixoMinimo,
       });
     }
-    return { linhas, total: round2(total), totalS: round2(totalS), semValor, limitados, abaixoMin, lanceAcima, reducao: round2(reducao), pregao: pst.p };
+    return { linhas, total: round2(total), totalS: round2(totalS), semValor, limitados, abaixoMin, lanceAcima, omitidos, reducao: round2(reducao), pregao: pst.p };
   }
 
   /* ---------- merge (sincronização: sempre puxa antes de empurrar) ---------- */
@@ -3231,6 +3232,7 @@ input[type=color].input { padding: 4px; height: 46px; }
         <div class="tbl-scroll"><table class="tbl"><thead><tr><th>Item</th><th class="r">Qtd</th><th class="r">Unit.</th><th class="r">Total</th></tr></thead><tbody>
           ${L.linhas.map((x) => `<tr><td>${esc(x.descricao)}${x.acimaTeto ? '<br><span class="badge bad">acima do teto</span>' : ''}${x.limitadoTeto ? '<br><span class="badge warn">limitado ao teto</span>' + (x.abaixoMinimo ? ' <span class="badge bad">abaixo do seu mínimo</span>' : '') : ''}</td><td class="r">${C.qtdBR(x.qtd)}</td><td class="r">${x.unit != null ? C.brl(x.unit) : '<span class="badge bad">sem valor</span>'}</td><td class="r">${x.total != null ? C.brl(x.total) : '—'}</td></tr>`).join('') || '<tr><td colspan="4" class="muted">Nenhum item neste pregão.</td></tr>'}
           </tbody><tfoot><tr><td colspan="3">Total da proposta</td><td class="r">${C.brl(L.total)}</td></tr></tfoot></table></div>
+        ${L.omitidos ? `<div class="alert info" style="margin-top:10px">${icon('info', 'sm')}<span>Pregão ganho: a proposta sai só com os itens ganhos. ${L.omitidos} item(ns) marcado(s) como não ganho(s) ficou(aram) de fora.</span></div>` : ''}
         ${L.lanceAcima ? `<div class="alert warn" style="margin-top:10px">${icon('alert', 'sm')}<span>${L.lanceAcima} item(ns) com lance final acima do teto do edital. O lance foi mantido, como você definiu.</span></div>` : ''}
         ${L.limitados ? `<div class="alert warn" style="margin-top:10px">${icon('alert', 'sm')}<span>${L.limitados} item(ns) passavam do teto do edital e entram na proposta com o valor do teto (${C.brl(L.reducao)} a menos no total), para não desclassificar.${L.abaixoMin ? ' Em ' + L.abaixoMin + ' deles o teto fica abaixo do seu valor mínimo: lucro menor ou prejuízo.' : ''}</span></div>` : ''}
         ${L.semValor ? `<div class="alert warn" style="margin-top:10px">${icon('alert', 'sm')}<span>${L.semValor} item(ns) sem valor nesta opção. Preencha o teto ou o lance final, ou troque a opção acima.</span></div>` : ''}
