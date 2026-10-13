@@ -371,6 +371,39 @@ input.input[type=datetime-local]::-webkit-date-and-time-value, input.input[type=
 .linkchip { display: flex; gap: 8px; }
 .linkchip .btn { min-height: 46px; text-decoration: none; color: var(--blue); justify-content: flex-start; min-width: 0; }
 .linkchip .btn:last-child { flex: none; width: 46px; padding: 0; justify-content: center; }
+/* dashboard do Painel */
+.dash { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.dash > * { min-width: 0; }
+.dash-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.dseg { display: inline-flex; gap: 2px; padding: 3px; border-radius: 12px; background: color-mix(in srgb, var(--muted) 12%, transparent); }
+.dseg button { border: 0; background: transparent; padding: 7px 14px; border-radius: 9px; font: inherit; font-weight: 700; font-size: 13px; color: var(--muted); cursor: pointer; }
+.dseg button.on { background: var(--card); color: var(--blue); box-shadow: 0 1px 3px rgba(15, 29, 51, .14); }
+.dash-chips { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 10px; }
+.dchip { border: 1px solid var(--blue); background: var(--blue-soft); color: var(--blue); border-radius: 99px; padding: 4px 12px; font: inherit; font-weight: 700; font-size: 12.5px; cursor: pointer; }
+.fn-row { display: grid; grid-template-columns: minmax(90px, 150px) 1fr auto; align-items: center; gap: 12px; width: 100%; padding: 8px 10px; border: 1px solid transparent; border-radius: 12px; background: transparent; cursor: pointer; text-align: left; font: inherit; color: var(--ink); }
+.fn-row:hover { background: color-mix(in srgb, var(--blue) 7%, transparent); }
+.fn-row.sel { background: var(--blue-soft); border-color: var(--blue); }
+.fn-l { font-size: 13px; font-weight: 700; min-width: 0; }
+.fn-l small { display: block; font-size: 10.5px; font-weight: 700; color: var(--muted); }
+.fn-bar { height: 16px; border-radius: 99px; background: color-mix(in srgb, var(--muted) 14%, transparent); overflow: hidden; }
+.fn-bar > i { display: block; height: 100%; border-radius: 99px; background: var(--c, var(--blue)); }
+.fn-n { text-align: right; font-variant-numeric: tabular-nums; min-width: 64px; }
+.fn-n b { display: block; font-size: 14px; } .fn-n small { display: block; font-size: 11px; color: var(--muted); font-weight: 600; }
+.dm-svg { width: 100%; height: auto; display: block; }
+.dm-grid { stroke: var(--line); stroke-width: 1; stroke-dasharray: 3 4; }
+.dm-ax { font-size: 11px; fill: var(--muted); font-weight: 600; }
+.dm-grp { cursor: pointer; }
+.dm-grp .hit { fill: transparent; }
+.dm-grp:hover .hit { fill: color-mix(in srgb, var(--blue) 7%, transparent); }
+.dm-grp.sel .hit { fill: var(--blue-soft); }
+.bar-v { fill: #2e75b6; } .bar-l { fill: #4caf66; }
+.dtbl th:first-child, .dtbl td:first-child { width: auto; white-space: nowrap; }
+.dtbl .ell-td { width: 100%; }
+.dtbl tbody tr { cursor: pointer; }
+.dtbl tbody tr:hover { background: color-mix(in srgb, var(--blue) 6%, transparent); }
+.dtbl .ell-td { max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dtbl .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.dash-tip { position: fixed; z-index: 300; pointer-events: none; display: none; max-width: 300px; background: #0f1d33; color: #fff; padding: 7px 11px; border-radius: 9px; font-size: 12px; font-weight: 600; line-height: 1.35; box-shadow: 0 6px 18px rgba(15, 29, 51, .3); }
 /* iPhone e telas estreitas: cartões resumidos (a conta completa fica no PC) */
 @media (max-width: 600px) {
   .hide-m { display: none !important; }
@@ -476,7 +509,7 @@ input[type=color].input { padding: 4px; height: 46px; }
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.8.2';
+  const APP_VERSION = '1.9.1';
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Em disputa', 'Ganhou', 'Faturado', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti'];
   const DECL_PADRAO =
@@ -1926,7 +1959,7 @@ input[type=color].input { padding: 4px; height: 46px; }
 
   /* ---------- estado da interface ---------- */
   const UI = {
-    tab: 'painel', detailId: null, filtro: 'todos', busca: '', buscaI: '', mostrarOcultos: false, mostrarEnc: false,
+    tab: 'painel', detailId: null, filtro: 'todos', busca: '', buscaI: '', mostrarOcultos: false, mostrarEnc: false, dash: { periodo: 'tudo', etapa: null, orgao: null, mes: null, todos: false },
     pdf: { pregaoId: null, fonte: 'auto', data: C.hojeISO(), busy: false, result: null }, acc: new Set(['acc-forn']),
     ignorePop: 0, deferredPrompt: null, reloadPending: false, updateBanner: false,
   };
@@ -2819,6 +2852,118 @@ input[type=color].input { padding: 4px; height: 46px; }
       ${lista}${rows.length < 10 ? `<p class="tiny muted" style="margin-top:10px">Com 10 ou mais itens registrados a leitura fica mais confiável.</p>` : ''}</div>`;
   }
 
+  /* ---------- dashboard interativo do Painel (só no PC) ---------- */
+  const ymDe = (p) => {
+    const m = /^(\d{4}-\d{2})/.exec(String(p.sessao || ''));
+    if (m) return m[1];
+    const d = new Date(p.createdAt || Date.now());
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+  };
+  const ymSomar = (ym, n) => { const [y, m] = ym.split('-').map(Number); const d = new Date(y, m - 1 + n, 1); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); };
+  const ymAgora = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); };
+  const noPeriodo = (ym, per) => {
+    const cur = ymAgora();
+    if (per === 'mes') return ym === cur;
+    if (per === 'tri') return ym >= ymSomar(cur, -2);
+    if (per === 'ano') return ym.slice(0, 4) === cur.slice(0, 4);
+    return true;
+  };
+  const rotuloMes = (ym) => ym.slice(5) + '/' + ym.slice(2, 4);
+  const DASH_PART = ['Proposta enviada', 'Em disputa', 'Ganhou', 'Faturado', 'Perdeu', 'Desclassificado'];
+  const DASH_ETAPAS = { enviadas: 'Propostas enviadas', ganhas: 'Ganhas', entregues: 'Entregues', pagas: 'Pagas' };
+  const dashEtapaOk = (o, k) => {
+    const ganho = POS_STATUS.includes(o.p.status);
+    return k === 'enviadas' ? DASH_PART.includes(o.p.status) : k === 'ganhas' ? ganho : k === 'entregues' ? ganho && !!o.p.entregueEm : k === 'pagas' ? ganho && !!o.p.pagoEm : true;
+  };
+  const kfmt = (v) => (Math.abs(v) >= 1000 ? Math.round(v / 100) / 10 + 'k' : String(Math.round(v))).replace('.', ',');
+
+  function painelDashboardHtml(R) {
+    if (!R.pMap.size) return '';
+    const D = UI.dash;
+    const todos = [...R.pMap.values()].map((x) => ({ x, p: x.p, ym: ymDe(x.p) })).filter((o) => noPeriodo(o.ym, D.periodo));
+    const part = todos.filter((o) => DASH_PART.includes(o.p.status));
+    const gan = todos.filter((o) => POS_STATUS.includes(o.p.status));
+    const ent = gan.filter((o) => o.p.entregueEm), pag = gan.filter((o) => o.p.pagoEm);
+    const soma = (arr, k) => arr.reduce((s, o) => s + (o.x[k] || 0), 0);
+
+    // filtros ativos
+    const chips = [];
+    if (D.etapa) chips.push(['etapa', D.etapa, DASH_ETAPAS[D.etapa]]);
+    if (D.orgao) chips.push(['orgao', D.orgao, D.orgao]);
+    if (D.mes) chips.push(['mes', D.mes, 'Mês ' + rotuloMes(D.mes)]);
+    const periodos = [['mes', 'Este mês'], ['tri', '3 meses'], ['ano', 'Este ano'], ['tudo', 'Tudo']];
+    const barra = `<div class="card"><div class="dash-bar"><h3 style="margin:0" class="grow">${icon('painel', 'sm')}<span class="grow">Dashboard</span></h3>
+      <div class="dseg" role="group" aria-label="Período">${periodos.map(([k, n]) => `<button type="button" class="${D.periodo === k ? 'on' : ''}" data-act="dash-periodo" data-v="${k}">${n}</button>`).join('')}</div></div>
+      ${chips.length ? `<div class="dash-chips">${chips.map(([k, v, n]) => `<button type="button" class="dchip" data-act="dash-filtro" data-k="${k}" data-v="${esc(v)}">${esc(n)} ✕</button>`).join('')}<button type="button" class="btn sm ghost" data-act="dash-limpar">Limpar filtros</button></div>` : `<p class="tiny muted" style="margin-top:8px">Clique numa etapa do funil, num mês ou num órgão para filtrar a lista de pregões abaixo.</p>`}</div>`;
+
+    // funil
+    const etapas = [['enviadas', part, soma(part, 'proposta'), '#2e75b6'], ['ganhas', gan, soma(gan, 'venda'), '#4caf66'], ['entregues', ent, soma(ent, 'venda'), '#e0a800'], ['pagas', pag, soma(pag, 'venda'), '#2f7d3a']];
+    const base = Math.max(1, part.length);
+    const funil = etapas.map(([k, arr, val, cor], i) => {
+      const ant = i === 0 ? null : etapas[i - 1][1].length;
+      const conv = ant ? C.pct(arr.length / ant, 0) + ' da etapa anterior' : '';
+      const tip = DASH_ETAPAS[k] + ': ' + arr.length + ' · ' + C.brl0(val) + (conv ? ' · ' + conv : '');
+      return `<button type="button" class="fn-row${D.etapa === k ? ' sel' : ''}" data-act="dash-filtro" data-k="etapa" data-v="${k}" data-tip="${esc(tip)}"><span class="fn-l">${DASH_ETAPAS[k]}</span><span class="fn-bar"><i style="width:${(arr.length / base * 100).toFixed(1)}%;--c:${cor}"></i></span><span class="fn-n"><b>${arr.length}</b><small>${C.brl0(val)}</small></span></button>`;
+    }).join('');
+    const funilCard = `<div class="card"><h3>${icon('painel', 'sm')}<span class="grow">Funil das propostas</span></h3>${part.length ? funil : '<p class="muted small">Nenhuma proposta enviada neste período.</p>'}${part.length ? `<p class="tiny muted" style="margin-top:8px">Conversão: <b style="color:var(--ink)">${gan.length}</b> ganha(s) de <b style="color:var(--ink)">${part.length}</b> enviada(s).</p>` : ''}</div>`;
+
+    // evolução por mês (venda e lucro dos ganhos, pela data da sessão)
+    const meses = {};
+    gan.forEach((o) => { const m = meses[o.ym] || (meses[o.ym] = { venda: 0, lucro: 0, n: 0 }); m.venda += o.x.venda || 0; m.lucro += o.x.lucro || 0; m.n += 1; });
+    const chaves = Object.keys(meses).sort().slice(-12);
+    let evo = '<p class="muted small">Nenhum pregão ganho neste período.</p>';
+    if (chaves.length) {
+      const W = 620, H = 230, pl = 46, pr = 8, pt = 12, pb = 28;
+      const mx = Math.max(1, ...chaves.map((k) => Math.max(meses[k].venda, meses[k].lucro)));
+      const y = (v) => pt + (H - pt - pb) * (1 - Math.max(0, v) / mx);
+      const slot = (W - pl - pr) / chaves.length, bw = Math.min(30, slot * 0.34);
+      const grade = [0, 0.5, 1].map((f) => `<line x1="${pl}" x2="${W - pr}" y1="${y(mx * f).toFixed(1)}" y2="${y(mx * f).toFixed(1)}" class="dm-grid"/><text x="${pl - 6}" y="${(y(mx * f) + 4).toFixed(1)}" text-anchor="end" class="dm-ax">${kfmt(mx * f)}</text>`).join('');
+      const grupos = chaves.map((k, i) => {
+        const m = meses[k], cx = pl + slot * i + slot / 2;
+        const tip = rotuloMes(k) + ' · Venda ' + C.brl0(m.venda) + ' · Lucro ' + C.brl0(m.lucro) + ' · ' + m.n + (m.n === 1 ? ' pregão' : ' pregões');
+        return `<g class="dm-grp${D.mes === k ? ' sel' : ''}" data-act="dash-filtro" data-k="mes" data-v="${k}" data-tip="${esc(tip)}"><rect class="hit" x="${(cx - slot / 2).toFixed(1)}" y="${pt}" width="${slot.toFixed(1)}" height="${H - pt - pb}" rx="8"/><rect class="bar-v" x="${(cx - bw - 1).toFixed(1)}" y="${y(m.venda).toFixed(1)}" width="${bw.toFixed(1)}" height="${(H - pb - y(m.venda)).toFixed(1)}" rx="4"/><rect class="bar-l" x="${(cx + 1).toFixed(1)}" y="${y(m.lucro).toFixed(1)}" width="${bw.toFixed(1)}" height="${(H - pb - y(m.lucro)).toFixed(1)}" rx="4"/><text x="${cx.toFixed(1)}" y="${H - 9}" text-anchor="middle" class="dm-ax">${rotuloMes(k)}</text></g>`;
+      }).join('');
+      evo = `<svg class="dm-svg" viewBox="0 0 ${W} ${H}" role="img" aria-label="Venda e lucro por mês">${grade}${grupos}</svg><div class="legend"><span><i style="background:#2e75b6"></i>Venda</span><span><i style="background:#4caf66"></i>Lucro</span></div>`;
+    }
+    const evoCard = `<div class="card"><h3>${icon('calendar', 'sm')}<span class="grow">Evolução por mês</span></h3>${evo}</div>`;
+
+    // margem por pregão ganho
+    const mg = gan.filter((o) => o.x.margem != null).sort((a, b) => b.x.margem - a.x.margem).slice(0, 8);
+    const corM = (v) => (v >= 0.35 ? '#4caf66' : v >= 0.15 ? '#e0a800' : '#e07a5f');
+    const mgHtml = mg.length ? mg.map((o) => {
+      const tip = 'Nº ' + o.p.numero + ' · ' + o.p.orgao + ' · margem ' + C.pct(o.x.margem, 1) + ' · lucro ' + C.brl0(o.x.lucro);
+      return `<button type="button" class="fn-row" data-act="abrir-pregao" data-id="${o.p.id}" data-tip="${esc(tip)}"><span class="fn-l"><small>Nº ${esc(o.p.numero)}</small><span class="ell" style="display:block">${esc(o.p.orgao)}</span></span><span class="fn-bar"><i style="width:${Math.max(2, Math.min(100, o.x.margem / 0.6 * 100)).toFixed(1)}%;--c:${corM(o.x.margem)}"></i></span><span class="fn-n"><b>${C.pct(o.x.margem, 0)}</b></span></button>`;
+    }).join('') : '<p class="muted small">Sem pregões ganhos com margem calculada neste período.</p>';
+    const mgCard = `<div class="card"><h3>${icon('painel', 'sm')}<span class="grow">Margem por pregão ganho</span></h3>${mgHtml}</div>`;
+
+    // órgãos que mais compram
+    const orgs = {};
+    gan.forEach((o) => { const g = orgs[o.p.orgao] || (orgs[o.p.orgao] = { venda: 0, n: 0 }); g.venda += o.x.venda || 0; g.n += 1; });
+    const top = Object.entries(orgs).sort((a, b) => b[1].venda - a[1].venda).slice(0, 5);
+    const mxO = Math.max(1, ...top.map(([, g]) => g.venda));
+    const orgHtml = top.length ? top.map(([nome, g]) => {
+      const tip = nome + ' · ' + C.brl0(g.venda) + ' · ' + g.n + (g.n === 1 ? ' pregão ganho' : ' pregões ganhos');
+      return `<button type="button" class="fn-row${D.orgao === nome ? ' sel' : ''}" data-act="dash-filtro" data-k="orgao" data-v="${esc(nome)}" data-tip="${esc(tip)}"><span class="fn-l ell">${esc(nome)}</span><span class="fn-bar"><i style="width:${(g.venda / mxO * 100).toFixed(1)}%;--c:#2e75b6"></i></span><span class="fn-n"><b>${C.brl0(g.venda)}</b></span></button>`;
+    }).join('') : '<p class="muted small">Nenhum pregão ganho neste período.</p>';
+    const orgCard = `<div class="card"><h3>${icon('pregoes', 'sm')}<span class="grow">Órgãos que mais compram</span></h3>${orgHtml}</div>`;
+
+    // lista de pregões (responde aos cliques)
+    let rows = todos.slice();
+    if (D.etapa) rows = rows.filter((o) => dashEtapaOk(o, D.etapa));
+    if (D.orgao) rows = rows.filter((o) => o.p.orgao === D.orgao);
+    if (D.mes) rows = rows.filter((o) => o.ym === D.mes);
+    rows.sort((a, b) => String(b.p.sessao || '').localeCompare(String(a.p.sessao || '')) || (b.p.createdAt || 0) - (a.p.createdAt || 0));
+    const mostrar = D.todos ? rows : rows.slice(0, 10);
+    const linhas = mostrar.map((o) => {
+      const g = POS_STATUS.includes(o.p.status);
+      return `<tr data-act="abrir-pregao" data-id="${o.p.id}" tabindex="0"><td>${esc(o.p.numero)}</td><td class="ell-td">${esc(o.p.orgao)}</td><td>${badgeStatus(o.p.status)}</td><td class="num">${o.x.proposta > 0 ? C.brl0(o.x.proposta) : '—'}</td><td class="num">${g ? C.brl0(o.x.venda) : '—'}</td><td class="num">${g ? C.brl0(o.x.lucro) : '—'}</td><td class="num">${g && o.x.margem != null ? C.pct(o.x.margem, 0) : '—'}</td></tr>`;
+    }).join('');
+    const tabela = `<div class="card"><h3>${icon('pregoes', 'sm')}<span class="grow">Pregões${chips.length || D.periodo !== 'tudo' ? ' filtrados' : ''} (${rows.length})</span></h3>
+      ${rows.length ? `<div class="tbl-scroll"><table class="tbl dtbl"><thead><tr><th>Nº</th><th>Órgão</th><th>Status</th><th class="num">Proposta</th><th class="num">Ganho</th><th class="num">Lucro</th><th class="num">Margem</th></tr></thead><tbody>${linhas}</tbody></table></div>${rows.length > 10 ? `<button type="button" class="btn sm ghost" style="margin-top:10px" data-act="dash-mais">${D.todos ? 'Mostrar menos' : 'Ver todos (' + rows.length + ')'}</button>` : ''}` : '<p class="muted small">Nenhum pregão com esses filtros.</p>'}</div>`;
+
+    return `<section class="dash m-hide">${barra}<div class="two-col">${funilCard}${evoCard}</div><div class="two-col">${mgCard}${orgCard}</div>${tabela}</section>`;
+  }
+
   function renderPainel() {
     const st = store.get();
     if (!st.pregoes.some((p) => !p.deleted)) return emptyWelcome();
@@ -2850,6 +2995,7 @@ input[type=color].input { padding: 4px; height: 46px; }
         <div class="kpi" style="--c:${m.saldoAgora < 0 ? '#c0392b' : '#2f7d3a'}"><div class="l">Saldo disponível</div><div class="v">${C.brl0(m.saldoAgora)}</div><div class="s">se ganhar tudo: ${C.brl0(m.saldoSeGanhar)}</div></div>
         <div class="kpi" style="--c:#b7791f"><div class="l">Lucro previsto</div><div class="v">${C.brl0(R.lucroPrevisto)}</div><div class="s">pregões ativos</div></div>
       </div>
+      ${painelDashboardHtml(R)}
       ${painelEntregasHtml(R)}
       ${painelPregoesHtml(R)}
       <div class="two-col">${painelCertidoesHtml(R)}${painelResultadosHtml(R)}</div>
@@ -3666,6 +3812,10 @@ input[type=color].input { padding: 4px; height: 46px; }
       case 'abrir-pregao': UI.tab = 'pregoes'; UI.detailId = id; history.pushState({ detail: id }, ''); saveUI(); render(); window.scrollTo(0, 0); break;
       case 'ocultar-painel': e.stopPropagation(); UI.keepScroll = true; store.upsertPregao({ id, ocultoPainel: true }); toast('Tirado do painel. Continua na aba Pregões'); break;
       case 'mostrar-painel': UI.keepScroll = true; store.upsertPregao({ id, ocultoPainel: false }); toast('De volta ao painel'); break;
+      case 'dash-periodo': UI.dash.periodo = t.dataset.v; UI.dash.mes = null; UI.keepScroll = true; render(); break;
+      case 'dash-filtro': { const k = t.dataset.k, v = t.dataset.v; UI.dash[k] = UI.dash[k] === v ? null : v; UI.keepScroll = true; render(); break; }
+      case 'dash-limpar': UI.dash.etapa = UI.dash.orgao = UI.dash.mes = null; UI.keepScroll = true; render(); break;
+      case 'dash-mais': UI.dash.todos = !UI.dash.todos; UI.keepScroll = true; render(); break;
       case 'painel-encerrados': UI.mostrarEnc = !UI.mostrarEnc; UI.keepScroll = true; render(); break;
       case 'painel-ocultos': UI.mostrarOcultos = !UI.mostrarOcultos; UI.keepScroll = true; render(); break;
       case 'voltar': if (history.state && history.state.detail) history.back(); else { UI.detailId = null; render(); } break;
@@ -3910,6 +4060,19 @@ input[type=color].input { padding: 4px; height: 46px; }
     $('.nav').addEventListener('click', (e) => { const b = e.target.closest('button[data-v]'); if (b) setTab(b.dataset.v); });
     const main = $('#main');
     main.addEventListener('click', onClick);
+    // dica flutuante dos gráficos do dashboard (PC)
+    let tipEl = null;
+    const esconderTip = () => { if (tipEl) tipEl.style.display = 'none'; };
+    main.addEventListener('mousemove', (e) => {
+      const el = e.target.closest && e.target.closest('[data-tip]');
+      if (!el) { esconderTip(); return; }
+      if (!tipEl) { tipEl = document.createElement('div'); tipEl.className = 'dash-tip'; document.body.appendChild(tipEl); }
+      tipEl.textContent = el.dataset.tip; tipEl.style.display = 'block';
+      tipEl.style.left = Math.max(8, Math.min(window.innerWidth - tipEl.offsetWidth - 12, e.clientX + 14)) + 'px';
+      tipEl.style.top = (e.clientY + 18) + 'px';
+    });
+    main.addEventListener('mouseleave', esconderTip);
+    main.addEventListener('click', esconderTip);
     main.addEventListener('input', onInput);
     main.addEventListener('change', onChange);
     main.addEventListener('toggle', (e) => { const d = e.target; if (d && d.dataset && d.dataset.acc) { if (d.open) UI.acc.add(d.dataset.acc); else UI.acc.delete(d.dataset.acc); } }, true);
