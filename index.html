@@ -462,6 +462,14 @@ input.input[type=datetime-local]::-webkit-date-and-time-value, input.input[type=
 .coloc-badge.c3 { background: var(--amber-soft); color: var(--amber); }
 .cat-pronto { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 10px; padding: 10px 12px; border-radius: 12px; border: 2px solid var(--green); background: var(--green-soft); }
 .acp-tbl td { vertical-align: middle; }
+.acp-tbl { min-width: 0; }
+.acp-tbl th, .acp-tbl td { padding-left: 5px; padding-right: 5px; }
+.acp-tbl td:not(.acp-desc), .acp-tbl th { white-space: nowrap; }
+.acp-tbl td.acp-desc, .acp-tbl th:first-child { width: 100%; min-width: 230px; }
+.acp-tbl .acp-tit { display: flex; flex-direction: column; align-items: flex-start; gap: 3px; }
+.acp-tbl .acp-obs { color: var(--amber) !important; font-weight: 600; }
+.acp-tbl .acp-acts .btn { min-height: 34px; padding: 4px 10px; }
+.main.wide { max-width: 1280px; }
 .it-modo { max-width: 340px; }
 .it-tbl { font-size: 12.5px; min-width: 0; }
 .it-tbl th, .it-tbl td { padding-left: 4px; padding-right: 4px; }
@@ -571,7 +579,7 @@ input[type=color].input { padding: 4px; height: 46px; }
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.27.0';
+  const APP_VERSION = '1.28.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Em disputa', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -3747,8 +3755,7 @@ input[type=color].input { padding: 4px; height: 46px; }
         const buy = compras.length ? compras.map((k) => k.href ? `<a class="buy" href="${esc(k.href)}" target="_blank" rel="noopener noreferrer" title="Comprar: ${esc(k.label || 'link')}">$</a>` : `<span class="buy sem" title="${esc(k.nome || 'Sem link')}">$</span>`).join('') : '<span class="muted">—</span>';
         const ie = String(it.itemEdital || '').trim();
         return `<tr>
-          <td class="acp-desc"><b>${ie ? 'Item ' + esc(ie) + ' · ' : ''}${esc(it.descricao)}</b>${it.marca ? `<small>${esc(it.marca)}</small>` : ''}${it.obs ? `<small>${icon('alert', 'sm')} ${esc(it.obs)}</small>` : ''}</td>
-          <td class="r">${l.venci ? '<span class="acp-tag venci">Venci</span>' : '<span class="acp-tag posso">Posso ganhar</span>'}</td>
+          <td class="acp-desc"><div class="acp-tit">${l.venci ? '<span class="acp-tag venci">Venci</span>' : '<span class="acp-tag posso">Posso ganhar</span>'}<b>${ie ? 'Item ' + esc(ie) + ' · ' : ''}${esc(it.descricao)}</b></div>${it.marca ? `<small>${esc(it.marca)}</small>` : ''}${it.obs ? `<small class="acp-obs">${icon('alert', 'sm')} ${esc(it.obs)}</small>` : ''}</td>
           <td class="r">${C.qtdBR(it.qtd)}</td>
           <td class="r">${C.brl(c.custoUnit)}</td>
           <td class="r">${C.brl(c.minimo)}</td>
@@ -3765,7 +3772,7 @@ input[type=color].input { padding: 4px; height: 46px; }
       }).join('');
       return `<section class="gbox" style="--gc:${corDe(p.id)};--sc:${COR_STATUS[p.status] || '#2e75b6'}">
         <header class="ghead"><div class="grow"><div class="gnum">PREGÃO Nº ${esc(p.numero)}</div><h3>${esc(p.orgao)}</h3></div>${badgeStatus(p.status)}</header>
-        <div class="tbl-scroll"><table class="tbl acp-tbl"><thead><tr><th>Item</th><th class="r"></th><th class="r">Qtd</th><th class="r">Custo un.</th><th class="r">Mínimo</th><th class="r">Teto</th><th class="r">Colocação</th><th class="r">Valor final</th><th class="r">Total</th><th class="r">Lucro</th><th class="r">Comprar</th><th class="r"></th></tr></thead><tbody>${rows}</tbody></table></div>
+        <div class="tbl-scroll"><table class="tbl acp-tbl"><thead><tr><th>Item</th><th class="r">Qtd</th><th class="r">Custo un.</th><th class="r">Mínimo</th><th class="r">Teto</th><th class="r">Colocação</th><th class="r">Valor final</th><th class="r">Total</th><th class="r">Lucro</th><th class="r">Comprar</th><th class="r"></th></tr></thead><tbody>${rows}</tbody></table></div>
         <div class="acp-foot"><div class="small">${ls.some((l) => l.posso) ? `Posso ganhar: <b>${C.brl(tot(ls.filter((l) => l.posso)))}</b>` : ''}${ls.some((l) => l.posso) && ganhos.length ? ' · ' : ''}${ganhos.length ? `Venci: <b>${C.brl(tot(ganhos))}</b>` : ''}${semValor ? ` <span class="prazo warn">${semValor} sem valor final</span>` : ''}</div>
           <div class="row" style="gap:8px"><button type="button" class="btn sm" data-act="abrir-pregao" data-id="${p.id}">${icon('eye', 'sm')} Abrir pregão</button>${ganhos.length ? `<button type="button" class="btn sm navy" data-act="acomp-proposta" data-id="${p.id}">${icon('pdf', 'sm')} Gerar proposta (${ganhos.length} ${ganhos.length === 1 ? 'item vencido' : 'itens vencidos'})</button>` : ''}</div></div>
       </section>`;
@@ -4431,6 +4438,7 @@ input[type=color].input { padding: 4px; height: 46px; }
     const y = window.scrollY;
     if ((UI.tab === 'itens' || UI.tab === 'acomp') && window.matchMedia && window.matchMedia('(max-width: 600px)').matches) { UI.tab = 'pregoes'; saveUI(); }
     const fn = { painel: renderPainel, pregoes: renderPregoes, itens: renderItens, acomp: renderAcomp, pdf: renderPDF, certidoes: renderCertidoes, config: renderConfig }[UI.tab];
+    main.classList.toggle('wide', UI.tab === 'acomp' || (UI.tab === 'itens' && UI.itensModo === 'tabela'));
     main.innerHTML = fn();
     $$('.nav button').forEach((b) => b.classList.toggle('on', b.dataset.v === UI.tab));
     const t = TABS.find((x) => x.id === UI.tab);
