@@ -103,6 +103,7 @@ svg.i.sm { width: 16px; height: 16px; }
 .kpi .s { font-size: 11.5px; color: var(--muted); margin-top: 2px; }
 
 .badge { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 99px; background: var(--blue-soft); color: var(--blue); white-space: nowrap; }
+.st-Concluído { background: color-mix(in srgb, #607d8b 16%, transparent); color: #455a64; }
 .badge.ok, .st-Faturado, .st-Ganhou { background: var(--green-soft); color: var(--green); }
 .badge.warn, .st-Em-disputa, .st-Proposta-enviada { background: var(--amber-soft); color: var(--amber); }
 .badge.bad, .st-Perdeu, .st-Desclassificado { background: var(--red-soft); color: var(--red); }
@@ -170,8 +171,6 @@ svg.i.sm { width: 16px; height: 16px; }
 .minbox.bad .t { color: var(--red); }
 .minbox .v { font-size: 19px; font-weight: 800; color: var(--green); font-variant-numeric: tabular-nums; white-space: nowrap; flex: none; }
 .minbox.bad .v { color: var(--red); }
-.grp { margin-top: 6px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.grp h3 { font-size: 14px; text-transform: none; letter-spacing: 0; color: var(--ink); margin: 0; }
 .empty { text-align: center; padding: 34px 18px; display: flex; flex-direction: column; align-items: center; gap: 12px; }
 .empty > svg { width: 46px; height: 46px; color: var(--blue); stroke-width: 1.5; }
 .empty .btn { width: 100%; }
@@ -282,9 +281,9 @@ input.input[type=datetime-local]::-webkit-date-and-time-value, input.input[type=
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
 
 /* ---------- pregão com cor própria: cartão da lista e caixa na aba Itens ---------- */
-.pcard { border-left: 6px solid var(--gc, var(--line)); }
-.pcard.prz-warn { border-top-color: var(--amber); border-right-color: var(--amber); border-bottom-color: var(--amber); background: color-mix(in srgb, var(--amber) 10%, var(--card)); box-shadow: 0 0 0 2px color-mix(in srgb, var(--amber) 35%, transparent), var(--shadow); }
-.pcard.prz-bad { border-top-color: var(--red); border-right-color: var(--red); border-bottom-color: var(--red); background: color-mix(in srgb, var(--red) 9%, var(--card)); box-shadow: 0 0 0 2px color-mix(in srgb, var(--red) 40%, transparent), var(--shadow); }
+.pcard { border: 2px solid var(--sc, var(--line)); }
+.pcard.prz-warn { border-color: var(--amber); background: color-mix(in srgb, var(--amber) 10%, var(--card)); box-shadow: 0 0 0 2px color-mix(in srgb, var(--amber) 35%, transparent), var(--shadow); }
+.pcard.prz-bad { border-color: var(--red); background: color-mix(in srgb, var(--red) 9%, var(--card)); box-shadow: 0 0 0 2px color-mix(in srgb, var(--red) 40%, transparent), var(--shadow); }
 .pcard.enviada { border: 2px solid var(--green); }
 .pcard.falta-dados { border: 3px solid var(--red); }
 /* onde comprar: link vira botão */
@@ -294,9 +293,6 @@ input.input[type=datetime-local]::-webkit-date-and-time-value, input.input[type=
 .comprar-btn svg { flex: none; }
 .ell { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .icard .lk { text-decoration: none; }
-.linkrow { display: flex; gap: 8px; align-items: stretch; }
-.linkrow .input { flex: 1; min-width: 0; }
-.linkrow .btn { flex: none; min-height: 46px; text-decoration: none; color: var(--blue); }
 .pcard .obsline .obs-ic { display: none; }
 .pcard .p-prop { display: none; }
 .pcard .p-itens { display: none; font-size: 12.5px; color: var(--muted); font-weight: 600; }
@@ -365,6 +361,8 @@ input.input[type=datetime-local]::-webkit-date-and-time-value, input.input[type=
 .icard-actions { display: flex; justify-content: flex-end; }
 .icard-actions .btn { min-height: 32px; padding: 4px 12px; font-size: 12.5px; }
 .icard.fora { filter: grayscale(1); opacity: .8; gap: 6px; }
+.btn.venci-on { background: var(--green); color: #fff; border-color: var(--green); }
+.icard.venci { border: 2px solid var(--green); }
 .icard.nao-ganho { filter: grayscale(.85); opacity: .65; }
 .icard.fora h4 { font-size: 14px; color: var(--muted); }
 .badge.off { background: color-mix(in srgb, var(--muted) 14%, transparent); color: var(--muted); }
@@ -429,7 +427,7 @@ input.input[type=datetime-local]::-webkit-date-and-time-value, input.input[type=
   .pcard .lkrow .btn:not(.btn-edital) { display: none; }
   .pcard .lkrow:not(.has-ed) { display: none; }
   .m-hide { display: none !important; }
-  .nav button[data-v="itens"] { display: none; }
+  .nav button[data-v="itens"], .nav button[data-v="acomp"] { display: none; }
   .pcard .obsline { display: inline-flex; align-items: center; align-self: flex-start; padding: 5px 9px; }
   .pcard .obsline .obs-ic { display: inline-flex; }
   .pcard .obsline .obs-tx { display: none; }
@@ -444,7 +442,39 @@ input.input[type=datetime-local]::-webkit-date-and-time-value, input.input[type=
 .egstat { margin: 0 0 8px; overflow-wrap: anywhere; }
 .prazo { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 8px; background: var(--blue-soft); color: var(--blue); max-width: 100%; }
 .prazo.warn { background: var(--amber-soft); color: var(--amber); } .prazo.bad { background: var(--red-soft); color: var(--red); } .prazo.off { background: var(--line); color: var(--muted); }
-.gbox { --gc: var(--blue); border: 1px solid var(--line); border-left: 7px solid var(--gc); border-radius: var(--r); background: color-mix(in srgb, var(--gc) 7%, var(--card)); padding: 12px; box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.dlg.dlg-precos { width: min(820px, 96vw); max-width: 96vw; }
+.dlg.dlg-precos .tbl { min-width: 640px; }
+.pf-check { margin: 12px 0 8px; padding: 10px 12px; border-radius: 10px; background: var(--amber-soft); color: var(--ink); font-size: 13px; }
+.pf-check > b { display: flex; align-items: center; gap: 6px; color: var(--amber); }
+.pf-check ul { margin: 6px 0 0 18px; padding: 0; line-height: 1.5; }
+.pf-ok { margin: 4px 0 6px; }
+.cat-edital { margin-top: 8px; font-size: 12.5px; line-height: 1.45; white-space: pre-wrap; max-height: 140px; overflow: auto; padding: 8px 10px; border-radius: 10px; background: color-mix(in srgb, var(--blue) 6%, var(--card)); border: 1px dashed var(--line); }
+.cat-edital b { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: .4px; color: var(--muted); margin-bottom: 2px; }
+.acp-tbl td { vertical-align: middle; }
+.it-modo { max-width: 340px; }
+.it-tbl { font-size: 12.5px; min-width: 0; }
+.it-tbl th, .it-tbl td { padding-left: 4px; padding-right: 4px; }
+.it-tbl td.it-desc, .it-tbl th:nth-child(2) { width: 100%; min-width: 170px; }
+.it-tbl th:first-child, .it-tbl td:first-child { width: 1%; }
+.it-tbl .it-desc small { display: block; color: var(--muted); font-size: 11.5px; margin-top: 2px; }
+.it-tbl .it-desc .it-obs { color: var(--amber); font-weight: 600; }
+.it-tbl tr.it-row { cursor: pointer; }
+.it-tbl tr.it-row:hover td { background: color-mix(in srgb, var(--blue) 6%, transparent); }
+.it-tbl tr.apagado td { opacity: .5; }
+.it-tbl .stars { font-size: 11px; white-space: nowrap; }
+.it-tags { display: flex; gap: 4px; justify-content: flex-end; flex-wrap: nowrap; }
+.acp-tbl .acp-desc small { display: block; color: var(--muted); font-size: 11.5px; margin-top: 2px; }
+.acp-tbl input.input { width: 104px; min-height: 34px; padding: 4px 8px; text-align: right; font-variant-numeric: tabular-nums; }
+.acp-tbl input.input.vazio { border-color: #e0a100; background: color-mix(in srgb, #f4b400 10%, var(--card)); }
+.acp-tag { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 800; padding: 2px 8px; border-radius: 99px; white-space: nowrap; }
+.acp-tag.venci { background: color-mix(in srgb, #2f8f3a 16%, transparent); color: #217a2c; }
+.acp-tag.posso { background: color-mix(in srgb, #d99a1c 18%, transparent); color: #9a6a00; }
+.buy { display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; border-radius: 50%; font-weight: 900; font-size: 15px; text-decoration: none; background: color-mix(in srgb, #2f8f3a 14%, var(--card)); color: #217a2c; border: 1px solid color-mix(in srgb, #2f8f3a 40%, transparent); margin: 1px; }
+.buy:hover { background: #2f8f3a; color: #fff; }
+.buy.sem { opacity: .45; cursor: default; }
+.acp-acts { display: flex; gap: 6px; justify-content: flex-end; flex-wrap: nowrap; }
+.acp-foot { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; justify-content: space-between; margin-top: 4px; }
+.gbox { --gc: var(--blue); border: 2px solid var(--sc, var(--gc)); border-radius: var(--r); background: color-mix(in srgb, var(--gc) 7%, var(--card)); padding: 12px; box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 10px; min-width: 0; }
 .ghead { display: flex; gap: 10px; align-items: flex-start; }
 .gnum { color: var(--gc); font-weight: 800; font-size: 11.5px; letter-spacing: .5px; }
 .ghead h3 { font-size: 16.5px; text-transform: none; letter-spacing: 0; color: var(--ink); margin: 2px 0 0; font-weight: 800; }
@@ -471,14 +501,21 @@ input[type=color].input { padding: 4px; height: 46px; }
 
 /* ---------- Painel: cards quadrados dos pregões ---------- */
 .pgrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-@media (min-width: 700px) { .pgrid { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; } .pgc { aspect-ratio: 1 / 1; } }
-.pgc { --sc: var(--blue); --pc: var(--sc); position: relative; display: flex; flex-direction: column; gap: 6px; min-width: 0; min-height: 150px; padding: 12px 12px 12px 14px; border-radius: 18px; border: 1px solid color-mix(in srgb, var(--sc) 40%, var(--line)); border-left: 6px solid var(--sc); background: linear-gradient(160deg, color-mix(in srgb, var(--sc) 24%, var(--card)) 0%, color-mix(in srgb, var(--sc) 7%, var(--card)) 62%); box-shadow: var(--shadow); cursor: pointer; text-align: left; }
+@media (min-width: 700px) { .pgrid { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; } .pgc { aspect-ratio: 1 / 1; min-height: auto; } }
+.pgc { --sc: var(--blue); --pc: var(--sc); position: relative; display: flex; flex-direction: column; gap: 6px; min-width: 0; min-height: 150px; padding: 12px; border-radius: 18px; border: 2px solid var(--sc); background: linear-gradient(160deg, color-mix(in srgb, var(--sc) 24%, var(--card)) 0%, color-mix(in srgb, var(--sc) 7%, var(--card)) 62%); box-shadow: var(--shadow); cursor: pointer; text-align: left; }
 .pgc:active { transform: scale(.985); }
+.pgc > * { flex-shrink: 0; }
+@media (min-width: 700px) { .pgc { min-height: auto; } }
 .pgc:focus-visible { outline: 3px solid var(--sc); outline-offset: 2px; }
 .pgc .pgc-num { font-size: 12px; font-weight: 800; color: var(--sc); padding-right: 30px; }
 .pgc h4 { font-size: 14.5px; font-weight: 700; line-height: 1.25; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
 .pgc .pgc-meta { display: flex; flex-direction: column; gap: 2px; font-size: 11.5px; color: var(--muted); }
 .pgc .pgc-meta span { display: flex; align-items: center; gap: 4px; min-width: 0; }
+.pgc-cd { display: flex; flex-direction: column; gap: 1px; padding: 5px 8px; border-radius: 10px; background: color-mix(in srgb, var(--sc) 10%, var(--card)); align-self: stretch; }
+.pgc-cd small { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; color: var(--muted); }
+.pgc-cd b { font-size: 14.5px; font-weight: 800; color: var(--ink); line-height: 1.15; font-variant-numeric: tabular-nums; }
+.pgc-cd b.hoje { color: var(--red); } .pgc-cd b.perto { color: var(--amber); } .pgc-cd b.passou { color: var(--muted); }
+.pgc-cd span { font-size: 11.5px; color: var(--muted); font-weight: 600; }
 .pgc-alertas { display: flex; flex-direction: column; gap: 4px; align-items: flex-start; }
 .pgc-al { display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px; font-weight: 800; padding: 3px 8px; border-radius: 8px; max-width: 100%; }
 .pgc-al .dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; flex: none; }
@@ -498,8 +535,8 @@ input[type=color].input { padding: 4px; height: 46px; }
   50%      { box-shadow: 0 0 0 7px transparent, 0 0 18px 2px color-mix(in srgb, var(--pc) 45%, transparent); }
 }
 @keyframes dotPulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.6); opacity: .45; } }
-.pgc.p-bad { --pc: #d62d20; border-color: #d62d20; border-left-color: #d62d20; animation: pgcPulse 1.2s ease-in-out infinite; }
-.pgc.p-warn { --pc: #e0a010; border-color: #e0a010; border-left-color: #e0a010; animation: pgcPulse 1.6s ease-in-out infinite; }
+.pgc.p-bad { --pc: #d62d20; border-color: #d62d20; animation: pgcPulse 1.2s ease-in-out infinite; }
+.pgc.p-warn { --pc: #e0a010; border-color: #e0a010; animation: pgcPulse 1.6s ease-in-out infinite; }
 .pgc.p-falta { --pc: var(--red); animation: pgcPulse 1.6s ease-in-out infinite; }
 .pgc.p-disputa { animation: pgcPulse 2.4s ease-in-out infinite; }
 .pgc.enviada { border: 2px solid var(--green); }
@@ -520,9 +557,10 @@ input[type=color].input { padding: 4px; height: 46px; }
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.16.0';
-  const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Em disputa', 'Ganhou', 'Faturado', 'Perdeu', 'Desclassificado', 'Desisti'];
-  const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti'];
+  const APP_VERSION = '1.23.0';
+  // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
+  const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Em disputa', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
+  const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
   const DECL_PADRAO =
     'Declaramos que, nos preços ofertados, estão incluídas todas as despesas com tributos, fretes, embalagens, ' +
     'seguros e demais custos necessários ao fornecimento, e que concordamos com todas as condições do edital.';
@@ -748,15 +786,21 @@ input[type=color].input { padding: 4px; height: 46px; }
         for (const it of padrao) { const x = entOf(it); x.base += compraBase(it); x.nItens += 1; }
         pool = ents.filter((x) => x.base === 0).reduce((a, x) => a + x.custo, 0);   // viagem sem itens: o custo é dividido entre todos
       }
-      pMap.set(p.id, { p, viagemPadrao: padrao.length ? custoViagem(p, cfg) : 0, viagem: (padrao.length ? (ents ? ents.reduce((a, x) => a + x.custo, 0) : custoViagem(p, cfg)) : 0) + custoGrupos, ents, entOf, pool, base, grupos: [...grupos.values()], grupoOf, itens: list, todosItens: listAll, nItens: list.length, nGanhos: list.filter((i) => !i.naoGanhou).length, nPode: list.filter((i) => i.possivelGanhar).length, venda: 0, custo: 0, lucro: 0, imposto: 0, margem: null });
+      // itens ganhos: marcados um a um (ganhou: true/false); dados antigos com o pregão "Ganhou"/"Faturado" = todos menos os "não ganhei"
+      const marcados = listAll.some((i) => typeof i.ganhou === 'boolean');
+      const legado = !marcados && ['Ganhou', 'Faturado'].includes(p.status);
+      const ganhouIt = (i) => !i.semLance && (marcados ? i.ganhou === true : (legado && !i.naoGanhou));
+      const nGanhos = list.filter(ganhouIt).length;
+      pMap.set(p.id, { ganhouIt, ganho: nGanhos > 0, p, viagemPadrao: padrao.length ? custoViagem(p, cfg) : 0, viagem: (padrao.length ? (ents ? ents.reduce((a, x) => a + x.custo, 0) : custoViagem(p, cfg)) : 0) + custoGrupos, ents, entOf, pool, base, grupos: [...grupos.values()], grupoOf, itens: list, todosItens: listAll, nItens: list.length, nGanhos, nPode: list.filter((i) => i.possivelGanhar && !ganhouIt(i)).length, venda: 0, custo: 0, lucro: 0, imposto: 0, margem: null });
     }
     const iMap = new Map();
     for (const it of itens) {
       const pst = pMap.get(it.pregaoId) || null;
       const c = calcItem(it, pst, cfg);
       c.fora = !!it.semLance;
-      // pregão ganho: item marcado como "não ganhei" fica fora das contas e das estatísticas
-      c.naoGanhou = !!(pst && ['Ganhou', 'Faturado'].includes(pst.p.status) && it.naoGanhou);
+      // pregão com itens ganhos: os itens não ganhos ficam fora das contas e das estatísticas
+      c.ganhou = !!(pst && pst.ganhouIt(it));
+      c.naoGanhou = !!(pst && pst.ganho && !c.ganhou);
       iMap.set(it.id, c);
       if (pst && !it.semLance && !c.naoGanhou) { pst.custo += c.custoTotal; pst.venda += c.totalVenda || 0; pst.lucro += c.lucro || 0; pst.imposto += c.impostoTotal; }
     }
@@ -773,8 +817,7 @@ input[type=color].input { padding: 4px; height: 46px; }
     let somaFat = 0, aFaturar = 0, emDisputa = 0;
     for (const pst of pMap.values()) {
       const s = pst.p.status;
-      if (s === 'Faturado') somaFat += pst.venda;
-      else if (s === 'Ganhou') aFaturar += pst.venda;
+      if (pst.ganho) { if (s === 'Faturado' || s === 'Concluído') somaFat += pst.venda; else aFaturar += pst.venda; }
       else if (s === 'Proposta enviada' || s === 'Em disputa') emDisputa += pst.venda;
     }
     const faturado = n0(cfg.fatFora) + somaFat;
@@ -830,16 +873,6 @@ input[type=color].input { padding: 4px; height: 46px; }
   }
 
   /* ---------- opções do PDF por pregão ("chavinhas" do que aparece) ---------- */
-  const CLAUSULAS_PADRAO = [
-    { id: 'validade', nivel: 0, ativo: true, texto: 'A validade da proposta é de {validade}, a qual será prorrogada automaticamente por {prorrogacao}, na hipótese de o certame não ser finalizado neste prazo, conforme previsto no subitem 4.6.1 do Edital.' },
-    { id: 'qualidade', nivel: 0, ativo: true, texto: 'A empresa vencedora é responsável pela qualidade e integridade do produto durante o período de validade e, inclusive, pelo seu transporte. Constatado qualquer problema, cabe ao Contratado efetuar a troca do produto nos termos do Edital e da legislação vigente.' },
-    { id: 'icms', nivel: 0, ativo: true, texto: 'O preço unitário estimado para o objeto encontra-se com a carga tributária completa. Nas operações previstas com o benefício do ICMS, na proposta de preço, o valor não pode ser maior do que o máximo UNITÁRIO estimado para o item, independentemente de tratar-se de “operação interna”, conforme estabelece o Convênio ICMS n.º 26, de 2003 - CONFAZ.' },
-    { id: 'icms41', nivel: 1, pai: 'icms', ativo: true, texto: 'As empresas beneficiárias do disposto no Convênio ICMS 26, de 2003 - CONFAZ deverão, de forma expressa e obrigatoriamente, indicar em sua proposta o preço onerado e o preço desonerado (o qual deve ser igual ou menor ao preço do arrematante), discriminando o percentual de desconto relacionado à isenção fiscal.' },
-    { id: 'icms42', nivel: 1, pai: 'icms', ativo: true, texto: 'Para o licitante abrangido pelo benefício de que trata o item {pai} e que participar da licitação com o preço desonerado do ICMS (preço líquido), a soma do preço proposto (preço líquido) com o valor do respectivo imposto não pode ultrapassar o valor máximo estabelecido no edital.' },
-    { id: 'exigencias', nivel: 0, ativo: true, texto: 'O arrematante atesta o atendimento das exigências técnicas conforme Anexo I do Edital.' },
-    { id: 'trabalhista', nivel: 0, ativo: true, texto: 'O arrematante DECLARA que, para fins do disposto no § 1.º do art. 63 da Lei Federal n.º 14.133/2021, a proposta compreende a integralidade dos custos para atendimento dos direitos trabalhistas assegurados na Constituição Federal, nas leis trabalhistas, nas normas infralegais, nas convenções coletivas de trabalho e nos termos de ajustamento de conduta vigentes na data de entrega desta proposta.' },
-  ];
-  const NOMES_CLAUSULAS = { validade: 'Validade da proposta', qualidade: 'Qualidade e transporte', icms: 'Preço com carga tributária (ICMS)', icms41: '↳ Preço onerado e desonerado', icms42: '↳ Soma do preço líquido com o imposto', exigencias: 'Exigências técnicas (Anexo I)', trabalhista: 'Declaração trabalhista (Lei 14.133, art. 63)' };
   const COLUNAS_DESC = [
     ['lote', 'Lote / item', 8, true], ['desc', 'Descrição', 28, true], ['marca', 'Marca / modelo', 14, false], ['un', 'Unidade', 7, false],
     ['qtd', 'Quantidade', 12.5, true], ['vub', 'Valor unitário bruto', 12, true], ['vtb', 'Valor total bruto', 13, true],
@@ -884,18 +917,8 @@ input[type=color].input { padding: 4px; height: 46px; }
     for (const k of Object.keys(b)) out[k] = (isObj(b[k]) && isObj(out[k])) ? deepMerge(out[k], b[k]) : b[k];
     return out;
   }
-  // une as cláusulas padrão com o que foi alterado (ativo/texto) e as cláusulas livres criadas
-  function montarClausulas(over) {
-    const porId = new Map((over || []).map((c) => [c.id, c]));
-    const out = CLAUSULAS_PADRAO.map((d) => {
-      const o = porId.get(d.id) || {};
-      return { id: d.id, nivel: d.nivel, pai: d.pai || null, custom: false, nome: NOMES_CLAUSULAS[d.id], ativo: o.ativo !== undefined ? o.ativo : d.ativo, texto: o.texto !== undefined ? o.texto : d.texto, padrao: d.texto };
-    });
-    for (const c of (over || [])) if (c.custom) out.push({ id: c.id, nivel: 0, pai: null, custom: true, nome: 'Cláusula livre', ativo: c.ativo !== false, texto: c.texto || '', padrao: '' });
-    return out;
-  }
   // opções efetivas de um pregão: padrões do app <- padrão do usuário (config) <- ajustes deste pregão
-  function resolverPdfOpts(pregao, cfg) {
+  function resolverPdfOpts(pregao, cfg, tipo) {
     const pad = cfg.pdfPadrao || {}, ov = (pregao && pregao.pdfOpts) || {};
     const m = deepMerge(deepMerge(pdfOptsBase(cfg), pad), ov);
     m.modelo = 'unico';
@@ -904,20 +927,15 @@ input[type=color].input { padding: 4px; height: 46px; }
     { const antigo = [ov, pad].map((x) => x && x.desc).find((d) => d && d.tituloTexto === undefined && (d.titulo1 !== undefined || d.titulo2 !== undefined));
       if (antigo) m.desc.tituloTexto = [antigo.titulo1, antigo.titulo2].filter(Boolean).join('\n'); }
     m.desc.blocos = Array.isArray(ov.desc && ov.desc.blocos) ? ov.desc.blocos : (Array.isArray(pad.desc && pad.desc.blocos) ? pad.desc.blocos : []);
+    // proposta final: parte da inicial deste pregão + ajustes próprios (não viram padrão e não mexem na inicial)
+    if (tipo === 'final') {
+      const f = (pregao && pregao.pdfOptsFinal) || {};
+      const blocos = Array.isArray(f.desc && f.desc.blocos) ? f.desc.blocos : m.desc.blocos;
+      const mf = deepMerge(m, f); mf.desc.blocos = blocos; mf.modelo = 'unico';
+      return mf;
+    }
     return m;
   }
-  // numeração automática: 2, 3, 4, 4.1, 4.2, 5… (só das cláusulas ligadas); filha sem pai ligado vira numeração própria
-  function numerarClausulas(lista, inicio) {
-    let top = (inicio || 2) - 1; const sub = {}, rotuloDe = {};
-    const out = [];
-    for (const c of lista) {
-      if (!c.ativo) continue;
-      if (c.nivel === 1 && c.pai && rotuloDe[c.pai]) { sub[c.pai] = (sub[c.pai] || 0) + 1; out.push(Object.assign({}, c, { rotulo: `${rotuloDe[c.pai]}.${sub[c.pai]}`, paiRotulo: rotuloDe[c.pai] })); }
-      else { top += 1; rotuloDe[c.id] = String(top); out.push(Object.assign({}, c, { rotulo: String(top), paiRotulo: String(top) })); }
-    }
-    return out;
-  }
-
   /* ---------- valor unitário da proposta: a mesma regra para o PDF e para o painel ---------- */
   // fonte: 'auto' (lance final, senão mínimo) | 'minimo' | 'teto' | 'lance'. O lance final preenchido prevalece sobre tudo;
   // nos demais casos, o que passar do teto do edital é limitado ao teto (para não desclassificar)
@@ -937,16 +955,27 @@ input[type=color].input { padding: 4px; height: 46px; }
 
   /* ---------- linhas da proposta (PDF) ---------- */
   // fonte: 'auto' (lance final, senão mínimo) | 'minimo' | 'teto' | 'lance'
-  function linhasProposta(state, pregaoId, fonte, icmsPadrao) {
+  // tipo: 'inicial' = todos os itens da disputa, preço da cotação (congelado na 1ª geração; o lance não entra)
+  //       'final'   = só os itens vencidos, valor ajustado (lance final; sem lance, o preço inicial; sem ele, o mínimo)
+  //       vazio     = regra antiga (usada por quem não informa o tipo)
+  function linhasProposta(state, pregaoId, fonte, icmsPadrao, tipo) {
     const R = computeAll(state);
     const pst = R.pMap.get(pregaoId);
     if (!pst) return { linhas: [], total: 0, semValor: 0 };
     const linhas = [];
-    let total = 0, totalS = 0, semValor = 0, n = 0, limitados = 0, abaixoMin = 0, reducao = 0, lanceAcima = 0, omitidos = 0;
+    let total = 0, totalS = 0, semValor = 0, n = 0, limitados = 0, abaixoMin = 0, reducao = 0, lanceAcima = 0, omitidos = 0, congelados = 0;
+    const fixo = (v) => ({ unit: v, original: v, limitado: false, doLance: false, acima: false });
+    const temIni = (it) => it.precoInicial !== null && it.precoInicial !== undefined && isFinite(it.precoInicial);
     for (const it of pst.itens) {
       const c = R.iMap.get(it.id);
-      if (c && c.naoGanhou) { omitidos += 1; continue; }   // pregão ganho: a proposta final leva só os itens ganhos
-      const up = unitProposta(c, fonte);
+      if (tipo !== 'inicial' && c && c.naoGanhou) { omitidos += 1; continue; }   // proposta final: só os itens ganhos
+      let up;
+      if (tipo === 'inicial') {
+        if (temIni(it)) { up = fixo(it.precoInicial); congelados += 1; }
+        else up = unitProposta(Object.assign({}, c, { lance: null }), fonte);
+      } else if (tipo === 'final') {
+        up = c.lance !== null ? unitProposta(c, fonte) : (temIni(it) ? fixo(it.precoInicial) : unitProposta(c, fonte));
+      } else up = unitProposta(c, fonte);
       let unit = up.unit;
       const limitadoTeto = up.limitado, unitOriginal = up.original;
       if (up.acima) lanceAcima += 1;
@@ -964,10 +993,10 @@ input[type=color].input { padding: 4px; height: 46px; }
         n, id: it.id, catalogo: String(it.catalogoDesc || '').trim(), numeroItem: (it.itemEdital && String(it.itemEdital).trim()) || String(n).padStart(2, '0'),
         descricao: it.descricao || '', descEdital: (it.descEdital && it.descEdital.trim()) || it.descricao || '',
         marca: it.marca || '', especificacoes: String(it.especificacoes || '').trim(), un: it.unidade || 'Un', qtd,
-        unit, total: tot, aliq, unitS, totalS: totS, teto: c.teto, acimaTeto: (unit !== null && c.teto !== null && unit > c.teto + 1e-9), limitadoTeto, unitOriginal, abaixoMinimo,
+        unit, total: tot, aliq, unitS, totalS: totS, teto: c.teto, minimo: c.minimo, lance: c.lance, precoInicial: temIni(it) ? it.precoInicial : null, acimaTeto: (unit !== null && c.teto !== null && unit > c.teto + 1e-9), limitadoTeto, unitOriginal, abaixoMinimo,
       });
     }
-    return { linhas, total: round2(total), totalS: round2(totalS), semValor, limitados, abaixoMin, lanceAcima, omitidos, reducao: round2(reducao), pregao: pst.p };
+    return { linhas, total: round2(total), totalS: round2(totalS), semValor, limitados, abaixoMin, lanceAcima, omitidos, reducao: round2(reducao), pregao: pst.p, tipo: tipo || '', congelados, ganho: !!pst.ganho };
   }
 
   /* ---------- merge (sincronização: sempre puxa antes de empurrar) ---------- */
@@ -1172,7 +1201,7 @@ input[type=color].input { padding: 4px; height: 46px; }
   const api = {
     APP_VERSION, STATUS, INATIVOS, DECL_PADRAO, uid, n0, round2, ceil2, parseBR, brl, brl0, pct, numBR, qtdBR,
     fmtSessao, dataExtensa, hojeISO, defaultConfig, emptyState, migrate, custoViagem, localEntregaPadrao, calcItem, limiteMEI,
-    computeAll, dasMensal, mesesAtivos, previewItem, linhasProposta, unitProposta, resolverPdfOpts, numerarClausulas, montarClausulas, CLAUSULAS_PADRAO, NOMES_CLAUSULAS, COLUNAS_DESC, CAMPOS_FORNECEDOR, CAMPOS_BANCO, mergeState, diffState, paraNuvem, createStore, demoState,
+    computeAll, dasMensal, mesesAtivos, previewItem, linhasProposta, unitProposta, resolverPdfOpts, COLUNAS_DESC, CAMPOS_FORNECEDOR, CAMPOS_BANCO, mergeState, diffState, paraNuvem, createStore, demoState,
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   root.Core = api;
@@ -1300,6 +1329,8 @@ input[type=color].input { padding: 4px; height: 46px; }
   // Imagens (papel timbrado e marca d'água) ficam numa coleção separada, para não estourar o limite de 1 MB do documento principal.
   // O nome da coleção é curinga nas suas regras (/{collection}/{userId}), então não precisa mexer nas regras.
   const COLECAO_IMG = 'pregoesmei_imagens';
+  // Fotos do catálogo: uma coleção por item (pregoesmei_cat_<id do item>), documento = seu usuário. Também cabe na regra curinga.
+  const COLECAO_CAT = 'pregoesmei_cat_';
 
   const firebaseConfig = {
     apiKey: 'AIzaSyCQBwZU8NK9YTGrnI-1-XDUhRGcmn3vMHs',
@@ -1371,6 +1402,9 @@ input[type=color].input { padding: 4px; height: 46px; }
             return r.resultado;
           });
         },
+        // fotos do catálogo: um documento por item (até 4 fotos reduzidas), fora do documento principal
+        async salvarFotos(uid, itemId, dados) { await mFs.setDoc(mFs.doc(db, COLECAO_CAT + itemId, uid), dados); },
+        async buscarFotos(uid, itemId) { const snap = await mFs.getDoc(mFs.doc(db, COLECAO_CAT + itemId, uid)); return snap.exists() ? snap.data() : null; },
         ouvirImagens(uid, callback) {
           if (pararDeOuvirImagens) pararDeOuvirImagens();
           pararDeOuvirImagens = mFs.onSnapshot(referenciaImagens(uid), (snap) => {
@@ -1515,13 +1549,13 @@ input[type=color].input { padding: 4px; height: 46px; }
     const { PDFDocument, StandardFonts, rgb, degrees } = PL();
     const cfg = state.config, emp = cfg.empresa;
     const pregao0 = state.pregoes.find((p) => p.id === pregaoId && !p.deleted);
-    const op = C.resolverPdfOpts(pregao0 || {}, cfg);          // chavinhas do que aparece (padrão do app <- padrão do usuário <- este pregão)
+    const op = C.resolverPdfOpts(pregao0 || {}, cfg, o && o.tipo);          // chavinhas do que aparece (padrão do app <- padrão do usuário <- este pregão)
     o = Object.assign({ fonte: 'auto', cor: cfg.proposta.cor, data: C.hojeISO(), marcaDagua: cfg.marcaDagua, cabecalho: cfg.cabecalho }, o || {});
     o.validadeDias = op.validade; o.condPagamento = op.pagamento; o.prazoEntrega = op.prazoEntrega; o.localEntrega = op.localEntrega;
     o.observacoes = op.observacoes; o.incluirExtenso = op.com.extenso; o.incluirBancarios = op.com.bancarios;
     o.incluirDeclaracao = op.com.declaracao; o.incluirLocalData = op.com.localData; o.textoDeclaracao = cfg.proposta.textoDeclaracao; o.local = emp.cidade;
 
-    const L = C.linhasProposta(state, pregaoId, o.fonte, op.icmsAliq);
+    const L = C.linhasProposta(state, pregaoId, o.fonte, op.icmsAliq, o.tipo);
     const preg = L.pregao;
     if (!preg) throw new Error('Pregão não encontrado.');
     const itensPdf = state.itens.filter((i) => i.pregaoId === pregaoId && !i.deleted);
@@ -1646,8 +1680,8 @@ input[type=color].input { padding: 4px; height: 46px; }
       if (cur.length) lines.push(cur);
       return lines.length ? lines : [[]];
     }
-    function drawMixed(line, x, yy, size, color) { let cx = x; for (const tk of line) { page.drawText(tk.t, { x: cx, y: yy, size, font: tk.f, color: color || rgb(0, 0, 0) }); cx += tk.f.widthOfTextAtSize(tk.t, size); } }
     // linha justificada: reparte a sobra entre os espaços (última linha do parágrafo fica à esquerda)
+    function drawMixed2(line, x, yy, size) { let cx = x; for (const tk of line) { if (!tk.sp) page.drawText(tk.t, { x: cx, y: yy, size, font: tk.f, color: rgb(0, 0, 0) }); cx += tk.f.widthOfTextAtSize(tk.t, size); } }
     function drawJust(line, x, yy, size, maxW, justify) {
       const w = line.reduce((a, k) => a + k.f.widthOfTextAtSize(k.t, size), 0);
       const sps = line.filter((k) => k.sp).length;
@@ -1669,38 +1703,85 @@ input[type=color].input { padding: 4px; height: 46px; }
         TC(safe(D.faixaTexto).replace(/\{numero\}/g, preg.numero || '').replace(/\{orgao\}/g, preg.orgao || ''), PW / 2, y - 15, 11, bold, BLK);
         y -= 30;
       }
-      const forn = [emp.nome, emp.cnpj ? 'CNPJ ' + emp.cnpj : ''].filter(Boolean).join(' - ');
-      wrap([preg.orgao, forn ? 'Fornecedor: ' + forn : ''].filter(Boolean).join('   ·   '), font, 9.5, CW).forEach((l) => { garantir(13); TC(l, PW / 2, y - 10, 9.5, font, GRAY); y -= 12; });
-      y -= 8;
+      // órgão + quadro com os dados do fornecedor (você)
+      wrapMixed([{ t: 'Órgão: ', f: bold }, { t: preg.orgao || '—', f: font }], 9.5, CW - 12).forEach((l) => { garantir(13); drawMixed2(l, M + 6, y - 10, 9.5); y -= 12.5; });
+      y -= 4;
+      const fornL = [
+        [['Fornecedor: ', emp.nome || '—'], ['CNPJ: ', emp.cnpj || '—']],
+        [['Endereço: ', endCompleto || '—']],
+        [['Telefone: ', emp.telefone || '—'], ['E-mail: ', emp.email || '—']],
+      ].map((row) => row.map(([a, b]) => [{ t: a, f: bold }, { t: b + '     ', f: font }]).flat());
+      const fLines = fornL.reduce((acc, segs) => acc.concat(wrapMixed(segs, 9, CW - 16)), []);
+      const hF = 16 + fLines.length * 12 + 6;
+      garantir(hF + 4);
+      page.drawRectangle({ x: M, y: y - hF, width: CW, height: hF, borderColor: ACC, borderWidth: 1 });
+      page.drawRectangle({ x: M, y: y - 15, width: CW, height: 15, color: ACC, opacity: 0.14 });
+      T('DADOS DO FORNECEDOR', M + 8, y - 11, 8.5, bold, ACCT);
+      fLines.forEach((l, k) => drawMixed2(l, M + 8, y - 16 - 10 - k * 12, 9));
+      y -= hF + 12;
       const imgs = o.imagens || {};
-      const par = (txt, size, f, ind) => {
-        String(txt || '').split(/\n+/).forEach((p) => {
-          if (!p.trim()) return;
-          const ls = wrapMixed([{ t: p.trim(), f }], size, CW - 12 - (ind || 0));
-          ls.forEach((l, k) => { garantir(size + 4); drawJust(l, M + 6 + (ind || 0), y - size, size, CW - 12 - (ind || 0), k < ls.length - 1); y -= size + 3.2; });
-          y -= 2;
-        });
-      };
-      const rot = (t) => { garantir(30); T(t, M + 6, y - 10, 8.5, bold, ACCT); y -= 14; };
       for (const ln of L.linhas) {
         const fotos = [];
         for (const u of (imgs[ln.id] || []).slice(0, 4)) { const im = await embedImg(u); if (im) fotos.push(im); }
         const tit = wrap(`ITEM ${ln.numeroItem} - ${String(ln.descricao || '').toUpperCase()}`, bold, 10.5, CW - 16);
         const hT = tit.length * 13 + 8;
         // o item inteiro (texto + fotos) cabe numa página nova mas não no resto desta? começa na próxima, para a foto não ficar longe do texto
-        const nL = (txt, size, f) => String(txt || '').split(/\n+/).filter((p) => p.trim()).reduce((a, p) => a + wrapMixed([{ t: p.trim(), f }], size, CW - 12).length * (size + 3.2) + 2, 0);
+        // duas colunas lado a lado: o que o edital exige x o que você (fornecedor) oferece
+        const colW = CW / 2, padX = 6, txtW = colW - padX * 2;
+        const montar = (blocos) => {
+          const out = [];
+          for (const b of blocos) {
+            if (b.rot) { out.push({ rot: b.rot, h: 13 }); continue; }
+            const pars = b.segs ? [b.segs] : String(b.t || '').split(/\n+/).filter((p) => p.trim()).map((p) => [{ t: p.trim(), f: b.f || font }]);
+            pars.forEach((segs) => { const ls = wrapMixed(segs, b.size, txtW); ls.forEach((l, k) => out.push({ l, size: b.size, just: !b.segs && k < ls.length - 1, h: b.size + 3.4 })); out.push({ h: 3 }); });
+          }
+          return out;
+        };
+        const LL = montar([{ t: ln.descEdital || '—', size: 9 }]);
+        const RR = montar([
+          { segs: [{ t: 'Marca/modelo: ', f: bold }, { t: ln.marca || '—', f: font }], size: 9.5 },
+          { segs: [{ t: 'Unidade: ', f: bold }, { t: ln.un + '     ', f: font }, { t: 'Quantidade: ', f: bold }, { t: new Intl.NumberFormat('pt-BR').format(ln.qtd), f: font }], size: 9.5 },
+        ].concat(ln.especificacoes ? [{ rot: 'ESPECIFICAÇÕES' }, { t: ln.especificacoes, size: 9.5 }] : [])
+         .concat(ln.catalogo ? [{ rot: 'DESCRIÇÃO DETALHADA DO PRODUTO' }, { t: ln.catalogo, size: 9.5 }] : []));
+        const soma = (arr) => arr.reduce((a, x) => a + x.h, 0);
         const fH = fotos.length ? Math.max(...fotos.map((im) => { const n = fotos.length, cw = (CW - 12 - 10 * (n - 1)) / n, mh = n === 1 ? 260 : 190; return im.height * Math.min(cw / im.width, mh / im.height); })) + 12 : 0;
-        const est = hT + 8 + 14 * 3 + nL(ln.descEdital, 9, font) + nL('x', 9.5, bold) + nL(ln.especificacoes, 9.5, font) + nL(ln.catalogo, 9.5, font) + fH;
+        const est = hT + 8 + 18 + Math.max(soma(LL), soma(RR)) + 10 + fH;
         const pagCheia = (headerH ? PH - TOPO - headerH - 4 : PH - M) - BOTTOM;
-        if (y - est < BOTTOM && est <= pagCheia) novaPagina(); else garantir(60);
+        if (y - est < BOTTOM && est <= pagCheia) novaPagina(); else garantir(80);
         // faixa do item
         page.drawRectangle({ x: M, y: y - hT, width: CW, height: hT, color: ACC, opacity: 0.14, borderColor: ACC, borderWidth: 1 });
         tit.forEach((l, k) => T(l, M + 8, y - 14 - k * 13, 10.5, bold, BLK));
-        y -= hT + 8;
-        rot('EXIGIDO NO EDITAL'); par(ln.descEdital, 9, font);
-        rot('PRODUTO OFERTADO'); par('Marca/modelo: ' + (ln.marca || '—') + '   ·   Unidade: ' + ln.un + '   ·   Quantidade: ' + new Intl.NumberFormat('pt-BR').format(ln.qtd), 9.5, bold);
-        if (ln.especificacoes) par(ln.especificacoes, 9.5, font);
-        if (ln.catalogo) { rot('DESCRIÇÃO DETALHADA DO PRODUTO'); par(ln.catalogo, 9.5, font); }
+        y -= hT + 6;
+        let iL = 0, iR = 0, primeira = true;
+        while (primeira || iL < LL.length || iR < RR.length) {
+          garantir(60);
+          const yTop = y, hH = 16;
+          page.drawRectangle({ x: M, y: y - hH, width: CW, height: hH, color: ACC, opacity: 0.1 });
+          T('EXIGIDO NO EDITAL' + (primeira ? '' : ' (continuação)'), M + padX, y - 11.5, 8, bold, ACCT);
+          T('PRODUTO OFERTADO (FORNECEDOR)' + (primeira ? '' : ' (continuação)'), M + colW + padX, y - 11.5, 8, bold, ACCT);
+          y -= hH;
+          primeira = false;
+          const avail = y - BOTTOM - 6;
+          const coluna = (arr, idx, x0) => {
+            let u = 5;
+            while (idx < arr.length && u + arr[idx].h <= avail) {
+              const r = arr[idx];
+              if (r.rot) T(r.rot, x0 + padX, y - u - 9, 7.8, bold, ACCT);
+              else if (r.l) drawJust(r.l, x0 + padX, y - u - r.size, r.size, txtW, r.just);
+              u += r.h; idx += 1;
+            }
+            return [idx, u];
+          };
+          let uL, uR;
+          [iL, uL] = coluna(LL, iL, M);
+          [iR, uR] = coluna(RR, iR, M + colW);
+          const segH = Math.max(uL, uR) + 4;
+          y -= segH;
+          page.drawRectangle({ x: M, y, width: CW, height: yTop - y, borderColor: ACC, borderWidth: 0.8 });
+          page.drawLine({ start: { x: M + colW, y }, end: { x: M + colW, y: yTop }, thickness: 0.8, color: ACC });
+          if (iL < LL.length || iR < RR.length) novaPagina();
+        }
+        y -= 4;
         if (fotos.length) {
           const gap = 10, n = fotos.length, cellW = (CW - 12 - gap * (n - 1)) / n, maxH = n === 1 ? 260 : 190;
           const dims = fotos.map((im) => { const s = Math.min(cellW / im.width, maxH / im.height); return [im.width * s, im.height * s]; });
@@ -2010,8 +2091,8 @@ input[type=color].input { padding: 4px; height: 46px; }
     }
 
     const bytes = await doc.save();
-    const filename = `Proposta_${slug(preg.numero) || 'compra'}_${slug(preg.orgao) || 'orgao'}.pdf`;
-    return { bytes, filename, total: L.total, linhas: L.linhas.length, semValor: L.semValor, paginas: pages.length };
+    const filename = `Proposta${o.tipo === 'final' ? '_Final' : (o.tipo === 'inicial' ? '_Inicial' : '')}_${slug(preg.numero) || 'compra'}_${slug(preg.orgao) || 'orgao'}.pdf`;
+    return { bytes, filename, linhasRes: L.linhas.map((x) => ({ id: x.id, unit: x.unit })), total: L.total, linhas: L.linhas.length, semValor: L.semValor, paginas: pages.length };
   }
 
 
@@ -2052,8 +2133,8 @@ input[type=color].input { padding: 4px; height: 46px; }
       const C = root.Core, cfg = state.config, emp = cfg.empresa;
       const preg = state.pregoes.find((p) => p.id === pregaoId && !p.deleted);
       if (!preg) throw new Error('Pregão não encontrado.');
-      const op = C.resolverPdfOpts(preg, cfg), D = op.desc;
-      const L = C.linhasProposta(state, pregaoId, o.fonte || 'auto', op.icmsAliq);
+      const op = C.resolverPdfOpts(preg, cfg, o.tipo), D = op.desc;
+      const L = C.linhasProposta(state, pregaoId, o.fonte || 'auto', op.icmsAliq, o.tipo);
       const COR = hexCor(cfg.proposta && cfg.proposta.cor), CW_EMU = 6120000; // largura útil (A4, margens de 2 cm)
       const midias = []; let nPic = 0;
       const imagem = (dataUrl, maxW, maxH) => {
@@ -2072,14 +2153,27 @@ input[type=color].input { padding: 4px; height: 46px; }
       let body = '';
       body += p(run('CATÁLOGO DOS PRODUTOS OFERTADOS', { b: true, sz: 26 }), jc('center') + esp(0, 120));
       if (D.faixaTexto) body += p(run(sub(D.faixaTexto), { b: true, sz: 22 }), jc('center') + esp(0, 120) + '<w:pBdr><w:top w:val="single" w:sz="8" w:space="2" w:color="000000"/><w:left w:val="single" w:sz="8" w:space="4" w:color="000000"/><w:bottom w:val="single" w:sz="8" w:space="2" w:color="000000"/><w:right w:val="single" w:sz="8" w:space="4" w:color="000000"/></w:pBdr><w:shd w:val="clear" w:color="auto" w:fill="E6E6E6"/>');
-      const forn = [emp.nome, emp.cnpj ? 'CNPJ ' + emp.cnpj : ''].filter(Boolean).join(' - ');
-      body += p(run([preg.orgao, forn ? 'Fornecedor: ' + forn : ''].filter(Boolean).join('   ·   '), { cor: '666666', sz: 18 }), jc('center') + esp(0, 240));
+      body += p(run('Órgão: ', { b: true, sz: 19 }) + run(preg.orgao || '—', { sz: 19 }), esp(0, 100));
+      const endC = [emp.endereco, emp.bairro, emp.cep ? 'CEP ' + emp.cep : '', [emp.cidade, emp.uf].filter(Boolean).join('/')].filter(Boolean).join(' - ');
+      const bordas = (cor, w) => `<w:tblBorders>${['top', 'left', 'bottom', 'right', 'insideH', 'insideV'].map((k) => `<w:${k} w:val="single" w:sz="${w || 6}" w:space="0" w:color="${cor}"/>`).join('')}</w:tblBorders>`;
+      const cel = (inner, wd, fill) => `<w:tc><w:tcPr><w:tcW w:w="${wd}" w:type="dxa"/>${fill ? `<w:shd w:val="clear" w:color="auto" w:fill="${fill}"/>` : ''}<w:tcMar><w:top w:w="60" w:type="dxa"/><w:left w:w="100" w:type="dxa"/><w:bottom w:w="60" w:type="dxa"/><w:right w:w="100" w:type="dxa"/></w:tcMar></w:tcPr>${inner || '<w:p/>'}</w:tc>`;
+      const kv = (a, b) => run(a, { b: true, sz: 18 }) + run(b + '     ', { sz: 18 });
+      body += `<w:tbl><w:tblPr><w:tblW w:w="9638" w:type="dxa"/>${bordas(COR, 6)}<w:tblLayout w:type="fixed"/></w:tblPr><w:tblGrid><w:gridCol w:w="9638"/></w:tblGrid>
+        <w:tr>${cel(p(run('DADOS DO FORNECEDOR', { b: true, cor: COR, sz: 17 })), 9638, 'F3F3F3')}</w:tr>
+        <w:tr>${cel(p(kv('Fornecedor: ', emp.nome || '—') + kv('CNPJ: ', emp.cnpj || '—')) + p(kv('Endereço: ', endC || '—')) + p(kv('Telefone: ', emp.telefone || '—') + kv('E-mail: ', emp.email || '—')), 9638)}</w:tr></w:tbl>`;
+      body += p('', esp(0, 200));
       for (const ln of L.linhas) {
         body += p(run(`ITEM ${ln.numeroItem} - ${String(ln.descricao || '').toUpperCase()}`, { b: true, sz: 21 }), esp(160, 80) + '<w:keepNext/><w:pBdr><w:top w:val="single" w:sz="6" w:space="3" w:color="' + COR + '"/><w:left w:val="single" w:sz="6" w:space="4" w:color="' + COR + '"/><w:bottom w:val="single" w:sz="6" w:space="3" w:color="' + COR + '"/><w:right w:val="single" w:sz="6" w:space="4" w:color="' + COR + '"/></w:pBdr><w:shd w:val="clear" w:color="auto" w:fill="F3F3F3"/>');
-        body += rot('EXIGIDO NO EDITAL') + paras(ln.descEdital, { sz: 18 });
-        body += rot('PRODUTO OFERTADO') + paras('Marca/modelo: ' + (ln.marca || '—') + '   ·   Unidade: ' + ln.un + '   ·   Quantidade: ' + new Intl.NumberFormat('pt-BR').format(ln.qtd), { b: true, sz: 19 });
-        if (ln.especificacoes) body += paras(ln.especificacoes, { sz: 19 });
-        if (ln.catalogo) body += rot('DESCRIÇÃO DETALHADA DO PRODUTO') + paras(ln.catalogo, { sz: 19 });
+        // duas colunas: o que o edital exige x o que você (fornecedor) oferece
+        const parsC = (txt, r) => String(txt || '').split(/\n+/).filter((q) => q.trim()).map((q) => p(run(q.trim(), r), jc('both') + esp(0, 60))).join('');
+        const rotC = (t) => p(run(t, { b: true, cor: COR, sz: 16 }), esp(80, 20));
+        const esq = parsC(ln.descEdital || '—', { sz: 18 });
+        const dir = p(kv('Marca/modelo: ', ln.marca || '—')) + p(kv('Unidade: ', ln.un) + kv('Quantidade: ', new Intl.NumberFormat('pt-BR').format(ln.qtd)))
+          + (ln.especificacoes ? rotC('ESPECIFICAÇÕES') + parsC(ln.especificacoes, { sz: 18 }) : '')
+          + (ln.catalogo ? rotC('DESCRIÇÃO DETALHADA DO PRODUTO') + parsC(ln.catalogo, { sz: 18 }) : '');
+        body += `<w:tbl><w:tblPr><w:tblW w:w="9638" w:type="dxa"/>${bordas(COR, 6)}<w:tblLayout w:type="fixed"/></w:tblPr><w:tblGrid><w:gridCol w:w="4819"/><w:gridCol w:w="4819"/></w:tblGrid>
+          <w:tr><w:trPr><w:tblHeader/><w:cantSplit/></w:trPr>${cel(p(run('EXIGIDO NO EDITAL', { b: true, cor: COR, sz: 16 })), 4819, 'F3F3F3')}${cel(p(run('PRODUTO OFERTADO (FORNECEDOR)', { b: true, cor: COR, sz: 16 })), 4819, 'F3F3F3')}</w:tr>
+          <w:tr>${cel(esq, 4819)}${cel(dir, 4819)}</w:tr></w:tbl>`;
         const fotos = ((o.imagens || {})[ln.id] || []).slice(0, 4);
         if (fotos.length) {
           const n = fotos.length, w = Math.floor((CW_EMU - 250000 * n) / n), h = n === 1 ? 3300000 : 2400000;
@@ -2153,6 +2247,7 @@ input[type=color].input { padding: 4px; height: 46px; }
 
   /* ---------- ícones ---------- */
   const ICONS = {
+    acomp: '<path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4z"/><path d="M17 6h3v2a3 3 0 0 1-3 3M7 6H4v2a3 3 0 0 0 3 3"/>',
     plus: '<path d="M12 5v14M5 12h14"/>',
     search: '<circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/>',
     painel: '<rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/>',
@@ -2183,21 +2278,24 @@ input[type=color].input { padding: 4px; height: 46px; }
   /* ---------- estado da interface ---------- */
   const UI = {
     tab: 'painel', detailId: null, filtro: 'todos', busca: '', buscaI: '', mostrarOcultos: false, mostrarEnc: false, dash: { periodo: 'tudo', etapa: null, orgao: null, mes: null, pode: null, todos: false },
-    pdf: { pregaoId: null, fonte: 'auto', data: C.hojeISO(), busy: false, result: null }, acc: new Set(['acc-forn']),
+    acomp: { filtro: 'todos' }, itensModo: 'cards', pdf: { pregaoId: null, tipo: 'inicial', fonte: 'auto', data: C.hojeISO(), busy: false, result: null }, acc: new Set(['acc-forn']),
     ignorePop: 0, deferredPrompt: null, reloadPending: false, updateBanner: false,
   };
   try {
     const s = JSON.parse(localStorage.getItem('mp.ui') || '{}');
     if (s.tab) UI.tab = s.tab;
     if (s.pdfPregao) UI.pdf.pregaoId = s.pdfPregao;
+    if (s.pdfTipo === 'final' || s.pdfTipo === 'inicial') UI.pdf.tipo = s.pdfTipo;
+    if (s.itensModo) UI.itensModo = s.itensModo;
     if (s.fonte) UI.pdf.fonte = s.fonte;
   } catch (e) { /* ignora */ }
-  const saveUI = () => { try { localStorage.setItem('mp.ui', JSON.stringify({ tab: UI.tab, pdfPregao: UI.pdf.pregaoId, fonte: UI.pdf.fonte })); } catch (e) { /* ignora */ } };
+  const saveUI = () => { try { localStorage.setItem('mp.ui', JSON.stringify({ tab: UI.tab, pdfPregao: UI.pdf.pregaoId, pdfTipo: UI.pdf.tipo, fonte: UI.pdf.fonte, itensModo: UI.itensModo })); } catch (e) { /* ignora */ } };
 
   const TABS = [
     { id: 'painel', t: 'Painel', title: 'Visão geral' },
     { id: 'pregoes', t: 'Pregões', title: 'Pregões e compras' },
     { id: 'itens', t: 'Itens', title: 'Itens e valor mínimo' },
+    { id: 'acomp', t: 'Acompanhar', title: 'Itens que venci ou posso ganhar' },
     { id: 'pdf', t: 'Proposta', title: 'Proposta em PDF' },
     { id: 'certidoes', t: 'Certidões', title: 'Onde baixar as certidões' },
     { id: 'config', t: 'Config', title: 'Configurações' },
@@ -2462,12 +2560,12 @@ input[type=color].input { padding: 4px; height: 46px; }
     const cur = id ? store.get().pregoes.find((p) => p.id === id && !p.deleted) : null;
     const v = pregaoValues(cur || { status: 'Falta dados', viagens: 1 });
     v._noFocus = false;
-    const posAberto = ['Ganhou', 'Faturado'].includes(v.status) || !!(v.empenhoNum || v.empenhoData || v.entregaPrazo || v.entregueEm || v.pagoEm);
+    const posAberto = (cur && ganhoDe(cur.id)) || !!(v.empenhoNum || v.empenhoData || v.entregaPrazo || v.entregueEm || v.pagoEm);
     const maisAberto = !!(window.matchMedia && window.matchMedia('(min-width: 700px)').matches);   // no PC já vem aberto; no celular fica recolhido
     const body = `
       <div class="formgrid">
         ${field({ label: 'Nº do pregão *', name: 'numero', value: v.numero, ph: 'ex.: 90001/2026' })}
-        ${field({ label: 'Status', name: 'status', type: 'select', value: v.status, options: C.STATUS.map((s) => ({ v: s, l: s })), hint: 'Falta dados = ainda preenchendo para ver se vale a pena.' })}
+        ${field({ label: 'Status', name: 'status', type: 'select', value: v.status, options: (C.STATUS.includes(v.status) ? C.STATUS : [v.status].concat(C.STATUS)).map((s) => ({ v: s, l: s })), hint: 'Falta dados = ainda preenchendo. Itens ganhos: marque “Venci” no item. Concluído = terminou (sai do painel).' })}
         ${field({ label: 'Órgão / entidade *', name: 'orgao', value: v.orgao, full: true, ph: 'ex.: Universidade de Londrina' })}
         ${field({ label: 'Local do pregão (cidade/UF)', name: 'cidadeUf', value: v.cidadeUf, full: true, ph: 'Londrina/PR', hint: 'Ao preencher, o trajeto de ida e volta a partir do endereço da sua empresa é calculado sozinho.' })}
         ${field({ label: 'Link do edital', name: 'link', type: 'url', value: v.link, full: true, ph: 'https://…' })}
@@ -2888,9 +2986,9 @@ input[type=color].input { padding: 4px; height: 46px; }
 
   /* ---------- Painel: cards dos pregões ---------- */
   // ordem dos cards: Falta dados, Analisando, Proposta enviada, depois o resto
-  const ORDEM_STATUS = ['Em disputa', 'Falta dados', 'Analisando', 'Proposta enviada', 'Ganhou', 'Faturado', 'Perdeu', 'Desclassificado', 'Desisti'];
+  const ORDEM_STATUS = ['Em disputa', 'Falta dados', 'Analisando', 'Proposta enviada', 'Ganhou', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const rankStatus = (s) => { const i = ORDEM_STATUS.indexOf(s); return i < 0 ? ORDEM_STATUS.length : i; };
-  const COR_STATUS = { 'Falta dados': '#f57c00', 'Analisando': '#2e75b6', 'Proposta enviada': '#5c6bc0', 'Em disputa': '#d99a1c', 'Ganhou': '#2f8f3a', 'Faturado': '#0f8b78', 'Perdeu': '#c0392b', 'Desclassificado': '#8e2a2a', 'Desisti': '#7b8798' };
+  const COR_STATUS = { 'Concluído': '#607d8b', 'Falta dados': '#f57c00', 'Analisando': '#2e75b6', 'Proposta enviada': '#5c6bc0', 'Em disputa': '#d99a1c', 'Ganhou': '#2f8f3a', 'Faturado': '#0f8b78', 'Perdeu': '#c0392b', 'Desclassificado': '#8e2a2a', 'Desisti': '#7b8798' };
   /* ---------- datas "AAAA-MM-DD" (entrega, pagamento e validade das certidões) ---------- */
   const isoParts = (s) => { const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(s || ''); return m ? new Date(+m[1], +m[2] - 1, +m[3]) : null; };
   const isoDe = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -2901,10 +2999,14 @@ input[type=color].input { padding: 4px; height: 46px; }
   const nivelCls = (n) => (n === 'ok' ? 'good' : n === 'info' ? '' : n);
 
   /* ---------- depois de ganhar: empenho → entrega → pagamento ---------- */
-  const POS_STATUS = ['Ganhou', 'Faturado'];
-  const posPendente = (p) => POS_STATUS.includes(p.status) && !p.pagoEm;
+  // pregão "ganho" = tem pelo menos um item ganho (marcado com Venci)
+  let cacheR = null;
+  store.on(() => { cacheR = null; });
+  const Rc = () => cacheR || (cacheR = C.computeAll(store.get()));
+  const ganhoDe = (pid) => { const g = Rc().pMap.get(pid); return !!(g && g.ganho); };
+  const posPendente = (p) => ganhoDe(p.id) && !p.pagoEm && p.status !== 'Concluído';
   function posInfo(p) {
-    if (!p || !POS_STATUS.includes(p.status)) return null;
+    if (!p || !ganhoDe(p.id)) return null;
     const prazo = p.entregaPrazo || (p.empenhoData && p.prazoEntregaDias ? addDias(p.empenhoData, p.prazoEntregaDias) : '');
     if (p.pagoEm) return { etapa: 'pago', nivel: 'ok', curto: 'Pago ' + fmtDM(p.pagoEm), texto: 'Pago em ' + C.fmtSessao(p.pagoEm), prazo, prev: '' };
     if (p.entregueEm) {
@@ -2950,13 +3052,7 @@ input[type=color].input { padding: 4px; height: 46px; }
   }
   function painelOculto(p) {
     if (p.ocultoPainel) return 'manual';
-    if (C.INATIVOS.includes(p.status)) return null;     // perdeu/desistiu: vai para o fim do painel, só com o básico
-    if (posPendente(p)) return null;                    // ganhou e ainda não recebeu: fica no painel até o pagamento
-    const ds = diasDesde(p.sessao), dp = diasDesde(p.prazoPropostas);
-    if (ds !== null && ds < 0) return null;            // sessão ainda por vir: não some sozinho
-    if (ds !== null && ds >= 2) return 'auto';
-    if (dp !== null && dp >= 3) return 'auto';
-    return null;
+    return null;   // não some sozinho: fica até você tirar, ou marcar Concluído/Perdeu/Desclassificado/Desisti (vão para "Encerrados")
   }
   // próximos primeiro; sem data no meio; já passados por último (mais recente antes)
   function ordemPainel(a, b) {
@@ -2980,7 +3076,8 @@ input[type=color].input { padding: 4px; height: 46px; }
     else if (!enviada && pz && pz.nivel === 'off') al.push(['off', 'Propostas encerradas']);
     if (ativo && ds === 0) al.push(['bad', 'Sessão hoje' + (hora ? ' ' + hora : '')]);
     else if (ativo && ds === -1) al.push(['warn', 'Sessão amanhã' + (hora ? ' ' + hora : '')]);
-    if (pst.nPode && !POS_STATUS.includes(p.status)) al.push(['good', 'Posso ganhar' + (pst.nPode > 1 ? ' (' + pst.nPode + ')' : '')]);
+    if (pst.nGanhos && pst.ganho) al.push(['good', 'Venci ' + pst.nGanhos + (pst.nGanhos === 1 ? ' item' : ' itens')]);
+    if (pst.nPode) al.push(['good', 'Posso ganhar' + (pst.nPode > 1 ? ' (' + pst.nPode + ')' : '')]);
     const po = posInfo(p);
     if (po && !p.pagoEm) { if (po.nivel === 'bad' || po.nivel === 'warn') al.push([po.nivel, po.curto]); else if (po.nivel === 'info') al.push(['off', po.curto]); }
     const pulse = al.some((a) => a[0] === 'bad') ? 'p-bad' : al.some((a) => a[0] === 'warn') ? 'p-warn' : p.status === 'Falta dados' ? 'p-falta' : p.status === 'Em disputa' ? 'p-disputa' : '';
@@ -2991,8 +3088,15 @@ input[type=color].input { padding: 4px; height: 46px; }
       <span class="pgc-num">Nº ${esc(p.numero)}</span>
       <h4>${esc(p.orgao)}</h4>
       <div class="pgc-meta">${meta}</div>
+      ${(() => {
+        const ref = p.sessao || p.prazoPropostas, d = diasDesde(ref);
+        const cd = d === null ? '' : d === 0 ? 'hoje' : d < 0 ? 'em ' + plural(-d, 'dia', 'dias') : 'há ' + plural(d, 'dia', 'dias');
+        const rot = p.sessao ? 'Sessão' : 'Propostas até';
+        const info = [pst.nItens ? plural(pst.nItens, 'item', 'itens') : '', pst.lucro ? 'lucro ' + C.brl0(pst.lucro) : ''].filter(Boolean).join(' · ');
+        return cd || info ? `<div class="pgc-cd m-hide">${cd ? `<div><small>${rot}</small> <b class="${d === 0 ? 'hoje' : d < 0 && d >= -3 ? 'perto' : d > 0 ? 'passou' : ''}">${cd}</b></div>` : ''}${info ? `<span>${esc(info)}</span>` : ''}</div>` : '';
+      })()}
       ${al.length ? `<div class="pgc-alertas">${al.map((a) => `<span class="pgc-al ${a[0]}"><i class="dot"></i>${esc(a[1])}</span>`).join('')}</div>` : ''}
-      <div class="pgc-foot"><span class="pgc-st">${esc(p.status)}</span>${pst.nItens ? `<b title="Valor da proposta (igual ao total do PDF); se ganhou só parte dos itens, o valor do que foi ganho">${(() => { const v = (POS_STATUS.includes(pst.p.status) && pst.nGanhos < pst.nItens) ? pst.propostaGanha : pst.proposta; return v > 0 ? C.brl(v) : '—'; })()}</b>` : '<span class="tiny muted">Sem itens</span>'}</div></article>`;
+      <div class="pgc-foot"><span class="pgc-st">${esc(p.status)}</span>${pst.nItens ? `<b title="Valor da proposta (igual ao total do PDF); se ganhou só parte dos itens, o valor do que foi ganho">${(() => { const v = (pst.ganho && pst.nGanhos < pst.nItens) ? pst.propostaGanha : pst.proposta; return v > 0 ? C.brl(v) : '—'; })()}</b>` : '<span class="tiny muted">Sem itens</span>'}</div></article>`;
   }
   function painelPregoesHtml(R) {
     const todos = [...R.pMap.values()];
@@ -3038,9 +3142,9 @@ input[type=color].input { padding: 4px; height: 46px; }
   }
 
   function painelResultadosHtml(R) {
-    const GANHO = ['Ganhou', 'Faturado'], PERDA = ['Perdeu', 'Desclassificado'], ABERTO = ['Proposta enviada', 'Em disputa'];
+    const PERDA = ['Perdeu', 'Desclassificado'], ABERTO = ['Proposta enviada', 'Em disputa'];
     const ps = [...R.pMap.values()];
-    const g = ps.filter((x) => GANHO.includes(x.p.status)), l = ps.filter((x) => PERDA.includes(x.p.status)), a = ps.filter((x) => ABERTO.includes(x.p.status));
+    const g = ps.filter((x) => x.ganho), l = ps.filter((x) => !x.ganho && PERDA.includes(x.p.status)), a = ps.filter((x) => !x.ganho && ABERTO.includes(x.p.status));
     const dec = g.length + l.length;
     if (!dec && !a.length) return '';
     const soma = (arr, k) => arr.reduce((s, x) => s + (x[k] || 0), 0);
@@ -3094,11 +3198,11 @@ input[type=color].input { padding: 4px; height: 46px; }
   };
   const round2n = (n) => Math.round(n * 100) / 100;
   const rotuloMes = (ym) => ym.slice(5) + '/' + ym.slice(2, 4);
-  const DASH_PART = ['Proposta enviada', 'Em disputa', 'Ganhou', 'Faturado', 'Perdeu', 'Desclassificado'];
+  const DASH_PART = ['Proposta enviada', 'Em disputa', 'Ganhou', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado'];
   const DASH_ETAPAS = { enviadas: 'Propostas enviadas', ganhas: 'Ganhas', entregues: 'Entregues', pagas: 'Pagas' };
   const dashEtapaOk = (o, k) => {
-    const ganho = POS_STATUS.includes(o.p.status);
-    return k === 'enviadas' ? DASH_PART.includes(o.p.status) : k === 'ganhas' ? ganho : k === 'entregues' ? ganho && !!o.p.entregueEm : k === 'pagas' ? ganho && !!o.p.pagoEm : true;
+    const ganho = o.x.ganho;
+    return k === 'enviadas' ? (DASH_PART.includes(o.p.status) || ganho) : k === 'ganhas' ? ganho : k === 'entregues' ? ganho && !!o.p.entregueEm : k === 'pagas' ? ganho && !!o.p.pagoEm : true;
   };
   const kfmt = (v) => (Math.abs(v) >= 1000 ? Math.round(v / 100) / 10 + 'k' : String(Math.round(v))).replace('.', ',');
 
@@ -3108,12 +3212,12 @@ input[type=color].input { padding: 4px; height: 46px; }
     const baseP = [...R.pMap.values()].map((x) => ({ x, p: x.p, ym: ymDe(x.p) })).filter((o) => noPeriodo(o.ym, D.periodo));
     // itens marcados "posso ganhar" (pregões ainda sem resultado de ganho), cada um com o pregão a que pertence
     const itensPode = [];
-    baseP.forEach((o) => { if (POS_STATUS.includes(o.p.status)) return; (o.x.todosItens || []).filter((i) => i.possivelGanhar && !i.semLance).forEach((it) => itensPode.push({ o, it })); });
+    baseP.forEach((o) => { if (C.INATIVOS.includes(o.p.status)) return; (o.x.todosItens || []).filter((i) => i.possivelGanhar && !i.semLance && !(R.iMap.get(i.id) || {}).ganhou).forEach((it) => itensPode.push({ o, it })); });
     const valorItem = (it) => { const c = R.iMap.get(it.id); const u = c ? C.unitProposta(c, 'auto').unit : null; return u == null ? 0 : round2n(u * (Number(it.qtd) || 0)); };
     const pregoesPode = new Set(itensPode.map((r) => r.o.p.id));
     const todos = D.pode ? baseP.filter((o) => pregoesPode.has(o.p.id)) : baseP;
     const part = todos.filter((o) => DASH_PART.includes(o.p.status));
-    const gan = todos.filter((o) => POS_STATUS.includes(o.p.status));
+    const gan = todos.filter((o) => o.x.ganho);
     const ent = gan.filter((o) => o.p.entregueEm), pag = gan.filter((o) => o.p.pagoEm);
     const soma = (arr, k) => arr.reduce((s, o) => s + (o.x[k] || 0), 0);
 
@@ -3126,6 +3230,7 @@ input[type=color].input { padding: 4px; height: 46px; }
     const periodos = [['mes', 'Este mês'], ['tri', '3 meses'], ['ano', 'Este ano'], ['tudo', 'Tudo']];
     const barra = `<div class="card"><div class="dash-bar"><h3 style="margin:0" class="grow">${icon('painel', 'sm')}<span class="grow">Dashboard</span></h3>
       <button type="button" class="dpill${D.pode ? ' on' : ''}" data-act="dash-filtro" data-k="pode" data-v="1" data-tip="Itens marcados como 'Posso ganhar' (sem resultado ainda). Clique para ver só eles, com o pregão de cada um.">${icon('check', 'sm')}Posso ganhar <b>${itensPode.length}</b><small>${C.brl0(itensPode.reduce((s, r) => s + valorItem(r.it), 0))}</small></button>
+      <button type="button" class="btn sm ghost" data-act="tab" data-v="acomp" title="Abrir a guia Acompanhar (posso ganhar e vencidos, por pregão)">${icon('acomp', 'sm')} Acompanhar</button>
       <div class="dseg" role="group" aria-label="Período">${periodos.map(([k, n]) => `<button type="button" class="${D.periodo === k ? 'on' : ''}" data-act="dash-periodo" data-v="${k}">${n}</button>`).join('')}</div></div>
       ${chips.length ? `<div class="dash-chips">${chips.map(([k, v, n]) => `<button type="button" class="dchip" data-act="dash-filtro" data-k="${k}" data-v="${esc(v)}">${esc(n)} ✕</button>`).join('')}<button type="button" class="btn sm ghost" data-act="dash-limpar">Limpar filtros</button></div>` : `<p class="tiny muted" style="margin-top:8px">Clique em "Posso ganhar", numa etapa do funil, num mês ou num órgão para filtrar.</p>`}</div>`;
 
@@ -3188,7 +3293,7 @@ input[type=color].input { padding: 4px; height: 46px; }
     rows.sort((a, b) => String(b.p.sessao || '').localeCompare(String(a.p.sessao || '')) || (b.p.createdAt || 0) - (a.p.createdAt || 0));
     const mostrar = D.todos ? rows : rows.slice(0, 10);
     const linhas = mostrar.map((o) => {
-      const g = POS_STATUS.includes(o.p.status);
+      const g = o.x.ganho;
       return `<tr data-act="abrir-pregao" data-id="${o.p.id}" tabindex="0"><td>${esc(o.p.numero)}</td><td class="ell-td">${esc(o.p.orgao)}</td><td>${badgeStatus(o.p.status)}${o.x.nPode > 0 && !g ? ' <span class="dstar" title="Itens que posso ganhar">★' + o.x.nPode + '</span>' : ''}</td><td class="num">${o.x.proposta > 0 ? C.brl0(o.x.proposta) : '—'}</td><td class="num">${g ? C.brl0(o.x.venda) : '—'}</td><td class="num">${g ? C.brl0(o.x.lucro) : '—'}</td><td class="num">${g && o.x.margem != null ? C.pct(o.x.margem, 0) : '—'}</td></tr>`;
     }).join('');
     const tabelaPregoes = `<div class="card"><h3>${icon('pregoes', 'sm')}<span class="grow">Pregões${chips.length || D.periodo !== 'tudo' ? ' filtrados' : ''} (${rows.length})</span></h3>
@@ -3286,12 +3391,13 @@ input[type=color].input { padding: 4px; height: 46px; }
     const url = (u) => { u = String(u || '').trim(); return u ? (/^https?:\/\//i.test(u) ? u : 'https://' + u) : ''; };
     const btn = (u, txt) => u ? `<a class="btn sm grow lk" href="${esc(u)}" target="_blank" rel="noopener noreferrer" data-act="link-externo">${icon('link', 'sm')} ${txt}</a>` : '';
     const botoes = btn(url(p.link), 'Edital').replace('class="btn sm grow lk"', 'class="btn sm grow lk btn-edital"') + btn(url(p.linkModelo), 'Modelo de proposta') + btn(url(p.linkProposta), 'Enviar proposta') + btn(url(p.linkLicitacao), 'Licitações');
-    return `<article class="pcard${pzCls}" style="--gc:${corDe(p.id)}" data-act="abrir-pregao" data-id="${p.id}" tabindex="0" role="button">
+    return `<article class="pcard${pzCls}" style="--gc:${corDe(p.id)};--sc:${COR_STATUS[p.status] || '#2e75b6'}" data-act="abrir-pregao" data-id="${p.id}" tabindex="0" role="button">
       <div class="row between"><span class="num" style="color:var(--gc)">PREGÃO Nº ${esc(p.numero)}</span>${badgeStatus(p.status)}</div>
       <h4>${esc(p.orgao)}</h4>
       <div class="small muted row wrap" style="gap:4px 14px;align-items:center">${url(p.linkProposta) ? `<a class="btn sm lk p-prop" href="${esc(url(p.linkProposta))}" target="_blank" rel="noopener noreferrer" data-act="link-externo">${icon('link', 'sm')} Proposta</a>` : ''}${p.cidadeUf ? `<span class="row" style="gap:4px">${icon('pin', 'sm')}${esc(p.cidadeUf)}</span>` : ''}${p.sessao ? `<span class="row" style="gap:4px">${icon('calendar', 'sm')}${esc(C.fmtSessao(p.sessao))}</span>` : ''}</div>
       ${pz ? `<div><span class="prazo ${pz.nivel}">${icon(pz.nivel === 'ok' ? 'calendar' : 'alert', 'sm')}${esc(pz.texto)}</span></div>` : ''}
-      ${pst.nPode && !POS_STATUS.includes(p.status) ? `<div><span class="prazo good">${icon('check', 'sm')}Posso ganhar: ${pst.nPode} ${pst.nPode === 1 ? 'item' : 'itens'}</span></div>` : ''}
+      ${pst.ganho ? `<div><span class="prazo good">${icon('acomp', 'sm')}Venci: ${pst.nGanhos} ${pst.nGanhos === 1 ? 'item' : 'itens'}</span></div>` : ''}
+      ${pst.nPode ? `<div><span class="prazo good">${icon('check', 'sm')}Posso ganhar: ${pst.nPode} ${pst.nPode === 1 ? 'item' : 'itens'}</span></div>` : ''}
       ${po ? `<div><span class="prazo ${nivelCls(po.nivel)}">${icon(po.nivel === 'bad' || po.nivel === 'warn' ? 'alert' : 'calendar', 'sm')}${esc(po.texto)}</span></div>` : ''}
       ${p.modeloProprio ? `<div><span class="prazo warn">${icon('alert', 'sm')}Modelo próprio de proposta</span></div>` : ''}
       ${p.obs ? `<div class="obsline"><span class="obs-ic">${icon('alert', 'sm')}</span><span class="obs-tx">${esc(p.obs)}</span></div>` : ''}
@@ -3354,7 +3460,7 @@ input[type=color].input { padding: 4px; height: 46px; }
         <div class="row between" style="align-items:center"><h4 class="grow">${tag}${esc(it.descricao)}</h4><span class="badge off">Fora da disputa</span></div>
         <div class="icard-actions"><button type="button" class="btn sm ghost" data-act="item-fora" data-id="${it.id}">Voltar para a disputa</button></div></article>`;
     }
-    const ganhoMode = !!(p && ['Ganhou', 'Faturado'].includes(p.status));
+    const ganhoMode = false;
     const cps = comprasDoItem(it);
     const compra = cps.length ? `<div class="comprar">${cps.map((cp) => {
       const custo = !cp.principal && cp.custo != null ? ' · ' + C.brl(cp.custo) : '';
@@ -3365,11 +3471,11 @@ input[type=color].input { padding: 4px; height: 46px; }
     const venc = Number(it.vencedor) > 0 ? `<div><span class="chip venc">${icon('alert', 'sm')}Venceu por ${C.brl(it.vencedor)}</span></div>` : '';
     const obs = String(it.obs || '').trim() ? `<div class="obsline item">${esc(it.obs)}</div>` : '';
     const vals = `<div class="i-vals"><div><span>Custo total</span><b>${it.custo > 0 && it.qtd > 0 ? C.brl(c.produtos) : '—'}</b></div><div class="v-mintot"><span>Mín. total</span><b>${C.brl(c.minTotal)}</b></div><div><span>Edital total</span><b>${c.tetoTotal != null ? C.brl(c.tetoTotal) : '—'}</b></div></div>`;
-    const acao = ganhoMode
-      ? `<button type="button" class="btn sm ${c.naoGanhou ? '' : 'ghost'}" data-act="item-ganho" data-id="${it.id}">${c.naoGanhou ? 'Ganhei este' : 'Não ganhei'}</button>`
-      : `<button type="button" class="btn sm ${it.possivelGanhar ? 'pode-on' : 'ghost'}" data-act="item-pode" data-id="${it.id}">${icon('check', 'sm')} Posso ganhar</button><button type="button" class="btn sm ghost" data-act="item-fora" data-id="${it.id}">Deixar de fora</button>`;
-    return `<article class="icard${c.naoGanhou ? ' nao-ganho' : ''}" data-act="editar-item" data-id="${it.id}" tabindex="0" role="button">
-      <div class="row between" style="align-items:flex-start"><h4 class="grow">${tag}${esc(it.descricao)}</h4><div class="rcol">${c.naoGanhou ? '<span class="badge off">Não ganhou</span>' : ''}${it.possivelGanhar && !ganhoMode ? '<span class="prazo good">★ Posso ganhar</span>' : ''}${c.situacao ? `<span class="badge ${c.sitTipo}">${esc(c.situacao)}</span>` : ''}${estrelasHtml(c)}</div></div>
+    const acao = c.ganhou
+      ? `<button type="button" class="btn sm venci-on" data-act="item-venci" data-id="${it.id}" title="Desmarcar">${icon('acomp', 'sm')} Venci</button>`
+      : `<button type="button" class="btn sm ghost" data-act="item-venci" data-id="${it.id}" title="Marcar este item como ganho">${icon('acomp', 'sm')} Venci</button>` + `<button type="button" class="btn sm ${it.possivelGanhar ? 'pode-on' : 'ghost'}" data-act="item-pode" data-id="${it.id}">${icon('check', 'sm')} Posso ganhar</button><button type="button" class="btn sm ghost" data-act="item-fora" data-id="${it.id}">Deixar de fora</button>`;
+    return `<article class="icard${c.naoGanhou && !it.possivelGanhar ? ' nao-ganho' : ''}${c.ganhou ? ' venci' : ''}" data-act="editar-item" data-id="${it.id}" tabindex="0" role="button">
+      <div class="row between" style="align-items:flex-start"><h4 class="grow">${tag}${esc(it.descricao)}</h4><div class="rcol">${c.ganhou ? '<span class="badge ok">Venci</span>' : (c.naoGanhou && !it.possivelGanhar ? '<span class="badge off">Não ganhou</span>' : '')}${it.possivelGanhar && !ganhoMode ? '<span class="prazo good">★ Posso ganhar</span>' : ''}${c.situacao ? `<span class="badge ${c.sitTipo}">${esc(c.situacao)}</span>` : ''}${estrelasHtml(c)}</div></div>
       ${opt.showOrg && p ? `<div class="chips"><span class="chip org">#${esc(p.numero)} · ${esc(p.orgao)}</span></div>` : ''}
       <div class="small muted">${C.qtdBR(it.qtd)} ${esc(it.unidade || 'Un')} · custo ${C.brl(it.custo)}<span class="i-teto"> · teto ${C.brl(c.teto)}</span>${it.marca ? ' · ' + esc(it.marca) : ''}</div>
       ${vals}
@@ -3383,7 +3489,7 @@ input[type=color].input { padding: 4px; height: 46px; }
 
   function ganhosCardHtml(pst) {
     const p = pst.p;
-    if (!POS_STATUS.includes(p.status) || !pst.itens.length) return '';
+    if (!pst.itens.length || (!pst.ganho && !['Faturado', 'Concluído'].includes(p.status))) return '';
     const n = pst.nGanhos, m = pst.itens.length;
     return `<div class="card"><h3>${icon('check', 'sm')}<span class="grow">Itens ganhos</span><span class="prazo ${n === m ? 'good' : 'warn'}">${n} de ${m}</span></h3>
       <p class="small muted" style="margin-bottom:12px">Só os itens ganhos entram nas contas e nas estatísticas (venda, lucro, limite do MEI e resultado).${n === m ? '' : ' Proposta dos itens ganhos: <b style="color:var(--ink)">' + C.brl(pst.propostaGanha) + '</b>.'}</p>
@@ -3394,8 +3500,8 @@ input[type=color].input { padding: 4px; height: 46px; }
     const st = store.get();
     const itens = porItemEdital(st.itens.filter((i) => i.pregaoId === id && !i.deleted && !i.semLance));
     if (!itens.length) return;
-    const values = {};
-    itens.forEach((i) => { values['g_' + i.id] = !i.naoGanhou; });
+    const values = {}, R0 = C.computeAll(st);
+    itens.forEach((i) => { values['g_' + i.id] = !!(R0.iMap.get(i.id) || {}).ganhou; });
     openForm({
       key: 'ganhos:' + id,
       title: 'Quais itens você ganhou?',
@@ -3413,7 +3519,8 @@ input[type=color].input { padding: 4px; height: 46px; }
       },
       onSave: (x) => {
         let n = 0;
-        itens.forEach((i) => { const ganhou = !!x['g_' + i.id]; if (ganhou) n += 1; if (!!i.naoGanhou === ganhou) store.upsertItem({ id: i.id, naoGanhou: !ganhou }); });
+        itens.forEach((i) => { const ganhou = !!x['g_' + i.id]; if (ganhou) n += 1; store.patchItem(i.id, (it) => { it.ganhou = ganhou; if (ganhou) it.possivelGanhar = false; }); });
+        ajustarStatusAoGanhar(id, n > 0);
         toast(n === itens.length ? 'Todos os itens ganhos' : n + ' de ' + itens.length + ' itens ganhos');
         return true;
       },
@@ -3422,9 +3529,10 @@ input[type=color].input { padding: 4px; height: 46px; }
   // ao mudar o status para Ganhou/Faturado, pergunta quais itens foram ganhos (se houver mais de um)
   function perguntarItensGanhos(id, statusAntes) {
     const p = store.get().pregoes.find((x) => x.id === id);
-    if (!p || !POS_STATUS.includes(p.status) || POS_STATUS.includes(statusAntes)) return;
+    // marcou Faturado sem nenhum item ganho: pergunta quais itens foram ganhos
+    if (!p || p.status !== 'Faturado' || statusAntes === 'Faturado' || ganhoDe(id)) return;
     const n = store.get().itens.filter((i) => i.pregaoId === id && !i.deleted && !i.semLance).length;
-    if (n >= 2) setTimeout(() => openGanhosForm(id), 400);
+    if (n >= 1) setTimeout(() => openGanhosForm(id), 400);
   }
 
   function posCardHtml(pst) {
@@ -3490,6 +3598,7 @@ input[type=color].input { padding: 4px; height: 46px; }
     const q = UI.buscaI.trim().toLowerCase();
     const enc = (g) => (C.INATIVOS.includes(g.p.status) ? 1 : 0);
     const disp = (g) => (g.p.status === 'Em disputa' ? 0 : 1);
+    const modoTabela = UI.itensModo === 'tabela' && !(window.matchMedia && window.matchMedia('(max-width: 600px)').matches);
     const groups = [...R.pMap.values()].sort((a, b) => (enc(a) - enc(b)) || (disp(a) - disp(b)) || (b.p.createdAt || 0) - (a.p.createdAt || 0));   // encerrados sempre no fim
     let html = '', n = 0;
     for (const g of groups) {
@@ -3497,18 +3606,147 @@ input[type=color].input { padding: 4px; height: 46px; }
       if (!its.length) continue;
       n += its.length;
       if (enc(g)) { html += miniPregao(g.p, g.nPode > 0); continue; }
-      html += `<section class="gbox" style="--gc:${corDe(g.p.id)}">
+      html += `<section class="gbox" style="--gc:${corDe(g.p.id)};--sc:${COR_STATUS[g.p.status] || '#2e75b6'}">
         <header class="ghead"><div class="grow"><div class="gnum">PREGÃO Nº ${esc(g.p.numero)}</div><h3>${esc(g.p.orgao)}</h3></div>${badgeStatus(g.p.status)}</header>
         <div class="gmeta">${g.itens.length} ${g.itens.length === 1 ? 'item' : 'itens'}${g.todosItens.length !== g.itens.length ? ' (+' + (g.todosItens.length - g.itens.length) + ' fora)' : ''}${its.length !== g.todosItens.length ? ' (' + its.length + ' na busca)' : ''}<span class="g-fin"> · venda <b>${C.brl0(g.venda)}</b> · lucro <b>${C.brl0(g.lucro)}</b></span></div>
-        <div class="list">${its.map((it) => itemCard(it, R.iMap.get(it.id), { pst: g, showOrg: false })).join('')}</div></section>`;
+        ${modoTabela ? itensTabelaHtml(its, R) : `<div class="list">${its.map((it) => itemCard(it, R.iMap.get(it.id), { pst: g, showOrg: false })).join('')}</div>`}</section>`;
     }
     return n ? html : `<div class="card empty"><p class="muted">Nenhum item encontrado.</p></div>`;
   }
+  // tabela compacta (PC): uma linha por item; clicar na linha abre o item
+  function itensTabelaHtml(its, R) {
+    const rows = its.map((it) => {
+      const c = R.iMap.get(it.id), ie = String(it.itemEdital || '').trim();
+      const cps = comprasDoItem(it).filter((k) => k.href);
+      const tags = (c.fora ? '<span class="badge off">Fora</span>' : '') + (c.ganhou ? '<span class="acp-tag venci">Venci</span>' : '') + (it.possivelGanhar && !c.ganhou ? '<span class="acp-tag posso">Posso</span>' : '') + (c.sitTipo === 'bad' ? `<span class="badge bad" title="${esc(c.situacao)}">!</span>` : '');
+      return `<tr class="it-row${c.fora || (c.naoGanhou && !it.possivelGanhar) ? ' apagado' : ''}" data-act="editar-item" data-id="${it.id}" tabindex="0">
+        <td class="r">${esc(ie || '—')}</td>
+        <td class="it-desc"><b>${esc(it.descricao)}</b>${it.marca ? `<small>${esc(it.marca)}</small>` : ''}${String(it.obs || '').trim() ? `<small class="it-obs">${icon('alert', 'sm')} ${esc(it.obs)}</small>` : ''}</td>
+        <td class="r">${C.qtdBR(it.qtd)}</td>
+        <td class="r">${C.brl(it.custo)}</td>
+        <td class="r"><b>${C.brl(c.minimo)}</b></td>
+        <td class="r">${C.brl(c.teto)}</td>
+        <td class="r">${c.lance != null ? C.brl(c.lance) : '—'}</td>
+        <td class="r">${it.custo > 0 && it.qtd > 0 ? C.brl(c.produtos) : '—'}</td>
+        <td class="r">${C.brl(c.tetoTotal)}</td>
+        <td class="r">${c.lucro == null ? '—' : `<span style="color:${c.lucro < 0 ? 'var(--red)' : 'var(--green)'}">${C.brl(c.lucro)}</span>`}</td>
+        <td class="r">${c.estrelas != null ? `<span class="stars s${c.estrelas}" title="${c.estrelas} de 5 estrelas · lucro ${C.pct(c.margemReal, 0)}">★${c.estrelas}</span>` : ''}</td>
+        <td class="r">${cps.length ? cps.map((k) => `<a class="buy" href="${esc(k.href)}" target="_blank" rel="noopener noreferrer" data-act="link-externo" title="Comprar: ${esc(k.label || 'link')}">$</a>`).join('') : '<span class="muted">—</span>'}</td>
+        <td class="r"><div class="it-tags">${tags}</div></td>
+      </tr>`;
+    }).join('');
+    return `<div class="tbl-scroll"><table class="tbl it-tbl"><thead><tr><th class="r">Item</th><th>Descrição</th><th class="r">Qtd</th><th class="r">Custo un.</th><th class="r">Mínimo</th><th class="r">Teto</th><th class="r">Lance</th><th class="r">Custo total</th><th class="r">Edital total</th><th class="r">Lucro</th><th class="r">★</th><th class="r">$</th><th class="r"></th></tr></thead><tbody>${rows}</tbody></table></div>`;
+  }
   function renderItens() {
     if (!activePregoes().length) return emptyWelcome();
-    return `<div class="page"><div class="search">${icon('search')}<input class="input" id="buscaI" type="search" placeholder="Buscar item, marca, onde compro ou órgão" value="${esc(UI.buscaI)}"></div>
+    const modo = `<div class="seg-ctl m-hide it-modo">${[['cards', 'Cards'], ['tabela', 'Tabela compacta']].map(([v, l]) => `<button type="button" data-act="itens-modo" data-v="${v}" class="${UI.itensModo === v ? 'on' : ''}">${l}</button>`).join('')}</div>`;
+    return `<div class="page">${modo}<div class="search">${icon('search')}<input class="input" id="buscaI" type="search" placeholder="Buscar item, marca, onde compro ou órgão" value="${esc(UI.buscaI)}"></div>
       <div id="ilist" class="page">${itensListHtml()}</div></div>
       <button class="fab" data-act="novo-item" aria-label="Novo item">${icon('plus')}</button>`;
+  }
+
+  // pregão encerrado (perdi/desisti…) que volta a ter item ganho reabre; 'Ganhou' antigo vira 'Em disputa'
+  function ajustarStatusAoGanhar(pid, temGanho) {
+    const p = store.get().pregoes.find((x) => x.id === pid); if (!p) return;
+    let st = p.status;
+    if (temGanho && (['Perdeu', 'Desclassificado', 'Desisti'].includes(st) || st === 'Ganhou')) st = 'Em disputa';
+    if (!temGanho && st === 'Ganhou') st = 'Em disputa';
+    store.patchPregao(pid, (x) => { x.status = st; });   // grava e redesenha
+  }
+  // marca/desmarca um item como ganho (a qualquer momento: no dia, ou 30 dias depois por desclassificação dos outros)
+  function marcarGanho(itemId, val, voltarPode) {
+    const st = store.get(), it = st.itens.find((i) => i.id === itemId); if (!it) return;
+    const R0 = C.computeAll(st);
+    // fixa o estado atual de todos os itens do pregão (dados antigos não tinham a marcação por item)
+    st.itens.filter((i) => i.pregaoId === it.pregaoId && !i.deleted && typeof i.ganhou !== 'boolean').forEach((i) => store.patchItem(i.id, (x) => { x.ganhou = !!(R0.iMap.get(i.id) || {}).ganhou; }));
+    store.patchItem(itemId, (x) => { x.ganhou = !!val; if (val) { x.possivelGanhar = false; x.ganhouEm = C.hojeISO(); } else if (voltarPode) x.possivelGanhar = true; });
+    const algum = store.get().itens.some((i) => i.pregaoId === it.pregaoId && !i.deleted && !i.semLance && i.ganhou === true);
+    ajustarStatusAoGanhar(it.pregaoId, algum);
+    toast(val ? 'Item marcado como vencido' : (voltarPode ? 'Item voltou para “posso ganhar”' : 'Item desmarcado'));
+  }
+
+  /* ---------- guia Acompanhar (só PC): itens que venci ou posso ganhar, agrupados por pregão ---------- */
+  const ENCERRADOS = ['Perdeu', 'Desclassificado', 'Desisti'];
+  function acompDados() {
+    const R = C.computeAll(store.get());
+    const grupos = [];
+    for (const g of R.pMap.values()) {
+      if (g.p.status === 'Concluído') continue;
+      const linhas = [];
+      for (const it of porItemEdital(g.todosItens)) {
+        if (it.semLance) continue;
+        const c = R.iMap.get(it.id);
+        const venci = !!c.ganhou;
+        const posso = !venci && !!it.possivelGanhar && !ENCERRADOS.includes(g.p.status);
+        if (!venci && !posso) continue;
+        const u = C.unitProposta(c, 'auto').unit;
+        const total = u == null ? 0 : round2n(u * (Number(it.qtd) || 0));
+        const lucro = u == null ? null : round2n(total - (c.custoTotal || 0) - total * Math.max(0, Number(store.get().config.impostoPct) || 0));
+        linhas.push({ it, c, venci, posso, unit: u, total, lucro });
+      }
+      if (linhas.length) grupos.push({ g, p: g.p, linhas });
+    }
+    const dt = (p) => (p.sessao ? Date.parse(p.sessao) || 0 : 0);
+    grupos.sort((a, b) => ((a.p.status === 'Em disputa' ? 0 : 1) - (b.p.status === 'Em disputa' ? 0 : 1)) || (dt(b.p) - dt(a.p)));
+    return grupos;
+  }
+  function renderAcomp() {
+    const F = UI.acomp.filtro;
+    const todos = acompDados();
+    const nV = todos.reduce((a, x) => a + x.linhas.filter((l) => l.venci).length, 0), nP = todos.reduce((a, x) => a + x.linhas.filter((l) => l.posso).length, 0);
+    const vV = todos.reduce((a, x) => a + x.linhas.filter((l) => l.venci).reduce((s, l) => s + l.total, 0), 0);
+    const vP = todos.reduce((a, x) => a + x.linhas.filter((l) => l.posso).reduce((s, l) => s + l.total, 0), 0);
+    const grupos = todos.map((x) => Object.assign({}, x, { linhas: x.linhas.filter((l) => F === 'todos' || (F === 'venci' ? l.venci : l.posso)) })).filter((x) => x.linhas.length);
+    const seg = [['todos', 'Todos'], ['posso', `Posso ganhar (${nP})`], ['venci', `Venci (${nV})`]].map(([v, l]) => `<button type="button" data-act="acomp-filtro" data-v="${v}" class="${F === v ? 'on' : ''}">${l}</button>`).join('');
+    const topo = `<div class="kpis">
+        <div class="kpi" style="--c:#d99a1c"><div class="l">Posso ganhar</div><div class="v">${C.brl0(vP)}</div><div class="s">${nP} ${nP === 1 ? 'item' : 'itens'} em observação</div></div>
+        <div class="kpi" style="--c:#2f8f3a"><div class="l">Venci</div><div class="v">${C.brl0(vV)}</div><div class="s">${nV} ${nV === 1 ? 'item' : 'itens'} ganhos</div></div>
+      </div>
+      <div class="card" style="padding:10px 12px"><div class="seg-ctl">${seg}</div>
+        <p class="tiny muted" style="margin:8px 0 0">Aparecem aqui os itens marcados “Posso ganhar” e os itens ganhos. Ajuste o valor final (o lance) de cada item e gere a proposta só com os itens que você venceu. O <b>$</b> abre o link de compra, para conferir se o preço ainda vale.</p></div>`;
+    if (!grupos.length) return `<div class="page">${topo}<div class="card empty"><p class="muted">${todos.length ? 'Nada neste filtro.' : 'Nenhum item marcado ainda. Na guia Itens, toque em “Posso ganhar” no item em que você ficou perto do 1º colocado.'}</p></div></div>`;
+    const html = grupos.map((x) => {
+      const p = x.p, ls = x.linhas, ganhos = x.linhas.filter((l) => l.venci);
+      const tot = (arr) => arr.reduce((s, l) => s + l.total, 0);
+      const semValor = ganhos.filter((l) => l.it.lanceFinal == null).length;
+      const rows = ls.map((l) => {
+        const it = l.it, c = l.c;
+        const compras = comprasDoItem(it);
+        const buy = compras.length ? compras.map((k) => k.href ? `<a class="buy" href="${esc(k.href)}" target="_blank" rel="noopener noreferrer" title="Comprar: ${esc(k.label || 'link')}">$</a>` : `<span class="buy sem" title="${esc(k.nome || 'Sem link')}">$</span>`).join('') : '<span class="muted">—</span>';
+        const ie = String(it.itemEdital || '').trim();
+        return `<tr>
+          <td class="acp-desc"><b>${ie ? 'Item ' + esc(ie) + ' · ' : ''}${esc(it.descricao)}</b>${it.marca ? `<small>${esc(it.marca)}</small>` : ''}${it.obs ? `<small>${icon('alert', 'sm')} ${esc(it.obs)}</small>` : ''}</td>
+          <td class="r">${l.venci ? '<span class="acp-tag venci">Venci</span>' : '<span class="acp-tag posso">Posso ganhar</span>'}</td>
+          <td class="r">${C.qtdBR(it.qtd)}</td>
+          <td class="r">${C.brl(c.custoUnit)}</td>
+          <td class="r">${C.brl(c.minimo)}</td>
+          <td class="r">${C.brl(c.teto)}</td>
+          <td class="r"><input class="input${l.venci && it.lanceFinal == null ? ' vazio' : ''}" inputmode="decimal" data-acomp-lance="${it.id}" value="${it.lanceFinal == null ? '' : Number(it.lanceFinal).toFixed(2).replace('.', ',')}" placeholder="${l.unit == null ? '' : Number(l.unit).toFixed(2).replace('.', ',')}" title="Valor final unitário (lance). Vazio = valor mínimo, limitado ao teto"></td>
+          <td class="r"><b>${C.brl(l.total)}</b></td>
+          <td class="r">${l.lucro == null ? '—' : `<span style="color:${l.lucro < 0 ? '#c0392b' : '#217a2c'}" title="Lucro com o valor final desta linha (depois do custo, entrega e imposto)">${C.brl(l.lucro)}</span>`}</td>
+          <td class="r">${buy}</td>
+          <td class="r"><div class="acp-acts">${l.venci
+            ? `<button type="button" class="btn sm" data-act="acomp-desfazer" data-id="${it.id}" title="Voltar para “posso ganhar”">Desfazer</button>`
+            : `<button type="button" class="btn sm primary" data-act="acomp-venci" data-id="${it.id}">${icon('check', 'sm')} Venci</button><button type="button" class="btn sm ghost" data-act="acomp-tirar" data-id="${it.id}" title="Tirar da lista (desmarca “Posso ganhar”)">${icon('x', 'sm')}</button>`}</div></td>
+        </tr>`;
+      }).join('');
+      return `<section class="gbox" style="--gc:${corDe(p.id)};--sc:${COR_STATUS[p.status] || '#2e75b6'}">
+        <header class="ghead"><div class="grow"><div class="gnum">PREGÃO Nº ${esc(p.numero)}</div><h3>${esc(p.orgao)}</h3></div>${badgeStatus(p.status)}</header>
+        <div class="tbl-scroll"><table class="tbl acp-tbl"><thead><tr><th>Item</th><th class="r"></th><th class="r">Qtd</th><th class="r">Custo un.</th><th class="r">Mínimo</th><th class="r">Teto</th><th class="r">Valor final</th><th class="r">Total</th><th class="r">Lucro</th><th class="r">Comprar</th><th class="r"></th></tr></thead><tbody>${rows}</tbody></table></div>
+        <div class="acp-foot"><div class="small">${ls.some((l) => l.posso) ? `Posso ganhar: <b>${C.brl(tot(ls.filter((l) => l.posso)))}</b>` : ''}${ls.some((l) => l.posso) && ganhos.length ? ' · ' : ''}${ganhos.length ? `Venci: <b>${C.brl(tot(ganhos))}</b>` : ''}${semValor ? ` <span class="prazo warn">${semValor} sem valor final</span>` : ''}</div>
+          <div class="row" style="gap:8px"><button type="button" class="btn sm" data-act="abrir-pregao" data-id="${p.id}">${icon('eye', 'sm')} Abrir pregão</button>${ganhos.length ? `<button type="button" class="btn sm navy" data-act="acomp-proposta" data-id="${p.id}">${icon('pdf', 'sm')} Gerar proposta (${ganhos.length} ${ganhos.length === 1 ? 'item vencido' : 'itens vencidos'})</button>` : ''}</div></div>
+      </section>`;
+    }).join('');
+    return `<div class="page">${topo}${html}</div>`;
+  }
+  const acompVenci = (id) => marcarGanho(id, true);
+  const acompDesfazer = (id) => marcarGanho(id, false, true);
+  async function acompProposta(pid) {
+    const x = acompDados().find((g) => g.p.id === pid); if (!x) return;
+    // o preço de cada item é confirmado na tela de confirmação da proposta final
+    UI.pdf.pregaoId = pid; UI.pdf.tipo = 'final'; UI.pdf.fonte = 'auto'; UI.pdf.result = null; saveUI();
+    setTab('pdf');
+    gerarPDF();
   }
 
   /* ---------- tela PDF ---------- */
@@ -3608,8 +3846,15 @@ input[type=color].input { padding: 4px; height: 46px; }
     if (!list.length) return emptyWelcome();
     if (!UI.pdf.pregaoId || !list.some((x) => x.id === UI.pdf.pregaoId)) UI.pdf.pregaoId = list[0].id;
     const pz0 = st.pregoes.find((x) => x.id === UI.pdf.pregaoId) || {};
-    const opts = C.resolverPdfOpts(pz0, cfg);
-    const L = C.linhasProposta(st, UI.pdf.pregaoId, UI.pdf.fonte, opts.icmsAliq);
+    const FINAL = UI.pdf.tipo === 'final';
+    const opts = C.resolverPdfOpts(pz0, cfg, UI.pdf.tipo);
+    const L = C.linhasProposta(st, UI.pdf.pregaoId, UI.pdf.fonte, opts.icmsAliq, UI.pdf.tipo);
+    const tipoHtml = `<div class="seg-ctl pdf-tipo" style="margin-bottom:10px">${[['inicial', 'Proposta inicial'], ['final', 'Proposta final (readequada)']].map(([v, l]) => `<button type="button" data-act="pdf-tipo" data-v="${v}" class="${UI.pdf.tipo === v ? 'on' : ''}">${l}</button>`).join('')}</div>
+        <p class="tiny muted" style="margin:-2px 0 12px">${FINAL
+          ? 'Só os itens que você marcou como <b>Venci</b>, com o valor ajustado. Antes de gerar, o app pede para confirmar o preço de cada item. Os ajustes de texto feitos aqui valem só para a proposta final deste pregão.'
+          : 'Todos os itens da disputa, com o preço da cotação. Na 1ª vez que você gerar, os preços ficam guardados: depois ela sai sempre igual, mesmo que você mude custos ou preencha o lance.'}</p>
+        ${!FINAL && L.congelados ? `<div class="alert info" style="margin-bottom:12px">${icon('info', 'sm')}<div class="grow">${L.congelados === L.linhas.length ? 'Preços' : L.congelados + ' preço(s)'} da proposta inicial guardados${pz0.precoInicialEm ? ' em ' + esc(fmtDM(pz0.precoInicialEm)) : ''}. A proposta inicial sai com esses valores.</div><button class="btn sm" data-act="pdf-recalcular" data-id="${pz0.id}">Recalcular</button></div>` : ''}
+        ${FINAL && !L.ganho ? `<div class="alert warn" style="margin-bottom:12px">${icon('alert', 'sm')}<span>Nenhum item marcado como <b>Venci</b> neste pregão: a proposta final sairia com todos os itens. Marque os itens vencidos na guia Itens ou Acompanhar.</span></div>` : ''}`;
     const pz = L.pregao || {};
     const hd = cfg.cabecalho;
     const r = UI.pdf.result;
@@ -3618,6 +3863,7 @@ input[type=color].input { padding: 4px; height: 46px; }
     return `<div class="page">
       <div class="card"><h3>1 · Qual pregão?</h3>
         <div class="field"><label for="pdfp">Pregão</label><select class="input" id="pdfp" data-ui="pregaoId">${list.map((x) => `<option value="${x.id}"${x.id === UI.pdf.pregaoId ? ' selected' : ''}>${esc(pregaoLabel(x))}</option>`).join('')}</select></div>
+        ${tipoHtml}
         ${(pz0.modeloProprio || pz0.linkModelo) ? `<div class="alert warn" style="margin-bottom:12px">${icon('alert', 'sm')}<div class="grow">Este edital tem modelo próprio de proposta.${pz0.obs ? '<br><span style="font-weight:600;white-space:pre-wrap">' + esc(pz0.obs) + '</span>' : ''}</div>${pz0.linkModelo ? `<a class="btn sm" href="${esc(/^https?:\/\//i.test(pz0.linkModelo) ? pz0.linkModelo : 'https://' + pz0.linkModelo)}" target="_blank" rel="noopener noreferrer">Abrir modelo</a>` : ''}</div>` : ''}
         ${pz0.status !== 'Proposta enviada' ? (pz0.link
           ? `<a class="btn block" style="margin-bottom:12px" href="${esc(/^https?:\/\//i.test(pz0.link) ? pz0.link : 'https://' + pz0.link)}" target="_blank" rel="noopener noreferrer">${icon('eye', 'sm')} Abrir edital</a>`
@@ -3676,22 +3922,62 @@ input[type=color].input { padding: 4px; height: 46px; }
       r.onsuccess = () => res(r.result); r.onerror = () => { dbp = null; rej(r.error); };
     }));
     const tx = async (mode, fn) => { const d = await db(); return new Promise((res, rej) => { const t = d.transaction('img', mode); const st = t.objectStore('img'); const q = fn(st); t.oncomplete = () => res(q && q.result); t.onerror = () => rej(t.error); }); };
+    const norm = (v) => (Array.isArray(v) ? { fotos: v, em: 0, pend: v.length > 0 } : (v && Array.isArray(v.fotos) ? v : { fotos: [], em: 0, pend: false }));
     return {
-      get: async (id) => { try { return (await tx('readonly', (st) => st.get(id))) || []; } catch (e) { return []; } },
-      set: (id, arr) => tx('readwrite', (st) => (arr && arr.length ? st.put(arr, id) : st.delete(id))),
+      getRec: async (id) => { try { return norm(await tx('readonly', (st) => st.get(id))); } catch (e) { return norm(null); } },
+      setRec: (id, rec) => tx('readwrite', (st) => st.put(rec, id)),
+      get: async (id) => { try { return norm(await tx('readonly', (st) => st.get(id))).fotos; } catch (e) { return []; } },
+      keys: async () => { try { return (await tx('readonly', (st) => st.getAllKeys())) || []; } catch (e) { return []; } },
     };
   })();
+  // fotos: ficam no aparelho (rápido) e vão para a nuvem reduzidas; o item guarda só a data (fotosEm) para os outros aparelhos saberem que mudou
+  const nuvemFotosOk = () => !!(window.CloudSync && Cloud.user && navigator.onLine);
+  async function enviarFotos(id, rec) {
+    if (!nuvemFotosOk()) return false;
+    try { await window.CloudSync.salvarFotos(Cloud.user.uid, id, { fotos: rec.fotos, em: rec.em }); await CatImg.setRec(id, Object.assign({}, rec, { pend: false })); return true; }
+    catch (e) { console.warn('[fotos] envio', e); if (!enviarFotos.avisou) { enviarFotos.avisou = true; toast(/permission/i.test(String(e && (e.code || e.message))) ? 'A nuvem recusou as fotos (regras do Firebase). Elas continuam salvas neste aparelho.' : 'Fotos salvas neste aparelho; envio para a nuvem fica para depois.'); } return false; }
+  }
+  async function gravarFotos(id, arr) {
+    const rec = { fotos: arr, em: Date.now(), pend: true };
+    await CatImg.setRec(id, rec);
+    store.patchItem(id, (x) => { x.fotosEm = rec.em; x.fotosN = arr.length; });   // vai para a nuvem junto com os dados
+    enviarFotos(id, rec);
+  }
+  // fotos de um item: se outro aparelho mudou (fotosEm mais novo), baixa da nuvem; se aqui tem foto ainda não enviada, envia
+  async function fotosDoItem(id) {
+    const loc = await CatImg.getRec(id);
+    const it = store.get().itens.find((i) => i.id === id);
+    const remEm = (it && it.fotosEm) || 0;
+    if (remEm > (loc.em || 0) && nuvemFotosOk()) {
+      try {
+        const r = await window.CloudSync.buscarFotos(Cloud.user.uid, id);
+        if (r && (r.em || 0) >= remEm) { const rec = { fotos: Array.isArray(r.fotos) ? r.fotos : [], em: r.em, pend: false }; await CatImg.setRec(id, rec); return rec.fotos; }
+      } catch (e) { console.warn('[fotos] download', e); }
+    }
+    if (loc.pend && nuvemFotosOk()) {
+      const rec = loc.em ? loc : Object.assign({}, loc, { em: Date.now() });
+      if (!loc.em && it) store.patchItem(id, (x) => { x.fotosEm = rec.em; x.fotosN = rec.fotos.length; });
+      enviarFotos(id, rec);
+    }
+    return loc.fotos;
+  }
+  // ao entrar/voltar a internet: envia o que ficou pendente
+  async function enviarFotosPendentes() {
+    if (!nuvemFotosOk()) return;
+    for (const id of await CatImg.keys()) { const loc = await CatImg.getRec(id); if (loc.pend) await fotosDoItem(id); }
+  }
   function catalogoCardHtml(st, L) {
     if (!L.linhas.length) return '';
     const itens = L.linhas.map((ln) => `<div class="clause" style="margin-bottom:12px">
         <div class="small"><b>Item ${esc(ln.numeroItem)}</b> · ${esc(ln.descricao)}${ln.marca ? ` <span class="muted">· ${esc(ln.marca)}</span>` : ''}</div>
         <div class="cat-thumbs" data-cat-thumbs="${esc(ln.id)}" style="display:flex;flex-wrap:wrap;gap:8px;margin:8px 0"></div>
         <label class="btn sm" style="cursor:pointer">${icon('image', 'sm')} Incluir imagem<input type="file" accept="image/png,image/jpeg,image/webp" multiple data-cat-file="${esc(ln.id)}" class="sr-only" style="position:absolute;width:1px;height:1px;opacity:0;overflow:hidden"></label>
+        <div class="cat-edital"><b>Exigido no edital</b>${ln.descEdital ? esc(ln.descEdital) : '<span class="muted">Sem descrição do edital no item. Preencha “Descrição completa (vai para o edital)” no item.</span>'}</div>
         <textarea class="input" rows="5" data-cat-desc="${esc(ln.id)}" placeholder="Descrição pormenorizada do produto (características técnicas, medidas, material, composição, normas, garantia…)" style="margin-top:8px">${esc(ln.catalogo)}</textarea>
       </div>`).join('');
     setTimeout(preencherFotosCatalogo, 0);
     return `<div class="card"><h3>${icon('image', 'sm')} Catálogo dos produtos</h3>
-        <p class="tiny muted" style="margin:0 0 10px">Para o pregoeiro confrontar o edital com o que você oferece. Cada item sai com o que o edital exige, a marca/modelo, as especificações, a sua descrição detalhada e as fotos (até 4 por item). As fotos ficam guardadas neste aparelho.</p>
+        <p class="tiny muted" style="margin:0 0 10px">Para o pregoeiro confrontar o edital com o que você oferece. Cada item sai com o que o edital exige, a marca/modelo, as especificações, a sua descrição detalhada e as fotos (até 4 por item). As fotos são reduzidas e sincronizadas com a sua conta (Config › Nuvem), para aparecerem nos outros aparelhos.</p>
         ${itens}
         <label class="switch" style="margin-top:4px"><span>Anexar o catálogo ao final da proposta<small class="hint" style="display:block;font-weight:500">Ligado: o botão “Gerar PDF da proposta” já sai com o catálogo nas últimas páginas, num arquivo só.</small></span><input type="checkbox" data-cfg="proposta.catalogoJunto" data-type="check" ${st.config.proposta.catalogoJunto ? 'checked' : ''}></label>
         <div class="grid2" style="margin-top:10px">
@@ -3702,7 +3988,7 @@ input[type=color].input { padding: 4px; height: 46px; }
   }
   async function preencherFotosCatalogo() {
     for (const el of $$('[data-cat-thumbs]')) {
-      const id = el.dataset.catThumbs, arr = await CatImg.get(id);
+      const id = el.dataset.catThumbs, arr = await fotosDoItem(id);
       el.innerHTML = arr.map((u, k) => `<div style="position:relative"><img alt="" src="${u}" style="height:84px;max-width:140px;object-fit:contain;border:1px solid var(--line, #ddd);border-radius:8px;background:#fff"><button type="button" class="btn sm danger" data-act="cat-del" data-id="${esc(id)}" data-v="${k}" title="Remover foto" style="position:absolute;top:2px;right:2px;padding:2px 6px;min-height:0">${icon('x', 'sm')}</button></div>`).join('');
     }
   }
@@ -3711,10 +3997,15 @@ input[type=color].input { padding: 4px; height: 46px; }
       const url = URL.createObjectURL(file), img = new Image();
       img.onload = () => {
         URL.revokeObjectURL(url);
-        const s = Math.min(1, 1200 / Math.max(img.width, img.height));
-        const cv = document.createElement('canvas'); cv.width = Math.round(img.width * s); cv.height = Math.round(img.height * s);
-        const g = cv.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, cv.width, cv.height); g.drawImage(img, 0, 0, cv.width, cv.height);
-        resolve(cv.toDataURL('image/jpeg', 0.85));
+        const gera = (max, q) => {
+          const s = Math.min(1, max / Math.max(img.width, img.height));
+          const cv = document.createElement('canvas'); cv.width = Math.round(img.width * s); cv.height = Math.round(img.height * s);
+          const g = cv.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, cv.width, cv.height); g.drawImage(img, 0, 0, cv.width, cv.height);
+          return cv.toDataURL('image/jpeg', q);
+        };
+        let out = gera(1000, 0.75);
+        for (const [mx, q] of [[900, 0.65], [750, 0.6], [600, 0.55], [480, 0.5]]) { if (out.length <= 200000) break; out = gera(mx, q); }
+        resolve(out);
       };
       img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Imagem inválida')); };
       img.src = url;
@@ -3722,9 +4013,9 @@ input[type=color].input { padding: 4px; height: 46px; }
   }
   async function incluirFotosCatalogo(id, files) {
     try {
-      const arr = await CatImg.get(id);
+      const arr = (await fotosDoItem(id)).slice();
       for (const f of files) { if (arr.length >= 4) { toast('Máximo de 4 fotos por item'); break; } arr.push(await fotoCatalogo(f)); }
-      await CatImg.set(id, arr); preencherFotosCatalogo(); toast('Foto incluída');
+      await gravarFotos(id, arr); preencherFotosCatalogo(); toast(Cloud.user ? 'Foto incluída e sincronizada' : 'Foto incluída (entre na conta em Config para sincronizar)');
     } catch (e) { toast(e.message || 'Não foi possível usar essa imagem'); }
   }
   async function gerarCatalogo() {
@@ -3735,7 +4026,7 @@ input[type=color].input { padding: 4px; height: 46px; }
     try {
       await ensurePdfLib();
       const imagens = await imagensCatalogo(id);
-      const res = await window.PropostaPDF.gerarProposta(store.get(), id, { fonte: UI.pdf.fonte, data: UI.pdf.data || C.hojeISO(), catalogo: true, imagens });
+      const res = await window.PropostaPDF.gerarProposta(store.get(), id, { fonte: UI.pdf.fonte, data: UI.pdf.data || C.hojeISO(), catalogo: true, imagens, tipo: UI.pdf.tipo });
       if (UI.pdf.result) URL.revokeObjectURL(UI.pdf.result.url);
       const blob = new Blob([res.bytes], { type: 'application/pdf' });
       UI.pdf.result = { blob, url: URL.createObjectURL(blob), name: res.filename, total: res.total, paginas: res.paginas, semValor: 0, catalogo: true };
@@ -3745,8 +4036,8 @@ input[type=color].input { padding: 4px; height: 46px; }
     const card = $('#pdfPronto'); if (card) card.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
   async function imagensCatalogo(id) {
-    const L = C.linhasProposta(store.get(), id, UI.pdf.fonte, 0);
-    const imagens = {}; for (const ln of L.linhas) imagens[ln.id] = await CatImg.get(ln.id);
+    const L = C.linhasProposta(store.get(), id, UI.pdf.fonte, 0, UI.pdf.tipo);
+    const imagens = {}; for (const ln of L.linhas) imagens[ln.id] = await fotosDoItem(ln.id);
     return imagens;
   }
   async function gerarCatalogoDocx() {
@@ -3755,13 +4046,55 @@ input[type=color].input { padding: 4px; height: 46px; }
     const id = UI.pdf.pregaoId; if (!id) { toast('Escolha um pregão'); return; }
     UI.pdf.busy = true; render();
     try {
-      const res = await window.CatalogoDocx.gerar(store.get(), id, { fonte: UI.pdf.fonte, data: UI.pdf.data || C.hojeISO(), imagens: await imagensCatalogo(id) });
+      const res = await window.CatalogoDocx.gerar(store.get(), id, { fonte: UI.pdf.fonte, data: UI.pdf.data || C.hojeISO(), imagens: await imagensCatalogo(id), tipo: UI.pdf.tipo });
       if (UI.pdf.result) URL.revokeObjectURL(UI.pdf.result.url);
       UI.pdf.result = { blob: res.blob, url: URL.createObjectURL(res.blob), name: res.filename, total: 0, paginas: null, semValor: 0, catalogo: true, docx: true };
       toast('Catálogo em Word gerado');
     } catch (e) { console.error(e); toast('Erro ao gerar o Word: ' + (e.message || e)); }
     UI.pdf.busy = false; render();
     const card = $('#pdfPronto'); if (card) card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+  // proposta final: confirma o preço de cada item vencido antes de gerar (grava o valor como lance final)
+  function confirmarPrecosFinal(pid) {
+    const st = store.get();
+    const L = C.linhasProposta(st, pid, UI.pdf.fonte, 0, 'final');
+    if (!L.linhas.length) { toast('Nenhum item para a proposta final'); return Promise.resolve(false); }
+    const v2 = (n) => (n === null || n === undefined ? '' : Number(n).toFixed(2).replace('.', ','));
+    return new Promise((resolve) => {
+      const w = document.createElement('div');
+      w.className = 'dlg-wrap';
+      w.innerHTML = `<div class="dlg dlg-precos" role="dialog" aria-modal="true"><h3>Confirme os preços da proposta final</h3>
+        <p>${L.ganho ? 'Itens vencidos' : 'Nenhum item marcado como Venci: entram todos os itens'}. Ajuste o valor unitário final se precisar.</p>
+        <div class="tbl-scroll"><table class="tbl"><thead><tr><th>Item</th><th class="r">Qtd</th><th class="r">Frete</th><th class="r">Comprar</th><th class="r">Inicial</th><th class="r">Mínimo</th><th class="r">Teto</th><th class="r">Valor final</th></tr></thead><tbody>
+        ${L.linhas.map((x) => { const it = st.itens.find((i) => i.id === x.id) || {}; const cps = comprasDoItem(it).filter((k) => k.href); return `<tr><td><b>${esc(x.numeroItem)}</b> · ${esc(x.descricao)}</td><td class="r">${C.qtdBR(x.qtd)}</td><td class="r">${C.brl(it.frete || 0)}</td>
+          <td class="r">${cps.length ? cps.map((k) => `<a class="buy" href="${esc(k.href)}" target="_blank" rel="noopener noreferrer" title="Conferir preço e estoque: ${esc(k.label || 'link')}">$</a>`).join('') : '<span class="muted">—</span>'}</td>
+          <td class="r">${C.brl(x.precoInicial)}</td><td class="r">${C.brl(x.minimo)}</td><td class="r">${C.brl(x.teto)}</td>
+          <td class="r"><input class="input" inputmode="decimal" style="width:110px;text-align:right" data-pf="${x.id}" value="${esc(v2(x.unit))}"></td></tr>`; }).join('')}
+        </tbody><tfoot><tr><td colspan="7">Total</td><td class="r" id="pfTot">${C.brl(L.total)}</td></tr></tfoot></table></div>
+        <div class="pf-check"><b>${icon('alert', 'sm')} Antes de gerar, confira (só lembrete):</b>
+          <ul><li>O frete continua o mesmo da cotação?</li><li>O fornecedor ainda tem a quantidade disponível? (toque no <b>$</b> para abrir o link de compra)</li><li>O preço de compra se manteve desde a cotação?</li><li>O prazo de entrega do edital ainda é viável?</li></ul></div>
+        <label class="switch pf-ok"><span><b>Confirmo os valores acima</b> para esta proposta final, mesmo que sejam iguais aos de antes.</span><input type="checkbox" data-pf-conf></label>
+        <div class="btns"><button type="button" class="btn primary" data-pf-ok disabled>Confirmar e gerar</button><button type="button" class="btn ghost" data-pf-no>Cancelar</button></div></div>`;
+      document.body.appendChild(w);
+      const qtd = Object.fromEntries(L.linhas.map((x) => [x.id, x.qtd]));
+      const soma = () => { let t = 0; w.querySelectorAll('[data-pf]').forEach((el) => { const v = C.parseBR(el.value); if (v > 0) t += v * qtd[el.dataset.pf]; }); $('#pfTot', w).textContent = C.brl(Math.round(t * 100) / 100); };
+      w.addEventListener('input', soma);
+      // confirmação obrigatória: o botão só libera com a caixinha marcada (desmarca se mudar algum valor depois)
+      const btnOk = w.querySelector('[data-pf-ok]'), conf = w.querySelector('[data-pf-conf]');
+      w.addEventListener('change', (e) => { if (e.target === conf) btnOk.disabled = !conf.checked; });
+      w.addEventListener('input', (e) => { if (e.target.dataset && e.target.dataset.pf) { conf.checked = false; btnOk.disabled = true; } });
+      w.addEventListener('click', (e) => {
+        if (e.target.closest('[data-pf-no]')) { w.remove(); resolve(false); return; }
+        if (!e.target.closest('[data-pf-ok]')) return;
+        if (!conf.checked) { toast('Marque “Confirmo os valores” para gerar'); return; }
+        const vals = [...w.querySelectorAll('[data-pf]')].map((el) => ({ id: el.dataset.pf, v: C.parseBR(el.value), el }));
+        const ruim = vals.find((x) => !(x.v > 0));
+        if (ruim) { ruim.el.classList.add('err'); ruim.el.focus(); toast('Informe o valor de todos os itens'); return; }
+        vals.forEach((x) => { const it = store.get().itens.find((i) => i.id === x.id); if (it && it.lanceFinal !== x.v) store.patchItem(x.id, (i) => { i.lanceFinal = x.v; }); });
+        w.remove(); resolve(true);
+      });
+      const first = w.querySelector('[data-pf]'); if (first) first.focus();
+    });
   }
   function salvarDescCatalogo(el) {
     const id = el.dataset.catDesc, v = el.value;
@@ -3797,7 +4130,9 @@ input[type=color].input { padding: 4px; height: 46px; }
   // o que for alterado na proposta vira o padrão dos próximos pregões (campos próprios de cada edital ficam só no pregão)
   const PDF_SO_NO_PREGAO = ['prazoEntrega', 'localEntrega', 'observacoes', 'icmsAliq'];
   const clonar = (x) => JSON.parse(JSON.stringify(x));
+  const OPK = () => (UI.pdf.tipo === 'final' ? 'pdfOptsFinal' : 'pdfOpts');   // a final guarda os seus ajustes à parte
   function lembrarPadraoPdf(path, v) {
+    if (UI.pdf.tipo === 'final') return;   // ajustes da proposta final não viram padrão
     if (PDF_SO_NO_PREGAO.includes(path)) return;
     const pad = clonar(store.get().config.pdfPadrao || {});
     setPathObj(pad, path, v);
@@ -3805,12 +4140,15 @@ input[type=color].input { padding: 4px; height: 46px; }
   }
   // cláusulas livres: parte das que o pregão já tem; se ainda não tem, parte do padrão salvo
   const blocosAtuais = (p) => {
+    if (UI.pdf.tipo === 'final') { const f = p && p.pdfOptsFinal && p.pdfOptsFinal.desc && p.pdfOptsFinal.desc.blocos; if (Array.isArray(f)) return f; }
+    if (UI.pdf.tipo === 'final' && p) return C.resolverPdfOpts(p, store.get().config).desc.blocos || [];
     const own = p && p.pdfOpts && p.pdfOpts.desc && p.pdfOpts.desc.blocos;
     if (Array.isArray(own)) return own;
     const pad = store.get().config.pdfPadrao;
     return pad && pad.desc && Array.isArray(pad.desc.blocos) ? pad.desc.blocos : [];
   };
   function lembrarBlocos() {
+    if (UI.pdf.tipo === 'final') return;
     const p = store.get().pregoes.find((x) => x.id === UI.pdf.pregaoId);
     const arr = p && p.pdfOpts && p.pdfOpts.desc && p.pdfOpts.desc.blocos;
     if (!Array.isArray(arr)) return;
@@ -3823,17 +4161,19 @@ input[type=color].input { padding: 4px; height: 46px; }
     const id = UI.pdf.pregaoId; if (!id) return;
     if (el.dataset.bloco !== undefined) { patchBloco(Number(el.dataset.bloco), el.dataset.field, readPdfValue(el)); flashSaved(); return; }
     const v = readPdfValue(el);
-    store.patchPregao(id, (p) => { p.pdfOpts = p.pdfOpts || {}; setPathObj(p.pdfOpts, el.dataset.pdf, v); }, true);
+    const k = OPK();
+    store.patchPregao(id, (p) => { p[k] = p[k] || {}; setPathObj(p[k], el.dataset.pdf, v); }, true);
     lembrarPadraoPdf(el.dataset.pdf, v);
     flashSaved();
   }
   function patchBloco(n, field, val) {
+    const k = OPK();
     store.patchPregao(UI.pdf.pregaoId, (p) => {
-      p.pdfOpts = p.pdfOpts || {}; p.pdfOpts.desc = p.pdfOpts.desc || {};
       const arr = blocosAtuais(p).map((c) => Object.assign({}, c));
       if (!arr[n]) return;
       arr[n][field] = val;
-      p.pdfOpts.desc.blocos = arr;
+      p[k] = p[k] || {}; p[k].desc = p[k].desc || {};
+      p[k].desc.blocos = arr;
     }, true);
     lembrarBlocos();
   }
@@ -3845,13 +4185,21 @@ input[type=color].input { padding: 4px; height: 46px; }
     commitAllPending();
     const id = UI.pdf.pregaoId;
     if (!id) { toast('Escolha um pregão'); return; }
+    if (UI.pdf.tipo === 'final' && !(await confirmarPrecosFinal(id))) return;
     UI.pdf.busy = true; render();
     try {
       await ensurePdfLib();
       const junto = !!store.get().config.proposta.catalogoJunto;
       if (junto) $$('[data-cat-desc]').forEach(salvarDescCatalogo);
       const imagens = junto ? await imagensCatalogo(id) : null;
-      const res = await window.PropostaPDF.gerarProposta(store.get(), id, { fonte: UI.pdf.fonte, data: UI.pdf.data || C.hojeISO(), anexarCatalogo: junto, imagens });
+      const tipo = UI.pdf.tipo;
+      const res = await window.PropostaPDF.gerarProposta(store.get(), id, { fonte: UI.pdf.fonte, data: UI.pdf.data || C.hojeISO(), anexarCatalogo: junto, imagens, tipo });
+      // proposta inicial: guarda os preços na 1ª geração (depois ela sai sempre igual)
+      if (tipo === 'inicial') {
+        let n = 0;
+        (res.linhasRes || []).forEach((x) => { const it = store.get().itens.find((i) => i.id === x.id); if (it && (it.precoInicial === null || it.precoInicial === undefined) && x.unit !== null) { store.patchItem(x.id, (i) => { i.precoInicial = x.unit; }); n += 1; } });
+        if (n) store.patchPregao(id, (p) => { if (!p.precoInicialEm) p.precoInicialEm = C.hojeISO(); }, true);
+      }
       if (UI.pdf.result) URL.revokeObjectURL(UI.pdf.result.url);
       const blob = new Blob([res.bytes], { type: 'application/pdf' });
       UI.pdf.result = { blob, url: URL.createObjectURL(blob), name: res.filename, total: res.total, paginas: res.paginas, semValor: res.semValor, comCatalogo: junto };
@@ -4007,8 +4355,8 @@ input[type=color].input { padding: 4px; height: 46px; }
     const a = document.activeElement;
     if (a && main.contains(a) && /INPUT|TEXTAREA|SELECT/.test(a.tagName) && Guard.pending.size) return;
     const y = window.scrollY;
-    if (UI.tab === 'itens' && window.matchMedia && window.matchMedia('(max-width: 600px)').matches) { UI.tab = 'pregoes'; saveUI(); }
-    const fn = { painel: renderPainel, pregoes: renderPregoes, itens: renderItens, pdf: renderPDF, certidoes: renderCertidoes, config: renderConfig }[UI.tab];
+    if ((UI.tab === 'itens' || UI.tab === 'acomp') && window.matchMedia && window.matchMedia('(max-width: 600px)').matches) { UI.tab = 'pregoes'; saveUI(); }
+    const fn = { painel: renderPainel, pregoes: renderPregoes, itens: renderItens, acomp: renderAcomp, pdf: renderPDF, certidoes: renderCertidoes, config: renderConfig }[UI.tab];
     main.innerHTML = fn();
     $$('.nav button').forEach((b) => b.classList.toggle('on', b.dataset.v === UI.tab));
     const t = TABS.find((x) => x.id === UI.tab);
@@ -4115,6 +4463,7 @@ input[type=color].input { padding: 4px; height: 46px; }
     return mudou;
   }
   async function sincronizarImagens() {
+    enviarFotosPendentes();
     const cs = window.CloudSync, u = Cloud.user;
     if (!cs || !u || !navigator.onLine || Cloud.imgBusy) return;
     Cloud.imgBusy = true;
@@ -4147,6 +4496,7 @@ input[type=color].input { padding: 4px; height: 46px; }
     switch (a) {
       case 'tab': setTab(t.dataset.v); break;
       case 'itens-ganhos': openGanhosForm(id); break;
+      case 'item-venci': { UI.keepScroll = true; const c = Rc().iMap.get(id); marcarGanho(id, !(c && c.ganhou)); break; }
       case 'item-ganho': { UI.keepScroll = true; const it = store.get().itens.find((i) => i.id === id); const perdeu = !(it && it.naoGanhou); store.upsertItem({ id, naoGanhou: perdeu }); toast(perdeu ? 'Item marcado como não ganho' : 'Item marcado como ganho'); break; }
       case 'item-pode': { UI.keepScroll = true; const it = store.get().itens.find((i) => i.id === id); const liga = !(it && it.possivelGanhar); store.upsertItem({ id, possivelGanhar: liga }); toast(liga ? 'Item marcado: posso ganhar' : 'Marcação removida'); break; }
       case 'item-fora': { UI.keepScroll = true; const it = store.get().itens.find((i) => i.id === id); const fora = !(it && it.semLance); store.upsertItem({ id, semLance: fora }); toast(fora ? 'Item fora da disputa' : 'Item de volta à disputa'); break; }
@@ -4182,17 +4532,25 @@ input[type=color].input { padding: 4px; height: 46px; }
       case 'pdf-pregao': UI.pdf.pregaoId = id; UI.pdf.result = null; setTab('pdf'); break;
       case 'pdf-gerar': gerarPDF(); break;
       case 'cat-gerar': gerarCatalogo(); break;
+      case 'itens-modo': UI.itensModo = t.dataset.v; saveUI(); UI.keepScroll = true; render(); break;
+      case 'acomp-filtro': UI.acomp.filtro = t.dataset.v; UI.keepScroll = true; render(); break;
+      case 'acomp-venci': UI.keepScroll = true; acompVenci(id); break;
+      case 'acomp-desfazer': UI.keepScroll = true; acompDesfazer(id); break;
+      case 'acomp-tirar': UI.keepScroll = true; store.upsertItem({ id, possivelGanhar: false }); toast('Item tirado da lista'); break;
+      case 'acomp-proposta': acompProposta(id); break;
       case 'cat-docx': gerarCatalogoDocx(); break;
-      case 'cat-del': (async () => { const arr = await CatImg.get(id); arr.splice(Number(t.dataset.v), 1); await CatImg.set(id, arr); preencherFotosCatalogo(); })(); break;
+      case 'cat-del': (async () => { const arr = (await fotosDoItem(id)).slice(); arr.splice(Number(t.dataset.v), 1); await gravarFotos(id, arr); preencherFotosCatalogo(); })(); break;
       case 'pdf-abrir': if (UI.pdf.result) { if (UI.pdf.result.docx) baixarPDF(); else window.open(UI.pdf.result.url, '_blank'); } break;
       case 'pdf-baixar': baixarPDF(); break;
       case 'pdf-compartilhar': compartilharPDF(); break;
       case 'pdf-modelo': commitAllPending(); store.patchPregao(UI.pdf.pregaoId, (p) => { p.pdfOpts = p.pdfOpts || {}; p.pdfOpts.modelo = t.dataset.v; }, true); UI.pdf.result = null; UI.keepScroll = true; render(); break;
-      case 'pdf-datamodo': store.patchPregao(UI.pdf.pregaoId, (p) => { p.pdfOpts = p.pdfOpts || {}; setPathObj(p.pdfOpts, 'desc.localDataModo', t.dataset.v); }, true); lembrarPadraoPdf('desc.localDataModo', t.dataset.v); UI.keepScroll = true; render(); break;
-      case 'pdf-padrao': { commitAllPending(); const p = store.get().pregoes.find((x) => x.id === UI.pdf.pregaoId); store.setConfigPath('pdfPadrao', JSON.parse(JSON.stringify((p && p.pdfOpts) || {})), { silent: true }); toast('Estas opções agora são o padrão dos novos pregões'); break; }
-      case 'pdf-reset': confirmar('Voltar ao padrão?', 'As chavinhas e textos deste pregão voltam ao padrão do app (ou ao padrão que você salvou).', 'Voltar ao padrão', false).then((ok) => { if (ok) { store.patchPregao(UI.pdf.pregaoId, (p) => { p.pdfOpts = null; }, true); UI.keepScroll = true; render(); } }); break;
-      case 'bloco-add': commitAllPending(); store.patchPregao(UI.pdf.pregaoId, (p) => { p.pdfOpts = p.pdfOpts || {}; p.pdfOpts.desc = p.pdfOpts.desc || {}; p.pdfOpts.desc.blocos = blocosAtuais(p).concat([{ titulo: '', texto: '' }]); }, true); lembrarBlocos(); UI.acc.add('acc-bl'); UI.keepScroll = true; render(); break;
-      case 'bloco-del': commitAllPending(); store.patchPregao(UI.pdf.pregaoId, (p) => { p.pdfOpts = p.pdfOpts || {}; p.pdfOpts.desc = p.pdfOpts.desc || {}; p.pdfOpts.desc.blocos = blocosAtuais(p).filter((_, k) => k !== Number(id)); }, true); lembrarBlocos(); UI.keepScroll = true; render(); break;
+      case 'pdf-datamodo': { const k = OPK(); store.patchPregao(UI.pdf.pregaoId, (p) => { p[k] = p[k] || {}; setPathObj(p[k], 'desc.localDataModo', t.dataset.v); }, true); } lembrarPadraoPdf('desc.localDataModo', t.dataset.v); UI.keepScroll = true; render(); break;
+      case 'pdf-padrao': { if (UI.pdf.tipo === 'final') { toast('Ajustes da proposta final não viram padrão'); break; } commitAllPending(); const p = store.get().pregoes.find((x) => x.id === UI.pdf.pregaoId); store.setConfigPath('pdfPadrao', JSON.parse(JSON.stringify((p && p.pdfOpts) || {})), { silent: true }); toast('Estas opções agora são o padrão dos novos pregões'); break; }
+      case 'pdf-reset': { const fin = UI.pdf.tipo === 'final'; confirmar('Voltar ao padrão?', fin ? 'Os ajustes da proposta final deste pregão são apagados: ela volta a ficar igual à proposta inicial.' : 'As chavinhas e textos deste pregão voltam ao padrão do app (ou ao padrão que você salvou).', 'Voltar ao padrão', false).then((ok) => { if (ok) { store.patchPregao(UI.pdf.pregaoId, (p) => { if (fin) p.pdfOptsFinal = null; else p.pdfOpts = null; }, true); UI.keepScroll = true; render(); } }); break; }
+      case 'pdf-tipo': commitAllPending(); UI.pdf.tipo = t.dataset.v; UI.pdf.result = null; saveUI(); UI.keepScroll = true; render(); break;
+      case 'pdf-recalcular': confirmar('Recalcular a proposta inicial?', 'Os preços guardados da proposta inicial deste pregão são apagados. Na próxima vez que você gerar, ela usa os valores atuais (e guarda de novo).', 'Recalcular', false).then((ok) => { if (!ok) return; store.get().itens.filter((i) => i.pregaoId === id && !i.deleted).forEach((i) => store.patchItem(i.id, (x) => { delete x.precoInicial; })); store.patchPregao(id, (p) => { delete p.precoInicialEm; }); UI.keepScroll = true; toast('Preços da proposta inicial liberados'); }); break;
+      case 'bloco-add': { commitAllPending(); const k = OPK(); store.patchPregao(UI.pdf.pregaoId, (p) => { const arr = blocosAtuais(p).concat([{ titulo: '', texto: '' }]); p[k] = p[k] || {}; p[k].desc = p[k].desc || {}; p[k].desc.blocos = arr; }, true); } lembrarBlocos(); UI.acc.add('acc-bl'); UI.keepScroll = true; render(); break;
+      case 'bloco-del': { commitAllPending(); const k = OPK(); store.patchPregao(UI.pdf.pregaoId, (p) => { const arr = blocosAtuais(p).filter((_, j) => j !== Number(id)); p[k] = p[k] || {}; p[k].desc = p[k].desc || {}; p[k].desc.blocos = arr; }, true); } lembrarBlocos(); UI.keepScroll = true; render(); break;
       case 'wm-tipo': commitAllPending(); store.setConfigPath('marcaDagua.tipo', t.dataset.v, { silent: true }); UI.keepScroll = true; render(); break;
       case 'hd-pos': store.setConfigPath('cabecalho.pos', t.dataset.v, { silent: true }); UI.keepScroll = true; render(); break;
       case 'hd-remover': store.setConfigPath('cabecalho.imagem', null, { silent: true }); imagemMudou('cabecalho'); UI.keepScroll = true; render(); break;
@@ -4231,12 +4589,19 @@ input[type=color].input { padding: 4px; height: 46px; }
   }
   function onChange(e) {
     const t = e.target;
-    if (t.dataset.ui === 'pregaoId') { commitAllPending(); UI.pdf.pregaoId = t.value; UI.pdf.result = null; saveUI(); UI.keepScroll = true; render(); return; }
+    if (t.dataset.ui === 'pregaoId') { commitAllPending(); UI.pdf.pregaoId = t.value; UI.pdf.tipo = ganhoDe(t.value) ? 'final' : 'inicial'; UI.pdf.result = null; saveUI(); UI.keepScroll = true; render(); return; }
     if (t.dataset.ui === 'fonte') { UI.pdf.fonte = t.value; UI.pdf.result = null; saveUI(); UI.keepScroll = true; render(); return; }
     if (t.dataset.ui) { UI.pdf[t.dataset.ui] = t.value; return; }
     if (t.dataset.pdf || t.dataset.bloco !== undefined) { commitPdf(t); return; }
     if (t.dataset.cfg) { commitCfg(t); return; }
     if (t.dataset.statusPregao) { const idp = t.dataset.statusPregao, antes = (store.get().pregoes.find((x) => x.id === idp) || {}).status; store.upsertPregao({ id: idp, status: t.value }); toast('Status: ' + t.value); perguntarItensGanhos(idp, antes); return; }
+    if (t.dataset.acompLance) {
+      const iid = t.dataset.acompLance, v = String(t.value).trim() === '' ? null : C.parseBR(t.value);
+      if (v !== null && !(v >= 0)) { toast('Valor inválido'); return; }
+      store.patchItem(iid, (x) => { x.lanceFinal = v; });
+      setTimeout(() => { const a = document.activeElement, k = a && a.dataset && a.dataset.acompLance; UI.keepScroll = true; render(); if (k) { const el = $(`[data-acomp-lance="${k}"]`); if (el) { el.focus(); el.select(); } } }, 0);
+      return;
+    }
     if (t.dataset.catFile && t.files && t.files.length) { incluirFotosCatalogo(t.dataset.catFile, [...t.files]); t.value = ''; return; }
     if (t.dataset.catDesc) { salvarDescCatalogo(t); return; }
     if (t.hasAttribute('data-hd-file') && t.files && t.files[0]) {
