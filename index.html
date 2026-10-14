@@ -450,6 +450,7 @@ input.input[type=datetime-local]::-webkit-date-and-time-value, input.input[type=
 .pf-ok { margin: 4px 0 6px; }
 .cat-edital { margin-top: 8px; font-size: 12.5px; line-height: 1.45; white-space: pre-wrap; max-height: 140px; overflow: auto; padding: 8px 10px; border-radius: 10px; background: color-mix(in srgb, var(--blue) 6%, var(--card)); border: 1px dashed var(--line); }
 .cat-edital b { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: .4px; color: var(--muted); margin-bottom: 2px; }
+.cat-pronto { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 10px; padding: 10px 12px; border-radius: 12px; border: 2px solid var(--green); background: var(--green-soft); }
 .acp-tbl td { vertical-align: middle; }
 .it-modo { max-width: 340px; }
 .it-tbl { font-size: 12.5px; min-width: 0; }
@@ -501,11 +502,14 @@ input[type=color].input { padding: 4px; height: 46px; }
 
 /* ---------- Painel: cards quadrados dos pregões ---------- */
 .pgrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-@media (min-width: 700px) { .pgrid { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; } .pgc { aspect-ratio: 1 / 1; min-height: auto; } }
+@media (min-width: 700px) { .pgrid { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; } .pgc { min-height: 230px; } }
+/* todos os cards do painel com a mesma altura: a do maior */
+.pgrid { grid-auto-rows: 1fr; }
+.pgrid > .pgc { height: 100%; }
 .pgc { --sc: var(--blue); --pc: var(--sc); position: relative; display: flex; flex-direction: column; gap: 6px; min-width: 0; min-height: 150px; padding: 12px; border-radius: 18px; border: 2px solid var(--sc); background: linear-gradient(160deg, color-mix(in srgb, var(--sc) 24%, var(--card)) 0%, color-mix(in srgb, var(--sc) 7%, var(--card)) 62%); box-shadow: var(--shadow); cursor: pointer; text-align: left; }
 .pgc:active { transform: scale(.985); }
 .pgc > * { flex-shrink: 0; }
-@media (min-width: 700px) { .pgc { min-height: auto; } }
+
 .pgc:focus-visible { outline: 3px solid var(--sc); outline-offset: 2px; }
 .pgc .pgc-num { font-size: 12px; font-weight: 800; color: var(--sc); padding-right: 30px; }
 .pgc h4 { font-size: 14.5px; font-weight: 700; line-height: 1.25; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
@@ -557,7 +561,7 @@ input[type=color].input { padding: 4px; height: 46px; }
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.23.0';
+  const APP_VERSION = '1.25.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Em disputa', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -1668,7 +1672,16 @@ input[type=color].input { padding: 4px; height: 46px; }
       for (const sg of segs) for (const w of safe(sg.t).split(/(\s+)/)) if (w !== '') toks.push({ t: w, f: sg.f, sp: /^\s+$/.test(w) });
       const wd = (arr) => arr.reduce((a, k) => a + k.f.widthOfTextAtSize(k.t, size), 0);
       const lines = []; let cur = [];
+      // palavra maior que a linha (códigos, links): quebra em pedaços que caibam
+      const toks2 = [];
       for (const tk of toks) {
+        if (tk.sp || tk.f.widthOfTextAtSize(tk.t, size) <= maxW) { toks2.push(tk); continue; }
+        let pedaco = '';
+        for (const ch of tk.t) { if (pedaco && tk.f.widthOfTextAtSize(pedaco + ch, size) > maxW) { toks2.push({ t: pedaco, f: tk.f, sp: false }); toks2.push({ t: '', f: tk.f, sp: true, quebra: true }); pedaco = ch; } else pedaco += ch; }
+        if (pedaco) toks2.push({ t: pedaco, f: tk.f, sp: false });
+      }
+      for (const tk of toks2) {
+        if (tk.quebra) { while (cur.length && cur[cur.length - 1].sp) cur.pop(); if (cur.length) lines.push(cur); cur = []; continue; }
         if (tk.sp) { if (cur.length) cur.push(tk); continue; }
         if (cur.length && wd(cur) + tk.f.widthOfTextAtSize(tk.t, size) > maxW) {
           while (cur.length && cur[cur.length - 1].sp) cur.pop();
@@ -1758,7 +1771,7 @@ input[type=color].input { padding: 4px; height: 46px; }
           const yTop = y, hH = 16;
           page.drawRectangle({ x: M, y: y - hH, width: CW, height: hH, color: ACC, opacity: 0.1 });
           T('EXIGIDO NO EDITAL' + (primeira ? '' : ' (continuação)'), M + padX, y - 11.5, 8, bold, ACCT);
-          T('PRODUTO OFERTADO (FORNECEDOR)' + (primeira ? '' : ' (continuação)'), M + colW + padX, y - 11.5, 8, bold, ACCT);
+          T('PRODUTO COTADO' + (primeira ? '' : ' (continuação)'), M + colW + padX, y - 11.5, 8, bold, ACCT);
           y -= hH;
           primeira = false;
           const avail = y - BOTTOM - 6;
@@ -2172,7 +2185,7 @@ input[type=color].input { padding: 4px; height: 46px; }
           + (ln.especificacoes ? rotC('ESPECIFICAÇÕES') + parsC(ln.especificacoes, { sz: 18 }) : '')
           + (ln.catalogo ? rotC('DESCRIÇÃO DETALHADA DO PRODUTO') + parsC(ln.catalogo, { sz: 18 }) : '');
         body += `<w:tbl><w:tblPr><w:tblW w:w="9638" w:type="dxa"/>${bordas(COR, 6)}<w:tblLayout w:type="fixed"/></w:tblPr><w:tblGrid><w:gridCol w:w="4819"/><w:gridCol w:w="4819"/></w:tblGrid>
-          <w:tr><w:trPr><w:tblHeader/><w:cantSplit/></w:trPr>${cel(p(run('EXIGIDO NO EDITAL', { b: true, cor: COR, sz: 16 })), 4819, 'F3F3F3')}${cel(p(run('PRODUTO OFERTADO (FORNECEDOR)', { b: true, cor: COR, sz: 16 })), 4819, 'F3F3F3')}</w:tr>
+          <w:tr><w:trPr><w:tblHeader/><w:cantSplit/></w:trPr>${cel(p(run('EXIGIDO NO EDITAL', { b: true, cor: COR, sz: 16 })), 4819, 'F3F3F3')}${cel(p(run('PRODUTO COTADO', { b: true, cor: COR, sz: 16 })), 4819, 'F3F3F3')}</w:tr>
           <w:tr>${cel(esq, 4819)}${cel(dir, 4819)}</w:tr></w:tbl>`;
         const fotos = ((o.imagens || {})[ln.id] || []).slice(0, 4);
         if (fotos.length) {
@@ -3984,6 +3997,11 @@ input[type=color].input { padding: 4px; height: 46px; }
           <button class="btn primary" data-act="cat-gerar" ${UI.pdf.busy ? 'disabled' : ''}>${icon('pdf', 'sm')} ${UI.pdf.busy ? 'Gerando…' : 'Catálogo separado (PDF)'}</button>
           <button class="btn" data-act="cat-docx" ${UI.pdf.busy ? 'disabled' : ''}>${icon('download', 'sm')} Catálogo em Word (.docx)</button>
         </div>
+        ${(() => { const r = UI.pdf.result; if (!r || !(r.catalogo || r.comCatalogo)) return ''; return `<div class="cat-pronto" id="catPronto">
+          <div class="grow small"><b>${esc(r.name)}</b><br><span class="muted">${r.docx ? 'Word (.docx)' : (r.paginas + ' página(s)') + (r.comCatalogo ? ' · proposta + catálogo' : '')}</span></div>
+          <button type="button" class="btn sm" data-act="pdf-abrir" title="${r.docx ? 'Abrir (baixa o arquivo)' : 'Abrir'}">${icon('eye', 'sm')} Abrir</button>
+          <button type="button" class="btn sm" data-act="pdf-baixar">${icon('download', 'sm')} Baixar</button>
+          <button type="button" class="btn sm" data-act="pdf-compartilhar" title="Compartilhar (onde não houver, baixa o arquivo)">${icon('share', 'sm')} Compartilhar</button></div>`; })()}
       </div>`;
   }
   async function preencherFotosCatalogo() {
@@ -4033,7 +4051,7 @@ input[type=color].input { padding: 4px; height: 46px; }
       toast('Catálogo gerado');
     } catch (e) { console.error(e); toast('Erro ao gerar o catálogo: ' + (e.message || e)); }
     UI.pdf.busy = false; render();
-    const card = $('#pdfPronto'); if (card) card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    const card = $('#catPronto') || $('#pdfPronto'); if (card) card.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
   async function imagensCatalogo(id) {
     const L = C.linhasProposta(store.get(), id, UI.pdf.fonte, 0, UI.pdf.tipo);
@@ -4052,7 +4070,7 @@ input[type=color].input { padding: 4px; height: 46px; }
       toast('Catálogo em Word gerado');
     } catch (e) { console.error(e); toast('Erro ao gerar o Word: ' + (e.message || e)); }
     UI.pdf.busy = false; render();
-    const card = $('#pdfPronto'); if (card) card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    const card = $('#catPronto') || $('#pdfPronto'); if (card) card.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
   // proposta final: confirma o preço de cada item vencido antes de gerar (grava o valor como lance final)
   function confirmarPrecosFinal(pid) {
