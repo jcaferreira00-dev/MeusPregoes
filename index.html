@@ -379,6 +379,11 @@ input.input[type=datetime-local]::-webkit-date-and-time-value, input.input[type=
 .dseg button { border: 0; background: transparent; padding: 7px 14px; border-radius: 9px; font: inherit; font-weight: 700; font-size: 13px; color: var(--muted); cursor: pointer; }
 .dseg button.on { background: var(--card); color: var(--blue); box-shadow: 0 1px 3px rgba(15, 29, 51, .14); }
 .dash-chips { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 10px; }
+.dpill { display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--line); background: var(--card); color: var(--ink); border-radius: 12px; padding: 7px 14px; font: inherit; font-weight: 700; font-size: 13px; cursor: pointer; }
+.dpill b { background: var(--green-soft); color: var(--green); border-radius: 99px; padding: 1px 9px; }
+.dpill small { color: var(--muted); font-weight: 700; font-size: 12px; }
+.dpill.on { border-color: var(--green); background: var(--green-soft); color: var(--green); }
+.dstar, .mp-star { color: #e0a800; font-weight: 800; }
 .dchip { border: 1px solid var(--blue); background: var(--blue-soft); color: var(--blue); border-radius: 99px; padding: 4px 12px; font: inherit; font-weight: 700; font-size: 12.5px; cursor: pointer; }
 .fn-row { display: grid; grid-template-columns: minmax(90px, 150px) 1fr auto; align-items: center; gap: 12px; width: 100%; padding: 8px 10px; border: 1px solid transparent; border-radius: 12px; background: transparent; cursor: pointer; text-align: left; font: inherit; color: var(--ink); }
 .fn-row:hover { background: color-mix(in srgb, var(--blue) 7%, transparent); }
@@ -399,6 +404,7 @@ input.input[type=datetime-local]::-webkit-date-and-time-value, input.input[type=
 .bar-v { fill: #2e75b6; } .bar-l { fill: #4caf66; }
 .dtbl th:first-child, .dtbl td:first-child { width: auto; white-space: nowrap; }
 .dtbl .ell-td { width: 100%; }
+.dtbl td:nth-child(3) { white-space: nowrap; }
 .dtbl tbody tr { cursor: pointer; }
 .dtbl tbody tr:hover { background: color-mix(in srgb, var(--blue) 6%, transparent); }
 .dtbl .ell-td { max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -475,6 +481,7 @@ input[type=color].input { padding: 4px; height: 46px; }
 .pgc-al.bad { background: var(--red-soft); color: var(--red); }
 .pgc-al.warn { background: var(--amber-soft); color: var(--amber); }
 .pgc-al.off { background: var(--line); color: var(--muted); }
+.pgc-al.good { background: var(--green-soft); color: var(--green); }
 .pgc-al.bad .dot, .pgc-al.warn .dot { animation: dotPulse 1.1s ease-in-out infinite; }
 .pgc-foot { margin-top: auto; display: flex; align-items: center; justify-content: space-between; gap: 6px; flex-wrap: wrap; }
 .pgc-foot b { font-variant-numeric: tabular-nums; font-size: 14px; }
@@ -509,7 +516,7 @@ input[type=color].input { padding: 4px; height: 46px; }
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.9.1';
+  const APP_VERSION = '1.10.0';
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Em disputa', 'Ganhou', 'Faturado', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti'];
   const DECL_PADRAO =
@@ -1959,7 +1966,7 @@ input[type=color].input { padding: 4px; height: 46px; }
 
   /* ---------- estado da interface ---------- */
   const UI = {
-    tab: 'painel', detailId: null, filtro: 'todos', busca: '', buscaI: '', mostrarOcultos: false, mostrarEnc: false, dash: { periodo: 'tudo', etapa: null, orgao: null, mes: null, todos: false },
+    tab: 'painel', detailId: null, filtro: 'todos', busca: '', buscaI: '', mostrarOcultos: false, mostrarEnc: false, dash: { periodo: 'tudo', etapa: null, orgao: null, mes: null, pode: null, todos: false },
     pdf: { pregaoId: null, fonte: 'auto', data: C.hojeISO(), busy: false, result: null }, acc: new Set(['acc-forn']),
     ignorePop: 0, deferredPrompt: null, reloadPending: false, updateBanner: false,
   };
@@ -2158,7 +2165,7 @@ input[type=color].input { padding: 4px; height: 46px; }
       km: p.km ? C.numBR(p.km, 1) : '', viagens: p.viagens == null ? '1' : String(p.viagens), pedagio: p.pedagio ? C.numBR(p.pedagio) : '',
       entregaDiferente: !!p.entregaDiferente, locaisEntrega: p.locaisEntrega || '',
       link: p.link || '', linkProposta: p.linkProposta || '', linkLicitacao: p.linkLicitacao || '', obs: p.obs || '',
-      modeloProprio: !!p.modeloProprio, linkModelo: p.linkModelo || '',
+      modeloProprio: !!p.modeloProprio, linkModelo: p.linkModelo || '', possivelGanhar: !!p.possivelGanhar,
       empenhoNum: p.empenhoNum || '', empenhoData: p.empenhoData || '', entregaPrazo: p.entregaPrazo || '', entregueEm: p.entregueEm || '',
       pagamentoDias: p.pagamentoDias == null ? '' : String(p.pagamentoDias), pagoEm: p.pagoEm || '',
     };
@@ -2252,6 +2259,7 @@ input[type=color].input { padding: 4px; height: 46px; }
         ${field({ label: 'Site que lista a licitação (ex.: PNCP)', name: 'linkLicitacao', type: 'url', value: v.linkLicitacao, full: true, ph: 'https://…', hint: 'Aparece como botão no cartão da guia Pregões.' })}
         ${field({ label: 'Data e hora final para envio das propostas', name: 'prazoPropostas', type: 'datetime-local', value: v.prazoPropostas, full: true, hint: 'Na lista, o cartão fica amarelo faltando 2 dias e vermelho faltando 1 dia.' })}
         ${field({ label: 'Data e hora da sessão', name: 'sessao', type: 'datetime-local', value: v.sessao, full: true })}
+        <div class="full"><label class="switch"><span>Posso ganhar<small class="hint" style="display:block;font-weight:500">Marque se ficou perto do 1º colocado e ainda é possível ganhar. Dá para filtrar no Dashboard.</small></span><input type="checkbox" name="possivelGanhar"${v.possivelGanhar ? ' checked' : ''}></label></div>
         ${field({ label: 'Observações importantes', name: 'obs', type: 'textarea', value: v.obs, full: true, ph: 'Ex.: enviar amostra, exigem atestado de capacidade técnica, ligar para o pregoeiro, prazo para esclarecimentos…', hint: 'Anotações para não esquecer. Aparecem em destaque no início do pregão.' })}
       </div>
       <details class="acc"${posAberto ? ' open' : ''}><summary>Entrega e pagamento</summary><div class="acc-body"><div class="formgrid">
@@ -2405,7 +2413,7 @@ input[type=color].input { padding: 4px; height: 46px; }
           entregaDiferente: !!x.entregaDiferente, kmManual: form.dataset.kmManual === '1',
           prazoEntregaDias: x.prazoEntregaDias ? parseInt(x.prazoEntregaDias, 10) : null, exigencias: x.exigencias.trim(), status: x.status,
           link: x.link.trim(), linkProposta: (x.linkProposta || '').trim(), linkLicitacao: (x.linkLicitacao || '').trim(), obs: x.obs.trim(),
-          modeloProprio: !!x.modeloProprio, linkModelo: (x.linkModelo || '').trim(),
+          modeloProprio: !!x.modeloProprio, linkModelo: (x.linkModelo || '').trim(), possivelGanhar: !!x.possivelGanhar,
           empenhoNum: (x.empenhoNum || '').trim(), empenhoData: x.empenhoData || '', entregaPrazo: x.entregaPrazo || '', entregueEm: x.entregueEm || '',
           pagamentoDias: x.pagamentoDias ? (parseInt(x.pagamentoDias, 10) || null) : null, pagoEm: x.pagoEm || '',
         };
@@ -2723,7 +2731,7 @@ input[type=color].input { padding: 4px; height: 46px; }
   }
   // fora do painel? 'manual' (você tirou) | 'auto' (2 dias após a sessão ou 3 dias após o fim do prazo de propostas) | null
   function miniPregao(p) {
-    return `<article class="mini-p" data-act="abrir-pregao" data-id="${p.id}" tabindex="0" role="button" aria-label="Abrir pregão ${esc(p.numero)} ${esc(p.orgao)}"><span class="mp-num">Nº ${esc(p.numero)}</span><span class="mp-org ell">${esc(p.orgao)}</span><span class="mp-st">${esc(p.status)}</span></article>`;
+    return `<article class="mini-p" data-act="abrir-pregao" data-id="${p.id}" tabindex="0" role="button" aria-label="Abrir pregão ${esc(p.numero)} ${esc(p.orgao)}"><span class="mp-num">Nº ${esc(p.numero)}</span><span class="mp-org ell">${esc(p.orgao)}</span>${p.possivelGanhar ? '<span class="mp-star" title="Posso ganhar">★</span>' : ''}<span class="mp-st">${esc(p.status)}</span></article>`;
   }
   function painelOculto(p) {
     if (p.ocultoPainel) return 'manual';
@@ -2757,6 +2765,7 @@ input[type=color].input { padding: 4px; height: 46px; }
     else if (!enviada && pz && pz.nivel === 'off') al.push(['off', 'Propostas encerradas']);
     if (ativo && ds === 0) al.push(['bad', 'Sessão hoje' + (hora ? ' ' + hora : '')]);
     else if (ativo && ds === -1) al.push(['warn', 'Sessão amanhã' + (hora ? ' ' + hora : '')]);
+    if (p.possivelGanhar && !POS_STATUS.includes(p.status)) al.push(['good', 'Posso ganhar']);
     const po = posInfo(p);
     if (po && !p.pagoEm) { if (po.nivel === 'bad' || po.nivel === 'warn') al.push([po.nivel, po.curto]); else if (po.nivel === 'info') al.push(['off', po.curto]); }
     const pulse = al.some((a) => a[0] === 'bad') ? 'p-bad' : al.some((a) => a[0] === 'warn') ? 'p-warn' : p.status === 'Falta dados' ? 'p-falta' : p.status === 'Em disputa' ? 'p-disputa' : '';
@@ -2880,7 +2889,9 @@ input[type=color].input { padding: 4px; height: 46px; }
   function painelDashboardHtml(R) {
     if (!R.pMap.size) return '';
     const D = UI.dash;
-    const todos = [...R.pMap.values()].map((x) => ({ x, p: x.p, ym: ymDe(x.p) })).filter((o) => noPeriodo(o.ym, D.periodo));
+    const baseP = [...R.pMap.values()].map((x) => ({ x, p: x.p, ym: ymDe(x.p) })).filter((o) => noPeriodo(o.ym, D.periodo));
+    const podem = baseP.filter((o) => o.p.possivelGanhar && !POS_STATUS.includes(o.p.status));   // ainda sem resultado, mas perto do 1º lugar
+    const todos = D.pode ? podem : baseP;
     const part = todos.filter((o) => DASH_PART.includes(o.p.status));
     const gan = todos.filter((o) => POS_STATUS.includes(o.p.status));
     const ent = gan.filter((o) => o.p.entregueEm), pag = gan.filter((o) => o.p.pagoEm);
@@ -2888,13 +2899,15 @@ input[type=color].input { padding: 4px; height: 46px; }
 
     // filtros ativos
     const chips = [];
+    if (D.pode) chips.push(['pode', '1', 'Só os que posso ganhar']);
     if (D.etapa) chips.push(['etapa', D.etapa, DASH_ETAPAS[D.etapa]]);
     if (D.orgao) chips.push(['orgao', D.orgao, D.orgao]);
     if (D.mes) chips.push(['mes', D.mes, 'Mês ' + rotuloMes(D.mes)]);
     const periodos = [['mes', 'Este mês'], ['tri', '3 meses'], ['ano', 'Este ano'], ['tudo', 'Tudo']];
     const barra = `<div class="card"><div class="dash-bar"><h3 style="margin:0" class="grow">${icon('painel', 'sm')}<span class="grow">Dashboard</span></h3>
+      <button type="button" class="dpill${D.pode ? ' on' : ''}" data-act="dash-filtro" data-k="pode" data-v="1" data-tip="Pregões marcados como 'Posso ganhar' (sem resultado ainda). Clique para ver só eles.">${icon('check', 'sm')}Posso ganhar <b>${podem.length}</b><small>${C.brl0(podem.reduce((s, o) => s + (o.x.proposta || 0), 0))}</small></button>
       <div class="dseg" role="group" aria-label="Período">${periodos.map(([k, n]) => `<button type="button" class="${D.periodo === k ? 'on' : ''}" data-act="dash-periodo" data-v="${k}">${n}</button>`).join('')}</div></div>
-      ${chips.length ? `<div class="dash-chips">${chips.map(([k, v, n]) => `<button type="button" class="dchip" data-act="dash-filtro" data-k="${k}" data-v="${esc(v)}">${esc(n)} ✕</button>`).join('')}<button type="button" class="btn sm ghost" data-act="dash-limpar">Limpar filtros</button></div>` : `<p class="tiny muted" style="margin-top:8px">Clique numa etapa do funil, num mês ou num órgão para filtrar a lista de pregões abaixo.</p>`}</div>`;
+      ${chips.length ? `<div class="dash-chips">${chips.map(([k, v, n]) => `<button type="button" class="dchip" data-act="dash-filtro" data-k="${k}" data-v="${esc(v)}">${esc(n)} ✕</button>`).join('')}<button type="button" class="btn sm ghost" data-act="dash-limpar">Limpar filtros</button></div>` : `<p class="tiny muted" style="margin-top:8px">Clique em "Posso ganhar", numa etapa do funil, num mês ou num órgão para filtrar.</p>`}</div>`;
 
     // funil
     const etapas = [['enviadas', part, soma(part, 'proposta'), '#2e75b6'], ['ganhas', gan, soma(gan, 'venda'), '#4caf66'], ['entregues', ent, soma(ent, 'venda'), '#e0a800'], ['pagas', pag, soma(pag, 'venda'), '#2f7d3a']];
@@ -2956,7 +2969,7 @@ input[type=color].input { padding: 4px; height: 46px; }
     const mostrar = D.todos ? rows : rows.slice(0, 10);
     const linhas = mostrar.map((o) => {
       const g = POS_STATUS.includes(o.p.status);
-      return `<tr data-act="abrir-pregao" data-id="${o.p.id}" tabindex="0"><td>${esc(o.p.numero)}</td><td class="ell-td">${esc(o.p.orgao)}</td><td>${badgeStatus(o.p.status)}</td><td class="num">${o.x.proposta > 0 ? C.brl0(o.x.proposta) : '—'}</td><td class="num">${g ? C.brl0(o.x.venda) : '—'}</td><td class="num">${g ? C.brl0(o.x.lucro) : '—'}</td><td class="num">${g && o.x.margem != null ? C.pct(o.x.margem, 0) : '—'}</td></tr>`;
+      return `<tr data-act="abrir-pregao" data-id="${o.p.id}" tabindex="0"><td>${esc(o.p.numero)}</td><td class="ell-td">${esc(o.p.orgao)}</td><td>${badgeStatus(o.p.status)}${o.p.possivelGanhar && !g ? ' <span class="dstar" title="Posso ganhar">★</span>' : ''}</td><td class="num">${o.x.proposta > 0 ? C.brl0(o.x.proposta) : '—'}</td><td class="num">${g ? C.brl0(o.x.venda) : '—'}</td><td class="num">${g ? C.brl0(o.x.lucro) : '—'}</td><td class="num">${g && o.x.margem != null ? C.pct(o.x.margem, 0) : '—'}</td></tr>`;
     }).join('');
     const tabela = `<div class="card"><h3>${icon('pregoes', 'sm')}<span class="grow">Pregões${chips.length || D.periodo !== 'tudo' ? ' filtrados' : ''} (${rows.length})</span></h3>
       ${rows.length ? `<div class="tbl-scroll"><table class="tbl dtbl"><thead><tr><th>Nº</th><th>Órgão</th><th>Status</th><th class="num">Proposta</th><th class="num">Ganho</th><th class="num">Lucro</th><th class="num">Margem</th></tr></thead><tbody>${linhas}</tbody></table></div>${rows.length > 10 ? `<button type="button" class="btn sm ghost" style="margin-top:10px" data-act="dash-mais">${D.todos ? 'Mostrar menos' : 'Ver todos (' + rows.length + ')'}</button>` : ''}` : '<p class="muted small">Nenhum pregão com esses filtros.</p>'}</div>`;
@@ -3044,6 +3057,7 @@ input[type=color].input { padding: 4px; height: 46px; }
       <h4>${esc(p.orgao)}</h4>
       <div class="small muted row wrap" style="gap:4px 14px;align-items:center">${url(p.linkProposta) ? `<a class="btn sm lk p-prop" href="${esc(url(p.linkProposta))}" target="_blank" rel="noopener noreferrer" data-act="link-externo">${icon('link', 'sm')} Proposta</a>` : ''}${p.cidadeUf ? `<span class="row" style="gap:4px">${icon('pin', 'sm')}${esc(p.cidadeUf)}</span>` : ''}${p.sessao ? `<span class="row" style="gap:4px">${icon('calendar', 'sm')}${esc(C.fmtSessao(p.sessao))}</span>` : ''}</div>
       ${pz ? `<div><span class="prazo ${pz.nivel}">${icon(pz.nivel === 'ok' ? 'calendar' : 'alert', 'sm')}${esc(pz.texto)}</span></div>` : ''}
+      ${p.possivelGanhar && !POS_STATUS.includes(p.status) ? `<div><span class="prazo good">${icon('check', 'sm')}Posso ganhar</span></div>` : ''}
       ${po ? `<div><span class="prazo ${nivelCls(po.nivel)}">${icon(po.nivel === 'bad' || po.nivel === 'warn' ? 'alert' : 'calendar', 'sm')}${esc(po.texto)}</span></div>` : ''}
       ${p.modeloProprio ? `<div><span class="prazo warn">${icon('alert', 'sm')}Modelo próprio de proposta</span></div>` : ''}
       ${p.obs ? `<div class="obsline"><span class="obs-ic">${icon('alert', 'sm')}</span><span class="obs-tx">${esc(p.obs)}</span></div>` : ''}
@@ -3216,7 +3230,8 @@ input[type=color].input { padding: 4px; height: 46px; }
           ${p.obs ? `<div class="obstxt">${esc(p.obs)}</div>` : ''}</div>`;
       })()}
       <div class="card"><div class="field" style="margin:0"><label for="stsel">Status do pregão</label>
-        <select class="input" id="stsel" data-status-pregao="${p.id}">${C.STATUS.map((s) => `<option${s === p.status ? ' selected' : ''}>${esc(s)}</option>`).join('')}</select></div></div>
+        <select class="input" id="stsel" data-status-pregao="${p.id}">${C.STATUS.map((s) => `<option${s === p.status ? ' selected' : ''}>${esc(s)}</option>`).join('')}</select></div>
+        <div style="margin-top:12px"><label class="switch"><span>Posso ganhar<small class="hint" style="display:block;font-weight:500">Fiquei perto do 1º colocado</small></span><input type="checkbox" data-pode-ganhar="${p.id}"${p.possivelGanhar ? ' checked' : ''}></label></div></div>
       ${posCardHtml(pst)}
       ${ganhosCardHtml(pst)}
       <div class="kpis">
@@ -3814,7 +3829,7 @@ input[type=color].input { padding: 4px; height: 46px; }
       case 'mostrar-painel': UI.keepScroll = true; store.upsertPregao({ id, ocultoPainel: false }); toast('De volta ao painel'); break;
       case 'dash-periodo': UI.dash.periodo = t.dataset.v; UI.dash.mes = null; UI.keepScroll = true; render(); break;
       case 'dash-filtro': { const k = t.dataset.k, v = t.dataset.v; UI.dash[k] = UI.dash[k] === v ? null : v; UI.keepScroll = true; render(); break; }
-      case 'dash-limpar': UI.dash.etapa = UI.dash.orgao = UI.dash.mes = null; UI.keepScroll = true; render(); break;
+      case 'dash-limpar': UI.dash.etapa = UI.dash.orgao = UI.dash.mes = UI.dash.pode = null; UI.keepScroll = true; render(); break;
       case 'dash-mais': UI.dash.todos = !UI.dash.todos; UI.keepScroll = true; render(); break;
       case 'painel-encerrados': UI.mostrarEnc = !UI.mostrarEnc; UI.keepScroll = true; render(); break;
       case 'painel-ocultos': UI.mostrarOcultos = !UI.mostrarOcultos; UI.keepScroll = true; render(); break;
@@ -3881,6 +3896,7 @@ input[type=color].input { padding: 4px; height: 46px; }
     if (t.dataset.ui) { UI.pdf[t.dataset.ui] = t.value; return; }
     if (t.dataset.pdf || t.dataset.clausula) { commitPdf(t); return; }
     if (t.dataset.cfg) { commitCfg(t); return; }
+    if (t.dataset.podeGanhar) { UI.keepScroll = true; store.upsertPregao({ id: t.dataset.podeGanhar, possivelGanhar: t.checked }); toast(t.checked ? 'Marcado: posso ganhar' : 'Desmarcado'); return; }
     if (t.dataset.statusPregao) { const idp = t.dataset.statusPregao, antes = (store.get().pregoes.find((x) => x.id === idp) || {}).status; store.upsertPregao({ id: idp, status: t.value }); toast('Status: ' + t.value); perguntarItensGanhos(idp, antes); return; }
     if (t.hasAttribute('data-hd-file') && t.files && t.files[0]) {
       downscaleImage(t.files[0], 1800).then((url) => {
