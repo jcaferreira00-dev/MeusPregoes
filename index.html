@@ -450,6 +450,16 @@ input.input[type=datetime-local]::-webkit-date-and-time-value, input.input[type=
 .pf-ok { margin: 4px 0 6px; }
 .cat-edital { margin-top: 8px; font-size: 12.5px; line-height: 1.45; white-space: pre-wrap; max-height: 140px; overflow: auto; padding: 8px 10px; border-radius: 10px; background: color-mix(in srgb, var(--blue) 6%, var(--card)); border: 1px dashed var(--line); }
 .cat-edital b { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: .4px; color: var(--muted); margin-bottom: 2px; }
+.dlg.dlg-foto { max-width: 340px; align-items: stretch; max-height: 94vh; overflow: auto; }
+.dlg-foto .foto-prev { align-self: center; border-radius: 12px; border: 1px solid var(--line); touch-action: none; background: #fff; }
+.coloc-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.coloc-in { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 700; color: var(--muted); cursor: default; }
+.coloc-in input.input { width: 52px; min-height: 32px; padding: 3px 6px; text-align: center; font-weight: 800; }
+.acp-tbl .coloc-in span:first-child { display: none; }
+.acp-tbl .coloc-in input.input { width: 48px; text-align: center; }
+.coloc-badge { display: inline-flex; align-items: center; font-size: 11.5px; font-weight: 800; padding: 2px 8px; border-radius: 99px; background: var(--line); color: var(--ink); white-space: nowrap; }
+.coloc-badge.c1 { background: var(--green-soft); color: var(--green); }
+.coloc-badge.c3 { background: var(--amber-soft); color: var(--amber); }
 .cat-pronto { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 10px; padding: 10px 12px; border-radius: 12px; border: 2px solid var(--green); background: var(--green-soft); }
 .acp-tbl td { vertical-align: middle; }
 .it-modo { max-width: 340px; }
@@ -561,7 +571,7 @@ input[type=color].input { padding: 4px; height: 46px; }
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.25.0';
+  const APP_VERSION = '1.27.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Em disputa', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -1757,7 +1767,7 @@ input[type=color].input { padding: 4px; height: 46px; }
         ].concat(ln.especificacoes ? [{ rot: 'ESPECIFICAÇÕES' }, { t: ln.especificacoes, size: 9.5 }] : [])
          .concat(ln.catalogo ? [{ rot: 'DESCRIÇÃO DETALHADA DO PRODUTO' }, { t: ln.catalogo, size: 9.5 }] : []));
         const soma = (arr) => arr.reduce((a, x) => a + x.h, 0);
-        const fH = fotos.length ? Math.max(...fotos.map((im) => { const n = fotos.length, cw = (CW - 12 - 10 * (n - 1)) / n, mh = n === 1 ? 260 : 190; return im.height * Math.min(cw / im.width, mh / im.height); })) + 12 : 0;
+        const fH = fotos.length ? Math.min((CW - 12 - 10 * (fotos.length - 1)) / fotos.length, fotos.length === 1 ? 230 : fotos.length === 2 ? 210 : 160) + 12 : 0;
         const est = hT + 8 + 18 + Math.max(soma(LL), soma(RR)) + 10 + fH;
         const pagCheia = (headerH ? PH - TOPO - headerH - 4 : PH - M) - BOTTOM;
         if (y - est < BOTTOM && est <= pagCheia) novaPagina(); else garantir(80);
@@ -1796,16 +1806,18 @@ input[type=color].input { padding: 4px; height: 46px; }
         }
         y -= 4;
         if (fotos.length) {
-          const gap = 10, n = fotos.length, cellW = (CW - 12 - gap * (n - 1)) / n, maxH = n === 1 ? 260 : 190;
-          const dims = fotos.map((im) => { const s = Math.min(cellW / im.width, maxH / im.height); return [im.width * s, im.height * s]; });
-          const h = Math.max(...dims.map((d) => d[1]));
-          garantir(h + 22); y -= 6;
+          const gap = 10, n = fotos.length, cellW = (CW - 12 - gap * (n - 1)) / n;
+          const lado = Math.min(cellW, n === 1 ? 230 : n === 2 ? 210 : 160);   // quadro quadrado, igual para todas
+          const larg = n * lado + gap * (n - 1), x00 = M + (CW - larg) / 2;
+          garantir(lado + 22); y -= 6;
           fotos.forEach((im, k) => {
-            const [w, hh] = dims[k], x0 = M + 6 + k * (cellW + gap) + (cellW - w) / 2;
-            page.drawImage(im, { x: x0, y: y - hh - (h - hh) / 2, width: w, height: hh });
-            page.drawRectangle({ x: x0, y: y - hh - (h - hh) / 2, width: w, height: hh, borderColor: rgb(0.8, 0.8, 0.82), borderWidth: 0.6 });
+            const s0 = Math.min(lado / im.width, lado / im.height), w = im.width * s0, hh = im.height * s0;
+            const xq = x00 + k * (lado + gap), yq = y - lado;
+            page.drawRectangle({ x: xq, y: yq, width: lado, height: lado, color: rgb(1, 1, 1) });
+            page.drawImage(im, { x: xq + (lado - w) / 2, y: yq + (lado - hh) / 2, width: w, height: hh });
+            page.drawRectangle({ x: xq, y: yq, width: lado, height: lado, borderColor: rgb(0.8, 0.8, 0.82), borderWidth: 0.6 });
           });
-          y -= h + 6;
+          y -= lado + 6;
         }
         y -= 14;
       }
@@ -2189,7 +2201,7 @@ input[type=color].input { padding: 4px; height: 46px; }
           <w:tr>${cel(esq, 4819)}${cel(dir, 4819)}</w:tr></w:tbl>`;
         const fotos = ((o.imagens || {})[ln.id] || []).slice(0, 4);
         if (fotos.length) {
-          const n = fotos.length, w = Math.floor((CW_EMU - 250000 * n) / n), h = n === 1 ? 3300000 : 2400000;
+          const n = fotos.length, lado = Math.min(Math.floor((CW_EMU - 250000 * n) / n), n === 1 ? 2900000 : n === 2 ? 2650000 : 2000000), w = lado, h = lado;
           body += p(fotos.map((u) => imagem(u, w, h)).join('<w:r><w:t xml:space="preserve">   </w:t></w:r>'), jc('center') + esp(120, 120));
         }
       }
@@ -2799,7 +2811,7 @@ input[type=color].input { padding: 4px; height: 46px; }
       qtd: it.qtd == null ? '' : C.numBR(it.qtd, 3), onde: pareceUrl(it.onde) ? '' : (it.onde || ''), ondeLink: it.ondeLink || (pareceUrl(it.onde) ? urlSeg(it.onde) : ''), obs: it.obs || '', possivelGanhar: !!it.possivelGanhar, vencedor: it.vencedor == null ? '' : C.numBR(it.vencedor),
       ...(() => { const o = {}; [0, 1].forEach((n) => { const a = (it.alternativas || [])[n] || {}; o['alt' + n + 'Loja'] = a.loja || ''; o['alt' + n + 'Link'] = a.link || ''; o['alt' + n + 'Custo'] = a.custo == null ? '' : C.numBR(a.custo); }); return o; })(),
       custo: it.custo == null ? '' : C.numBR(it.custo), teto: it.teto == null ? '' : C.numBR(it.teto), frete: it.frete ? C.numBR(it.frete) : '',
-      margem: it.margem == null ? '' : C.numBR(it.margem * 100, 2), lanceFinal: it.lanceFinal == null ? '' : C.numBR(it.lanceFinal),
+      margem: it.margem == null ? '' : C.numBR(it.margem * 100, 2), lanceFinal: it.lanceFinal == null ? '' : C.numBR(it.lanceFinal), colocacao: it.colocacao == null ? '' : String(it.colocacao),
       entregaId: it.entregaId || '',
       localEntrega: it.localEntrega || '', kmEntrega: it.kmEntrega ? C.numBR(it.kmEntrega, 1) : '',
       viagensEntrega: it.viagensEntrega == null ? '' : String(it.viagensEntrega), pedagioEntrega: it.pedagioEntrega ? C.numBR(it.pedagioEntrega) : '',
@@ -2813,7 +2825,7 @@ input[type=color].input { padding: 4px; height: 46px; }
       qtd: C.parseBR(x.qtd), onde: x.onde.trim(), ondeLink: urlSeg(x.ondeLink), obs: String(x.obs || '').trim(), possivelGanhar: !!x.possivelGanhar, vencedor: C.parseBR(x.vencedor),
       alternativas: [0, 1].map((n) => ({ loja: String(x['alt' + n + 'Loja'] || '').trim(), link: urlSeg(x['alt' + n + 'Link']), custo: C.parseBR(x['alt' + n + 'Custo']) })).filter((a) => a.loja || a.link || a.custo != null),
       custo: C.parseBR(x.custo), teto: C.parseBR(x.teto), frete: C.parseBR(x.frete) || 0,
-      margem: m == null ? null : m / 100, lanceFinal: C.parseBR(x.lanceFinal),
+      margem: m == null ? null : m / 100, lanceFinal: C.parseBR(x.lanceFinal), colocacao: colocacaoDe(x.colocacao),
       // campos retirados do formulário: o que já estava salvo no item continua valendo
       impostoCompraPct: old && old.impostoCompraPct != null ? old.impostoCompraPct : null,
       icmsAliq: old && old.icmsAliq != null ? old.icmsAliq : null,
@@ -2872,6 +2884,7 @@ input[type=color].input { padding: 4px; height: 46px; }
         ${field({ label: 'Observações do item', name: 'obs', type: 'textarea', value: v.obs, full: true, ph: 'Ex.: cotar o frete amanhã; não consegui cotar com o fornecedor Y', hint: 'Aparece no cartão do pregão (guia Pregões) e no cartão do item.' })}
         <div class="full"><label class="switch"><span>Posso ganhar<small class="hint" style="display:block;font-weight:500">Marque se ficou perto do 1º colocado neste item e ainda é possível ganhar. Dá para filtrar no Dashboard.</small></span><input type="checkbox" name="possivelGanhar"${v.possivelGanhar ? ' checked' : ''}></label></div>
         ${field({ label: 'Minha margem (%)', name: 'margem', value: v.margem, inputmode: 'decimal', ph: 'padrão: ' + C.numBR(cfg.margemPadrao * 100, 2).replace(',00', '') + '%', hint: 'Vazio = margem padrão' })}
+        ${field({ label: 'Minha colocação na disputa', name: 'colocacao', value: v.colocacao, inputmode: 'numeric', ph: 'ex.: 3', hint: 'Em que lugar você ficou neste item (1 = primeiro).' })}
         ${field({ label: 'Lance final (R$ unit., opcional)', name: 'lanceFinal', value: v.lanceFinal, inputmode: 'decimal', hint: 'Depois de disputar. Vazio = conta pelo teto.' })}
         ${field({ label: 'Valor do vencedor (R$ unit., se perdi)', name: 'vencedor', value: v.vencedor, inputmode: 'decimal', hint: 'Quanto quem ganhou ofertou. Alimenta a análise “Preço de quem ganhou” no Painel.' })}
       </div>`;
@@ -3497,6 +3510,7 @@ input[type=color].input { padding: 4px; height: 46px; }
       ${venc}
       <div class="minbox i-min ${c.sitTipo === 'bad' ? 'bad' : ''}"><div><div class="t">Valor mínimo p/ proposta (unit.)</div><div class="tiny muted">margem ${C.pct(c.margem, 0)} · custo final ${C.brl(c.custoUnit)}</div></div><div class="v">${C.brl(c.minimo)}</div></div>
       <div class="row between wrap small muted i-fin" style="gap:4px 10px"><span>Posso baixar do teto: <b style="color:var(--ink)">${c.folgaRs != null ? C.brl(c.folgaRs) + ' (' + C.pct(c.folgaPct, 0) + ')' : '—'}</b></span><span>${c.impostoTotal > 0 ? 'Impostos ' + C.brl(c.impostoTotal) + ' · ' : ''}Lucro: <b style="color:var(--ink)">${C.brl(c.lucro)}</b></span></div>
+      ${p && !c.fora && (p.status === 'Em disputa' || it.possivelGanhar || it.colocacao) ? `<div class="coloc-row">${colocacaoInput(it)}${it.colocacao ? `<span class="coloc-badge ${it.colocacao === 1 ? 'c1' : it.colocacao <= 3 ? 'c3' : ''}">${colocTxt(it.colocacao)} lugar</span>` : ''}</div>` : ''}
       <div class="icard-actions">${acao}</div></article>`;
   }
 
@@ -3631,7 +3645,7 @@ input[type=color].input { padding: 4px; height: 46px; }
     const rows = its.map((it) => {
       const c = R.iMap.get(it.id), ie = String(it.itemEdital || '').trim();
       const cps = comprasDoItem(it).filter((k) => k.href);
-      const tags = (c.fora ? '<span class="badge off">Fora</span>' : '') + (c.ganhou ? '<span class="acp-tag venci">Venci</span>' : '') + (it.possivelGanhar && !c.ganhou ? '<span class="acp-tag posso">Posso</span>' : '') + (c.sitTipo === 'bad' ? `<span class="badge bad" title="${esc(c.situacao)}">!</span>` : '');
+      const tags = (it.colocacao ? `<span class="coloc-badge ${it.colocacao === 1 ? 'c1' : it.colocacao <= 3 ? 'c3' : ''}">${colocTxt(it.colocacao)}</span>` : '') + (c.fora ? '<span class="badge off">Fora</span>' : '') + (c.ganhou ? '<span class="acp-tag venci">Venci</span>' : '') + (it.possivelGanhar && !c.ganhou ? '<span class="acp-tag posso">Posso</span>' : '') + (c.sitTipo === 'bad' ? `<span class="badge bad" title="${esc(c.situacao)}">!</span>` : '');
       return `<tr class="it-row${c.fora || (c.naoGanhou && !it.possivelGanhar) ? ' apagado' : ''}" data-act="editar-item" data-id="${it.id}" tabindex="0">
         <td class="r">${esc(ie || '—')}</td>
         <td class="it-desc"><b>${esc(it.descricao)}</b>${it.marca ? `<small>${esc(it.marca)}</small>` : ''}${String(it.obs || '').trim() ? `<small class="it-obs">${icon('alert', 'sm')} ${esc(it.obs)}</small>` : ''}</td>
@@ -3677,6 +3691,11 @@ input[type=color].input { padding: 4px; height: 46px; }
     ajustarStatusAoGanhar(it.pregaoId, algum);
     toast(val ? 'Item marcado como vencido' : (voltarPode ? 'Item voltou para “posso ganhar”' : 'Item desmarcado'));
   }
+
+  // colocação: número inteiro de 1 a 999 (vazio = sem colocação)
+  const colocacaoDe = (v) => { const n = parseInt(String(v == null ? '' : v).replace(/\D/g, ''), 10); return n >= 1 && n <= 999 ? n : null; };
+  const colocTxt = (n) => (n ? n + 'º' : '');
+  const colocacaoInput = (it, extra) => `<label class="coloc-in" title="Minha colocação neste item (1 = primeiro)"><span>Colocação</span><input class="input" inputmode="numeric" maxlength="3" data-act="noop" data-coloc="${it.id}" value="${it.colocacao || ''}" placeholder="—" ${extra || ''}><span>º</span></label>`;
 
   /* ---------- guia Acompanhar (só PC): itens que venci ou posso ganhar, agrupados por pregão ---------- */
   const ENCERRADOS = ['Perdeu', 'Desclassificado', 'Desisti'];
@@ -3734,6 +3753,7 @@ input[type=color].input { padding: 4px; height: 46px; }
           <td class="r">${C.brl(c.custoUnit)}</td>
           <td class="r">${C.brl(c.minimo)}</td>
           <td class="r">${C.brl(c.teto)}</td>
+          <td class="r">${colocacaoInput(it)}</td>
           <td class="r"><input class="input${l.venci && it.lanceFinal == null ? ' vazio' : ''}" inputmode="decimal" data-acomp-lance="${it.id}" value="${it.lanceFinal == null ? '' : Number(it.lanceFinal).toFixed(2).replace('.', ',')}" placeholder="${l.unit == null ? '' : Number(l.unit).toFixed(2).replace('.', ',')}" title="Valor final unitário (lance). Vazio = valor mínimo, limitado ao teto"></td>
           <td class="r"><b>${C.brl(l.total)}</b></td>
           <td class="r">${l.lucro == null ? '—' : `<span style="color:${l.lucro < 0 ? '#c0392b' : '#217a2c'}" title="Lucro com o valor final desta linha (depois do custo, entrega e imposto)">${C.brl(l.lucro)}</span>`}</td>
@@ -3745,7 +3765,7 @@ input[type=color].input { padding: 4px; height: 46px; }
       }).join('');
       return `<section class="gbox" style="--gc:${corDe(p.id)};--sc:${COR_STATUS[p.status] || '#2e75b6'}">
         <header class="ghead"><div class="grow"><div class="gnum">PREGÃO Nº ${esc(p.numero)}</div><h3>${esc(p.orgao)}</h3></div>${badgeStatus(p.status)}</header>
-        <div class="tbl-scroll"><table class="tbl acp-tbl"><thead><tr><th>Item</th><th class="r"></th><th class="r">Qtd</th><th class="r">Custo un.</th><th class="r">Mínimo</th><th class="r">Teto</th><th class="r">Valor final</th><th class="r">Total</th><th class="r">Lucro</th><th class="r">Comprar</th><th class="r"></th></tr></thead><tbody>${rows}</tbody></table></div>
+        <div class="tbl-scroll"><table class="tbl acp-tbl"><thead><tr><th>Item</th><th class="r"></th><th class="r">Qtd</th><th class="r">Custo un.</th><th class="r">Mínimo</th><th class="r">Teto</th><th class="r">Colocação</th><th class="r">Valor final</th><th class="r">Total</th><th class="r">Lucro</th><th class="r">Comprar</th><th class="r"></th></tr></thead><tbody>${rows}</tbody></table></div>
         <div class="acp-foot"><div class="small">${ls.some((l) => l.posso) ? `Posso ganhar: <b>${C.brl(tot(ls.filter((l) => l.posso)))}</b>` : ''}${ls.some((l) => l.posso) && ganhos.length ? ' · ' : ''}${ganhos.length ? `Venci: <b>${C.brl(tot(ganhos))}</b>` : ''}${semValor ? ` <span class="prazo warn">${semValor} sem valor final</span>` : ''}</div>
           <div class="row" style="gap:8px"><button type="button" class="btn sm" data-act="abrir-pregao" data-id="${p.id}">${icon('eye', 'sm')} Abrir pregão</button>${ganhos.length ? `<button type="button" class="btn sm navy" data-act="acomp-proposta" data-id="${p.id}">${icon('pdf', 'sm')} Gerar proposta (${ganhos.length} ${ganhos.length === 1 ? 'item vencido' : 'itens vencidos'})</button>` : ''}</div></div>
       </section>`;
@@ -4007,32 +4027,68 @@ input[type=color].input { padding: 4px; height: 46px; }
   async function preencherFotosCatalogo() {
     for (const el of $$('[data-cat-thumbs]')) {
       const id = el.dataset.catThumbs, arr = await fotosDoItem(id);
-      el.innerHTML = arr.map((u, k) => `<div style="position:relative"><img alt="" src="${u}" style="height:84px;max-width:140px;object-fit:contain;border:1px solid var(--line, #ddd);border-radius:8px;background:#fff"><button type="button" class="btn sm danger" data-act="cat-del" data-id="${esc(id)}" data-v="${k}" title="Remover foto" style="position:absolute;top:2px;right:2px;padding:2px 6px;min-height:0">${icon('x', 'sm')}</button></div>`).join('');
+      el.innerHTML = arr.map((u, k) => `<div style="position:relative"><img alt="" src="${u}" style="width:84px;height:84px;object-fit:contain;border:1px solid var(--line, #ddd);border-radius:8px;background:#fff"><button type="button" class="btn sm danger" data-act="cat-del" data-id="${esc(id)}" data-v="${k}" title="Remover foto" style="position:absolute;top:2px;right:2px;padding:2px 6px;min-height:0">${icon('x', 'sm')}</button></div>`).join('');
     }
   }
-  function fotoCatalogo(file) {
+  // ao incluir: mostra a foto num quadrado; você escolhe "Recortar" (preenche, com zoom e arrastar) ou "Inteira" (fundo branco)
+  function fotoCatalogo(file, n, total) {
     return new Promise((resolve, reject) => {
       const url = URL.createObjectURL(file), img = new Image();
+      img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Imagem inválida')); };
       img.onload = () => {
         URL.revokeObjectURL(url);
-        const gera = (max, q) => {
-          const s = Math.min(1, max / Math.max(img.width, img.height));
-          const cv = document.createElement('canvas'); cv.width = Math.round(img.width * s); cv.height = Math.round(img.height * s);
-          const g = cv.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, cv.width, cv.height); g.drawImage(img, 0, 0, cv.width, cv.height);
-          return cv.toDataURL('image/jpeg', q);
+        const P = 280;   // tamanho da prévia
+        const st = { modo: 'recortar', zoom: 1, dx: 0, dy: 0 };
+        const w = document.createElement('div');
+        w.className = 'dlg-wrap';
+        w.innerHTML = `<div class="dlg dlg-foto" role="dialog" aria-modal="true"><h3>Ajustar foto${total > 1 ? ` (${n} de ${total})` : ''}</h3>
+          <p>As fotos do catálogo ficam todas quadradas. ${img.width === img.height ? 'Esta já é quadrada.' : 'Sugestão: <b>Recortar</b> para preencher o quadrado (arraste para enquadrar) ou <b>Inteira</b> para não cortar nada.'}</p>
+          <canvas width="${P * 2}" height="${P * 2}" class="foto-prev" style="width:${P}px;height:${P}px"></canvas>
+          <div class="seg-ctl">${[['recortar', 'Recortar (preencher)'], ['inteira', 'Inteira (fundo branco)']].map(([v, l]) => `<button type="button" data-fm="${v}" class="${v === st.modo ? 'on' : ''}">${l}</button>`).join('')}</div>
+          <div class="field foto-zoom"><label>Zoom</label><input type="range" min="1" max="3" step="0.05" value="1" data-fz></div>
+          <div class="btns"><button type="button" class="btn primary" data-fok>Usar esta foto</button><button type="button" class="btn ghost" data-fno>Pular esta foto</button></div></div>`;
+        document.body.appendChild(w);
+        const cv = w.querySelector('canvas'), g = cv.getContext('2d');
+        // desenha a foto num quadrado de lado L conforme o modo
+        const desenhar = (ctx, L) => {
+          ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, L, L);
+          if (st.modo === 'inteira') { const s0 = L / Math.max(img.width, img.height); const ww = img.width * s0, hh = img.height * s0; ctx.drawImage(img, (L - ww) / 2, (L - hh) / 2, ww, hh); return; }
+          const s0 = (L / Math.min(img.width, img.height)) * st.zoom; const ww = img.width * s0, hh = img.height * s0;
+          const mx = Math.max(0, (ww - L) / 2), my = Math.max(0, (hh - L) / 2);
+          st.dx = Math.max(-1, Math.min(1, st.dx)); st.dy = Math.max(-1, Math.min(1, st.dy));
+          ctx.drawImage(img, (L - ww) / 2 + st.dx * mx, (L - hh) / 2 + st.dy * my, ww, hh);
         };
-        let out = gera(1000, 0.75);
-        for (const [mx, q] of [[900, 0.65], [750, 0.6], [600, 0.55], [480, 0.5]]) { if (out.length <= 200000) break; out = gera(mx, q); }
-        resolve(out);
+        const prev = () => { desenhar(g, cv.width); w.querySelector('.foto-zoom').style.display = st.modo === 'recortar' ? '' : 'none'; cv.style.cursor = st.modo === 'recortar' ? 'grab' : 'default'; };
+        prev();
+        let arr0 = null;
+        cv.addEventListener('pointerdown', (e) => { if (st.modo !== 'recortar') return; arr0 = { x: e.clientX, y: e.clientY, dx: st.dx, dy: st.dy }; cv.setPointerCapture(e.pointerId); });
+        cv.addEventListener('pointermove', (e) => {
+          if (!arr0) return;
+          const s0 = (P / Math.min(img.width, img.height)) * st.zoom, mx = Math.max(1, (img.width * s0 - P) / 2), my = Math.max(1, (img.height * s0 - P) / 2);
+          st.dx = arr0.dx + (e.clientX - arr0.x) / mx; st.dy = arr0.dy + (e.clientY - arr0.y) / my; prev();
+        });
+        cv.addEventListener('pointerup', () => { arr0 = null; });
+        w.querySelector('[data-fz]').addEventListener('input', (e) => { st.zoom = Number(e.target.value) || 1; prev(); });
+        w.addEventListener('click', (e) => {
+          const m = e.target.closest('[data-fm]');
+          if (m) { st.modo = m.dataset.fm; w.querySelectorAll('[data-fm]').forEach((b) => b.classList.toggle('on', b === m)); prev(); return; }
+          if (e.target.closest('[data-fno]')) { w.remove(); resolve(null); return; }
+          if (!e.target.closest('[data-fok]')) return;
+          const gera = (L, q) => { const c2 = document.createElement('canvas'); c2.width = L; c2.height = L; desenhar(c2.getContext('2d'), L); return c2.toDataURL('image/jpeg', q); };
+          let out = gera(900, 0.75);
+          for (const [L, q] of [[800, 0.65], [700, 0.6], [600, 0.55], [480, 0.5]]) { if (out.length <= 200000) break; out = gera(L, q); }
+          w.remove(); resolve(out);
+        });
       };
-      img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Imagem inválida')); };
       img.src = url;
     });
   }
   async function incluirFotosCatalogo(id, files) {
     try {
       const arr = (await fotosDoItem(id)).slice();
-      for (const f of files) { if (arr.length >= 4) { toast('Máximo de 4 fotos por item'); break; } arr.push(await fotoCatalogo(f)); }
+      let novas = 0;
+      for (let k = 0; k < files.length; k++) { if (arr.length >= 4) { toast('Máximo de 4 fotos por item'); break; } const u = await fotoCatalogo(files[k], k + 1, files.length); if (u) { arr.push(u); novas += 1; } }
+      if (!novas) return;
       await gravarFotos(id, arr); preencherFotosCatalogo(); toast(Cloud.user ? 'Foto incluída e sincronizada' : 'Foto incluída (entre na conta em Config para sincronizar)');
     } catch (e) { toast(e.message || 'Não foi possível usar essa imagem'); }
   }
@@ -4587,6 +4643,7 @@ input[type=color].input { padding: 4px; height: 46px; }
       case 'sync-agora': sincronizarImagens(); S.run('manual').then((r) => { if (r && r.ok) toast('Sincronizado'); updateStatusPill(); }); break;
       case 'instalar': if (UI.deferredPrompt) { UI.deferredPrompt.prompt(); UI.deferredPrompt.userChoice.finally(() => { UI.deferredPrompt = null; render(); }); } break;
       case 'banner-atualizar': location.reload(); break;
+      case 'noop': break;
       default: break;
     }
   }
@@ -4613,6 +4670,13 @@ input[type=color].input { padding: 4px; height: 46px; }
     if (t.dataset.pdf || t.dataset.bloco !== undefined) { commitPdf(t); return; }
     if (t.dataset.cfg) { commitCfg(t); return; }
     if (t.dataset.statusPregao) { const idp = t.dataset.statusPregao, antes = (store.get().pregoes.find((x) => x.id === idp) || {}).status; store.upsertPregao({ id: idp, status: t.value }); toast('Status: ' + t.value); perguntarItensGanhos(idp, antes); return; }
+    if (t.dataset.coloc) {
+      const iid = t.dataset.coloc, v = colocacaoDe(t.value);
+      t.value = v || '';
+      store.patchItem(iid, (x) => { x.colocacao = v; });
+      setTimeout(() => { const a = document.activeElement, k = a && a.dataset && (a.dataset.coloc || a.dataset.acompLance); const attr = a && a.dataset && a.dataset.coloc ? 'data-coloc' : 'data-acomp-lance'; UI.keepScroll = true; render(); if (k) { const el = $(`[${attr}="${k}"]`); if (el) { el.focus(); el.select(); } } }, 0);
+      return;
+    }
     if (t.dataset.acompLance) {
       const iid = t.dataset.acompLance, v = String(t.value).trim() === '' ? null : C.parseBR(t.value);
       if (v !== null && !(v >= 0)) { toast('Valor inválido'); return; }
@@ -4817,6 +4881,7 @@ input[type=color].input { padding: 4px; height: 46px; }
     main.addEventListener('change', onChange);
     main.addEventListener('toggle', (e) => { const d = e.target; if (d && d.dataset && d.dataset.acc) { if (d.open) UI.acc.add(d.dataset.acc); else UI.acc.delete(d.dataset.acc); } }, true);
     main.addEventListener('keydown', (e) => { if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('article[data-act]')) { e.preventDefault(); e.target.click(); } });
+    main.addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target.dataset && e.target.dataset.coloc) { e.preventDefault(); e.target.blur(); } });
   }
 
   function boot() {
