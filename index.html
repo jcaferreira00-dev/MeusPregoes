@@ -460,6 +460,9 @@ input.input[type=datetime-local]::-webkit-date-and-time-value, input.input[type=
 .coloc-badge { display: inline-flex; align-items: center; font-size: 11.5px; font-weight: 800; padding: 2px 8px; border-radius: 99px; background: var(--line); color: var(--ink); white-space: nowrap; }
 .coloc-badge.c1 { background: var(--green-soft); color: var(--green); }
 .coloc-badge.c3 { background: var(--amber-soft); color: var(--amber); }
+.pdfp-field label { color: var(--blue); font-weight: 800; }
+#pdfp { border: 2px solid var(--blue); background: color-mix(in srgb, var(--blue) 7%, var(--card)); font-weight: 700; box-shadow: 0 0 0 3px color-mix(in srgb, var(--blue) 16%, transparent); }
+#pdfp:focus { box-shadow: 0 0 0 4px color-mix(in srgb, var(--blue) 30%, transparent); }
 .cat-pronto { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 10px; padding: 10px 12px; border-radius: 12px; border: 2px solid var(--green); background: var(--green-soft); }
 .acp-tbl td { vertical-align: middle; }
 .acp-tbl { min-width: 0; }
@@ -579,7 +582,7 @@ input[type=color].input { padding: 4px; height: 46px; }
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.28.0';
+  const APP_VERSION = '1.29.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Em disputa', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -3902,7 +3905,7 @@ input[type=color].input { padding: 4px; height: 46px; }
     const empOk = !!(e.nome && e.cnpj);
     return `<div class="page">
       <div class="card"><h3>1 · Qual pregão?</h3>
-        <div class="field"><label for="pdfp">Pregão</label><select class="input" id="pdfp" data-ui="pregaoId">${list.map((x) => `<option value="${x.id}"${x.id === UI.pdf.pregaoId ? ' selected' : ''}>${esc(pregaoLabel(x))}</option>`).join('')}</select></div>
+        <div class="field pdfp-field"><label for="pdfp">Pregão</label><select class="input" id="pdfp" data-ui="pregaoId">${list.map((x) => `<option value="${x.id}"${x.id === UI.pdf.pregaoId ? ' selected' : ''}>${esc(pregaoLabel(x))}</option>`).join('')}</select></div>
         ${tipoHtml}
         ${(pz0.modeloProprio || pz0.linkModelo) ? `<div class="alert warn" style="margin-bottom:12px">${icon('alert', 'sm')}<div class="grow">Este edital tem modelo próprio de proposta.${pz0.obs ? '<br><span style="font-weight:600;white-space:pre-wrap">' + esc(pz0.obs) + '</span>' : ''}</div>${pz0.linkModelo ? `<a class="btn sm" href="${esc(/^https?:\/\//i.test(pz0.linkModelo) ? pz0.linkModelo : 'https://' + pz0.linkModelo)}" target="_blank" rel="noopener noreferrer">Abrir modelo</a>` : ''}</div>` : ''}
         ${pz0.status !== 'Proposta enviada' ? (pz0.link
