@@ -520,7 +520,7 @@ input[type=color].input { padding: 4px; height: 46px; }
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.12.0';
+  const APP_VERSION = '1.16.0';
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Em disputa', 'Ganhou', 'Faturado', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti'];
   const DECL_PADRAO =
@@ -866,13 +866,12 @@ input[type=color].input { padding: 4px; height: 46px; }
         observacoes: true, declaracao: true, localData: true, assinatura: true, assinaturaNome: true, assinaturaDoc: true,
       },
       desc: {
-        titulo: true, titulo1: 'ANEXO III', titulo2: 'MODELO DE DESCRITIVO DA PROPOSTA DE PREÇOS',
+        titulo: true, tituloTexto: 'ANEXO III\nMODELO DE DESCRITIVO DA PROPOSTA DE PREÇOS',
         faixa: true, faixaTexto: 'PREGÃO ELETRÔNICO - EDITAL nº {numero}',
         fornecedor: true, campos,
-        objeto: true, objetoTexto: '', objetoPrefixo: 'Constitui objeto desta licitação:',
         tabela: true, tabelaTitulo: '1. Especificações técnicas:', rotuloItem: 'Lote', colunas,
         total: false, extenso: false,
-        clausulas: [],
+        blocos: [],
         localData: true, localDataModo: 'preenchido',
         assinatura: true, assinaturaRotulo: 'Representante Legal', assinaturaNome: true, assinaturaDoc: true,
       },
@@ -902,7 +901,9 @@ input[type=color].input { padding: 4px; height: 46px; }
     m.modelo = 'unico';
     if (m.cabecalho === null || m.cabecalho === undefined) m.cabecalho = true;
     if (m.marca === null || m.marca === undefined) m.marca = true;
-    m.desc.clausulas = montarClausulas((ov.desc && ov.desc.clausulas) || (pad.desc && pad.desc.clausulas) || []);
+    { const antigo = [ov, pad].map((x) => x && x.desc).find((d) => d && d.tituloTexto === undefined && (d.titulo1 !== undefined || d.titulo2 !== undefined));
+      if (antigo) m.desc.tituloTexto = [antigo.titulo1, antigo.titulo2].filter(Boolean).join('\n'); }
+    m.desc.blocos = Array.isArray(ov.desc && ov.desc.blocos) ? ov.desc.blocos : (Array.isArray(pad.desc && pad.desc.blocos) ? pad.desc.blocos : []);
     return m;
   }
   // numeração automática: 2, 3, 4, 4.1, 4.2, 5… (só das cláusulas ligadas); filha sem pai ligado vira numeração própria
@@ -960,7 +961,7 @@ input[type=color].input { padding: 4px; height: 46px; }
       const totS = unitS !== null ? round2(qtd * unitS) : null;
       if (totS !== null) totalS += totS;
       linhas.push({
-        n, numeroItem: (it.itemEdital && String(it.itemEdital).trim()) || String(n).padStart(2, '0'),
+        n, id: it.id, catalogo: String(it.catalogoDesc || '').trim(), numeroItem: (it.itemEdital && String(it.itemEdital).trim()) || String(n).padStart(2, '0'),
         descricao: it.descricao || '', descEdital: (it.descEdital && it.descEdital.trim()) || it.descricao || '',
         marca: it.marca || '', especificacoes: String(it.especificacoes || '').trim(), un: it.unidade || 'Un', qtd,
         unit, total: tot, aliq, unitS, totalS: totS, teto: c.teto, acimaTeto: (unit !== null && c.teto !== null && unit > c.teto + 1e-9), limitadoTeto, unitOriginal, abaixoMinimo,
@@ -1077,6 +1078,12 @@ input[type=color].input { padding: 4px; height: 46px; }
         }
         persist();
         return data.id;
+      },
+      // altera um item sem redesenhar a tela (catálogo)
+      patchItem(id, fn) {
+        const it = state.itens.find((x) => x.id === id && !x.deleted);
+        if (!it) return false;
+        fn(it); it.updatedAt = now(); persist('silent'); return true;
       },
       removeItem(id) {
         const it = state.itens.find((x) => x.id === id);
@@ -1640,9 +1647,89 @@ input[type=color].input { padding: 4px; height: 46px; }
       return lines.length ? lines : [[]];
     }
     function drawMixed(line, x, yy, size, color) { let cx = x; for (const tk of line) { page.drawText(tk.t, { x: cx, y: yy, size, font: tk.f, color: color || rgb(0, 0, 0) }); cx += tk.f.widthOfTextAtSize(tk.t, size); } }
+    // linha justificada: reparte a sobra entre os espaços (última linha do parágrafo fica à esquerda)
+    function drawJust(line, x, yy, size, maxW, justify) {
+      const w = line.reduce((a, k) => a + k.f.widthOfTextAtSize(k.t, size), 0);
+      const sps = line.filter((k) => k.sp).length;
+      const extra = justify && sps > 0 && w < maxW ? (maxW - w) / sps : 0;
+      let cx = x;
+      for (const tk of line) { if (!tk.sp) page.drawText(tk.t, { x: cx, y: yy, size, font: tk.f, color: rgb(0, 0, 0) }); cx += tk.f.widthOfTextAtSize(tk.t, size) + (tk.sp ? extra : 0); }
+    }
     novaPagina();
 
     const D = op.desc, BLK = rgb(0, 0, 0), CINZA = rgb(0.9, 0.9, 0.9), AZUL = rgb(0.72, 0.78, 0.89);
+
+    /* ===== CATÁLOGO DOS PRODUTOS (mesmo cabeçalho e marca d'água da proposta) ===== */
+    async function desenharCatalogo(anexo) {
+      wrap('CATÁLOGO DOS PRODUTOS OFERTADOS', bold, 13, CW - 8).forEach((l) => { garantir(20); TC(l, PW / 2, y - 12, 13, bold, BLK); y -= 17; });
+      y -= 4;
+      if (D.faixaTexto) {
+        garantir(30);
+        page.drawRectangle({ x: M, y: y - 22, width: CW, height: 22, color: CINZA, borderColor: BLK, borderWidth: 1 });
+        TC(safe(D.faixaTexto).replace(/\{numero\}/g, preg.numero || '').replace(/\{orgao\}/g, preg.orgao || ''), PW / 2, y - 15, 11, bold, BLK);
+        y -= 30;
+      }
+      const forn = [emp.nome, emp.cnpj ? 'CNPJ ' + emp.cnpj : ''].filter(Boolean).join(' - ');
+      wrap([preg.orgao, forn ? 'Fornecedor: ' + forn : ''].filter(Boolean).join('   ·   '), font, 9.5, CW).forEach((l) => { garantir(13); TC(l, PW / 2, y - 10, 9.5, font, GRAY); y -= 12; });
+      y -= 8;
+      const imgs = o.imagens || {};
+      const par = (txt, size, f, ind) => {
+        String(txt || '').split(/\n+/).forEach((p) => {
+          if (!p.trim()) return;
+          const ls = wrapMixed([{ t: p.trim(), f }], size, CW - 12 - (ind || 0));
+          ls.forEach((l, k) => { garantir(size + 4); drawJust(l, M + 6 + (ind || 0), y - size, size, CW - 12 - (ind || 0), k < ls.length - 1); y -= size + 3.2; });
+          y -= 2;
+        });
+      };
+      const rot = (t) => { garantir(30); T(t, M + 6, y - 10, 8.5, bold, ACCT); y -= 14; };
+      for (const ln of L.linhas) {
+        const fotos = [];
+        for (const u of (imgs[ln.id] || []).slice(0, 4)) { const im = await embedImg(u); if (im) fotos.push(im); }
+        const tit = wrap(`ITEM ${ln.numeroItem} - ${String(ln.descricao || '').toUpperCase()}`, bold, 10.5, CW - 16);
+        const hT = tit.length * 13 + 8;
+        // o item inteiro (texto + fotos) cabe numa página nova mas não no resto desta? começa na próxima, para a foto não ficar longe do texto
+        const nL = (txt, size, f) => String(txt || '').split(/\n+/).filter((p) => p.trim()).reduce((a, p) => a + wrapMixed([{ t: p.trim(), f }], size, CW - 12).length * (size + 3.2) + 2, 0);
+        const fH = fotos.length ? Math.max(...fotos.map((im) => { const n = fotos.length, cw = (CW - 12 - 10 * (n - 1)) / n, mh = n === 1 ? 260 : 190; return im.height * Math.min(cw / im.width, mh / im.height); })) + 12 : 0;
+        const est = hT + 8 + 14 * 3 + nL(ln.descEdital, 9, font) + nL('x', 9.5, bold) + nL(ln.especificacoes, 9.5, font) + nL(ln.catalogo, 9.5, font) + fH;
+        const pagCheia = (headerH ? PH - TOPO - headerH - 4 : PH - M) - BOTTOM;
+        if (y - est < BOTTOM && est <= pagCheia) novaPagina(); else garantir(60);
+        // faixa do item
+        page.drawRectangle({ x: M, y: y - hT, width: CW, height: hT, color: ACC, opacity: 0.14, borderColor: ACC, borderWidth: 1 });
+        tit.forEach((l, k) => T(l, M + 8, y - 14 - k * 13, 10.5, bold, BLK));
+        y -= hT + 8;
+        rot('EXIGIDO NO EDITAL'); par(ln.descEdital, 9, font);
+        rot('PRODUTO OFERTADO'); par('Marca/modelo: ' + (ln.marca || '—') + '   ·   Unidade: ' + ln.un + '   ·   Quantidade: ' + new Intl.NumberFormat('pt-BR').format(ln.qtd), 9.5, bold);
+        if (ln.especificacoes) par(ln.especificacoes, 9.5, font);
+        if (ln.catalogo) { rot('DESCRIÇÃO DETALHADA DO PRODUTO'); par(ln.catalogo, 9.5, font); }
+        if (fotos.length) {
+          const gap = 10, n = fotos.length, cellW = (CW - 12 - gap * (n - 1)) / n, maxH = n === 1 ? 260 : 190;
+          const dims = fotos.map((im) => { const s = Math.min(cellW / im.width, maxH / im.height); return [im.width * s, im.height * s]; });
+          const h = Math.max(...dims.map((d) => d[1]));
+          garantir(h + 22); y -= 6;
+          fotos.forEach((im, k) => {
+            const [w, hh] = dims[k], x0 = M + 6 + k * (cellW + gap) + (cellW - w) / 2;
+            page.drawImage(im, { x: x0, y: y - hh - (h - hh) / 2, width: w, height: hh });
+            page.drawRectangle({ x: x0, y: y - hh - (h - hh) / 2, width: w, height: hh, borderColor: rgb(0.8, 0.8, 0.82), borderWidth: 0.6 });
+          });
+          y -= h + 6;
+        }
+        y -= 14;
+      }
+      if (!anexo && D.localData) {
+        garantir(70); y -= 6;
+        const txt = D.localDataModo === 'branco' ? `______________________, ____ de ______________________ de ${new Date().getFullYear()}.` : [emp.cidade, C.dataExtensa(o.data)].filter(Boolean).join(', ') + '.';
+        TC(txt, PW / 2, y - 11, 11, font, BLK); y -= 40;
+        page.drawLine({ start: { x: PW / 2 - 120, y }, end: { x: PW / 2 + 120, y }, thickness: 0.8, color: BLK });
+        TC(emp.nome || D.assinaturaRotulo || '', PW / 2, y - 12, 10, font, BLK); y -= 14;
+      }
+    }
+    if (o.catalogo) {
+      doc.setTitle('Catálogo dos produtos — ' + (preg.numero || ''));
+      await desenharCatalogo(false);
+      pages.forEach((pg, i) => { const s = `Página ${i + 1} de ${pages.length}`; pg.drawText(s, { x: PW / 2 - font.widthOfTextAtSize(s, 8) / 2, y: 20, size: 8, font, color: GRAY }); });
+      const bytes = await doc.save();
+      return { bytes, filename: `Catalogo_${slug(preg.numero) || 'compra'}_${slug(preg.orgao) || 'orgao'}.pdf`, total: L.total, linhas: L.linhas.length, semValor: 0, paginas: pages.length, catalogo: true };
+    }
     const fN = (n) => new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n);
     const bT = (n) => (n === null || n === undefined) ? '—' : 'R$ ' + fN(n);
     const subst = (t, c) => safe(t)
@@ -1652,8 +1739,8 @@ input[type=color].input { padding: 4px; height: 46px; }
 
     // --- títulos e faixa do edital
     if (D.titulo) {
-      [D.titulo1, D.titulo2].filter(Boolean).forEach((t) => { garantir(20); TC(subst(t), PW / 2, y - 12, 12.5, bold, BLK); y -= 16; });
-      y -= 6;
+      const tt = subst(String(D.tituloTexto || '')).toUpperCase();
+      if (tt.trim()) { wrap(tt, bold, 12.5, CW - 8).forEach((l) => { garantir(20); TC(l, PW / 2, y - 12, 12.5, bold, BLK); y -= 16; }); y -= 6; }
     }
     if (D.faixa && D.faixaTexto) {
       garantir(30);
@@ -1718,13 +1805,6 @@ input[type=color].input { padding: 4px; height: 46px; }
       garantir(24 + 40 * Math.ceil(bancoPares.length / 2));
       T('DADOS BANCÁRIOS', M + 8, y - 12, 12, font, INK); y -= 18;
       grade(bancoPares);
-      y -= 10;
-    }
-
-    // --- objeto da licitação
-    if (D.objeto && D.objetoTexto) {
-      wrapMixed([{ t: (D.objetoPrefixo ? D.objetoPrefixo + ' ' : ''), f: font }, { t: D.objetoTexto, f: bold }], 11, CW - 4)
-        .forEach((l) => { garantir(15); drawMixed(l, M + 2, y - 11, 11); y -= 14.5; });
       y -= 10;
     }
 
@@ -1879,13 +1959,20 @@ input[type=color].input { padding: 4px; height: 46px; }
       wrap(o.textoDeclaracao, font, 10, CW - 30).forEach((l) => { garantir(14); T(l, M + 14, y - 10, 10, font, INK); y -= 13; });
     }
 
-    // --- cláusulas numeradas (2, 3, 4, 4.1, 4.2, 5, 6…): cada uma liga/desliga e o texto é editável
-    C.numerarClausulas(D.clausulas, D.tabela ? 2 : 1).forEach((c) => {
-      const txt = subst(c.texto, c);
-      if (!txt.trim()) return;
-      const ls = wrapMixed([{ t: c.rotulo + ' ', f: bold }, { t: txt, f: font }], 10.5, CW - 6);
-      ls.forEach((l, j) => { garantir(15); drawMixed(l, M + 2, y - 11, 10.5); y -= 13.5; });
-      y -= 4;
+    // --- cláusulas livres: título em caixa alta e negrito + descrição justificada
+    if ((D.blocos || []).some((b) => (b.titulo || b.texto || '').trim())) y -= 8;
+    (D.blocos || []).forEach((b) => {
+      const ti = subst(String(b.titulo || '')).toUpperCase().trim();
+      const tx = subst(String(b.texto || '')).trim();
+      if (!ti && !tx) return;
+      if (ti) { wrap(ti, bold, 10.5, CW - 6).forEach((l) => { garantir(16); T(l, M + 2, y - 11, 10.5, bold, BLK); y -= 14; }); y -= 1; }
+      tx.split(/\n+/).forEach((par) => {
+        if (!par.trim()) return;
+        const ls = wrapMixed([{ t: par, f: font }], 10.5, CW - 6);
+        ls.forEach((l, k) => { garantir(15); drawJust(l, M + 2, y - 11, 10.5, CW - 6, k < ls.length - 1); y -= 13.5; });
+        y -= 3;
+      });
+      y -= 6;
     });
 
     // --- local e data
@@ -1911,6 +1998,9 @@ input[type=color].input { padding: 4px; height: 46px; }
       y = yy;
     }
 
+    /* ===== catálogo anexado ao final da proposta (opcional) ===== */
+    if (o.anexarCatalogo && L.linhas.length) { novaPagina(); await desenharCatalogo(true); }
+
     /* ===== numeração de páginas (só se houver mais de uma) ===== */
     if (pages.length > 1) {
       pages.forEach((pg, i) => {
@@ -1924,7 +2014,123 @@ input[type=color].input { padding: 4px; height: 46px; }
     return { bytes, filename, total: L.total, linhas: L.linhas.length, semValor: L.semValor, paginas: pages.length };
   }
 
+
+  /* ===== CATÁLOGO EM WORD (.docx) — montado aqui mesmo, sem biblioteca: XML do Word + zip simples ===== */
+  const CatalogoDocx = (() => {
+    const CRC = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
+    const crc32 = (b) => { let c = 0xFFFFFFFF; for (let i = 0; i < b.length; i++) c = CRC[(c ^ b[i]) & 0xFF] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; };
+    const enc = (s) => new TextEncoder().encode(s);
+    function zip(files) { // [{name, data:Uint8Array}] sem compressão (STORE)
+      const parts = [], central = []; let off = 0;
+      const u16 = (v) => [v & 255, (v >>> 8) & 255], u32 = (v) => [v & 255, (v >>> 8) & 255, (v >>> 16) & 255, (v >>> 24) & 255];
+      for (const f of files) {
+        const nm = enc(f.name), c = crc32(f.data), sz = f.data.length;
+        const loc = new Uint8Array([...u32(0x04034b50), ...u16(20), ...u16(0x0800), ...u16(0), ...u16(0), ...u16(0x21), ...u32(c), ...u32(sz), ...u32(sz), ...u16(nm.length), ...u16(0)]);
+        parts.push(loc, nm, f.data);
+        central.push(new Uint8Array([...u32(0x02014b50), ...u16(20), ...u16(20), ...u16(0x0800), ...u16(0), ...u16(0), ...u16(0x21), ...u32(c), ...u32(sz), ...u32(sz), ...u16(nm.length), ...u16(0), ...u16(0), ...u16(0), ...u16(0), ...u32(0), ...u32(off)]), nm);
+        off += loc.length + nm.length + sz;
+      }
+      const cdSize = central.reduce((a, x) => a + x.length, 0);
+      const end = new Uint8Array([...u32(0x06054b50), ...u16(0), ...u16(0), ...u16(files.length), ...u16(files.length), ...u32(cdSize), ...u32(off), ...u16(0)]);
+      return new Blob([...parts, ...central, end], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+    }
+    const x = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, '');
+    function bytesDe(dataUrl) { const b = atob(dataUrl.split(',')[1] || ''); const u = new Uint8Array(b.length); for (let i = 0; i < b.length; i++) u[i] = b.charCodeAt(i); return u; }
+    function tamanho(u) { // largura/altura lidas do próprio arquivo (PNG ou JPEG)
+      if (u[0] === 0x89 && u[1] === 0x50) return { w: (u[16] << 24 | u[17] << 16 | u[18] << 8 | u[19]) >>> 0, h: (u[20] << 24 | u[21] << 16 | u[22] << 8 | u[23]) >>> 0, ext: 'png' };
+      let i = 2;
+      while (i < u.length) {
+        if (u[i] !== 0xFF) { i++; continue; }
+        const m = u[i + 1], len = u[i + 2] << 8 | u[i + 3];
+        if (m >= 0xC0 && m <= 0xCF && m !== 0xC4 && m !== 0xC8 && m !== 0xCC) return { h: u[i + 5] << 8 | u[i + 6], w: u[i + 7] << 8 | u[i + 8], ext: 'jpeg' };
+        i += 2 + len;
+      }
+      return { w: 800, h: 600, ext: 'jpeg' };
+    }
+    const hexCor = (h) => String(h || '#555555').replace('#', '').slice(0, 6).toUpperCase();
+    async function gerar(state, pregaoId, o) {
+      const C = root.Core, cfg = state.config, emp = cfg.empresa;
+      const preg = state.pregoes.find((p) => p.id === pregaoId && !p.deleted);
+      if (!preg) throw new Error('Pregão não encontrado.');
+      const op = C.resolverPdfOpts(preg, cfg), D = op.desc;
+      const L = C.linhasProposta(state, pregaoId, o.fonte || 'auto', op.icmsAliq);
+      const COR = hexCor(cfg.proposta && cfg.proposta.cor), CW_EMU = 6120000; // largura útil (A4, margens de 2 cm)
+      const midias = []; let nPic = 0;
+      const imagem = (dataUrl, maxW, maxH) => {
+        const u = bytesDe(dataUrl), t = tamanho(u);
+        const s = Math.min(maxW / t.w, maxH / t.h); const cx = Math.round(t.w * s), cy = Math.round(t.h * s);
+        nPic += 1; const rid = 'rIdImg' + nPic, nome = `img${nPic}.${t.ext === 'png' ? 'png' : 'jpeg'}`;
+        midias.push({ rid, nome, data: u });
+        return `<w:r><w:drawing><wp:inline distT="0" distB="0" distL="57150" distR="57150"><wp:extent cx="${cx}" cy="${cy}"/><wp:docPr id="${nPic}" name="Foto ${nPic}"/><wp:cNvGraphicFramePr><a:graphicFrameLocks noChangeAspect="1"/></wp:cNvGraphicFramePr><a:graphic><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:pic><pic:nvPicPr><pic:cNvPr id="${nPic}" name="${nome}"/><pic:cNvPicPr/></pic:nvPicPr><pic:blipFill><a:blip r:embed="${rid}"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill><pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="${cx}" cy="${cy}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr></pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r>`;
+      };
+      const run = (t, r) => `<w:r><w:rPr>${r && r.b ? '<w:b/>' : ''}${r && r.cor ? `<w:color w:val="${r.cor}"/>` : ''}${r && r.sz ? `<w:sz w:val="${r.sz}"/><w:szCs w:val="${r.sz}"/>` : ''}</w:rPr><w:t xml:space="preserve">${x(t)}</w:t></w:r>`;
+      const p = (inner, pp) => `<w:p><w:pPr>${pp || ''}</w:pPr>${inner}</w:p>`;
+      const jc = (v) => `<w:jc w:val="${v}"/>`, esp = (a, d) => `<w:spacing w:before="${a || 0}" w:after="${d || 0}"/>`;
+      const paras = (txt, r) => String(txt || '').split(/\n+/).filter((s) => s.trim()).map((s) => p(run(s.trim(), r), jc('both') + esp(0, 80) + '<w:keepNext/>')).join('');
+      const rot = (t) => p(run(t, { b: true, cor: COR, sz: 17 }), esp(120, 30) + '<w:keepNext/>');
+      const sub = (t) => String(t || '').replace(/\{numero\}/g, preg.numero || '').replace(/\{orgao\}/g, preg.orgao || '');
+      let body = '';
+      body += p(run('CATÁLOGO DOS PRODUTOS OFERTADOS', { b: true, sz: 26 }), jc('center') + esp(0, 120));
+      if (D.faixaTexto) body += p(run(sub(D.faixaTexto), { b: true, sz: 22 }), jc('center') + esp(0, 120) + '<w:pBdr><w:top w:val="single" w:sz="8" w:space="2" w:color="000000"/><w:left w:val="single" w:sz="8" w:space="4" w:color="000000"/><w:bottom w:val="single" w:sz="8" w:space="2" w:color="000000"/><w:right w:val="single" w:sz="8" w:space="4" w:color="000000"/></w:pBdr><w:shd w:val="clear" w:color="auto" w:fill="E6E6E6"/>');
+      const forn = [emp.nome, emp.cnpj ? 'CNPJ ' + emp.cnpj : ''].filter(Boolean).join(' - ');
+      body += p(run([preg.orgao, forn ? 'Fornecedor: ' + forn : ''].filter(Boolean).join('   ·   '), { cor: '666666', sz: 18 }), jc('center') + esp(0, 240));
+      for (const ln of L.linhas) {
+        body += p(run(`ITEM ${ln.numeroItem} - ${String(ln.descricao || '').toUpperCase()}`, { b: true, sz: 21 }), esp(160, 80) + '<w:keepNext/><w:pBdr><w:top w:val="single" w:sz="6" w:space="3" w:color="' + COR + '"/><w:left w:val="single" w:sz="6" w:space="4" w:color="' + COR + '"/><w:bottom w:val="single" w:sz="6" w:space="3" w:color="' + COR + '"/><w:right w:val="single" w:sz="6" w:space="4" w:color="' + COR + '"/></w:pBdr><w:shd w:val="clear" w:color="auto" w:fill="F3F3F3"/>');
+        body += rot('EXIGIDO NO EDITAL') + paras(ln.descEdital, { sz: 18 });
+        body += rot('PRODUTO OFERTADO') + paras('Marca/modelo: ' + (ln.marca || '—') + '   ·   Unidade: ' + ln.un + '   ·   Quantidade: ' + new Intl.NumberFormat('pt-BR').format(ln.qtd), { b: true, sz: 19 });
+        if (ln.especificacoes) body += paras(ln.especificacoes, { sz: 19 });
+        if (ln.catalogo) body += rot('DESCRIÇÃO DETALHADA DO PRODUTO') + paras(ln.catalogo, { sz: 19 });
+        const fotos = ((o.imagens || {})[ln.id] || []).slice(0, 4);
+        if (fotos.length) {
+          const n = fotos.length, w = Math.floor((CW_EMU - 250000 * n) / n), h = n === 1 ? 3300000 : 2400000;
+          body += p(fotos.map((u) => imagem(u, w, h)).join('<w:r><w:t xml:space="preserve">   </w:t></w:r>'), jc('center') + esp(120, 120));
+        }
+      }
+      if (D.localData) {
+        const txt = D.localDataModo === 'branco' ? `______________________, ____ de ______________________ de ${new Date().getFullYear()}.` : [emp.cidade, C.dataExtensa(o.data || C.hojeISO())].filter(Boolean).join(', ') + '.';
+        body += p(run(txt, { sz: 22 }), jc('center') + esp(360, 720) + '<w:keepNext/>');
+        body += p(run('________________________________________', {}), jc('center') + '<w:keepNext/>');
+        body += p(run(emp.nome || D.assinaturaRotulo || '', { sz: 20 }), jc('center'));
+      }
+      // cabeçalho (logo + nome da empresa) e rodapé (página X de Y)
+      let cab = '';
+      const hc = cfg.cabecalho || {};
+      if (op.cabecalho && hc.imagem) cab += p(imagem(hc.imagem, 2200000, 650000), jc(hc.pos === 'esquerda' ? 'left' : hc.pos === 'centro' ? 'center' : 'right'));
+      if (op.cabecalho !== false && (!hc.imagem || hc.mostrarNome !== false)) {
+        cab += p(run(emp.nome || '', { b: true, sz: 26, cor: COR }), esp(0, 0));
+        const l2 = [emp.cnpj ? 'CNPJ: ' + emp.cnpj : '', [emp.cidade, emp.uf].filter(Boolean).join('/'), [emp.telefone, emp.email].filter(Boolean).join(' · ')].filter(Boolean).join('   ');
+        if (l2) cab += p(run(l2, { sz: 16, cor: '666666' }), esp(0, 0));
+      }
+      cab += p('', `<w:pBdr><w:bottom w:val="single" w:sz="8" w:space="1" w:color="${COR}"/></w:pBdr>` + esp(0, 120));
+      const midiaCab = midias.filter((m) => cab.includes(`"${m.rid}"`));
+      const NS = 'xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture"';
+      const fld = (instr) => `<w:r><w:fldChar w:fldCharType="begin"/></w:r><w:r><w:instrText xml:space="preserve"> ${instr} </w:instrText></w:r><w:r><w:fldChar w:fldCharType="separate"/></w:r><w:r><w:t>1</w:t></w:r><w:r><w:fldChar w:fldCharType="end"/></w:r>`;
+      const rodape = p(run('Página ', { sz: 16, cor: '888888' }) + fld('PAGE') + run(' de ', { sz: 16, cor: '888888' }) + fld('NUMPAGES'), jc('center'));
+      const doc = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document ${NS}><w:body>${body}<w:sectPr><w:headerReference w:type="default" r:id="rIdCab"/><w:footerReference w:type="default" r:id="rIdRod"/><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1134" w:right="1134" w:bottom="1134" w:left="1134" w:header="567" w:footer="567" w:gutter="0"/></w:sectPr></w:body></w:document>`;
+      const rel = (id, type, target) => `<Relationship Id="${id}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/${type}" Target="${target}"/>`;
+      const rels = (arr) => `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">${arr.join('')}</Relationships>`;
+      const docRels = rels([rel('rIdEst', 'styles', 'styles.xml'), rel('rIdCab', 'header', 'header1.xml'), rel('rIdRod', 'footer', 'footer1.xml')].concat(midias.filter((m) => !midiaCab.includes(m)).map((m) => rel(m.rid, 'image', 'media/' + m.nome))));
+      const cabRels = rels(midiaCab.map((m) => rel(m.rid, 'image', 'media/' + m.nome)));
+      const estilos = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:docDefaults><w:rPrDefault><w:rPr><w:rFonts w:ascii="Arial" w:hAnsi="Arial" w:cs="Arial" w:eastAsia="Arial"/><w:sz w:val="20"/><w:szCs w:val="20"/><w:lang w:val="pt-BR"/></w:rPr></w:rPrDefault><w:pPrDefault><w:pPr><w:spacing w:after="0" w:line="264" w:lineRule="auto"/></w:pPr></w:pPrDefault></w:docDefaults><w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/></w:style></w:styles>`;
+      const tipos = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Default Extension="jpeg" ContentType="image/jpeg"/><Default Extension="png" ContentType="image/png"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/><Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/><Override PartName="/word/header1.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.header+xml"/><Override PartName="/word/footer1.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.footer+xml"/></Types>`;
+      const files = [
+        { name: '[Content_Types].xml', data: enc(tipos) },
+        { name: '_rels/.rels', data: enc(rels([rel('rId1', 'officeDocument', 'word/document.xml')])) },
+        { name: 'word/document.xml', data: enc(doc) },
+        { name: 'word/styles.xml', data: enc(estilos) },
+        { name: 'word/header1.xml', data: enc(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:hdr ${NS}>${cab}</w:hdr>`) },
+        { name: 'word/footer1.xml', data: enc(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:ftr ${NS}>${rodape}</w:ftr>`) },
+        { name: 'word/_rels/document.xml.rels', data: enc(docRels) },
+        { name: 'word/_rels/header1.xml.rels', data: enc(cabRels) },
+      ].concat(midias.map((m) => ({ name: 'word/media/' + m.nome, data: m.data })));
+      const slug = (s) => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^\w]+/g, '_').replace(/^_|_$/g, '');
+      return { blob: zip(files), filename: `Catalogo_${slug(preg.numero) || 'compra'}_${slug(preg.orgao) || 'orgao'}.docx`, paginas: null };
+    }
+    return { gerar };
+  })();
+
   const api = { gerarProposta, valorExtenso, inteiroExtenso };
+  root.CatalogoDocx = CatalogoDocx;
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   root.PropostaPDF = api;
 })(typeof window !== 'undefined' ? window : globalThis);
@@ -2682,7 +2888,7 @@ input[type=color].input { padding: 4px; height: 46px; }
 
   /* ---------- Painel: cards dos pregões ---------- */
   // ordem dos cards: Falta dados, Analisando, Proposta enviada, depois o resto
-  const ORDEM_STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Em disputa', 'Ganhou', 'Faturado', 'Perdeu', 'Desclassificado', 'Desisti'];
+  const ORDEM_STATUS = ['Em disputa', 'Falta dados', 'Analisando', 'Proposta enviada', 'Ganhou', 'Faturado', 'Perdeu', 'Desclassificado', 'Desisti'];
   const rankStatus = (s) => { const i = ORDEM_STATUS.indexOf(s); return i < 0 ? ORDEM_STATUS.length : i; };
   const COR_STATUS = { 'Falta dados': '#f57c00', 'Analisando': '#2e75b6', 'Proposta enviada': '#5c6bc0', 'Em disputa': '#d99a1c', 'Ganhou': '#2f8f3a', 'Faturado': '#0f8b78', 'Perdeu': '#c0392b', 'Desclassificado': '#8e2a2a', 'Desisti': '#7b8798' };
   /* ---------- datas "AAAA-MM-DD" (entrega, pagamento e validade das certidões) ---------- */
@@ -3036,9 +3242,9 @@ input[type=color].input { padding: 4px; height: 46px; }
         <div class="kpi" style="--c:${m.saldoAgora < 0 ? '#c0392b' : '#2f7d3a'}"><div class="l">Saldo disponível</div><div class="v">${C.brl0(m.saldoAgora)}</div><div class="s">se ganhar tudo: ${C.brl0(m.saldoSeGanhar)}</div></div>
         <div class="kpi" style="--c:#b7791f"><div class="l">Lucro previsto</div><div class="v">${C.brl0(R.lucroPrevisto)}</div><div class="s">pregões ativos</div></div>
       </div>
+      ${painelPregoesHtml(R)}
       ${painelDashboardHtml(R)}
       ${painelEntregasHtml(R)}
-      ${painelPregoesHtml(R)}
       <div class="two-col">${painelCertidoesHtml(R)}${painelResultadosHtml(R)}</div>
       ${painelVencedorHtml(R, st)}
       <div class="card m-hide"><h3>Uso do limite do MEI</h3>
@@ -3283,7 +3489,8 @@ input[type=color].input { padding: 4px; height: 46px; }
     const R = C.computeAll(store.get());
     const q = UI.buscaI.trim().toLowerCase();
     const enc = (g) => (C.INATIVOS.includes(g.p.status) ? 1 : 0);
-    const groups = [...R.pMap.values()].sort((a, b) => (enc(a) - enc(b)) || (b.p.createdAt || 0) - (a.p.createdAt || 0));   // encerrados sempre no fim
+    const disp = (g) => (g.p.status === 'Em disputa' ? 0 : 1);
+    const groups = [...R.pMap.values()].sort((a, b) => (enc(a) - enc(b)) || (disp(a) - disp(b)) || (b.p.createdAt || 0) - (a.p.createdAt || 0));   // encerrados sempre no fim
     let html = '', n = 0;
     for (const g of groups) {
       const its = foraNoFim(porItemEdital(g.todosItens), R).filter((i) => !q || (i.descricao + ' ' + (i.marca || '') + ' ' + (i.onde || '') + ' ' + g.p.orgao + ' ' + g.p.numero).toLowerCase().includes(q));
@@ -3353,14 +3560,14 @@ input[type=color].input { padding: 4px; height: 46px; }
     const campos = C.CAMPOS_FORNECEDOR.map(([id, nome]) => swp(o, 'desc.campos.' + id, nome)).join('');
     const camposBanco = C.CAMPOS_BANCO.map(([id, nome]) => swp(o, 'bancoCampos.' + id, nome)).join('');
     const colunas = C.COLUNAS_DESC.map(([id, nome]) => swp(o, 'desc.colunas.' + id, nome)).join('');
-    const cls = D.clausulas.map((c) => `<div class="clause">
-        <label class="switch"><span><b>${esc(c.custom ? 'Cláusula livre' : c.nome)}</b></span><input type="checkbox" data-clausula="${esc(c.id)}" data-field="ativo" data-type="check" ${c.ativo ? 'checked' : ''}></label>
-        <textarea class="input" rows="${c.custom ? 3 : 4}" data-clausula="${esc(c.id)}" data-field="texto" data-type="text" placeholder="Texto da cláusula">${esc(c.texto)}</textarea>
-        ${c.custom ? `<button type="button" class="btn sm danger" data-act="clausula-del" data-id="${esc(c.id)}">${icon('trash', 'sm')} Remover</button>` : (c.texto !== c.padrao ? `<button type="button" class="btn sm" data-act="clausula-padrao" data-id="${esc(c.id)}">Voltar ao texto original</button>` : '')}
+    const blocosUi = (D.blocos || []).map((b, n) => `<div class="clause">
+        <input class="input" data-bloco="${n}" data-field="titulo" data-type="text" placeholder="Título da cláusula (sai em caixa alta e negrito)" value="${esc(b.titulo || '')}">
+        <textarea class="input" rows="4" data-bloco="${n}" data-field="texto" data-type="text" placeholder="Descrição (sai justificada, abaixo do título)" style="margin-top:6px">${esc(b.texto || '')}</textarea>
+        <button type="button" class="btn sm danger" data-act="bloco-del" data-id="${n}">${icon('trash', 'sm')} Remover</button>
       </div>`).join('');
     const cab = `
       <div class="card"><h3>2 · Documento da proposta <span class="grow"></span><span class="saved-ind" id="savedInd">Salvo</span></h3>
-        <p class="tiny muted" style="margin:0 0 8px">Um único modelo, com tudo ligado por padrão. Desligue na chavinha o que não quiser na proposta. O que você mudar aqui (chavinhas e textos) vira o padrão dos próximos pregões; objeto, prazo e local de entrega, observações e ICMS valem só para o pregão.</p>
+        <p class="tiny muted" style="margin:0 0 8px">Um único modelo, com tudo ligado por padrão. Desligue na chavinha o que não quiser na proposta. O que você mudar aqui (chavinhas e textos) vira o padrão dos próximos pregões; prazo e local de entrega, observações e ICMS valem só para o pregão.</p>
         ${swp(o, 'cabecalho', 'Cabeçalho (nome e imagem)', 'Aparece em todas as páginas')}
         ${swp(o, 'marca', 'Marca d’água')}
         <div class="field full" style="margin-top:8px"><label>Cor do documento (rótulos, faixas e bordas)</label><input class="input" type="color" data-cfg="proposta.cor" data-type="text" value="${esc(cfg.proposta.cor)}"></div>
@@ -3368,26 +3575,25 @@ input[type=color].input { padding: 4px; height: 46px; }
       </div>`;
     const corpo = [
       acc('acc-tit', 'Títulos e faixa do edital',
-        `${swp(o, 'desc.titulo', 'Títulos (ANEXO / modelo)')}<div class="formgrid">${fp(o, 'desc.titulo1', 'Título 1')}${fp(o, 'desc.titulo2', 'Título 2')}</div>
+        `${swp(o, 'desc.titulo', 'Título do documento')}${fp(o, 'desc.tituloTexto', 'Título', { area: true, rows: 2, full: true, hint: 'Sai em caixa alta e negrito, ajustado às margens. Enter = nova linha.' })}
          ${swp(o, 'desc.faixa', 'Faixa com o número do edital')}${fp(o, 'desc.faixaTexto', 'Texto da faixa', { hint: '{numero} vira o “Nº do pregão”' })}`),
       acc('acc-grade', 'Dados do órgão e do processo', `${swp(o, 'com.grade', 'Mostrar órgão, processo, validade, pagamento e entrega')}
         <div class="formgrid" style="margin-top:8px">
           ${fp(o, 'validade', 'Validade (dias)', { type: 'int', im: 'numeric' })}
           ${fp(o, 'pagamento', 'Prazo de pagamento')}
+          ${fp(o, 'prorrogacao', 'Prorrogação (dias)', { type: 'int', im: 'numeric', hint: 'Entra no texto {prorrogacao}.' })}
           ${fp(o, 'prazoEntrega', 'Prazo de entrega', { ph: pz.prazoEntregaDias ? pz.prazoEntregaDias + ' dias (do pregão)' : 'ex.: 10 dias' })}
           ${fp(o, 'localEntrega', 'Local de entrega', { ph: C.localEntregaPadrao(pz, store.get().itens.filter((i) => i.pregaoId === pz.id && !i.deleted)) || 'local do pregão', hint: 'Em branco = usa o local do pregão. Escreva aqui só para mudar.' })}
         </div>`),
       acc('acc-forn', 'Dados do fornecedor', `${swp(o, 'desc.fornecedor', 'Mostrar o quadro “Dados do fornecedor”')}<div class="swgrid">${campos}</div><p class="tiny muted">Os dados vêm de Config › Empresa. Campo desligado some do quadro.</p>`),
       acc('acc-banco', 'Dados bancários', `${swp(o, 'com.bancarios', 'Mostrar o quadro “Dados bancários”')}<div class="swgrid">${camposBanco}</div>`),
-      acc('acc-obj', 'Objeto da licitação', `${swp(o, 'desc.objeto', 'Mostrar o objeto')}${fp(o, 'desc.objetoPrefixo', 'Prefixo')}${fp(o, 'desc.objetoTexto', 'Objeto (copie do edital)', { area: true, rows: 4, ph: 'aquisição de …' })}`),
       acc('acc-itens', 'Itens da proposta (um bloco por item)', `${swp(o, 'com.itens', 'Mostrar os itens em blocos, com descrição e marca')}`),
       acc('acc-tab', 'Tabela de especificações', `${swp(o, 'desc.tabela', 'Mostrar a tabela')}<div class="formgrid">${fp(o, 'desc.tabelaTitulo', 'Título da tabela')}${fp(o, 'desc.rotuloItem', 'Nome da coluna do item', { hint: 'Lote, Item…' })}${fp(o, 'icmsAliq', 'Alíquota ICMS padrão (%)', { type: 'pct', im: 'decimal', hint: 'MEI: 0. Por item, edite o item.' })}</div>
          <div class="lbl" style="margin:6px 0">Colunas</div><div class="swgrid">${colunas}</div>`),
       acc('acc-resumo', 'Valor total', `${swp(o, 'com.resumo', 'Resumo comercial (valor global)', 'Com a coluna “Valor total s/ ICMS” ligada, mostra também esse total')}${swp(o, 'com.extenso', 'Valor por extenso')}`),
       acc('acc-obs', 'Observações e declaração', `${swp(o, 'com.observacoes', 'Observações')}${fp(o, 'observacoes', 'Texto das observações (saem no PDF)', { area: true, rows: 2, full: true })}
          ${swp(o, 'com.declaracao', 'Declaração de preços')}<div class="field full"><label>Texto da declaração</label><textarea class="input" rows="3" data-cfg="proposta.textoDeclaracao" data-type="text">${esc(cfg.proposta.textoDeclaracao)}</textarea></div>`),
-      acc('acc-cl', 'Cláusulas numeradas', `<div class="formgrid">${fp(o, 'prorrogacao', 'Prorrogação (dias)', { type: 'int', im: 'numeric', hint: 'Entra no texto {prorrogacao}. A validade fica em “Dados do órgão”.' })}</div>
-         <p class="tiny muted">A numeração é automática (2, 3, 4, 4.1…) e se ajusta ao que você ligar ou desligar.</p>${cls}<button type="button" class="btn sm block" data-act="clausula-add">${icon('plus', 'sm')} Adicionar cláusula</button>`),
+      acc('acc-bl', 'Cláusulas', `<p class="tiny muted">Cada cláusula tem título (caixa alta e negrito) e descrição justificada. Use {validade}, {prorrogacao}, {numero} ou {orgao} no texto, se quiser.</p>${blocosUi}<button type="button" class="btn sm block" data-act="bloco-add">${icon('plus', 'sm')} Incluir cláusula</button>`),
       acc('acc-fim', 'Local, data e assinatura',
         `${swp(o, 'desc.localData', 'Local e data')}<div class="seg-ctl" style="margin:4px 0 10px">${[['preenchido', 'Preenchido'], ['branco', 'Em branco']].map(([v, l]) => `<button type="button" data-act="pdf-datamodo" data-v="${v}" class="${D.localDataModo === v ? 'on' : ''}">${l}</button>`).join('')}</div>
          <div class="field"><label>Data do documento</label><input class="input" type="date" data-ui="data" value="${esc(UI.pdf.data)}"></div>
@@ -3453,11 +3659,114 @@ input[type=color].input { padding: 4px; height: 46px; }
       </div>
       ${faltaEmpresaHtml(opts, cfg.empresa)}
       <button class="btn primary block" data-act="pdf-gerar" ${UI.pdf.busy ? 'disabled' : ''}>${icon('pdf')} ${UI.pdf.busy ? 'Gerando…' : 'Gerar PDF da proposta'}</button>
-      ${r ? `<div class="card"><h3>PDF pronto</h3><p class="small"><b>${esc(r.name)}</b><br><span class="muted">${r.paginas} página(s) · total ${C.brl(r.total)}</span></p>
+      ${r ? `<div class="card" id="pdfPronto"><h3>${r.docx ? 'Catálogo em Word pronto' : r.catalogo ? 'Catálogo pronto' : r.comCatalogo ? 'PDF pronto (proposta + catálogo)' : 'PDF pronto'}</h3><p class="small"><b>${esc(r.name)}</b><br><span class="muted">${r.docx ? 'Arquivo do Word, separado da proposta' : r.paginas + ' página(s)'}${r.catalogo ? '' : ' · total ' + C.brl(r.total)}</span></p>
         ${r.semValor ? `<div class="alert warn" style="margin:10px 0">${icon('alert', 'sm')}<span>Gerado com ${r.semValor} item(ns) sem valor.</span></div>` : ''}
         <div class="grid2" style="margin-top:12px"><button class="btn" data-act="pdf-abrir">${icon('eye', 'sm')} Abrir</button><button class="btn" data-act="pdf-baixar">${icon('download', 'sm')} Baixar</button></div>
         ${navigator.canShare ? `<button class="btn block" style="margin-top:10px" data-act="pdf-compartilhar">${icon('share', 'sm')} Compartilhar</button>` : ''}</div>` : ''}
+      ${catalogoCardHtml(st, L)}
     </div>`;
+  }
+
+  /* ---------- catálogo dos produtos: fotos ficam neste aparelho (IndexedDB); a descrição detalhada fica no item (vai para a nuvem) ---------- */
+  const CatImg = (() => {
+    let dbp = null;
+    const db = () => dbp || (dbp = new Promise((res, rej) => {
+      const r = indexedDB.open('mp.catalogo', 1);
+      r.onupgradeneeded = () => r.result.createObjectStore('img');
+      r.onsuccess = () => res(r.result); r.onerror = () => { dbp = null; rej(r.error); };
+    }));
+    const tx = async (mode, fn) => { const d = await db(); return new Promise((res, rej) => { const t = d.transaction('img', mode); const st = t.objectStore('img'); const q = fn(st); t.oncomplete = () => res(q && q.result); t.onerror = () => rej(t.error); }); };
+    return {
+      get: async (id) => { try { return (await tx('readonly', (st) => st.get(id))) || []; } catch (e) { return []; } },
+      set: (id, arr) => tx('readwrite', (st) => (arr && arr.length ? st.put(arr, id) : st.delete(id))),
+    };
+  })();
+  function catalogoCardHtml(st, L) {
+    if (!L.linhas.length) return '';
+    const itens = L.linhas.map((ln) => `<div class="clause" style="margin-bottom:12px">
+        <div class="small"><b>Item ${esc(ln.numeroItem)}</b> · ${esc(ln.descricao)}${ln.marca ? ` <span class="muted">· ${esc(ln.marca)}</span>` : ''}</div>
+        <div class="cat-thumbs" data-cat-thumbs="${esc(ln.id)}" style="display:flex;flex-wrap:wrap;gap:8px;margin:8px 0"></div>
+        <label class="btn sm" style="cursor:pointer">${icon('image', 'sm')} Incluir imagem<input type="file" accept="image/png,image/jpeg,image/webp" multiple data-cat-file="${esc(ln.id)}" class="sr-only" style="position:absolute;width:1px;height:1px;opacity:0;overflow:hidden"></label>
+        <textarea class="input" rows="5" data-cat-desc="${esc(ln.id)}" placeholder="Descrição pormenorizada do produto (características técnicas, medidas, material, composição, normas, garantia…)" style="margin-top:8px">${esc(ln.catalogo)}</textarea>
+      </div>`).join('');
+    setTimeout(preencherFotosCatalogo, 0);
+    return `<div class="card"><h3>${icon('image', 'sm')} Catálogo dos produtos</h3>
+        <p class="tiny muted" style="margin:0 0 10px">Para o pregoeiro confrontar o edital com o que você oferece. Cada item sai com o que o edital exige, a marca/modelo, as especificações, a sua descrição detalhada e as fotos (até 4 por item). As fotos ficam guardadas neste aparelho.</p>
+        ${itens}
+        <label class="switch" style="margin-top:4px"><span>Anexar o catálogo ao final da proposta<small class="hint" style="display:block;font-weight:500">Ligado: o botão “Gerar PDF da proposta” já sai com o catálogo nas últimas páginas, num arquivo só.</small></span><input type="checkbox" data-cfg="proposta.catalogoJunto" data-type="check" ${st.config.proposta.catalogoJunto ? 'checked' : ''}></label>
+        <div class="grid2" style="margin-top:10px">
+          <button class="btn primary" data-act="cat-gerar" ${UI.pdf.busy ? 'disabled' : ''}>${icon('pdf', 'sm')} ${UI.pdf.busy ? 'Gerando…' : 'Catálogo separado (PDF)'}</button>
+          <button class="btn" data-act="cat-docx" ${UI.pdf.busy ? 'disabled' : ''}>${icon('download', 'sm')} Catálogo em Word (.docx)</button>
+        </div>
+      </div>`;
+  }
+  async function preencherFotosCatalogo() {
+    for (const el of $$('[data-cat-thumbs]')) {
+      const id = el.dataset.catThumbs, arr = await CatImg.get(id);
+      el.innerHTML = arr.map((u, k) => `<div style="position:relative"><img alt="" src="${u}" style="height:84px;max-width:140px;object-fit:contain;border:1px solid var(--line, #ddd);border-radius:8px;background:#fff"><button type="button" class="btn sm danger" data-act="cat-del" data-id="${esc(id)}" data-v="${k}" title="Remover foto" style="position:absolute;top:2px;right:2px;padding:2px 6px;min-height:0">${icon('x', 'sm')}</button></div>`).join('');
+    }
+  }
+  function fotoCatalogo(file) {
+    return new Promise((resolve, reject) => {
+      const url = URL.createObjectURL(file), img = new Image();
+      img.onload = () => {
+        URL.revokeObjectURL(url);
+        const s = Math.min(1, 1200 / Math.max(img.width, img.height));
+        const cv = document.createElement('canvas'); cv.width = Math.round(img.width * s); cv.height = Math.round(img.height * s);
+        const g = cv.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, cv.width, cv.height); g.drawImage(img, 0, 0, cv.width, cv.height);
+        resolve(cv.toDataURL('image/jpeg', 0.85));
+      };
+      img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Imagem inválida')); };
+      img.src = url;
+    });
+  }
+  async function incluirFotosCatalogo(id, files) {
+    try {
+      const arr = await CatImg.get(id);
+      for (const f of files) { if (arr.length >= 4) { toast('Máximo de 4 fotos por item'); break; } arr.push(await fotoCatalogo(f)); }
+      await CatImg.set(id, arr); preencherFotosCatalogo(); toast('Foto incluída');
+    } catch (e) { toast(e.message || 'Não foi possível usar essa imagem'); }
+  }
+  async function gerarCatalogo() {
+    commitAllPending();
+    $$('[data-cat-desc]').forEach(salvarDescCatalogo);
+    const id = UI.pdf.pregaoId; if (!id) { toast('Escolha um pregão'); return; }
+    UI.pdf.busy = true; render();
+    try {
+      await ensurePdfLib();
+      const imagens = await imagensCatalogo(id);
+      const res = await window.PropostaPDF.gerarProposta(store.get(), id, { fonte: UI.pdf.fonte, data: UI.pdf.data || C.hojeISO(), catalogo: true, imagens });
+      if (UI.pdf.result) URL.revokeObjectURL(UI.pdf.result.url);
+      const blob = new Blob([res.bytes], { type: 'application/pdf' });
+      UI.pdf.result = { blob, url: URL.createObjectURL(blob), name: res.filename, total: res.total, paginas: res.paginas, semValor: 0, catalogo: true };
+      toast('Catálogo gerado');
+    } catch (e) { console.error(e); toast('Erro ao gerar o catálogo: ' + (e.message || e)); }
+    UI.pdf.busy = false; render();
+    const card = $('#pdfPronto'); if (card) card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+  async function imagensCatalogo(id) {
+    const L = C.linhasProposta(store.get(), id, UI.pdf.fonte, 0);
+    const imagens = {}; for (const ln of L.linhas) imagens[ln.id] = await CatImg.get(ln.id);
+    return imagens;
+  }
+  async function gerarCatalogoDocx() {
+    commitAllPending();
+    $$('[data-cat-desc]').forEach(salvarDescCatalogo);
+    const id = UI.pdf.pregaoId; if (!id) { toast('Escolha um pregão'); return; }
+    UI.pdf.busy = true; render();
+    try {
+      const res = await window.CatalogoDocx.gerar(store.get(), id, { fonte: UI.pdf.fonte, data: UI.pdf.data || C.hojeISO(), imagens: await imagensCatalogo(id) });
+      if (UI.pdf.result) URL.revokeObjectURL(UI.pdf.result.url);
+      UI.pdf.result = { blob: res.blob, url: URL.createObjectURL(res.blob), name: res.filename, total: 0, paginas: null, semValor: 0, catalogo: true, docx: true };
+      toast('Catálogo em Word gerado');
+    } catch (e) { console.error(e); toast('Erro ao gerar o Word: ' + (e.message || e)); }
+    UI.pdf.busy = false; render();
+    const card = $('#pdfPronto'); if (card) card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+  function salvarDescCatalogo(el) {
+    const id = el.dataset.catDesc, v = el.value;
+    const it = store.get().itens.find((x) => x.id === id);
+    if (it && (it.catalogoDesc || '') !== v) { store.patchItem(id, (x) => { x.catalogoDesc = v; }); flashSaved(); }
   }
 
   let pdfLibPromise = null;
@@ -3477,7 +3786,7 @@ input[type=color].input { padding: 4px; height: 46px; }
     for (let i = 0; i < ks.length - 1; i++) { if (typeof o[ks[i]] !== 'object' || o[ks[i]] === null) o[ks[i]] = {}; o = o[ks[i]]; }
     o[ks[ks.length - 1]] = val;
   }
-  const pendKey = (el) => (el.dataset.pdf ? 'pdf:' + el.dataset.pdf : 'cl:' + el.dataset.clausula + ':' + el.dataset.field);
+  const pendKey = (el) => (el.dataset.pdf ? 'pdf:' + el.dataset.pdf : 'bl:' + el.dataset.bloco + ':' + el.dataset.field);
   function readPdfValue(el) {
     const t = el.dataset.type;
     if (t === 'check') return el.checked;
@@ -3486,7 +3795,7 @@ input[type=color].input { padding: 4px; height: 46px; }
     return el.value;
   }
   // o que for alterado na proposta vira o padrão dos próximos pregões (campos próprios de cada edital ficam só no pregão)
-  const PDF_SO_NO_PREGAO = ['prazoEntrega', 'localEntrega', 'observacoes', 'icmsAliq', 'desc.objetoTexto'];
+  const PDF_SO_NO_PREGAO = ['prazoEntrega', 'localEntrega', 'observacoes', 'icmsAliq'];
   const clonar = (x) => JSON.parse(JSON.stringify(x));
   function lembrarPadraoPdf(path, v) {
     if (PDF_SO_NO_PREGAO.includes(path)) return;
@@ -3494,45 +3803,43 @@ input[type=color].input { padding: 4px; height: 46px; }
     setPathObj(pad, path, v);
     store.setConfigPath('pdfPadrao', pad, { silent: true });
   }
-  // cláusulas: parte das que o pregão já tem; se ele ainda não tem as suas, parte do padrão salvo
-  const clausulasAtuais = (p) => {
-    const own = p && p.pdfOpts && p.pdfOpts.desc && p.pdfOpts.desc.clausulas;
+  // cláusulas livres: parte das que o pregão já tem; se ainda não tem, parte do padrão salvo
+  const blocosAtuais = (p) => {
+    const own = p && p.pdfOpts && p.pdfOpts.desc && p.pdfOpts.desc.blocos;
     if (Array.isArray(own)) return own;
     const pad = store.get().config.pdfPadrao;
-    return pad && pad.desc && Array.isArray(pad.desc.clausulas) ? pad.desc.clausulas : [];
+    return pad && pad.desc && Array.isArray(pad.desc.blocos) ? pad.desc.blocos : [];
   };
-  function lembrarClausulas() {
+  function lembrarBlocos() {
     const p = store.get().pregoes.find((x) => x.id === UI.pdf.pregaoId);
-    const arr = p && p.pdfOpts && p.pdfOpts.desc && p.pdfOpts.desc.clausulas;
+    const arr = p && p.pdfOpts && p.pdfOpts.desc && p.pdfOpts.desc.blocos;
     if (!Array.isArray(arr)) return;
     const pad = clonar(store.get().config.pdfPadrao || {});
-    setPathObj(pad, 'desc.clausulas', clonar(arr));
+    setPathObj(pad, 'desc.blocos', clonar(arr));
     store.setConfigPath('pdfPadrao', pad, { silent: true });
   }
   function commitPdf(el) {
     Guard.pending.delete(pendKey(el));
     const id = UI.pdf.pregaoId; if (!id) return;
-    if (el.dataset.clausula) { patchClausula(el.dataset.clausula, el.dataset.field, readPdfValue(el)); flashSaved(); return; }
+    if (el.dataset.bloco !== undefined) { patchBloco(Number(el.dataset.bloco), el.dataset.field, readPdfValue(el)); flashSaved(); return; }
     const v = readPdfValue(el);
     store.patchPregao(id, (p) => { p.pdfOpts = p.pdfOpts || {}; setPathObj(p.pdfOpts, el.dataset.pdf, v); }, true);
     lembrarPadraoPdf(el.dataset.pdf, v);
     flashSaved();
   }
-  function patchClausula(cid, field, val) {
+  function patchBloco(n, field, val) {
     store.patchPregao(UI.pdf.pregaoId, (p) => {
       p.pdfOpts = p.pdfOpts || {}; p.pdfOpts.desc = p.pdfOpts.desc || {};
-      const arr = clausulasAtuais(p).map((c) => Object.assign({}, c));
-      let c = arr.find((x) => x.id === cid);
-      if (!c) { c = { id: cid }; arr.push(c); }
-      const def = C.CLAUSULAS_PADRAO.find((d) => d.id === cid);
-      if (field === 'texto' && def && val === def.texto) delete c.texto; else c[field] = val;
-      p.pdfOpts.desc.clausulas = arr.filter((x) => x.custom || x.ativo !== undefined || x.texto !== undefined);
+      const arr = blocosAtuais(p).map((c) => Object.assign({}, c));
+      if (!arr[n]) return;
+      arr[n][field] = val;
+      p.pdfOpts.desc.blocos = arr;
     }, true);
-    lembrarClausulas();
+    lembrarBlocos();
   }
   function commitAllPending() {
     $$('[data-cfg]').forEach((el) => { if (Guard.pending.has(el.dataset.cfg)) commitCfg(el); });
-    $$('[data-pdf],[data-clausula]').forEach((el) => { if (Guard.pending.has(pendKey(el))) commitPdf(el); });
+    $$('[data-pdf],[data-bloco]').forEach((el) => { if (Guard.pending.has(pendKey(el))) commitPdf(el); });
   }
   async function gerarPDF() {
     commitAllPending();
@@ -3541,14 +3848,17 @@ input[type=color].input { padding: 4px; height: 46px; }
     UI.pdf.busy = true; render();
     try {
       await ensurePdfLib();
-      const res = await window.PropostaPDF.gerarProposta(store.get(), id, { fonte: UI.pdf.fonte, data: UI.pdf.data || C.hojeISO() });
+      const junto = !!store.get().config.proposta.catalogoJunto;
+      if (junto) $$('[data-cat-desc]').forEach(salvarDescCatalogo);
+      const imagens = junto ? await imagensCatalogo(id) : null;
+      const res = await window.PropostaPDF.gerarProposta(store.get(), id, { fonte: UI.pdf.fonte, data: UI.pdf.data || C.hojeISO(), anexarCatalogo: junto, imagens });
       if (UI.pdf.result) URL.revokeObjectURL(UI.pdf.result.url);
       const blob = new Blob([res.bytes], { type: 'application/pdf' });
-      UI.pdf.result = { blob, url: URL.createObjectURL(blob), name: res.filename, total: res.total, paginas: res.paginas, semValor: res.semValor };
+      UI.pdf.result = { blob, url: URL.createObjectURL(blob), name: res.filename, total: res.total, paginas: res.paginas, semValor: res.semValor, comCatalogo: junto };
       toast('PDF gerado');
     } catch (e) { console.error(e); toast('Erro ao gerar o PDF: ' + (e.message || e)); }
     UI.pdf.busy = false; render();
-    const card = $('#main .card:last-child'); if (card && UI.pdf.result) card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    const card = $('#pdfPronto'); if (card && UI.pdf.result) card.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
   function baixarPDF() {
     const r = UI.pdf.result; if (!r) return;
@@ -3557,7 +3867,7 @@ input[type=color].input { padding: 4px; height: 46px; }
   async function compartilharPDF() {
     const r = UI.pdf.result; if (!r) return;
     try {
-      const file = new File([r.blob], r.name, { type: 'application/pdf' });
+      const file = new File([r.blob], r.name, { type: r.blob.type || 'application/pdf' });
       if (navigator.canShare && navigator.canShare({ files: [file] })) await navigator.share({ files: [file], title: r.name });
       else baixarPDF();
     } catch (e) { if (e && e.name !== 'AbortError') toast('Não foi possível compartilhar'); }
@@ -3871,16 +4181,18 @@ input[type=color].input { padding: 4px; height: 46px; }
       case 'demo': store.mergeDemo(); toast('Dados de exemplo carregados'); break;
       case 'pdf-pregao': UI.pdf.pregaoId = id; UI.pdf.result = null; setTab('pdf'); break;
       case 'pdf-gerar': gerarPDF(); break;
-      case 'pdf-abrir': if (UI.pdf.result) window.open(UI.pdf.result.url, '_blank'); break;
+      case 'cat-gerar': gerarCatalogo(); break;
+      case 'cat-docx': gerarCatalogoDocx(); break;
+      case 'cat-del': (async () => { const arr = await CatImg.get(id); arr.splice(Number(t.dataset.v), 1); await CatImg.set(id, arr); preencherFotosCatalogo(); })(); break;
+      case 'pdf-abrir': if (UI.pdf.result) { if (UI.pdf.result.docx) baixarPDF(); else window.open(UI.pdf.result.url, '_blank'); } break;
       case 'pdf-baixar': baixarPDF(); break;
       case 'pdf-compartilhar': compartilharPDF(); break;
       case 'pdf-modelo': commitAllPending(); store.patchPregao(UI.pdf.pregaoId, (p) => { p.pdfOpts = p.pdfOpts || {}; p.pdfOpts.modelo = t.dataset.v; }, true); UI.pdf.result = null; UI.keepScroll = true; render(); break;
       case 'pdf-datamodo': store.patchPregao(UI.pdf.pregaoId, (p) => { p.pdfOpts = p.pdfOpts || {}; setPathObj(p.pdfOpts, 'desc.localDataModo', t.dataset.v); }, true); lembrarPadraoPdf('desc.localDataModo', t.dataset.v); UI.keepScroll = true; render(); break;
       case 'pdf-padrao': { commitAllPending(); const p = store.get().pregoes.find((x) => x.id === UI.pdf.pregaoId); store.setConfigPath('pdfPadrao', JSON.parse(JSON.stringify((p && p.pdfOpts) || {})), { silent: true }); toast('Estas opções agora são o padrão dos novos pregões'); break; }
       case 'pdf-reset': confirmar('Voltar ao padrão?', 'As chavinhas e textos deste pregão voltam ao padrão do app (ou ao padrão que você salvou).', 'Voltar ao padrão', false).then((ok) => { if (ok) { store.patchPregao(UI.pdf.pregaoId, (p) => { p.pdfOpts = null; }, true); UI.keepScroll = true; render(); } }); break;
-      case 'clausula-add': commitAllPending(); store.patchPregao(UI.pdf.pregaoId, (p) => { p.pdfOpts = p.pdfOpts || {}; p.pdfOpts.desc = p.pdfOpts.desc || {}; p.pdfOpts.desc.clausulas = clausulasAtuais(p).concat([{ id: 'x' + Date.now().toString(36), custom: true, ativo: true, texto: '' }]); }, true); lembrarClausulas(); UI.acc.add('acc-cl'); UI.keepScroll = true; render(); break;
-      case 'clausula-del': store.patchPregao(UI.pdf.pregaoId, (p) => { p.pdfOpts = p.pdfOpts || {}; p.pdfOpts.desc = p.pdfOpts.desc || {}; p.pdfOpts.desc.clausulas = clausulasAtuais(p).filter((c) => c.id !== id); }, true); lembrarClausulas(); UI.keepScroll = true; render(); break;
-      case 'clausula-padrao': patchClausula(id, 'texto', C.CLAUSULAS_PADRAO.find((d) => d.id === id).texto); UI.keepScroll = true; render(); break;
+      case 'bloco-add': commitAllPending(); store.patchPregao(UI.pdf.pregaoId, (p) => { p.pdfOpts = p.pdfOpts || {}; p.pdfOpts.desc = p.pdfOpts.desc || {}; p.pdfOpts.desc.blocos = blocosAtuais(p).concat([{ titulo: '', texto: '' }]); }, true); lembrarBlocos(); UI.acc.add('acc-bl'); UI.keepScroll = true; render(); break;
+      case 'bloco-del': commitAllPending(); store.patchPregao(UI.pdf.pregaoId, (p) => { p.pdfOpts = p.pdfOpts || {}; p.pdfOpts.desc = p.pdfOpts.desc || {}; p.pdfOpts.desc.blocos = blocosAtuais(p).filter((_, k) => k !== Number(id)); }, true); lembrarBlocos(); UI.keepScroll = true; render(); break;
       case 'wm-tipo': commitAllPending(); store.setConfigPath('marcaDagua.tipo', t.dataset.v, { silent: true }); UI.keepScroll = true; render(); break;
       case 'hd-pos': store.setConfigPath('cabecalho.pos', t.dataset.v, { silent: true }); UI.keepScroll = true; render(); break;
       case 'hd-remover': store.setConfigPath('cabecalho.imagem', null, { silent: true }); imagemMudou('cabecalho'); UI.keepScroll = true; render(); break;
@@ -3910,7 +4222,7 @@ input[type=color].input { padding: 4px; height: 46px; }
       if (t.dataset.ui === 'pregaoId' || t.dataset.ui === 'fonte') return; // selects: tratados em change
       UI.pdf[t.dataset.ui] = t.value; return;
     }
-    if (t.dataset.pdf || t.dataset.clausula) { if (t.type !== 'checkbox') Guard.pending.add(pendKey(t)); return; }
+    if (t.dataset.pdf || t.dataset.bloco !== undefined) { if (t.type !== 'checkbox') Guard.pending.add(pendKey(t)); return; }
     if (t.dataset.cfg) {
       Guard.pending.add(t.dataset.cfg);
       if (t.dataset.lb) { const lb = $('#' + t.dataset.lb); if (lb) lb.textContent = t.value + (t.dataset.type === 'pctrange' ? '%' : (t.dataset.suf || '')); }
@@ -3922,9 +4234,11 @@ input[type=color].input { padding: 4px; height: 46px; }
     if (t.dataset.ui === 'pregaoId') { commitAllPending(); UI.pdf.pregaoId = t.value; UI.pdf.result = null; saveUI(); UI.keepScroll = true; render(); return; }
     if (t.dataset.ui === 'fonte') { UI.pdf.fonte = t.value; UI.pdf.result = null; saveUI(); UI.keepScroll = true; render(); return; }
     if (t.dataset.ui) { UI.pdf[t.dataset.ui] = t.value; return; }
-    if (t.dataset.pdf || t.dataset.clausula) { commitPdf(t); return; }
+    if (t.dataset.pdf || t.dataset.bloco !== undefined) { commitPdf(t); return; }
     if (t.dataset.cfg) { commitCfg(t); return; }
     if (t.dataset.statusPregao) { const idp = t.dataset.statusPregao, antes = (store.get().pregoes.find((x) => x.id === idp) || {}).status; store.upsertPregao({ id: idp, status: t.value }); toast('Status: ' + t.value); perguntarItensGanhos(idp, antes); return; }
+    if (t.dataset.catFile && t.files && t.files.length) { incluirFotosCatalogo(t.dataset.catFile, [...t.files]); t.value = ''; return; }
+    if (t.dataset.catDesc) { salvarDescCatalogo(t); return; }
     if (t.hasAttribute('data-hd-file') && t.files && t.files[0]) {
       downscaleImage(t.files[0], 1800).then((url) => {
         store.setConfigPath('cabecalho.imagem', url, { silent: true }); imagemMudou('cabecalho');
