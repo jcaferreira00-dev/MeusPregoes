@@ -345,6 +345,13 @@ input.input[type=datetime-local]::-webkit-date-and-time-value, input.input[type=
 .mini-p .mp-org { flex: 1; min-width: 0; }
 .mini-p .mp-st { flex: none; font-size: 11px; font-weight: 700; padding: 2px 9px; border-radius: 99px; border: 1px solid var(--line); background: color-mix(in srgb, var(--muted) 12%, transparent); white-space: nowrap; }
 .mini-list { display: flex; flex-direction: column; gap: 6px; }
+/* concluídos: compactos, mas com destaque verde (não ficam apagados como os desistidos) */
+.mini-p.conc { filter: none; opacity: 1; color: var(--ink); border-color: color-mix(in srgb, var(--green) 40%, var(--line)); border-left: 4px solid var(--green); background: color-mix(in srgb, var(--green) 6%, var(--card)); }
+.mini-p.conc .mp-ok { flex: none; width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; background: var(--green); color: #fff; }
+.mini-p.conc .mp-ok svg { width: 12px; height: 12px; stroke-width: 3.2; }
+.mini-p.conc .mp-num { color: var(--muted); }
+.mini-p.conc .mp-st { background: var(--green-soft); color: var(--green); border-color: transparent; }
+.mini-hd.conc { color: var(--green); }
 .mini-hd { margin: 14px 2px 8px; font-size: 11px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
 /* item: estrelas, valores, fora da disputa, link */
 .icard .rcol { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex: none; }
@@ -656,7 +663,7 @@ input[type=color].input { padding: 4px; height: 46px; }
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.36.0';
+  const APP_VERSION = '1.37.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Em disputa', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -2387,7 +2394,7 @@ input[type=color].input { padding: 4px; height: 46px; }
 
   /* ---------- estado da interface ---------- */
   const UI = {
-    tab: 'painel', detailId: null, filtro: 'todos', busca: '', buscaI: '', mostrarOcultos: false, mostrarEnc: false, dash: { periodo: 'tudo', etapa: null, orgao: null, mes: null, pode: null, todos: false },
+    tab: 'painel', detailId: null, filtro: 'todos', busca: '', buscaI: '', mostrarOcultos: false, mostrarEnc: false, mostrarConcl: false, dash: { periodo: 'tudo', etapa: null, orgao: null, mes: null, pode: null, todos: false },
     acomp: { filtro: 'todos' }, itensModo: 'cards', pdf: { pregaoId: null, tipo: 'inicial', fonte: 'auto', data: C.hojeISO(), busy: false, result: null }, acc: new Set(['acc-forn']),
     ignorePop: 0, deferredPrompt: null, reloadPending: false, updateBanner: false,
   };
@@ -3159,7 +3166,8 @@ input[type=color].input { padding: 4px; height: 46px; }
   }
   // fora do painel? 'manual' (você tirou) | 'auto' (2 dias após a sessão ou 3 dias após o fim do prazo de propostas) | null
   function miniPregao(p, flag) {
-    return `<article class="mini-p" data-act="abrir-pregao" data-id="${p.id}" tabindex="0" role="button" aria-label="Abrir pregão ${esc(p.numero)} ${esc(p.orgao)}"><span class="mp-num">Nº ${esc(p.numero)}</span><span class="mp-org ell">${esc(p.orgao)}</span>${flag ? '<span class="mp-star" title="Tem item que posso ganhar">★</span>' : ''}<span class="mp-st">${esc(p.status)}</span></article>`;
+    const conc = p.status === 'Concluído';
+    return `<article class="mini-p${conc ? ' conc' : ''}" data-act="abrir-pregao" data-id="${p.id}" tabindex="0" role="button" aria-label="Abrir pregão ${esc(p.numero)} ${esc(p.orgao)}">${conc ? `<span class="mp-ok">${icon('check', 'sm')}</span>` : ''}<span class="mp-num">Nº ${esc(p.numero)}</span><span class="mp-org ell">${esc(p.orgao)}</span>${flag ? '<span class="mp-star" title="Tem item que posso ganhar">★</span>' : ''}<span class="mp-st">${esc(p.status)}</span></article>`;
   }
   function painelOculto(p) {
     if (p.ocultoPainel) return 'manual';
@@ -3213,14 +3221,18 @@ input[type=color].input { padding: 4px; height: 46px; }
     const todos = [...R.pMap.values()];
     const vis = todos.filter((x) => !painelOculto(x.p)).sort((a, b) => (rankStatus(a.p.status) - rankStatus(b.p.status)) || ordemPainel(a, b));
     const oc = todos.filter((x) => painelOculto(x.p)).sort(ordemPainel);
-    const ativosV = vis.filter((x) => !C.INATIVOS.includes(x.p.status)), enc = vis.filter((x) => C.INATIVOS.includes(x.p.status));
+    const ativosV = vis.filter((x) => !C.INATIVOS.includes(x.p.status));
+    const concl = vis.filter((x) => x.p.status === 'Concluído');
+    const enc = vis.filter((x) => C.INATIVOS.includes(x.p.status) && x.p.status !== 'Concluído');
+    const conclHtml = concl.length ? `<div class="mini-hd conc">Concluídos (${concl.length})</div><div class="mini-list">${(UI.mostrarConcl ? concl : concl.slice(0, 5)).map((x) => miniPregao(x.p, false)).join('')}</div>${concl.length > 5 ? `<button class="btn sm ghost" style="margin-top:8px" data-act="painel-concluidos">${UI.mostrarConcl ? 'Mostrar menos' : 'Ver todos (' + concl.length + ')'}</button>` : ''}` : '';
     const encHtml = enc.length ? `<div class="mini-hd">Encerrados (${enc.length})</div><div class="mini-list">${(UI.mostrarEnc ? enc : enc.slice(0, 5)).map((x) => miniPregao(x.p, x.nPode > 0)).join('')}</div>${enc.length > 5 ? `<button class="btn sm ghost" style="margin-top:8px" data-act="painel-encerrados">${UI.mostrarEnc ? 'Mostrar menos' : 'Ver todos (' + enc.length + ')'}</button>` : ''}` : '';
     const lista = oc.map((x) => {
       const manual = painelOculto(x.p) === 'manual';
       return `<div class="strow"><div><b>${esc(x.p.orgao)}</b><div class="tiny muted">Nº ${esc(x.p.numero)} · ${manual ? 'tirado do painel por você' : 'prazo já passou'}</div></div>${manual ? `<button class="btn sm" data-act="mostrar-painel" data-id="${x.p.id}">Voltar ao painel</button>` : `<button class="btn sm" data-act="abrir-pregao" data-id="${x.p.id}">Abrir</button>`}</div>`;
     }).join('');
     return `<div class="card"><h3><span class="grow">Pregões (${ativosV.length})</span>${oc.length ? `<button class="btn sm" data-act="painel-ocultos">${icon('eye', 'sm')} ${UI.mostrarOcultos ? 'Esconder' : 'Ver'} ocultos (${oc.length})</button>` : ''}</h3>
-      ${ativosV.length ? `<div class="pgrid">${ativosV.map(painelCard).join('')}</div>` : (enc.length ? '' : `<p class="muted small">Nenhum pregão no painel agora. Os cadastrados continuam na aba Pregões.</p>`)}
+      ${ativosV.length ? `<div class="pgrid">${ativosV.map(painelCard).join('')}</div>` : (enc.length || concl.length ? '' : `<p class="muted small">Nenhum pregão no painel agora. Os cadastrados continuam na aba Pregões.</p>`)}
+      ${conclHtml}
       ${encHtml}
       ${UI.mostrarOcultos && oc.length ? `<div class="pgoc"><div class="small muted" style="margin-bottom:6px">Fora do painel (continuam na aba Pregões)</div>${lista}</div>` : ''}</div>`;
   }
@@ -4678,6 +4690,7 @@ input[type=color].input { padding: 4px; height: 46px; }
       case 'dash-filtro': { const k = t.dataset.k, v = t.dataset.v; UI.dash[k] = UI.dash[k] === v ? null : v; UI.keepScroll = true; render(); break; }
       case 'dash-limpar': UI.dash.etapa = UI.dash.orgao = UI.dash.mes = UI.dash.pode = null; UI.keepScroll = true; render(); break;
       case 'dash-mais': UI.dash.todos = !UI.dash.todos; UI.keepScroll = true; render(); break;
+      case 'painel-concluidos': UI.mostrarConcl = !UI.mostrarConcl; UI.keepScroll = true; render(); break;
       case 'painel-encerrados': UI.mostrarEnc = !UI.mostrarEnc; UI.keepScroll = true; render(); break;
       case 'painel-ocultos': UI.mostrarOcultos = !UI.mostrarOcultos; UI.keepScroll = true; render(); break;
       case 'voltar': if (history.state && history.state.detail) history.back(); else { UI.detailId = null; render(); } break;
