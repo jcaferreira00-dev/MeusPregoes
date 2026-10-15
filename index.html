@@ -660,6 +660,10 @@ input[type=color].input { padding: 4px; height: 46px; }
 .pgc.falta { --pc: var(--red); border: 3px solid var(--red); }
 @media (prefers-reduced-motion: reduce) { .pgc.p-bad, .pgc.p-warn, .pgc.p-falta, .pgc.p-disputa { box-shadow: 0 0 0 2px var(--pc), var(--shadow); } }
 
+/* lance final em destaque no formulário do item (é o valor que vai para o PDF) */
+.field.destaque { background: var(--amber-soft); border: 2px solid var(--amber); border-radius: 12px; padding: 10px 12px; }
+.field.destaque label, .field.destaque .hint { color: var(--amber); font-weight: 700; }
+
 /* nº do item no edital (facilita achar no PDF do edital) */
 .itag { display: inline-block; font-size: 11.5px; font-weight: 800; padding: 2px 8px; border-radius: 8px; background: var(--blue-soft); color: var(--blue); margin-right: 8px; white-space: nowrap; vertical-align: 1px; }
 </style>
@@ -674,7 +678,7 @@ input[type=color].input { padding: 4px; height: 46px; }
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.43.0';
+  const APP_VERSION = '1.44.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Em disputa', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -2517,7 +2521,7 @@ input[type=color].input { padding: 4px; height: 46px; }
 
   function field(o) {
     const id = 'f_' + o.name;
-    const cls = o.full ? 'field full' : 'field';
+    const cls = (o.full ? 'field full' : 'field') + (o.cls ? ' ' + o.cls : '');
     let ctl;
     if (o.type === 'textarea') ctl = `<textarea class="input" id="${id}" name="${o.name}" placeholder="${esc(o.ph || '')}" rows="2">${esc(o.value)}</textarea>`;
     else if (o.type === 'select') ctl = `<select class="input" id="${id}" name="${o.name}">${o.options.map((x) => `<option value="${esc(x.v)}"${String(x.v) === String(o.value) ? ' selected' : ''}>${esc(x.l)}</option>`).join('')}</select>`;
@@ -3010,8 +3014,9 @@ input[type=color].input { padding: 4px; height: 46px; }
         ${field({ label: 'Especificações adicionais', name: 'especificacoes', type: 'textarea', value: v.especificacoes, full: true, ph: 'Ex.: cor, voltagem, capacidade, material, garantia…', hint: 'Aparece na proposta, junto da marca/modelo.' })}
         ${field({ label: 'Quantidade *', name: 'qtd', value: v.qtd, inputmode: 'decimal' })}
         ${field({ label: 'Custo unit. (R$) *', name: 'custo', value: v.custo, inputmode: 'decimal', hint: 'O que eu vou pagar' })}
-        ${field({ label: 'Valor unit. do edital (teto)', name: 'teto', value: v.teto, inputmode: 'decimal', hint: 'Máximo que o órgão aceita' })}
         ${field({ label: 'Frete do fornecedor (R$, total do item)', name: 'frete', value: v.frete, inputmode: 'decimal' })}
+        ${field({ label: 'Valor unit. do edital (teto)', name: 'teto', value: v.teto, inputmode: 'decimal', hint: 'Máximo que o órgão aceita' })}
+        ${field({ label: 'Lance final (R$ unit., opcional)', name: 'lanceFinal', value: v.lanceFinal, inputmode: 'decimal', full: true, cls: 'destaque', hint: 'Preenchido, é este o valor que sai na proposta em PDF. Vazio = sai o teto do edital.' })}
         ${field({ label: 'Descrição completa do edital (vai no PDF)', name: 'descEdital', type: 'textarea', value: v.descEdital, full: true, ph: 'Cole aqui a descrição do item como está no edital', hint: 'Se ficar vazia, o PDF usa o nome do item.' })}
         <div class="field full" id="linkBox"><label for="f_ondeLink">Onde comprar (link)</label>
           <input type="hidden" name="onde" value="${esc(v.onde)}">
@@ -3024,7 +3029,6 @@ input[type=color].input { padding: 4px; height: 46px; }
         <div class="full"><label class="switch"><span>Posso ganhar<small class="hint" style="display:block;font-weight:500">Marque se ficou perto do 1º colocado neste item e ainda é possível ganhar. Dá para filtrar no Dashboard.</small></span><input type="checkbox" name="possivelGanhar"${v.possivelGanhar ? ' checked' : ''}></label></div>
         ${field({ label: 'Minha margem (%)', name: 'margem', value: v.margem, inputmode: 'decimal', ph: 'padrão: ' + C.numBR(cfg.margemPadrao * 100, 2).replace(',00', '') + '%', hint: 'Vazio = margem padrão' })}
         ${field({ label: 'Minha colocação na disputa', name: 'colocacao', value: v.colocacao, inputmode: 'numeric', ph: 'ex.: 3', hint: 'Em que lugar você ficou neste item (1 = primeiro).' })}
-        ${field({ label: 'Lance final (R$ unit., opcional)', name: 'lanceFinal', value: v.lanceFinal, inputmode: 'decimal', hint: 'Depois de disputar. Vazio = conta pelo teto.' })}
         ${field({ label: 'Valor do vencedor (R$ unit., se perdi)', name: 'vencedor', value: v.vencedor, inputmode: 'decimal', hint: 'Quanto quem ganhou ofertou. Alimenta a análise “Preço de quem ganhou” no Painel.' })}
       </div>`;
         openForm({
