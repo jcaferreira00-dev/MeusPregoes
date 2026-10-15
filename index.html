@@ -674,7 +674,7 @@ input[type=color].input { padding: 4px; height: 46px; }
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.40.0';
+  const APP_VERSION = '1.41.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Em disputa', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -1087,8 +1087,10 @@ input[type=color].input { padding: 4px; height: 46px; }
       const c = R.iMap.get(it.id);
       if (tipo !== 'inicial' && c && c.naoGanhou) { omitidos += 1; continue; }   // proposta final: só os itens ganhos
       let up;
+      // preço guardado pela regra antiga (= valor mínimo, abaixo do teto): não vale mais, refaz pela regra atual (teto)
+      const velho = temIni(it) && c && c.minimo !== null && c.teto !== null && c.minimo < c.teto - 0.005 && Math.abs(it.precoInicial - c.minimo) < 0.006;
       if (tipo === 'inicial') {
-        if (temIni(it)) { up = fixo(it.precoInicial); congelados += 1; }
+        if (temIni(it) && !velho) { up = fixo(it.precoInicial); congelados += 1; }
         else up = unitProposta(Object.assign({}, c, { lance: null }), fonte);
       } else if (tipo === 'final') {
         up = unitProposta(c, fonte);   // lance final; sem lance, o teto do edital
@@ -1110,7 +1112,7 @@ input[type=color].input { padding: 4px; height: 46px; }
         n, id: it.id, catalogo: String(it.catalogoDesc || '').trim(), numeroItem: (it.itemEdital && String(it.itemEdital).trim()) || String(n).padStart(2, '0'),
         descricao: it.descricao || '', descEdital: (it.descEdital && it.descEdital.trim()) || it.descricao || '',
         marca: it.marca || '', especificacoes: String(it.especificacoes || '').trim(), un: it.unidade || 'Un', qtd,
-        unit, total: tot, aliq, unitS, totalS: totS, teto: c.teto, minimo: c.minimo, lance: c.lance, precoInicial: temIni(it) ? it.precoInicial : null, acimaTeto: (unit !== null && c.teto !== null && unit > c.teto + 1e-9), limitadoTeto, unitOriginal, abaixoMinimo,
+        recongelar: tipo === 'inicial' && velho, unit, total: tot, aliq, unitS, totalS: totS, teto: c.teto, minimo: c.minimo, lance: c.lance, precoInicial: temIni(it) ? it.precoInicial : null, acimaTeto: (unit !== null && c.teto !== null && unit > c.teto + 1e-9), limitadoTeto, unitOriginal, abaixoMinimo,
       });
     }
     return { linhas, total: round2(total), totalS: round2(totalS), semValor, limitados, abaixoMin, lanceAcima, omitidos, reducao: round2(reducao), pregao: pst.p, tipo: tipo || '', congelados, ganho: !!pst.ganho };
@@ -2230,7 +2232,7 @@ input[type=color].input { padding: 4px; height: 46px; }
 
     const bytes = await doc.save();
     const filename = `Proposta${o.tipo === 'final' ? '_Final' : (o.tipo === 'inicial' ? '_Inicial' : '')}_${slug(preg.numero) || 'compra'}_${slug(preg.orgao) || 'orgao'}.pdf`;
-    return { bytes, filename, linhasRes: L.linhas.map((x) => ({ id: x.id, unit: x.unit })), total: L.total, linhas: L.linhas.length, semValor: L.semValor, paginas: pages.length };
+    return { bytes, filename, linhasRes: L.linhas.map((x) => ({ id: x.id, unit: x.unit, recongelar: !!x.recongelar })), total: L.total, linhas: L.linhas.length, semValor: L.semValor, paginas: pages.length };
   }
 
 
@@ -4404,7 +4406,7 @@ input[type=color].input { padding: 4px; height: 46px; }
       // proposta inicial: guarda os preços na 1ª geração (depois ela sai sempre igual)
       if (tipo === 'inicial') {
         let n = 0;
-        (res.linhasRes || []).forEach((x) => { const it = store.get().itens.find((i) => i.id === x.id); if (it && (it.precoInicial === null || it.precoInicial === undefined) && x.unit !== null) { store.patchItem(x.id, (i) => { i.precoInicial = x.unit; }); n += 1; } });
+        (res.linhasRes || []).forEach((x) => { const it = store.get().itens.find((i) => i.id === x.id); if (it && (it.precoInicial === null || it.precoInicial === undefined || x.recongelar) && x.unit !== null) { store.patchItem(x.id, (i) => { i.precoInicial = x.unit; }); n += 1; } });
         if (n) store.patchPregao(id, (p) => { if (!p.precoInicialEm) p.precoInicialEm = C.hojeISO(); }, true);
       }
       if (UI.pdf.result) URL.revokeObjectURL(UI.pdf.result.url);
