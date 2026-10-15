@@ -649,7 +649,7 @@ input[type=color].input { padding: 4px; height: 46px; }
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.34.0';
+  const APP_VERSION = '1.35.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Em disputa', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -3477,7 +3477,7 @@ input[type=color].input { padding: 4px; height: 46px; }
         <p class="tiny muted" style="margin-top:10px">Lucro previsto dos pregões ativos menos o DAS do ano. MEI não paga percentual sobre a venda (dentro do limite). Optante do Simples/MEI em geral não sofre retenção de IR, PIS, Cofins e CSLL do órgão público: se o órgão pedir, apresente a declaração do Anexo IV da IN RFB 1.234/2012. Ajuste em Config › Tributos.</p></div>
       <div class="two-col">
         <div class="card m-hide"><h3>Pregões por status</h3>${R.statusRows.map((r) => `<div class="strow"><div class="row">${badgeStatus(r.status)}<span class="small muted">${r.count} pregão(ões)</span></div><b>${C.brl0(r.venda)}</b><div class="bar"><div style="width:${(r.venda / maxV * 100).toFixed(1)}%"></div></div></div>`).join('')}</div>
-        <div class="card m-hide"><h3>De onde vem o preço de venda</h3><div class="donut-wrap">
+        <div class="card"><h3>De onde vem o preço de venda</h3><div class="donut-wrap">
           <svg viewBox="0 0 160 160" role="img" aria-label="Composição do preço"><circle cx="80" cy="80" r="54" fill="none" stroke="var(--line)" stroke-width="22"/>${comp.venda > 0 ? arcs : ''}
             <text x="80" y="76" text-anchor="middle" font-size="22" font-weight="800" fill="currentColor">${margemTot == null ? '—' : C.pct(margemTot, 0)}</text><text x="80" y="95" text-anchor="middle" font-size="11" fill="var(--muted)">de lucro</text></svg>
           <div class="donut-leg">${segs.map(([l, v, col]) => `<div><i style="background:${col}"></i>${l}<b>${C.brl0(v)}</b></div>`).join('')}</div></div>
