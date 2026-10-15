@@ -441,8 +441,8 @@ input.input[type=datetime-local]::-webkit-date-and-time-value, input.input[type=
   html .pgrid { gap: 8px; }
   html .pgc { min-height: 0; padding: 9px 10px; gap: 3px; border-radius: 14px; }
   html .pgc .pgc-num { font-size: 10.5px; padding-right: 26px; }
-  html .pgc .pgc-plat { font-size: 10px; padding: 1px 7px; } html .pgc .pgc-plat svg { width: 10px; height: 10px; }
-  html .pgc h4 { font-size: 13px; -webkit-line-clamp: 2; }
+  html .pgc .pgc-plat { font-size: 11.5px; padding: 4px 8px; gap: 5px; border-radius: 8px; } html .pgc .pgc-plat svg { width: 12px; height: 12px; }
+  html .pgc h4 { font-size: 13px; -webkit-line-clamp: 2; min-height: 2.5em; }
   html .pgc .pgc-meta { font-size: 10.5px; gap: 1px; }
   html .pgc .pgc-meta svg { width: 11px; height: 11px; }
   html .pgc-al { font-size: 10px; padding: 2px 6px; gap: 4px; } html .pgc-al .dot { width: 6px; height: 6px; }
@@ -615,10 +615,13 @@ input[type=color].input { padding: 4px; height: 46px; }
 
 .pgc:focus-visible { outline: 3px solid var(--sc); outline-offset: 2px; }
 .pgc .pgc-num { font-size: 12px; font-weight: 800; color: var(--sc); padding-right: 30px; }
-.pgc .pgc-plat { align-self: flex-start; display: inline-flex; align-items: center; gap: 4px; max-width: 100%; font-size: 11px; font-weight: 800; letter-spacing: .02em; padding: 2px 8px; border-radius: 99px; color: var(--sc); background: color-mix(in srgb, var(--sc) 14%, var(--card)); border: 1px solid color-mix(in srgb, var(--sc) 35%, transparent); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.pgc .pgc-plat svg { width: 12px; height: 12px; flex: none; }
+.pgc .pgc-plat { align-self: stretch; display: flex; align-items: center; gap: 6px; min-width: 0; font-size: 12.5px; font-weight: 800; letter-spacing: .02em; padding: 5px 10px; border-radius: 9px; color: #fff; background: color-mix(in srgb, var(--sc) 82%, #10151f); border: 1px solid transparent; box-shadow: 0 2px 6px color-mix(in srgb, var(--sc) 30%, transparent); white-space: nowrap; }
+.pgc .pgc-plat svg { width: 14px; height: 14px; flex: none; }
+.pgc .pgc-plat.vazio { color: var(--muted); background: transparent; border: 1px dashed color-mix(in srgb, var(--muted) 45%, transparent); box-shadow: none; font-weight: 600; }
 .pgc .pgc-plat > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
-.pgc h4 { font-size: 14.5px; font-weight: 700; line-height: 1.25; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.pgc h4 { font-size: 14.5px; font-weight: 700; line-height: 1.25; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; min-height: 2.5em; }
+.pgc .pgc-meta span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pgc .pgc-meta svg { flex: none; }
 .pgc .pgc-meta { display: flex; flex-direction: column; gap: 2px; font-size: 11.5px; color: var(--muted); }
 .pgc .pgc-meta span { display: flex; align-items: center; gap: 4px; min-width: 0; }
 .pgc-cd { display: flex; flex-direction: column; gap: 1px; padding: 5px 8px; border-radius: 10px; background: color-mix(in srgb, var(--sc) 10%, var(--card)); align-self: stretch; }
@@ -669,7 +672,7 @@ input[type=color].input { padding: 4px; height: 46px; }
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.38.2';
+  const APP_VERSION = '1.39.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Em disputa', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -3223,8 +3226,8 @@ input[type=color].input { padding: 4px; height: 46px; }
     return `<article class="pgc ${pulse}${enviada ? ' enviada' : ''}${p.status === 'Falta dados' ? ' falta' : ''}" style="--sc:${cor}" data-act="abrir-pregao" data-id="${p.id}" tabindex="0" role="button" aria-label="Abrir pregão ${esc(p.numero)} ${esc(p.orgao)}">
       <button type="button" class="pgc-x" data-act="ocultar-painel" data-id="${p.id}" title="Tirar do painel (não exclui o pregão)" aria-label="Tirar do painel">${icon('x', 'sm')}</button>
       <span class="pgc-num">Nº ${esc(p.numero)}</span>
-      ${plataformaDe(p) ? `<span class="pgc-plat" title="Plataforma do pregão">${icon('web', 'sm')}<span>${esc(plataformaDe(p))}</span></span>` : ''}
-      <h4>${esc(p.orgao)}</h4>
+      ${plataformaDe(p) ? `<span class="pgc-plat" title="Plataforma do pregão">${icon('web', 'sm')}<span>${esc(plataformaDe(p))}</span></span>` : `<span class="pgc-plat vazio" title="Informe a plataforma no cadastro do pregão">${icon('web', 'sm')}<span>Sem plataforma</span></span>`}
+      <h4 title="${esc(p.orgao)}">${esc(p.orgao)}</h4>
       <div class="pgc-meta">${meta}</div>
       ${(() => {
         const ref = p.sessao || p.prazoPropostas, d = diasDesde(ref);
