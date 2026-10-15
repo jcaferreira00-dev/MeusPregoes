@@ -451,33 +451,31 @@ input.input[type=datetime-local]::-webkit-date-and-time-value, input.input[type=
   html .gbox:has(.acp-tbl) .ghead h3 { font-size: 14.5px; }
   html .gbox:has(.acp-tbl) .gnum { font-size: 10.5px; }
   html .acp-tbl thead { display: none; }
-  html .acp-tbl, html .acp-tbl tbody { display: block; min-width: 0; font-size: 12.5px; }
-  html .acp-tbl tr { display: grid; grid-template-columns: auto auto 1fr auto auto; align-items: center; gap: 6px 10px; padding: 8px 0; border-bottom: 1px dashed var(--line); }
-  html .acp-tbl td { display: flex; flex-direction: column; align-items: flex-start; gap: 1px; padding: 0 !important; border: 0 !important; width: auto !important; min-width: 0 !important; white-space: nowrap !important; }
-  html .acp-tbl td.acp-desc { grid-column: 1 / -1; display: block; white-space: normal !important; }
-  html .acp-tbl .acp-tit { flex-direction: row; align-items: center; gap: 6px; }
-  html .acp-tbl .acp-tit b { font-size: 13px; line-height: 1.25; }
-  html .acp-tbl .acp-tag { font-size: 9.5px; padding: 1px 6px; flex: none; }
-  html .acp-tbl .acp-desc small { display: none; }
-  html .acp-tbl .acp-desc small.acp-obs { display: block; font-size: 11px; }
-  html .acp-tbl td.m-off { display: none; }
-  html .acp-tbl td[data-l]::before { content: attr(data-l); font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .3px; color: var(--muted); }
-  html .acp-tbl td.a-tot { align-items: flex-end; align-self: end; }
-  html .acp-tbl td.a-buy { grid-column: 4; flex-direction: row; align-items: center; align-self: end; }
-  html .acp-tbl td.a-buy::before { display: none; }
-  html .acp-tbl td.a-buy:not(:has(a.buy)) { visibility: hidden; }
-  html .acp-tbl td.a-acts { grid-column: 5; align-items: flex-end; align-self: end; }
+  html .acp-tbl, html .acp-tbl tbody { display: flex; flex-direction: column; gap: 6px; min-width: 0; font-size: 12.5px; }
+  /* cada item: um bloco com borda (verde = venci, amarelo = posso ganhar) */
+  html .acp-tbl tr { display: grid; grid-template-columns: minmax(0, 1fr) auto auto auto; align-items: center; gap: 6px; padding: 7px 8px; border: 1.5px solid var(--line); border-radius: 10px; background: var(--card); }
+  html .acp-tbl tr.r-venci { border-color: var(--green); }
+  html .acp-tbl tr.r-posso { border-color: #e0a100; }
+  html .acp-tbl td { display: flex; align-items: center; gap: 3px; padding: 0 !important; border: 0 !important; width: auto !important; min-width: 0 !important; white-space: nowrap !important; }
+  html .acp-tbl td.acp-desc { display: block; white-space: normal !important; }
+  html .acp-tbl .acp-tit { flex-direction: row; align-items: center; gap: 0; }
+  html .acp-tbl .acp-tit b { font-size: 13px; line-height: 1.25; font-weight: 700; }
+  html .acp-tbl .acp-tag, html .acp-tbl .acp-desc small { display: none !important; }
+  html .acp-tbl td.m-off, html .acp-tbl td.a-val, html .acp-tbl td.a-tot { display: none !important; }
+  html .acp-tbl td[data-l]::before { display: none; }
+  html .acp-tbl td.a-buy:not(:has(a.buy)) { display: none; }
   html .acp-tbl .acp-acts { gap: 4px; }
-  html .acp-tbl .acp-acts .btn.primary { font-size: 0; gap: 0; padding: 3px 9px; } html .acp-tbl .acp-acts .btn.primary svg { width: 16px; height: 16px; }
-  html .acp-tbl .acp-acts .btn.ghost { padding: 3px 7px; }
-  html .acp-tbl .acp-acts .btn { min-height: 30px; padding: 3px 10px; font-size: 12.5px; }
-  html .acp-tbl .buy { width: 26px; height: 26px; font-size: 13px; }
-  html .acp-tbl input.input { width: 64px; min-height: 30px; padding: 2px 6px; font-size: 13px; }
-  html .acp-tbl .coloc-in input.input { width: 40px; }
-  html .acp-tbl .coloc-in { gap: 3px; } html .acp-tbl .coloc-in span:last-child { font-size: 11px; }
+  html .acp-tbl .acp-acts .btn { min-height: 30px; padding: 3px 8px; font-size: 0; gap: 0; }
+  html .acp-tbl .acp-acts .btn svg { width: 16px; height: 16px; }
+  html .acp-tbl .acp-acts [data-act="acomp-desfazer"]::after { content: "↺"; font-size: 16px; line-height: 1; }
+  html .acp-tbl .buy { width: 28px; height: 28px; font-size: 13px; margin: 0; }
+  html .acp-tbl .coloc-in input.input { width: 36px; min-height: 30px; padding: 2px 4px; font-size: 13px; }
+  html .acp-tbl .coloc-in { gap: 1px; } html .acp-tbl .coloc-in span:first-child { display: none; } html .acp-tbl .coloc-in span:last-child { font-size: 11px; }
+  html .acp-foot .acp-tot { display: none; }
+  html .acp-foot .b-tx { display: none; }
   html .gbox .tbl-scroll { overflow: visible; }
   html .acp-foot { margin-top: 2px; } html .acp-foot .small { font-size: 12px; }
-  html .acp-foot .row { width: 100%; } html .acp-foot .row .btn { flex: 1; min-height: 34px; padding: 4px 8px; font-size: 12.5px; }
+  html .acp-foot .row { width: 100%; justify-content: flex-end; } html .acp-foot .row .btn { flex: 0 0 auto; min-height: 32px; padding: 4px 8px; font-size: 12.5px; }
   .pcard .obsline { display: inline-flex; align-items: center; align-self: flex-start; padding: 5px 9px; }
   .pcard .obsline .obs-ic { display: inline-flex; }
   .pcard .obsline .obs-tx { display: none; }
@@ -516,6 +514,8 @@ input.input[type=datetime-local]::-webkit-date-and-time-value, input.input[type=
 .m-acts, .m-meta { display: none; }
 .ic-btn { display: inline-grid; place-items: center; width: 30px; height: 30px; border-radius: 9px; border: 1px solid var(--line); background: var(--card); color: var(--blue); text-decoration: none; }
 .ic-btn svg { width: 16px; height: 16px; }
+.b-tx-m { display: none; }
+@media (max-width: 600px) { .b-tx-m { display: inline; } }
 .cat-pronto { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 10px; padding: 10px 12px; border-radius: 12px; border: 2px solid var(--green); background: var(--green-soft); }
 .acp-tbl td { vertical-align: middle; }
 .acp-tbl { min-width: 0; }
@@ -635,7 +635,7 @@ input[type=color].input { padding: 4px; height: 46px; }
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.32.0';
+  const APP_VERSION = '1.33.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Em disputa', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -3810,7 +3810,7 @@ input[type=color].input { padding: 4px; height: 46px; }
         const compras = comprasDoItem(it);
         const buy = compras.length ? compras.map((k) => k.href ? `<a class="buy" href="${esc(k.href)}" target="_blank" rel="noopener noreferrer" title="Comprar: ${esc(k.label || 'link')}">$</a>` : `<span class="buy sem" title="${esc(k.nome || 'Sem link')}">$</span>`).join('') : '<span class="muted">—</span>';
         const ie = String(it.itemEdital || '').trim();
-        return `<tr>
+        return `<tr class="${l.venci ? 'r-venci' : 'r-posso'}">
           <td class="acp-desc"><div class="acp-tit">${l.venci ? '<span class="acp-tag venci">Venci</span>' : '<span class="acp-tag posso">Posso ganhar</span>'}<b>${ie ? 'Item ' + esc(ie) + ' · ' : ''}${esc(it.descricao)}</b></div>${it.marca ? `<small>${esc(it.marca)}</small>` : ''}${it.obs ? `<small class="acp-obs">${icon('alert', 'sm')} ${esc(it.obs)}</small>` : ''}</td>
           <td class="r m-off" data-l="Qtd">${C.qtdBR(it.qtd)}</td>
           <td class="r m-off" data-l="Custo un.">${C.brl(c.custoUnit)}</td>
@@ -3829,8 +3829,8 @@ input[type=color].input { padding: 4px; height: 46px; }
       return `<section class="gbox" style="--gc:${corDe(p.id)};--sc:${COR_STATUS[p.status] || '#2e75b6'}">
         <header class="ghead"><div class="grow"><div class="gnum">PREGÃO Nº ${esc(p.numero)}</div><h3>${esc(p.orgao)}</h3></div>${badgeStatus(p.status)}</header>
         <div class="tbl-scroll"><table class="tbl acp-tbl"><thead><tr><th>Item</th><th class="r">Qtd</th><th class="r">Custo un.</th><th class="r">Mínimo</th><th class="r">Teto</th><th class="r">Colocação</th><th class="r">Valor final</th><th class="r">Total</th><th class="r">Lucro</th><th class="r">Comprar</th><th class="r"></th></tr></thead><tbody>${rows}</tbody></table></div>
-        <div class="acp-foot"><div class="small">${ls.some((l) => l.posso) ? `Posso ganhar: <b>${C.brl(tot(ls.filter((l) => l.posso)))}</b>` : ''}${ls.some((l) => l.posso) && ganhos.length ? ' · ' : ''}${ganhos.length ? `Venci: <b>${C.brl(tot(ganhos))}</b>` : ''}${semValor ? ` <span class="prazo warn">${semValor} sem valor final</span>` : ''}</div>
-          <div class="row" style="gap:8px"><button type="button" class="btn sm" data-act="abrir-pregao" data-id="${p.id}">${icon('eye', 'sm')} Abrir pregão</button>${ganhos.length ? `<button type="button" class="btn sm navy" data-act="acomp-proposta" data-id="${p.id}">${icon('pdf', 'sm')} Gerar proposta (${ganhos.length} ${ganhos.length === 1 ? 'item vencido' : 'itens vencidos'})</button>` : ''}</div></div>
+        <div class="acp-foot"><div class="small acp-tot">${ls.some((l) => l.posso) ? `Posso ganhar: <b>${C.brl(tot(ls.filter((l) => l.posso)))}</b>` : ''}${ls.some((l) => l.posso) && ganhos.length ? ' · ' : ''}${ganhos.length ? `Venci: <b>${C.brl(tot(ganhos))}</b>` : ''}${semValor ? ` <span class="prazo warn">${semValor} sem valor final</span>` : ''}</div>
+          <div class="row" style="gap:8px"><button type="button" class="btn sm" data-act="abrir-pregao" data-id="${p.id}" title="Abrir pregão">${icon('eye', 'sm')}<span class="b-tx"> Abrir pregão</span></button>${ganhos.length ? `<button type="button" class="btn sm navy" data-act="acomp-proposta" data-id="${p.id}" title="Gerar proposta dos itens vencidos">${icon('pdf', 'sm')}<span class="b-tx"> Gerar proposta (${ganhos.length} ${ganhos.length === 1 ? 'item vencido' : 'itens vencidos'})</span><span class="b-tx-m"> Proposta</span></button>` : ''}</div></div>
       </section>`;
     }).join('');
     return `<div class="page">${topo}${html}</div>`;
