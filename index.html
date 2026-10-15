@@ -427,6 +427,20 @@ input.input[type=datetime-local]::-webkit-date-and-time-value, input.input[type=
   .pcard .lkrow .btn:not(.btn-edital) { display: none; }
   .pcard .lkrow:not(.has-ed) { display: none; }
   .m-hide { display: none !important; }
+  /* Painel no celular: 4 quadros do topo menores e cards dos pregões mais baixos */
+  html .p-kpis { gap: 6px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  html .p-kpis .kpi { padding: 7px 10px; border-top-width: 3px; }
+  html .p-kpis .kpi .l { font-size: 9.5px; letter-spacing: .3px; } html .p-kpis .kpi .v { font-size: 16px; margin-top: 1px; } html .p-kpis .kpi .s { display: none; }
+  html .pgrid { gap: 8px; }
+  html .pgc { min-height: 0; padding: 9px 10px; gap: 3px; border-radius: 14px; }
+  html .pgc .pgc-num { font-size: 10.5px; padding-right: 26px; }
+  html .pgc h4 { font-size: 13px; -webkit-line-clamp: 2; }
+  html .pgc .pgc-meta { font-size: 10.5px; gap: 1px; }
+  html .pgc .pgc-meta svg { width: 11px; height: 11px; }
+  html .pgc-al { font-size: 10px; padding: 2px 6px; gap: 4px; } html .pgc-al .dot { width: 6px; height: 6px; }
+  html .pgc-alertas { gap: 3px; }
+  html .pgc-foot { gap: 4px; } html .pgc-foot b { font-size: 12.5px; } html .pgc-st { font-size: 10px !important; padding: 2px 6px !important; }
+  html .pgc .pgc-x { width: 24px; height: 24px; top: 6px; right: 6px; } html .pgc .pgc-x svg { width: 12px; height: 12px; }
   /* Pregões no celular: só o básico */
   html .pcard { padding: 10px 12px; gap: 4px; }
   html .pcard .p-hd { gap: 6px; }
@@ -635,7 +649,7 @@ input[type=color].input { padding: 4px; height: 46px; }
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.33.0';
+  const APP_VERSION = '1.34.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Em disputa', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -3264,7 +3278,7 @@ input[type=color].input { padding: 4px; height: 46px; }
     const mvMed = media(rows.map((r) => r.mv)), minhaMed = media(rows.map((r) => r.minha));
     const inv = rows.filter((r) => r.mv < 0).length, aperto = rows.filter((r) => r.mv >= 0 && r.mv < r.minha).length, folga = rows.length - inv - aperto;
     const lista = rows.slice().sort((a, b) => (b.it.updatedAt || 0) - (a.it.updatedAt || 0)).slice(0, 5).map((r) => `<div class="vrow hide-m"><div class="grow"><b class="ell">${esc(r.it.descricao)}</b><span class="tiny muted">meu mínimo ${C.brl(r.c.minimo)} · venceu ${C.brl(r.it.vencedor)}</span></div><span class="badge ${r.mv < 0 ? 'bad' : r.mv < r.minha ? 'warn' : 'ok'}">${C.pct(r.mv, 0)}</span></div>`).join('');
-    return `<div class="card"><h3>${icon('itens', 'sm')}<span class="grow">Preço de quem ganhou</span><span class="tiny muted" style="text-transform:none;letter-spacing:0">${rows.length} ${rows.length === 1 ? 'item' : 'itens'}</span></h3>
+    return `<div class="card m-hide"><h3>${icon('itens', 'sm')}<span class="grow">Preço de quem ganhou</span><span class="tiny muted" style="text-transform:none;letter-spacing:0">${rows.length} ${rows.length === 1 ? 'item' : 'itens'}</span></h3>
       <p class="small" style="margin-bottom:12px">Igualando o preço do vencedor, sua margem média seria <b>${C.pct(mvMed, 1)}</b> (você pratica ${C.pct(minhaMed, 1)}).</p>
       <div class="vstats"><div class="bad"><b>${inv}</b><span>abaixo do meu custo</span></div><div class="warn"><b>${aperto}</b><span>igualaria com margem menor</span></div><div class="ok"><b>${folga}</b><span>igualaria com minha margem</span></div></div>
       ${lista}${rows.length < 10 ? `<p class="tiny muted" style="margin-top:10px">Com 10 ou mais itens registrados a leitura fica mais confiável.</p>` : ''}</div>`;
@@ -3431,7 +3445,7 @@ input[type=color].input { padding: 4px; height: 46px; }
 
     return `<div class="page">
       ${drafts.length ? `<div class="alert warn">${icon('alert', 'sm')}<div class="grow">Você tem preenchimento não salvo: ${esc(drafts.slice(0, 2).map((x) => draftDesc(x.key)).join(', '))}.</div><button class="btn sm" data-act="rascunho" data-key="${esc(drafts[0].key)}">Continuar</button></div>` : ''}
-      <div class="kpis">
+      <div class="kpis p-kpis">
         <div class="kpi" style="--c:#1f3864"><div class="l">Limite do MEI</div><div class="v" style="color:var(--ink)">${C.brl0(m.limite)}</div><div class="s">no ano de ${st.config.anoRef}</div></div>
         <div class="kpi" style="--c:#2e75b6"><div class="l">Comprometido</div><div class="v">${C.brl0(m.comprometido)}</div><div class="s">faturado + ganho · ${C.pct(m.pctComprometido, 0)}</div></div>
         <div class="kpi" style="--c:${m.saldoAgora < 0 ? '#c0392b' : '#2f7d3a'}"><div class="l">Saldo disponível</div><div class="v">${C.brl0(m.saldoAgora)}</div><div class="s">se ganhar tudo: ${C.brl0(m.saldoSeGanhar)}</div></div>
@@ -3462,8 +3476,8 @@ input[type=color].input { padding: 4px; height: 46px; }
         <div><span>Lucro depois do DAS</span><b style="color:${R.tributos.lucroLiquido < 0 ? 'var(--red)' : 'var(--green)'}">${C.brl(R.tributos.lucroLiquido)}</b></div></div>
         <p class="tiny muted" style="margin-top:10px">Lucro previsto dos pregões ativos menos o DAS do ano. MEI não paga percentual sobre a venda (dentro do limite). Optante do Simples/MEI em geral não sofre retenção de IR, PIS, Cofins e CSLL do órgão público: se o órgão pedir, apresente a declaração do Anexo IV da IN RFB 1.234/2012. Ajuste em Config › Tributos.</p></div>
       <div class="two-col">
-        <div class="card"><h3>Pregões por status</h3>${R.statusRows.map((r) => `<div class="strow"><div class="row">${badgeStatus(r.status)}<span class="small muted">${r.count} pregão(ões)</span></div><b>${C.brl0(r.venda)}</b><div class="bar"><div style="width:${(r.venda / maxV * 100).toFixed(1)}%"></div></div></div>`).join('')}</div>
-        <div class="card"><h3>De onde vem o preço de venda</h3><div class="donut-wrap">
+        <div class="card m-hide"><h3>Pregões por status</h3>${R.statusRows.map((r) => `<div class="strow"><div class="row">${badgeStatus(r.status)}<span class="small muted">${r.count} pregão(ões)</span></div><b>${C.brl0(r.venda)}</b><div class="bar"><div style="width:${(r.venda / maxV * 100).toFixed(1)}%"></div></div></div>`).join('')}</div>
+        <div class="card m-hide"><h3>De onde vem o preço de venda</h3><div class="donut-wrap">
           <svg viewBox="0 0 160 160" role="img" aria-label="Composição do preço"><circle cx="80" cy="80" r="54" fill="none" stroke="var(--line)" stroke-width="22"/>${comp.venda > 0 ? arcs : ''}
             <text x="80" y="76" text-anchor="middle" font-size="22" font-weight="800" fill="currentColor">${margemTot == null ? '—' : C.pct(margemTot, 0)}</text><text x="80" y="95" text-anchor="middle" font-size="11" fill="var(--muted)">de lucro</text></svg>
           <div class="donut-leg">${segs.map(([l, v, col]) => `<div><i style="background:${col}"></i>${l}<b>${C.brl0(v)}</b></div>`).join('')}</div></div>
