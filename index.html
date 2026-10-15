@@ -695,7 +695,7 @@ input[type=color].input { padding: 4px; height: 46px; }
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.48.0';
+  const APP_VERSION = '1.49.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Em disputa', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -2748,7 +2748,7 @@ input[type=color].input { padding: 4px; height: 46px; }
     const maisAberto = !!(window.matchMedia && window.matchMedia('(min-width: 700px)').matches);   // no PC já vem aberto; no celular fica recolhido
     const body = `
       <div class="formgrid">
-        ${field({ label: 'Nº do pregão *', name: 'numero', value: v.numero, ph: 'ex.: 90001/2026' })}
+        ${field({ label: 'Nº do pregão *', name: 'numero', value: v.numero, ph: 'ex.: 90001/2026', inputmode: 'text', hint: 'Só números e . - / (a proposta já escreve “Pregão nº” antes).' })}
         ${field({ label: 'Status', name: 'status', type: 'select', value: v.status, options: (C.STATUS.includes(v.status) ? C.STATUS : [v.status].concat(C.STATUS)).map((s) => ({ v: s, l: s })), hint: 'Falta dados = ainda preenchendo. Itens ganhos: marque “Venci” no item. Concluído = terminou (sai do painel).' })}
         ${field({ label: 'Órgão / entidade *', name: 'orgao', value: v.orgao, full: true, ph: 'ex.: Universidade de Londrina' })}
         ${field({ label: 'Plataforma do pregão', name: 'plataforma', value: v.plataforma, full: true, ph: 'ex.: BLL, Compras.gov.br', list: PLATAFORMAS, hint: 'Onde a disputa acontece. Aparece no cartão do Painel. Se ficar vazio, o app tenta reconhecer pelo site da proposta.' })}
@@ -2795,6 +2795,18 @@ input[type=color].input { padding: 4px; height: 46px; }
     openForm({
       key: 'pregao:' + (id || 'novo'), title: id ? 'Editar pregão' : 'Novo pregão', body, values: v,
       onMount: (form) => {
+        // nº do pregão: só números e . - / (a proposta já escreve "Pregão nº"; texto a mais sairia duplicado)
+        const numInp = $('[name=numero]', form);
+        let avisandoNum = false;
+        numInp.addEventListener('input', () => {
+          const limpo = numInp.value.replace(/[^0-9.\-\/]/g, '');
+          if (limpo === numInp.value) return;
+          numInp.value = limpo;
+          if (avisandoNum) return;
+          avisandoNum = true;
+          dialog({ title: 'Só o número do pregão', text: 'Neste campo vão apenas números e os sinais . - / (ex.: 90001/2026). A proposta em PDF já escreve “Pregão nº” antes do número; se você digitar “Pregão nº 1”, sairia “Pregão nº Pregão nº 1”. Removi o que não era número.', buttons: [{ label: 'Entendi', value: true, cls: 'primary' }] })
+            .then(() => { avisandoNum = false; numInp.focus(); });
+        });
         // trajeto automático: recalcula quando muda o local do pregão ou os locais de entrega
         let seq = 0, timer = null, ajustando = false, seqE = 0;
         const novoId = () => 'e' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
@@ -2903,6 +2915,7 @@ input[type=color].input { padding: 4px; height: 46px; }
         if (!x.numero.trim()) miss.push('numero');
         if (!x.orgao.trim()) miss.push('orgao');
         if (miss.length) { miss.forEach((n) => $('[name=' + n + ']', form).classList.add('err')); return 'Preencha o número do pregão e o órgão.'; }
+        if (/[^0-9.\-\/]/.test(x.numero.trim())) { $('[name=numero]', form).classList.add('err'); return 'No nº do pregão vão só números e . - / (ex.: 90001/2026). A proposta já escreve “Pregão nº” antes.'; }
         const km = C.parseBR(x.km) || 0;
         const ent = x.entregaDiferente && form._lerEntregas ? form._lerEntregas() : [];
         if (x.entregaDiferente && !ent.length) { $('[name=locaisEntrega]', form).classList.add('err'); return 'Informe ao menos um local de entrega ou desmarque a opção.'; }
