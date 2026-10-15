@@ -661,8 +661,10 @@ input[type=color].input { padding: 4px; height: 46px; }
 @media (prefers-reduced-motion: reduce) { .pgc.p-bad, .pgc.p-warn, .pgc.p-falta, .pgc.p-disputa { box-shadow: 0 0 0 2px var(--pc), var(--shadow); } }
 
 /* "+" das outras opções de compra: janela por cima do formulário */
-.altplus-row { margin: -4px 0 12px; }
-.btn.altplus { font-size: 22px; font-weight: 800; min-width: 44px; gap: 6px; }
+.linkrow { display: flex; gap: 8px; align-items: center; }
+.linkrow .input { flex: 1; min-width: 0; }
+.btn.ibtn { flex: none; width: 46px; min-height: 46px; padding: 0; text-decoration: none; color: var(--blue); position: relative; }
+.btn.altplus .altplus-n { position: absolute; top: -6px; right: -6px; }
 .altplus-n { font-size: 11px; font-weight: 800; background: var(--blue); color: #fff; border-radius: 99px; padding: 1px 7px; }
 .altplus-n[hidden] { display: none; }
 .altpop { position: absolute; inset: 0; z-index: 5; background: rgba(0,0,0,.45); display: flex; align-items: center; justify-content: center; padding: 16px; }
@@ -688,7 +690,7 @@ input[type=color].input { padding: 4px; height: 46px; }
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.46.0';
+  const APP_VERSION = '1.47.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Em disputa', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -2414,6 +2416,7 @@ input[type=color].input { padding: 4px; height: 46px; }
   const ICONS = {
     acomp: '<path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4z"/><path d="M17 6h3v2a3 3 0 0 1-3 3M7 6H4v2a3 3 0 0 0 3 3"/>',
     plus: '<path d="M12 5v14M5 12h14"/>',
+    cart: '<circle cx="9" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/><path d="M2.5 3.5h3l2.4 11.2a1.5 1.5 0 0 0 1.5 1.2h8.4a1.5 1.5 0 0 0 1.5-1.1L21 8H6.6"/>',
     search: '<circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/>',
     painel: '<rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/>',
     pregoes: '<rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M9 12h6M9 16h4"/>',
@@ -3029,10 +3032,13 @@ input[type=color].input { padding: 4px; height: 46px; }
         ${field({ label: 'Descrição completa do edital (vai no PDF)', name: 'descEdital', type: 'textarea', value: v.descEdital, full: true, ph: 'Cole aqui a descrição do item como está no edital', hint: 'Se ficar vazia, o PDF usa o nome do item.' })}
         <div class="field full" id="linkBox"><label for="f_ondeLink">Onde comprar (link)</label>
           <input type="hidden" name="onde" value="${esc(v.onde)}">
+          <div class="linkrow">
           <input class="input" id="f_ondeLink" name="ondeLink" type="url" value="${esc(v.ondeLink)}" placeholder="Cole o link do produto ou da loja" inputmode="url" autocomplete="off" autocapitalize="none">
-          <div class="linkchip" id="linkChip" style="display:none"><a class="btn grow" id="goOnde" href="#" target="_blank" rel="noopener noreferrer">${icon('link', 'sm')}<span class="ell">Comprar</span></a><button type="button" class="btn ghost" id="editLink" aria-label="Editar link" title="Editar link">${icon('edit', 'sm')}</button></div>
-          <div class="hint">Depois de colar, o link vira um botão. Toque no lápis para trocar.</div></div>
-        <div class="full altplus-row"><button type="button" class="btn sm altplus" data-alt="abrir" aria-label="Outras opções de compra" title="Outras opções de compra">+<span class="altplus-n"${altQtd ? '' : ' hidden'}>${altQtd}</span></button></div>
+          <a class="btn ibtn" id="goOnde" href="#" target="_blank" rel="noopener noreferrer" aria-label="Comprar" title="Comprar" style="display:none">${icon('cart')}</a>
+          <button type="button" class="btn ibtn altplus" data-alt="abrir" aria-label="Outras opções de compra" title="Outras opções de compra">${icon('plus')}<span class="altplus-n"${altQtd ? '' : ' hidden'}>${altQtd}</span></button>
+          <button type="button" class="btn ghost ibtn" id="editLink" aria-label="Editar link" title="Editar link" style="display:none">${icon('edit', 'sm')}</button>
+          </div>
+          </div>
         <div class="altpop" id="altPop" hidden role="dialog" aria-modal="true" aria-label="Outras opções de compra"><div class="altpop-box">
           <div class="altpop-hd"><b>Outras opções de compra</b><button type="button" class="btn ghost sm" data-alt="fechar" aria-label="Fechar">✕</button></div>
           <div class="formgrid">${altFields(0)}${altFields(1)}</div>
@@ -3087,15 +3093,15 @@ input[type=color].input { padding: 4px; height: 46px; }
           g('custo').dispatchEvent(new Event('input', { bubbles: true }));
         });
         // link de compra: depois de colar vira um botão clicável (lápis para editar)
-        const linkInp = $('#f_ondeLink', form), chip = $('#linkChip', form), go = $('#goOnde', form);
+        const linkInp = $('#f_ondeLink', form), go = $('#goOnde', form), edt = $('#editLink', form);
         form._syncLink = () => {
           const h = urlSeg(linkInp.value);
-          if (h) { go.href = h; linkInp.style.display = 'none'; chip.style.display = 'flex'; }
-          else { linkInp.style.display = ''; chip.style.display = 'none'; }
+          if (h) { go.href = h; linkInp.style.display = 'none'; go.style.display = ''; edt.style.display = ''; }
+          else { linkInp.style.display = ''; go.style.display = 'none'; edt.style.display = 'none'; }
         };
         linkInp.addEventListener('change', form._syncLink);
         linkInp.addEventListener('paste', () => setTimeout(() => { linkInp.dispatchEvent(new Event('input', { bubbles: true })); form._syncLink(); }, 0));
-        $('#editLink', form).addEventListener('click', () => { linkInp.style.display = ''; chip.style.display = 'none'; linkInp.focus(); linkInp.select(); });
+        edt.addEventListener('click', () => { linkInp.style.display = ''; go.style.display = 'none'; edt.style.display = 'none'; linkInp.focus(); linkInp.select(); });
         form._syncLink();
         if (loc.value.trim() && !km.value) calc(false);
       },
