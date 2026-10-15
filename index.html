@@ -530,6 +530,13 @@ input.input[type=datetime-local]::-webkit-date-and-time-value, input.input[type=
 .ic-btn svg { width: 16px; height: 16px; }
 .b-tx-m { display: none; }
 @media (max-width: 600px) { .b-tx-m { display: inline; } }
+.cat-pronto .grow { min-width: 0; overflow-wrap: anywhere; word-break: break-word; }
+#pdfPronto b, .cat-pronto b { overflow-wrap: anywhere; word-break: break-all; }
+@media (max-width: 600px) {
+  .cat-pronto { gap: 6px; padding: 10px; }
+  .cat-pronto .grow { flex: 1 1 100%; }
+  .cat-pronto .btn { flex: 1 1 0; min-width: 0; padding: 6px 4px; font-size: 12px; gap: 4px; }
+}
 .cat-pronto { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 10px; padding: 10px 12px; border-radius: 12px; border: 2px solid var(--green); background: var(--green-soft); }
 .acp-tbl td { vertical-align: middle; }
 .acp-tbl { min-width: 0; }
@@ -649,7 +656,7 @@ input[type=color].input { padding: 4px; height: 46px; }
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.35.0';
+  const APP_VERSION = '1.36.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Em disputa', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
