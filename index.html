@@ -921,7 +921,7 @@ input[type=color].input { padding: 4px; height: 46px; }
     }
     for (const pst of pMap.values()) {
       pst.margem = pst.venda > 0 ? pst.lucro / pst.venda : null;
-      // valor da proposta = o total que sai no PDF (fonte automática): lance final, senão mínimo, limitado ao teto
+      // valor da proposta = o total que sai no PDF (fonte automática): lance final, senão teto do edital
       const somaProp = (arr) => round2(arr.reduce((s, it) => { const u = unitProposta(iMap.get(it.id), 'auto').unit; return u !== null ? s + round2(n0(it.qtd) * u) : s; }, 0));
       pst.proposta = somaProp(pst.itens);
       pst.propostaGanha = somaProp(pst.itens.filter((it) => !iMap.get(it.id).naoGanhou));   // só o que foi ganho
@@ -1052,14 +1052,14 @@ input[type=color].input { padding: 4px; height: 46px; }
     return m;
   }
   /* ---------- valor unitário da proposta: a mesma regra para o PDF e para o painel ---------- */
-  // fonte: 'auto' (lance final, senão mínimo) | 'minimo' | 'teto' | 'lance'. O lance final preenchido prevalece sobre tudo;
+  // fonte: 'auto' (lance final, senão teto do edital) | 'minimo' | 'teto' | 'lance'. O lance final preenchido prevalece sobre tudo;
   // nos demais casos, o que passar do teto do edital é limitado ao teto (para não desclassificar)
   function unitProposta(c, fonte) {
     let unit;
     if (fonte === 'minimo') unit = c.minimo;
     else if (fonte === 'teto') unit = c.teto;
     else if (fonte === 'lance') unit = c.lance;
-    else unit = c.lance !== null ? c.lance : c.minimo;
+    else unit = c.lance !== null ? c.lance : (c.teto !== null ? c.teto : c.minimo);   // sem lance final: teto do edital (sem teto, o mínimo)
     const doLance = c.lance !== null && fonte !== 'minimo' && fonte !== 'teto';
     const original = unit;
     let limitado = false;
@@ -1069,7 +1069,7 @@ input[type=color].input { padding: 4px; height: 46px; }
   }
 
   /* ---------- linhas da proposta (PDF) ---------- */
-  // fonte: 'auto' (lance final, senão mínimo) | 'minimo' | 'teto' | 'lance'
+  // fonte: 'auto' (lance final, senão teto do edital) | 'minimo' | 'teto' | 'lance'
   // tipo: 'inicial' = todos os itens da disputa, preço da cotação (congelado na 1ª geração; o lance não entra)
   //       'final'   = só os itens vencidos, valor ajustado (lance final; sem lance, o preço inicial; sem ele, o mínimo)
   //       vazio     = regra antiga (usada por quem não informa o tipo)
@@ -3872,7 +3872,7 @@ input[type=color].input { padding: 4px; height: 46px; }
           <td class="r m-off" data-l="Mínimo">${C.brl(c.minimo)}</td>
           <td class="r m-off" data-l="Teto">${C.brl(c.teto)}</td>
           <td class="r a-col" data-l="Colocação">${colocacaoInput(it)}</td>
-          <td class="r a-val" data-l="Valor"><input class="input${l.venci && it.lanceFinal == null ? ' vazio' : ''}" inputmode="decimal" data-acomp-lance="${it.id}" value="${it.lanceFinal == null ? '' : Number(it.lanceFinal).toFixed(2).replace('.', ',')}" placeholder="${l.unit == null ? '' : Number(l.unit).toFixed(2).replace('.', ',')}" title="Valor final unitário (lance). Vazio = valor mínimo, limitado ao teto"></td>
+          <td class="r a-val" data-l="Valor"><input class="input${l.venci && it.lanceFinal == null ? ' vazio' : ''}" inputmode="decimal" data-acomp-lance="${it.id}" value="${it.lanceFinal == null ? '' : Number(it.lanceFinal).toFixed(2).replace('.', ',')}" placeholder="${l.unit == null ? '' : Number(l.unit).toFixed(2).replace('.', ',')}" title="Valor final unitário (lance). Vazio = valor do edital (teto)"></td>
           <td class="r a-tot" data-l="Total"><b>${C.brl(l.total)}</b></td>
           <td class="r m-off" data-l="Lucro">${l.lucro == null ? '—' : `<span style="color:${l.lucro < 0 ? '#c0392b' : '#217a2c'}" title="Lucro com o valor final desta linha (depois do custo, entrega e imposto)">${C.brl(l.lucro)}</span>`}</td>
           <td class="r a-buy" data-l="Comprar">${buy}</td>
@@ -3901,7 +3901,7 @@ input[type=color].input { padding: 4px; height: 46px; }
   }
 
   /* ---------- tela PDF ---------- */
-  const FONTES = [['auto', 'Lance final; sem lance, valor mínimo'], ['minimo', 'Sempre o valor mínimo (custo + margem)'], ['teto', 'Valor do edital (teto)'], ['lance', 'Só o lance final']];
+  const FONTES = [['auto', 'Lance final; sem lance, valor do edital (teto)'], ['minimo', 'Sempre o valor mínimo (custo + margem)'], ['teto', 'Valor do edital (teto)'], ['lance', 'Só o lance final']];
   function hdPreviewHtml(h, emp) {
     const nome = esc(emp.nome || 'SUA EMPRESA'), linhas = [emp.cnpj ? 'CNPJ: ' + emp.cnpj : '', emp.endereco || ''].filter(Boolean).map(esc).join('<br>');
     const justify = h.pos === 'esquerda' ? 'flex-start' : h.pos === 'centro' ? 'center' : 'flex-end';
