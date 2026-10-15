@@ -678,7 +678,7 @@ input[type=color].input { padding: 4px; height: 46px; }
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.44.0';
+  const APP_VERSION = '1.45.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Em disputa', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -3589,8 +3589,8 @@ input[type=color].input { padding: 4px; height: 46px; }
     if (UI.filtro !== 'todos') list = list.filter((x) => x.p.status === UI.filtro);
     const q = UI.busca.trim().toLowerCase();
     if (q) list = list.filter((x) => (x.p.numero + ' ' + x.p.orgao + ' ' + (x.p.cidadeUf || '') + ' ' + x.itens.map((i) => i.descricao).join(' ')).toLowerCase().includes(q));
-    // ordem: Falta dados, Analisando, Proposta enviada, depois o resto; dentro de cada status, o mais novo primeiro
-    list.sort((a, b) => (rankStatus(a.p.status) - rankStatus(b.p.status)) || ((b.p.createdAt || 0) - (a.p.createdAt || 0)));
+    // mesma ordem do Painel: por status e, dentro de cada status, a data mais próxima primeiro
+    list.sort((a, b) => (rankStatus(a.p.status) - rankStatus(b.p.status)) || ordemPainel(a, b));
     if (!list.length) return `<div class="card empty"><p class="muted">Nenhum pregão encontrado.</p></div>`;
     return `<div class="list">${list.map(pregaoCard).join('')}</div>`;
   }
