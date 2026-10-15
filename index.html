@@ -660,6 +660,16 @@ input[type=color].input { padding: 4px; height: 46px; }
 .pgc.falta { --pc: var(--red); border: 3px solid var(--red); }
 @media (prefers-reduced-motion: reduce) { .pgc.p-bad, .pgc.p-warn, .pgc.p-falta, .pgc.p-disputa { box-shadow: 0 0 0 2px var(--pc), var(--shadow); } }
 
+/* "+" das outras opções de compra: janela por cima do formulário */
+.altplus-row { margin: -4px 0 12px; }
+.btn.altplus { font-size: 22px; font-weight: 800; min-width: 44px; gap: 6px; }
+.altplus-n { font-size: 11px; font-weight: 800; background: var(--blue); color: #fff; border-radius: 99px; padding: 1px 7px; }
+.altplus-n[hidden] { display: none; }
+.altpop { position: absolute; inset: 0; z-index: 5; background: rgba(0,0,0,.45); display: flex; align-items: center; justify-content: center; padding: 16px; }
+.altpop[hidden] { display: none; }
+.altpop-box { width: 100%; max-width: 520px; max-height: 100%; overflow-y: auto; background: var(--bg); border-radius: 18px; padding: 14px 16px; box-shadow: var(--shadow); }
+.altpop-hd { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+
 /* lance final em destaque no formulário do item (é o valor que vai para o PDF) */
 .field.destaque { background: var(--amber-soft); border: 2px solid var(--amber); border-radius: 12px; padding: 10px 12px; }
 .field.destaque label, .field.destaque .hint { color: var(--amber); font-weight: 700; }
@@ -678,7 +688,7 @@ input[type=color].input { padding: 4px; height: 46px; }
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.45.0';
+  const APP_VERSION = '1.46.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Em disputa', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -2963,7 +2973,7 @@ input[type=color].input { padding: 4px; height: 46px; }
     const m = C.parseBR(x.margem);
     const old = id && id !== 'new' ? store.get().itens.find((i) => i.id === id) : null;
     return {
-      id: id || 'new', pregaoId: x.pregaoId, loteEdital: String(x.loteEdital || '').trim(), itemEdital: x.itemEdital.trim(), descricao: x.descricao.trim(), descEdital: x.descEdital.trim(), marca: x.marca.trim(), especificacoes: String(x.especificacoes || '').trim(), unidade: x.unidade.trim() || 'Un',
+      id: id || 'new', pregaoId: x.pregaoId, loteEdital: String(x.loteEdital || '').trim(), itemEdital: x.itemEdital.trim(), descricao: x.descricao.trim(), descEdital: x.descEdital.trim(), marca: x.marca.trim(), especificacoes: old && old.especificacoes ? old.especificacoes : '', unidade: x.unidade.trim() || 'Un',
       qtd: C.parseBR(x.qtd), onde: x.onde.trim(), ondeLink: urlSeg(x.ondeLink), obs: String(x.obs || '').trim(), possivelGanhar: !!x.possivelGanhar, vencedor: C.parseBR(x.vencedor),
       alternativas: [0, 1].map((n) => ({ loja: String(x['alt' + n + 'Loja'] || '').trim(), link: urlSeg(x['alt' + n + 'Link']), custo: C.parseBR(x['alt' + n + 'Custo']) })).filter((a) => a.loja || a.link || a.custo != null),
       custo: C.parseBR(x.custo), teto: C.parseBR(x.teto), frete: C.parseBR(x.frete) || 0,
@@ -2993,7 +3003,7 @@ input[type=color].input { padding: 4px; height: 46px; }
           ${field({ label: 'Loja ou site', name: 'alt' + n + 'Loja', value: v['alt' + n + 'Loja'] })}
           ${field({ label: 'Custo unit. (R$)', name: 'alt' + n + 'Custo', value: v['alt' + n + 'Custo'], inputmode: 'decimal' })}
           ${field({ label: 'Link', name: 'alt' + n + 'Link', type: 'url', value: v['alt' + n + 'Link'], full: true, ph: 'https://…', inputmode: 'url' })}`;
-    const altAberto = [0, 1].some((n) => v['alt' + n + 'Loja'] || v['alt' + n + 'Link'] || v['alt' + n + 'Custo']);
+    const altQtd = [0, 1].filter((n) => v['alt' + n + 'Loja'] || v['alt' + n + 'Link'] || v['alt' + n + 'Custo']).length;
     const body = `
       <div class="preview" id="prev"></div>
       ${field({ label: 'Pregão / órgão *', name: 'pregaoId', type: 'select', value: v.pregaoId, options: list.map((p) => ({ v: p.id, l: pregaoLabel(p) })) })}
@@ -3011,7 +3021,6 @@ input[type=color].input { padding: 4px; height: 46px; }
         ${field({ label: 'Nº do item', name: 'itemEdital', value: v.itemEdital, ph: 'ex.: 04', hint: 'Sai “LOTE 1 - ITEM 04” no PDF' })}
         ${field({ label: 'Unidade', name: 'unidade', value: v.unidade, ph: 'Un, Cx, Resma…' })}
         ${field({ label: 'Marca / modelo', name: 'marca', value: v.marca, full: true, ph: 'ex.: SONE/Bico RN Anatômico' })}
-        ${field({ label: 'Especificações adicionais', name: 'especificacoes', type: 'textarea', value: v.especificacoes, full: true, ph: 'Ex.: cor, voltagem, capacidade, material, garantia…', hint: 'Aparece na proposta, junto da marca/modelo.' })}
         ${field({ label: 'Quantidade *', name: 'qtd', value: v.qtd, inputmode: 'decimal' })}
         ${field({ label: 'Custo unit. (R$) *', name: 'custo', value: v.custo, inputmode: 'decimal', hint: 'O que eu vou pagar' })}
         ${field({ label: 'Frete do fornecedor (R$, total do item)', name: 'frete', value: v.frete, inputmode: 'decimal' })}
@@ -3023,8 +3032,12 @@ input[type=color].input { padding: 4px; height: 46px; }
           <input class="input" id="f_ondeLink" name="ondeLink" type="url" value="${esc(v.ondeLink)}" placeholder="Cole o link do produto ou da loja" inputmode="url" autocomplete="off" autocapitalize="none">
           <div class="linkchip" id="linkChip" style="display:none"><a class="btn grow" id="goOnde" href="#" target="_blank" rel="noopener noreferrer">${icon('link', 'sm')}<span class="ell">Comprar</span></a><button type="button" class="btn ghost" id="editLink" aria-label="Editar link" title="Editar link">${icon('edit', 'sm')}</button></div>
           <div class="hint">Depois de colar, o link vira um botão. Toque no lápis para trocar.</div></div>
-        <div class="full"><details class="acc"${altAberto ? ' open' : ''}><summary>Outras opções de compra</summary><div class="acc-body"><div class="formgrid">${altFields(0)}${altFields(1)}</div>
-          <div class="hint">Compare 2 ou 3 fornecedores. Se uma opção sair mais barata, o app avisa e você troca com um toque.</div></div></details></div>
+        <div class="full altplus-row"><button type="button" class="btn sm altplus" data-alt="abrir" aria-label="Outras opções de compra" title="Outras opções de compra">+<span class="altplus-n"${altQtd ? '' : ' hidden'}>${altQtd}</span></button></div>
+        <div class="altpop" id="altPop" hidden role="dialog" aria-modal="true" aria-label="Outras opções de compra"><div class="altpop-box">
+          <div class="altpop-hd"><b>Outras opções de compra</b><button type="button" class="btn ghost sm" data-alt="fechar" aria-label="Fechar">✕</button></div>
+          <div class="formgrid">${altFields(0)}${altFields(1)}</div>
+          <div class="hint" style="margin-bottom:12px">Compare 2 ou 3 fornecedores. Se uma opção sair mais barata, o app avisa e você troca com um toque.</div>
+          <button type="button" class="btn primary block" data-alt="fechar">OK</button></div></div>
         ${field({ label: 'Observações do item', name: 'obs', type: 'textarea', value: v.obs, full: true, ph: 'Ex.: cotar o frete amanhã; não consegui cotar com o fornecedor Y', hint: 'Aparece no cartão do pregão (guia Pregões) e no cartão do item.' })}
         <div class="full"><label class="switch"><span>Posso ganhar<small class="hint" style="display:block;font-weight:500">Marque se ficou perto do 1º colocado neste item e ainda é possível ganhar. Dá para filtrar no Dashboard.</small></span><input type="checkbox" name="possivelGanhar"${v.possivelGanhar ? ' checked' : ''}></label></div>
         ${field({ label: 'Minha margem (%)', name: 'margem', value: v.margem, inputmode: 'decimal', ph: 'padrão: ' + C.numBR(cfg.margemPadrao * 100, 2).replace(',00', '') + '%', hint: 'Vazio = margem padrão' })}
@@ -3057,6 +3070,16 @@ input[type=color].input { padding: 4px; height: 46px; }
         }
         loc.addEventListener('change', () => { delete form.dataset.kmManual; calc(false); });
         form.addEventListener('click', (e) => { if (e.target.closest('[data-rota-item="calc"]')) calc(true); });
+        // janela "+" das outras opções de compra
+        const altPop = $('#altPop', form);
+        const altConta = () => { const k = [0, 1].filter((n) => ['Loja', 'Link', 'Custo'].some((f) => $('[name=alt' + n + f + ']', form).value.trim())).length; const s = $('.altplus-n', form); s.textContent = k; s.hidden = !k; };
+        form.addEventListener('click', (e) => {
+          const b = e.target.closest('[data-alt]'); if (!b) return;
+          if (b.dataset.alt === 'abrir') { altPop.hidden = false; const f = $('[name=alt0Loja]', form); if (f) f.focus(); }
+          else { altPop.hidden = true; altConta(); }
+        });
+        altPop.addEventListener('click', (e) => { if (e.target === altPop) { altPop.hidden = true; altConta(); } });
+        altPop.addEventListener('input', altConta); altConta();
         form.addEventListener('click', (e) => {
           const b = e.target.closest('[data-usar-alt]'); if (!b) return;
           const n = b.dataset.usarAlt, g = (k) => $('[name=' + k + ']', form);
@@ -3106,7 +3129,7 @@ input[type=color].input { padding: 4px; height: 46px; }
         if (!(it.qtd > 0)) miss.push('qtd');
         if (it.custo == null || it.custo < 0) miss.push('custo');
         if (miss.length) { miss.forEach((n) => $('[name=' + n + ']', form).classList.add('err')); return 'Preencha pregão, item, quantidade e custo.'; }
-        for (const n of [0, 1]) { if (String(x['alt' + n + 'Link'] || '').trim() && !urlSeg(x['alt' + n + 'Link'])) { $('[name=alt' + n + 'Link]', form).classList.add('err'); return 'Link da opção ' + (n + 2) + ' inválido. Cole o endereço completo, sem espaços.'; } }
+        for (const n of [0, 1]) { if (String(x['alt' + n + 'Link'] || '').trim() && !urlSeg(x['alt' + n + 'Link'])) { $('[name=alt' + n + 'Link]', form).classList.add('err'); const ap = $('#altPop', form); if (ap) ap.hidden = false; return 'Link da opção ' + (n + 2) + ' inválido. Cole o endereço completo, sem espaços.'; } }
         if ((x.ondeLink || '').trim() && !it.ondeLink) { $('[name=ondeLink]', form).classList.add('err'); return 'Link de compra inválido. Cole o endereço completo, sem espaços.'; }
         if (it.margem != null && it.margem >= 1) { $('[name=margem]', form).classList.add('err'); return 'A margem precisa ser menor que 100%.'; }
         const data = Object.assign({}, it); delete data.id;
