@@ -428,19 +428,43 @@ input.input[type=datetime-local]::-webkit-date-and-time-value, input.input[type=
   .pcard .lkrow:not(.has-ed) { display: none; }
   .m-hide { display: none !important; }
   .nav button[data-v="itens"], .nav button[data-v="certidoes"] { display: none; }
-  /* Acompanhar no celular: cada item vira um cartão compacto */
-  .acp-tbl thead { display: none; }
-  .acp-tbl, .acp-tbl tbody { display: block; min-width: 0; }
-  .acp-tbl tr { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 10px; padding: 12px 0; border-bottom: 1px dashed var(--line); }
-  .acp-tbl td { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 !important; border: 0 !important; width: auto !important; min-width: 0 !important; white-space: normal !important; }
-  .acp-tbl td.acp-desc { grid-column: 1 / -1; display: block; }
-  .acp-tbl td.m-off { display: none; }
-  .acp-tbl td[data-l]::before { content: attr(data-l); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .3px; color: var(--muted); }
-  .acp-tbl td.a-acts { grid-column: 1 / -1; justify-content: flex-end; }
-  .acp-tbl td.a-buy:not(:has(a.buy)) { display: none; }
-  .acp-tbl input.input { width: 96px; }
-  .gbox .tbl-scroll { overflow: visible; }
-  .acp-foot .row { width: 100%; } .acp-foot .row .btn { flex: 1; }
+  /* Acompanhar no celular: blocos pequenos e compactos */
+  html .acp-kpis { gap: 8px; }
+  html .acp-kpis .kpi { padding: 8px 10px; }
+  html .acp-kpis .kpi .l { font-size: 10px; } html .acp-kpis .kpi .v { font-size: 17px; } html .acp-kpis .kpi .s { font-size: 10.5px; }
+  html .acp-filtro { padding: 6px !important; }
+  html .acp-filtro .seg-ctl button { padding: 6px 4px; font-size: 12px; min-height: 0; }
+  html .gbox:has(.acp-tbl) { padding: 10px; gap: 4px; }
+  html .gbox:has(.acp-tbl) .ghead h3 { font-size: 14.5px; }
+  html .gbox:has(.acp-tbl) .gnum { font-size: 10.5px; }
+  html .acp-tbl thead { display: none; }
+  html .acp-tbl, html .acp-tbl tbody { display: block; min-width: 0; font-size: 12.5px; }
+  html .acp-tbl tr { display: grid; grid-template-columns: auto auto 1fr auto auto; align-items: center; gap: 6px 10px; padding: 8px 0; border-bottom: 1px dashed var(--line); }
+  html .acp-tbl td { display: flex; flex-direction: column; align-items: flex-start; gap: 1px; padding: 0 !important; border: 0 !important; width: auto !important; min-width: 0 !important; white-space: nowrap !important; }
+  html .acp-tbl td.acp-desc { grid-column: 1 / -1; display: block; white-space: normal !important; }
+  html .acp-tbl .acp-tit { flex-direction: row; align-items: center; gap: 6px; }
+  html .acp-tbl .acp-tit b { font-size: 13px; line-height: 1.25; }
+  html .acp-tbl .acp-tag { font-size: 9.5px; padding: 1px 6px; flex: none; }
+  html .acp-tbl .acp-desc small { display: none; }
+  html .acp-tbl .acp-desc small.acp-obs { display: block; font-size: 11px; }
+  html .acp-tbl td.m-off { display: none; }
+  html .acp-tbl td[data-l]::before { content: attr(data-l); font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .3px; color: var(--muted); }
+  html .acp-tbl td.a-tot { align-items: flex-end; align-self: end; }
+  html .acp-tbl td.a-buy { grid-column: 4; flex-direction: row; align-items: center; align-self: end; }
+  html .acp-tbl td.a-buy::before { display: none; }
+  html .acp-tbl td.a-buy:not(:has(a.buy)) { visibility: hidden; }
+  html .acp-tbl td.a-acts { grid-column: 5; align-items: flex-end; align-self: end; }
+  html .acp-tbl .acp-acts { gap: 4px; }
+  html .acp-tbl .acp-acts .btn.primary { font-size: 0; gap: 0; padding: 3px 9px; } html .acp-tbl .acp-acts .btn.primary svg { width: 16px; height: 16px; }
+  html .acp-tbl .acp-acts .btn.ghost { padding: 3px 7px; }
+  html .acp-tbl .acp-acts .btn { min-height: 30px; padding: 3px 10px; font-size: 12.5px; }
+  html .acp-tbl .buy { width: 26px; height: 26px; font-size: 13px; }
+  html .acp-tbl input.input { width: 64px; min-height: 30px; padding: 2px 6px; font-size: 13px; }
+  html .acp-tbl .coloc-in input.input { width: 40px; }
+  html .acp-tbl .coloc-in { gap: 3px; } html .acp-tbl .coloc-in span:last-child { font-size: 11px; }
+  html .gbox .tbl-scroll { overflow: visible; }
+  html .acp-foot { margin-top: 2px; } html .acp-foot .small { font-size: 12px; }
+  html .acp-foot .row { width: 100%; } html .acp-foot .row .btn { flex: 1; min-height: 34px; padding: 4px 8px; font-size: 12.5px; }
   .pcard .obsline { display: inline-flex; align-items: center; align-self: flex-start; padding: 5px 9px; }
   .pcard .obsline .obs-ic { display: inline-flex; }
   .pcard .obsline .obs-tx { display: none; }
@@ -595,7 +619,7 @@ input[type=color].input { padding: 4px; height: 46px; }
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.30.0';
+  const APP_VERSION = '1.31.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Em disputa', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -3754,11 +3778,11 @@ input[type=color].input { padding: 4px; height: 46px; }
     const vP = todos.reduce((a, x) => a + x.linhas.filter((l) => l.posso).reduce((s, l) => s + l.total, 0), 0);
     const grupos = todos.map((x) => Object.assign({}, x, { linhas: x.linhas.filter((l) => F === 'todos' || (F === 'venci' ? l.venci : l.posso)) })).filter((x) => x.linhas.length);
     const seg = [['todos', 'Todos'], ['posso', `Posso ganhar (${nP})`], ['venci', `Venci (${nV})`]].map(([v, l]) => `<button type="button" data-act="acomp-filtro" data-v="${v}" class="${F === v ? 'on' : ''}">${l}</button>`).join('');
-    const topo = `<div class="kpis">
+    const topo = `<div class="kpis acp-kpis">
         <div class="kpi" style="--c:#d99a1c"><div class="l">Posso ganhar</div><div class="v">${C.brl0(vP)}</div><div class="s">${nP} ${nP === 1 ? 'item' : 'itens'} em observação</div></div>
         <div class="kpi" style="--c:#2f8f3a"><div class="l">Venci</div><div class="v">${C.brl0(vV)}</div><div class="s">${nV} ${nV === 1 ? 'item' : 'itens'} ganhos</div></div>
       </div>
-      <div class="card" style="padding:10px 12px"><div class="seg-ctl">${seg}</div>
+      <div class="card acp-filtro" style="padding:10px 12px"><div class="seg-ctl">${seg}</div>
         <p class="tiny muted m-hide" style="margin:8px 0 0">Aparecem aqui os itens marcados “Posso ganhar” e os itens ganhos. Ajuste o valor final (o lance) de cada item e gere a proposta só com os itens que você venceu. O <b>$</b> abre o link de compra, para conferir se o preço ainda vale.</p></div>`;
     if (!grupos.length) return `<div class="page">${topo}<div class="card empty"><p class="muted">${todos.length ? 'Nada neste filtro.' : 'Nenhum item marcado ainda. Na guia Itens, toque em “Posso ganhar” no item em que você ficou perto do 1º colocado.'}</p></div></div>`;
     const html = grupos.map((x) => {
