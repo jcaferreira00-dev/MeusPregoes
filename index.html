@@ -674,7 +674,7 @@ input[type=color].input { padding: 4px; height: 46px; }
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.41.0';
+  const APP_VERSION = '1.42.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Em disputa', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -2194,8 +2194,9 @@ input[type=color].input { padding: 4px; height: 46px; }
     });
 
     // --- local e data
+    const ESPACO_ASSIN = 60;   // espaço livre acima da linha para a assinatura digital
     if (D.localData) {
-      garantir(60); y -= 14;
+      garantir(D.assinatura ? 60 + ESPACO_ASSIN + 50 : 60); y -= 14;   // local/data e assinatura ficam juntos na mesma página
       const ano = new Date().getFullYear();
       const txt = D.localDataModo === 'branco'
         ? `______________________, ____ de ______________________ de ${ano}.`
@@ -2204,7 +2205,8 @@ input[type=color].input { padding: 4px; height: 46px; }
     }
     // --- assinatura
     if (D.assinatura) {
-      garantir(70); if (!D.localData) y -= 24;
+      garantir(70 + ESPACO_ASSIN); if (!D.localData) y -= 24;
+      y -= ESPACO_ASSIN;
       const sigW = 260, sx = (PW - sigW) / 2;
       page.drawLine({ start: { x: sx, y }, end: { x: sx + sigW, y }, thickness: 0.9, color: BLK });
       let yy = y - 14;
