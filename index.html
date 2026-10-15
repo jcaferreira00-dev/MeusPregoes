@@ -441,6 +441,7 @@ input.input[type=datetime-local]::-webkit-date-and-time-value, input.input[type=
   html .pgrid { gap: 8px; }
   html .pgc { min-height: 0; padding: 9px 10px; gap: 3px; border-radius: 14px; }
   html .pgc .pgc-num { font-size: 10.5px; padding-right: 26px; }
+  html .pgc .pgc-plat { font-size: 10px; padding: 1px 7px; } html .pgc .pgc-plat svg { width: 10px; height: 10px; }
   html .pgc h4 { font-size: 13px; -webkit-line-clamp: 2; }
   html .pgc .pgc-meta { font-size: 10.5px; gap: 1px; }
   html .pgc .pgc-meta svg { width: 11px; height: 11px; }
@@ -614,6 +615,8 @@ input[type=color].input { padding: 4px; height: 46px; }
 
 .pgc:focus-visible { outline: 3px solid var(--sc); outline-offset: 2px; }
 .pgc .pgc-num { font-size: 12px; font-weight: 800; color: var(--sc); padding-right: 30px; }
+.pgc .pgc-plat { align-self: flex-start; display: inline-flex; align-items: center; gap: 4px; max-width: 100%; font-size: 11px; font-weight: 800; letter-spacing: .02em; padding: 2px 8px; border-radius: 99px; color: var(--sc); background: color-mix(in srgb, var(--sc) 14%, var(--card)); border: 1px solid color-mix(in srgb, var(--sc) 35%, transparent); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pgc .pgc-plat svg { width: 12px; height: 12px; flex: none; }
 .pgc h4 { font-size: 14.5px; font-weight: 700; line-height: 1.25; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
 .pgc .pgc-meta { display: flex; flex-direction: column; gap: 2px; font-size: 11.5px; color: var(--muted); }
 .pgc .pgc-meta span { display: flex; align-items: center; gap: 4px; min-width: 0; }
@@ -663,7 +666,7 @@ input[type=color].input { padding: 4px; height: 46px; }
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.37.0';
+  const APP_VERSION = '1.38.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Em disputa', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -2379,6 +2382,7 @@ input[type=color].input { padding: 4px; height: 46px; }
     download: '<path d="M12 3v12M7 10l5 5 5-5M4 21h16"/>',
     share: '<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/>',
     check: '<path d="M20 6L9 17l-5-5"/>',
+    web: '<rect x="2" y="4" width="20" height="13" rx="2"/><path d="M8 21h8M12 17v4"/>',
     alert: '<path d="M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/>',
     x: '<path d="M18 6L6 18M6 6l12 12"/>',
     back: '<path d="M15 18l-6-6 6-6"/>',
@@ -2486,7 +2490,7 @@ input[type=color].input { padding: 4px; height: 46px; }
     let ctl;
     if (o.type === 'textarea') ctl = `<textarea class="input" id="${id}" name="${o.name}" placeholder="${esc(o.ph || '')}" rows="2">${esc(o.value)}</textarea>`;
     else if (o.type === 'select') ctl = `<select class="input" id="${id}" name="${o.name}">${o.options.map((x) => `<option value="${esc(x.v)}"${String(x.v) === String(o.value) ? ' selected' : ''}>${esc(x.l)}</option>`).join('')}</select>`;
-    else ctl = `<input class="input" id="${id}" name="${o.name}" type="${o.type || 'text'}" value="${esc(o.value)}" placeholder="${esc(o.ph || '')}"${o.inputmode ? ` inputmode="${o.inputmode}"` : ''} autocomplete="off"${o.type === 'datetime-local' || o.type === 'date' ? '' : ' autocapitalize="sentences"'}>`;
+    else ctl = `<input class="input" id="${id}" name="${o.name}" type="${o.type || 'text'}" value="${esc(o.value)}" placeholder="${esc(o.ph || '')}"${o.inputmode ? ` inputmode="${o.inputmode}"` : ''} autocomplete="off"${o.list ? ` list="${id}_dl"` : ''}${o.type === 'datetime-local' || o.type === 'date' ? '' : ' autocapitalize="sentences"'}>${o.list ? `<datalist id="${id}_dl">${o.list.map((x) => `<option value="${esc(x)}"></option>`).join('')}</datalist>` : ''}`;
     return `<div class="${cls}"><label for="${id}">${esc(o.label)}</label>${ctl}${o.hint ? `<div class="hint">${esc(o.hint)}</div>` : ''}</div>`;
   }
 
@@ -2589,9 +2593,19 @@ input[type=color].input { padding: 4px; height: 46px; }
   const activePregoes = () => store.get().pregoes.filter((p) => !p.deleted);
   const pregaoLabel = (p) => `#${p.numero} — ${p.orgao}`;
 
+  const PLATAFORMAS = ['BLL', 'Compras.gov.br', 'Licitanet', 'BNC', 'Portal de Compras Públicas', 'Licitações-e (BB)', 'BBMNET', 'Licitar Digital', 'Portal do próprio órgão'];
+  const PLAT_HOST = [[/bll\.org\.br|bllcompras/i, 'BLL'], [/compras\.gov\.br|comprasnet|gov\.br\/compras/i, 'Compras.gov.br'], [/licitanet/i, 'Licitanet'],
+    [/bnc\.org\.br|bnccompras/i, 'BNC'], [/portaldecompraspublicas/i, 'Portal de Compras Públicas'], [/licitacoes-e/i, 'Licitações-e (BB)'],
+    [/bbmnet/i, 'BBMNET'], [/licitardigital/i, 'Licitar Digital']];
+  function plataformaDe(p) {
+    if (p.plataforma && String(p.plataforma).trim()) return String(p.plataforma).trim();
+    const l = String(p.linkProposta || '');
+    const hit = l && PLAT_HOST.find(([re]) => re.test(l));
+    return hit ? hit[1] : '';
+  }
   function pregaoValues(p) {
     return {
-      numero: p.numero || '', orgao: p.orgao || '', cidadeUf: p.cidadeUf || '', sessao: p.sessao || '', prazoPropostas: p.prazoPropostas || '',
+      numero: p.numero || '', orgao: p.orgao || '', plataforma: p.plataforma || '', cidadeUf: p.cidadeUf || '', sessao: p.sessao || '', prazoPropostas: p.prazoPropostas || '',
       prazoEntregaDias: p.prazoEntregaDias == null ? '' : String(p.prazoEntregaDias), exigencias: p.exigencias || '', status: p.status || 'Falta dados',
       km: p.km ? C.numBR(p.km, 1) : '', viagens: p.viagens == null ? '1' : String(p.viagens), pedagio: p.pedagio ? C.numBR(p.pedagio) : '',
       entregaDiferente: !!p.entregaDiferente, locaisEntrega: p.locaisEntrega || '',
@@ -2684,6 +2698,7 @@ input[type=color].input { padding: 4px; height: 46px; }
         ${field({ label: 'Nº do pregão *', name: 'numero', value: v.numero, ph: 'ex.: 90001/2026' })}
         ${field({ label: 'Status', name: 'status', type: 'select', value: v.status, options: (C.STATUS.includes(v.status) ? C.STATUS : [v.status].concat(C.STATUS)).map((s) => ({ v: s, l: s })), hint: 'Falta dados = ainda preenchendo. Itens ganhos: marque “Venci” no item. Concluído = terminou (sai do painel).' })}
         ${field({ label: 'Órgão / entidade *', name: 'orgao', value: v.orgao, full: true, ph: 'ex.: Universidade de Londrina' })}
+        ${field({ label: 'Plataforma do pregão', name: 'plataforma', value: v.plataforma, full: true, ph: 'ex.: BLL, Compras.gov.br', list: PLATAFORMAS, hint: 'Onde a disputa acontece. Aparece no cartão do Painel. Se ficar vazio, o app tenta reconhecer pelo site da proposta.' })}
         ${field({ label: 'Local do pregão (cidade/UF)', name: 'cidadeUf', value: v.cidadeUf, full: true, ph: 'Londrina/PR', hint: 'Ao preencher, o trajeto de ida e volta a partir do endereço da sua empresa é calculado sozinho.' })}
         ${field({ label: 'Link do edital', name: 'link', type: 'url', value: v.link, full: true, ph: 'https://…' })}
         ${field({ label: 'Site para enviar a proposta (ex.: BLL)', name: 'linkProposta', type: 'url', value: v.linkProposta, full: true, ph: 'https://…', hint: 'Aparece como botão no cartão da guia Pregões.' })}
@@ -2839,7 +2854,7 @@ input[type=color].input { padding: 4px; height: 46px; }
         const ent = x.entregaDiferente && form._lerEntregas ? form._lerEntregas() : [];
         if (x.entregaDiferente && !ent.length) { $('[name=locaisEntrega]', form).classList.add('err'); return 'Informe ao menos um local de entrega ou desmarque a opção.'; }
         const data = {
-          numero: x.numero.trim(), orgao: x.orgao.trim(), cidadeUf: x.cidadeUf.trim(), sessao: x.sessao || '', prazoPropostas: x.prazoPropostas || '',
+          numero: x.numero.trim(), orgao: x.orgao.trim(), plataforma: (x.plataforma || '').trim(), cidadeUf: x.cidadeUf.trim(), sessao: x.sessao || '', prazoPropostas: x.prazoPropostas || '',
           entregaDiferente: !!x.entregaDiferente, kmManual: form.dataset.kmManual === '1',
           prazoEntregaDias: x.prazoEntregaDias ? parseInt(x.prazoEntregaDias, 10) : null, exigencias: x.exigencias.trim(), status: x.status,
           link: x.link.trim(), linkProposta: (x.linkProposta || '').trim(), linkLicitacao: (x.linkLicitacao || '').trim(), obs: x.obs.trim(),
@@ -3205,6 +3220,7 @@ input[type=color].input { padding: 4px; height: 46px; }
     return `<article class="pgc ${pulse}${enviada ? ' enviada' : ''}${p.status === 'Falta dados' ? ' falta' : ''}" style="--sc:${cor}" data-act="abrir-pregao" data-id="${p.id}" tabindex="0" role="button" aria-label="Abrir pregão ${esc(p.numero)} ${esc(p.orgao)}">
       <button type="button" class="pgc-x" data-act="ocultar-painel" data-id="${p.id}" title="Tirar do painel (não exclui o pregão)" aria-label="Tirar do painel">${icon('x', 'sm')}</button>
       <span class="pgc-num">Nº ${esc(p.numero)}</span>
+      ${plataformaDe(p) ? `<span class="pgc-plat" title="Plataforma do pregão">${icon('web', 'sm')}${esc(plataformaDe(p))}</span>` : ''}
       <h4>${esc(p.orgao)}</h4>
       <div class="pgc-meta">${meta}</div>
       ${(() => {
