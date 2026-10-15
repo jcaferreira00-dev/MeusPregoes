@@ -674,7 +674,7 @@ input[type=color].input { padding: 4px; height: 46px; }
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.42.0';
+  const APP_VERSION = '1.43.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Em disputa', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -1075,6 +1075,13 @@ input[type=color].input { padding: 4px; height: 46px; }
   // tipo: 'inicial' = todos os itens da disputa, preço da cotação (congelado na 1ª geração; o lance não entra)
   //       'final'   = só os itens vencidos, valor ajustado (lance final; sem lance, o teto do edital)
   //       vazio     = regra antiga (usada por quem não informa o tipo)
+  // rótulo no PDF: "LOTE 1 - ITEM 1"; só lote → "LOTE 1"; só item → "ITEM 1" (sem nenhum, o nº sequencial)
+  function rotuloLoteItem(it, n) {
+    const lote = String(it.loteEdital || '').trim(), item = String(it.itemEdital || '').trim();
+    if (lote && item) return 'LOTE ' + lote + ' - ITEM ' + item;
+    if (lote) return 'LOTE ' + lote;
+    return 'ITEM ' + (item || String(n).padStart(2, '0'));
+  }
   function linhasProposta(state, pregaoId, fonte, icmsPadrao, tipo) {
     const R = computeAll(state);
     const pst = R.pMap.get(pregaoId);
@@ -1109,7 +1116,7 @@ input[type=color].input { padding: 4px; height: 46px; }
       const totS = unitS !== null ? round2(qtd * unitS) : null;
       if (totS !== null) totalS += totS;
       linhas.push({
-        n, id: it.id, catalogo: String(it.catalogoDesc || '').trim(), numeroItem: (it.itemEdital && String(it.itemEdital).trim()) || String(n).padStart(2, '0'),
+        n, id: it.id, catalogo: String(it.catalogoDesc || '').trim(), numeroItem: (it.itemEdital && String(it.itemEdital).trim()) || String(n).padStart(2, '0'), rotulo: rotuloLoteItem(it, n),
         descricao: it.descricao || '', descEdital: (it.descEdital && it.descEdital.trim()) || it.descricao || '',
         marca: it.marca || '', especificacoes: String(it.especificacoes || '').trim(), un: it.unidade || 'Un', qtd,
         recongelar: tipo === 'inicial' && velho, unit, total: tot, aliq, unitS, totalS: totS, teto: c.teto, minimo: c.minimo, lance: c.lance, precoInicial: temIni(it) ? it.precoInicial : null, acimaTeto: (unit !== null && c.teto !== null && unit > c.teto + 1e-9), limitadoTeto, unitOriginal, abaixoMinimo,
@@ -1851,7 +1858,7 @@ input[type=color].input { padding: 4px; height: 46px; }
       for (const ln of L.linhas) {
         const fotos = [];
         for (const u of (imgs[ln.id] || []).slice(0, 4)) { const im = await embedImg(u); if (im) fotos.push(im); }
-        const tit = wrap(`ITEM ${ln.numeroItem} - ${String(ln.descricao || '').toUpperCase()}`, bold, 10.5, CW - 16);
+        const tit = wrap(`${ln.rotulo} - ${String(ln.descricao || '').toUpperCase()}`, bold, 10.5, CW - 16);
         const hT = tit.length * 13 + 8;
         // o item inteiro (texto + fotos) cabe numa página nova mas não no resto desta? começa na próxima, para a foto não ficar longe do texto
         // duas colunas lado a lado: o que o edital exige x o que você (fornecedor) oferece
@@ -2054,7 +2061,7 @@ input[type=color].input { padding: 4px; height: 46px; }
       y -= hHead;
       // linha principal
       box(M, y - hRow, CW, hRow);
-      const vals = [`ITEM ${ln.numeroItem}`, 'Ver descrição abaixo', ln.un.toUpperCase(),
+      const vals = [ln.rotulo, 'Ver descrição abaixo', ln.un.toUpperCase(),
         new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 3 }).format(ln.qtd),
         ln.unit !== null ? brlTxt(ln.unit) : '—', ln.total !== null ? brlTxt(ln.total) : '—'];
       vals.forEach((t, k) => {
@@ -2089,7 +2096,7 @@ input[type=color].input { padding: 4px; height: 46px; }
       const wsum = cols.reduce((a, c) => a + c.w, 0) || 1;
       cols.forEach((c) => { c.pw = CW * c.w / wsum; });
       const cellTxt = (c, ln) => ({
-        lote: ln.numeroItem, desc: ln.descEdital, marca: (ln.marca || '—') + (ln.especificacoes ? '\n' + ln.especificacoes : ''), un: ln.un, qtd: new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 3 }).format(ln.qtd),
+        lote: ln.rotulo, desc: ln.descEdital, marca: (ln.marca || '—') + (ln.especificacoes ? '\n' + ln.especificacoes : ''), un: ln.un, qtd: new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 3 }).format(ln.qtd),
         vub: bT(ln.unit), vtb: bT(ln.total), vus: bT(ln.unitS), vts: bT(ln.totalS), aliq: fN(ln.aliq * 100) + '%',
       })[c.id];
       const cabecalhoTab = () => {
@@ -2305,7 +2312,7 @@ input[type=color].input { padding: 4px; height: 46px; }
         <w:tr>${cel(p(kv('Fornecedor: ', emp.nome || '—') + kv('CNPJ: ', emp.cnpj || '—')) + p(kv('Endereço: ', endC || '—')) + p(kv('Telefone: ', emp.telefone || '—') + kv('E-mail: ', emp.email || '—')), 9638)}</w:tr></w:tbl>`;
       body += p('', esp(0, 200));
       for (const ln of L.linhas) {
-        body += p(run(`ITEM ${ln.numeroItem} - ${String(ln.descricao || '').toUpperCase()}`, { b: true, sz: 21 }), esp(160, 80) + '<w:keepNext/><w:pBdr><w:top w:val="single" w:sz="6" w:space="3" w:color="' + COR + '"/><w:left w:val="single" w:sz="6" w:space="4" w:color="' + COR + '"/><w:bottom w:val="single" w:sz="6" w:space="3" w:color="' + COR + '"/><w:right w:val="single" w:sz="6" w:space="4" w:color="' + COR + '"/></w:pBdr><w:shd w:val="clear" w:color="auto" w:fill="F3F3F3"/>');
+        body += p(run(`${ln.rotulo} - ${String(ln.descricao || '').toUpperCase()}`, { b: true, sz: 21 }), esp(160, 80) + '<w:keepNext/><w:pBdr><w:top w:val="single" w:sz="6" w:space="3" w:color="' + COR + '"/><w:left w:val="single" w:sz="6" w:space="4" w:color="' + COR + '"/><w:bottom w:val="single" w:sz="6" w:space="3" w:color="' + COR + '"/><w:right w:val="single" w:sz="6" w:space="4" w:color="' + COR + '"/></w:pBdr><w:shd w:val="clear" w:color="auto" w:fill="F3F3F3"/>');
         // duas colunas: o que o edital exige x o que você (fornecedor) oferece
         const parsC = (txt, r) => String(txt || '').split(/\n+/).filter((q) => q.trim()).map((q) => p(run(q.trim(), r), jc('both') + esp(0, 60))).join('');
         const rotC = (t) => p(run(t, { b: true, cor: COR, sz: 16 }), esp(80, 20));
@@ -2938,7 +2945,7 @@ input[type=color].input { padding: 4px; height: 46px; }
 
   function itemValues(it) {
     return {
-      pregaoId: it.pregaoId || '', itemEdital: it.itemEdital || '', descricao: it.descricao || '', descEdital: it.descEdital || '', marca: it.marca || '', especificacoes: it.especificacoes || '', unidade: it.unidade || 'Un',
+      pregaoId: it.pregaoId || '', loteEdital: it.loteEdital || '', itemEdital: it.itemEdital || '', descricao: it.descricao || '', descEdital: it.descEdital || '', marca: it.marca || '', especificacoes: it.especificacoes || '', unidade: it.unidade || 'Un',
       qtd: it.qtd == null ? '' : C.numBR(it.qtd, 3), onde: pareceUrl(it.onde) ? '' : (it.onde || ''), ondeLink: it.ondeLink || (pareceUrl(it.onde) ? urlSeg(it.onde) : ''), obs: it.obs || '', possivelGanhar: !!it.possivelGanhar, vencedor: it.vencedor == null ? '' : C.numBR(it.vencedor),
       ...(() => { const o = {}; [0, 1].forEach((n) => { const a = (it.alternativas || [])[n] || {}; o['alt' + n + 'Loja'] = a.loja || ''; o['alt' + n + 'Link'] = a.link || ''; o['alt' + n + 'Custo'] = a.custo == null ? '' : C.numBR(a.custo); }); return o; })(),
       custo: it.custo == null ? '' : C.numBR(it.custo), teto: it.teto == null ? '' : C.numBR(it.teto), frete: it.frete ? C.numBR(it.frete) : '',
@@ -2952,7 +2959,7 @@ input[type=color].input { padding: 4px; height: 46px; }
     const m = C.parseBR(x.margem);
     const old = id && id !== 'new' ? store.get().itens.find((i) => i.id === id) : null;
     return {
-      id: id || 'new', pregaoId: x.pregaoId, itemEdital: x.itemEdital.trim(), descricao: x.descricao.trim(), descEdital: x.descEdital.trim(), marca: x.marca.trim(), especificacoes: String(x.especificacoes || '').trim(), unidade: x.unidade.trim() || 'Un',
+      id: id || 'new', pregaoId: x.pregaoId, loteEdital: String(x.loteEdital || '').trim(), itemEdital: x.itemEdital.trim(), descricao: x.descricao.trim(), descEdital: x.descEdital.trim(), marca: x.marca.trim(), especificacoes: String(x.especificacoes || '').trim(), unidade: x.unidade.trim() || 'Un',
       qtd: C.parseBR(x.qtd), onde: x.onde.trim(), ondeLink: urlSeg(x.ondeLink), obs: String(x.obs || '').trim(), possivelGanhar: !!x.possivelGanhar, vencedor: C.parseBR(x.vencedor),
       alternativas: [0, 1].map((n) => ({ loja: String(x['alt' + n + 'Loja'] || '').trim(), link: urlSeg(x['alt' + n + 'Link']), custo: C.parseBR(x['alt' + n + 'Custo']) })).filter((a) => a.loja || a.link || a.custo != null),
       custo: C.parseBR(x.custo), teto: C.parseBR(x.teto), frete: C.parseBR(x.frete) || 0,
@@ -2996,7 +3003,8 @@ input[type=color].input { padding: 4px; height: 46px; }
       </div><div class="hint" style="margin:-4px 0 12px">Itens com o mesmo local de entrega dividem o custo desta viagem entre si.</div></div>
       ${field({ label: 'Item que vou comprar *', name: 'descricao', value: v.descricao, ph: 'ex.: Caixa organizadora plástica 30 L' })}
       <div class="formgrid">
-        ${field({ label: 'Nº do item no edital', name: 'itemEdital', value: v.itemEdital, ph: 'ex.: 04', hint: 'Sai como “ITEM 04” no PDF' })}
+        ${field({ label: 'Nº do lote', name: 'loteEdital', value: v.loteEdital, ph: 'ex.: 1', hint: 'Vazio = sai só o item' })}
+        ${field({ label: 'Nº do item', name: 'itemEdital', value: v.itemEdital, ph: 'ex.: 04', hint: 'Sai “LOTE 1 - ITEM 04” no PDF' })}
         ${field({ label: 'Unidade', name: 'unidade', value: v.unidade, ph: 'Un, Cx, Resma…' })}
         ${field({ label: 'Marca / modelo', name: 'marca', value: v.marca, full: true, ph: 'ex.: SONE/Bico RN Anatômico' })}
         ${field({ label: 'Especificações adicionais', name: 'especificacoes', type: 'textarea', value: v.especificacoes, full: true, ph: 'Ex.: cor, voltagem, capacidade, material, garantia…', hint: 'Aparece na proposta, junto da marca/modelo.' })}
@@ -3597,13 +3605,16 @@ input[type=color].input { padding: 4px; height: 46px; }
 
   // itens sempre na ordem do edital (04, 10, 4A…); sem número ficam no fim, na ordem de cadastro
   function porItemEdital(list) {
-    const k = (it) => String(it.itemEdital || '').trim();
+    const k = (it) => String(it.itemEdital || '').trim(), kl = (it) => String(it.loteEdital || '').trim();
+    const cmp = (x, y) => x.localeCompare(y, 'pt-BR', { numeric: true, sensitivity: 'base' });
     return list.map((it, i) => ({ it, i })).sort((a, b) => {
+      const la = kl(a.it), lb = kl(b.it);
+      if (la !== lb) { if (!la) return 1; if (!lb) return -1; return cmp(la, lb); }   // primeiro o lote
       const ka = k(a.it), kb = k(b.it);
       if (!ka && !kb) return a.i - b.i;
       if (!ka) return 1;
       if (!kb) return -1;
-      return ka.localeCompare(kb, 'pt-BR', { numeric: true, sensitivity: 'base' }) || a.i - b.i;
+      return cmp(ka, kb) || a.i - b.i;
     }).map((x) => x.it);
   }
 
