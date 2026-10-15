@@ -663,8 +663,13 @@ input[type=color].input { padding: 4px; height: 46px; }
 /* "+" das outras opções de compra: janela por cima do formulário */
 .linkrow { display: flex; gap: 8px; align-items: center; }
 .linkrow .input { flex: 1; min-width: 0; }
-.btn.ibtn { flex: none; width: 46px; min-height: 46px; padding: 0; text-decoration: none; color: var(--blue); position: relative; }
+.btn.ibtn { flex: none; width: 42px; min-height: 42px; padding: 0; text-decoration: none; color: var(--blue); position: relative; }
 .btn.altplus .altplus-n { position: absolute; top: -6px; right: -6px; }
+.linkrow { flex-wrap: wrap; }
+.altpar { display: inline-flex; gap: 8px; }
+.altpar[hidden] { display: none; }
+.btn.ibtn.altc { color: var(--red); border-color: color-mix(in srgb, var(--red) 45%, var(--line)); background: var(--red-soft); }
+.altc .altc-n { position: absolute; bottom: 2px; right: 4px; font-size: 10px; font-weight: 800; line-height: 1; }
 .altplus-n { font-size: 11px; font-weight: 800; background: var(--blue); color: #fff; border-radius: 99px; padding: 1px 7px; }
 .altplus-n[hidden] { display: none; }
 .altpop { position: absolute; inset: 0; z-index: 5; background: rgba(0,0,0,.45); display: flex; align-items: center; justify-content: center; padding: 16px; }
@@ -690,7 +695,7 @@ input[type=color].input { padding: 4px; height: 46px; }
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.47.0';
+  const APP_VERSION = '1.48.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Em disputa', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -3037,6 +3042,7 @@ input[type=color].input { padding: 4px; height: 46px; }
           <a class="btn ibtn" id="goOnde" href="#" target="_blank" rel="noopener noreferrer" aria-label="Comprar" title="Comprar" style="display:none">${icon('cart')}</a>
           <button type="button" class="btn ibtn altplus" data-alt="abrir" aria-label="Outras opções de compra" title="Outras opções de compra">${icon('plus')}<span class="altplus-n"${altQtd ? '' : ' hidden'}>${altQtd}</span></button>
           <button type="button" class="btn ghost ibtn" id="editLink" aria-label="Editar link" title="Editar link" style="display:none">${icon('edit', 'sm')}</button>
+          ${[0, 1].map((n) => `<span class="altpar" data-altpar="${n}" hidden><a class="btn ibtn altc" data-alt-go="${n}" href="#" target="_blank" rel="noopener noreferrer" aria-label="Comprar na opção ${n + 2}" title="Comprar na opção ${n + 2}">${icon('cart')}<span class="altc-n">${n + 2}</span></a><button type="button" class="btn ghost ibtn altc" data-alt="abrir" data-alt-n="${n}" aria-label="Editar opção ${n + 2}" title="Editar opção ${n + 2}">${icon('edit', 'sm')}</button></span>`).join('')}
           </div>
           </div>
         <div class="altpop" id="altPop" hidden role="dialog" aria-modal="true" aria-label="Outras opções de compra"><div class="altpop-box">
@@ -3078,10 +3084,15 @@ input[type=color].input { padding: 4px; height: 46px; }
         form.addEventListener('click', (e) => { if (e.target.closest('[data-rota-item="calc"]')) calc(true); });
         // janela "+" das outras opções de compra
         const altPop = $('#altPop', form);
-        const altConta = () => { const k = [0, 1].filter((n) => ['Loja', 'Link', 'Custo'].some((f) => $('[name=alt' + n + f + ']', form).value.trim())).length; const s = $('.altplus-n', form); s.textContent = k; s.hidden = !k; };
+        const altConta = () => {
+          const k = [0, 1].filter((n) => ['Loja', 'Link', 'Custo'].some((f) => $('[name=alt' + n + f + ']', form).value.trim())).length; const s = $('.altplus-n', form); s.textContent = k; s.hidden = !k;
+          // cada outra opção com link vira um carrinho avermelhado + lápis, ao lado do principal
+          [0, 1].forEach((n) => { const h = urlSeg($('[name=alt' + n + 'Link]', form).value), par = $('[data-altpar="' + n + '"]', form), loja = $('[name=alt' + n + 'Loja]', form).value.trim();
+            par.hidden = !h; if (h) { const a = $('[data-alt-go]', par); a.href = h; a.title = 'Comprar' + (loja ? ' em ' + loja : ' na opção ' + (n + 2)); } });
+        };
         form.addEventListener('click', (e) => {
           const b = e.target.closest('[data-alt]'); if (!b) return;
-          if (b.dataset.alt === 'abrir') { altPop.hidden = false; const f = $('[name=alt0Loja]', form); if (f) f.focus(); }
+          if (b.dataset.alt === 'abrir') { altPop.hidden = false; const f = $('[name=alt' + (b.dataset.altN || '0') + 'Loja]', form); if (f) f.focus(); }
           else { altPop.hidden = true; altConta(); }
         });
         altPop.addEventListener('click', (e) => { if (e.target === altPop) { altPop.hidden = true; altConta(); } });
