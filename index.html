@@ -427,7 +427,20 @@ input.input[type=datetime-local]::-webkit-date-and-time-value, input.input[type=
   .pcard .lkrow .btn:not(.btn-edital) { display: none; }
   .pcard .lkrow:not(.has-ed) { display: none; }
   .m-hide { display: none !important; }
-  .nav button[data-v="itens"], .nav button[data-v="acomp"] { display: none; }
+  .nav button[data-v="itens"], .nav button[data-v="certidoes"] { display: none; }
+  /* Acompanhar no celular: cada item vira um cartão compacto */
+  .acp-tbl thead { display: none; }
+  .acp-tbl, .acp-tbl tbody { display: block; min-width: 0; }
+  .acp-tbl tr { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 10px; padding: 12px 0; border-bottom: 1px dashed var(--line); }
+  .acp-tbl td { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 !important; border: 0 !important; width: auto !important; min-width: 0 !important; white-space: normal !important; }
+  .acp-tbl td.acp-desc { grid-column: 1 / -1; display: block; }
+  .acp-tbl td.m-off { display: none; }
+  .acp-tbl td[data-l]::before { content: attr(data-l); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .3px; color: var(--muted); }
+  .acp-tbl td.a-acts { grid-column: 1 / -1; justify-content: flex-end; }
+  .acp-tbl td.a-buy:not(:has(a.buy)) { display: none; }
+  .acp-tbl input.input { width: 96px; }
+  .gbox .tbl-scroll { overflow: visible; }
+  .acp-foot .row { width: 100%; } .acp-foot .row .btn { flex: 1; }
   .pcard .obsline { display: inline-flex; align-items: center; align-self: flex-start; padding: 5px 9px; }
   .pcard .obsline .obs-ic { display: inline-flex; }
   .pcard .obsline .obs-tx { display: none; }
@@ -582,7 +595,7 @@ input[type=color].input { padding: 4px; height: 46px; }
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.29.0';
+  const APP_VERSION = '1.30.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Em disputa', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -3746,7 +3759,7 @@ input[type=color].input { padding: 4px; height: 46px; }
         <div class="kpi" style="--c:#2f8f3a"><div class="l">Venci</div><div class="v">${C.brl0(vV)}</div><div class="s">${nV} ${nV === 1 ? 'item' : 'itens'} ganhos</div></div>
       </div>
       <div class="card" style="padding:10px 12px"><div class="seg-ctl">${seg}</div>
-        <p class="tiny muted" style="margin:8px 0 0">Aparecem aqui os itens marcados “Posso ganhar” e os itens ganhos. Ajuste o valor final (o lance) de cada item e gere a proposta só com os itens que você venceu. O <b>$</b> abre o link de compra, para conferir se o preço ainda vale.</p></div>`;
+        <p class="tiny muted m-hide" style="margin:8px 0 0">Aparecem aqui os itens marcados “Posso ganhar” e os itens ganhos. Ajuste o valor final (o lance) de cada item e gere a proposta só com os itens que você venceu. O <b>$</b> abre o link de compra, para conferir se o preço ainda vale.</p></div>`;
     if (!grupos.length) return `<div class="page">${topo}<div class="card empty"><p class="muted">${todos.length ? 'Nada neste filtro.' : 'Nenhum item marcado ainda. Na guia Itens, toque em “Posso ganhar” no item em que você ficou perto do 1º colocado.'}</p></div></div>`;
     const html = grupos.map((x) => {
       const p = x.p, ls = x.linhas, ganhos = x.linhas.filter((l) => l.venci);
@@ -3759,16 +3772,16 @@ input[type=color].input { padding: 4px; height: 46px; }
         const ie = String(it.itemEdital || '').trim();
         return `<tr>
           <td class="acp-desc"><div class="acp-tit">${l.venci ? '<span class="acp-tag venci">Venci</span>' : '<span class="acp-tag posso">Posso ganhar</span>'}<b>${ie ? 'Item ' + esc(ie) + ' · ' : ''}${esc(it.descricao)}</b></div>${it.marca ? `<small>${esc(it.marca)}</small>` : ''}${it.obs ? `<small class="acp-obs">${icon('alert', 'sm')} ${esc(it.obs)}</small>` : ''}</td>
-          <td class="r">${C.qtdBR(it.qtd)}</td>
-          <td class="r">${C.brl(c.custoUnit)}</td>
-          <td class="r">${C.brl(c.minimo)}</td>
-          <td class="r">${C.brl(c.teto)}</td>
-          <td class="r">${colocacaoInput(it)}</td>
-          <td class="r"><input class="input${l.venci && it.lanceFinal == null ? ' vazio' : ''}" inputmode="decimal" data-acomp-lance="${it.id}" value="${it.lanceFinal == null ? '' : Number(it.lanceFinal).toFixed(2).replace('.', ',')}" placeholder="${l.unit == null ? '' : Number(l.unit).toFixed(2).replace('.', ',')}" title="Valor final unitário (lance). Vazio = valor mínimo, limitado ao teto"></td>
-          <td class="r"><b>${C.brl(l.total)}</b></td>
-          <td class="r">${l.lucro == null ? '—' : `<span style="color:${l.lucro < 0 ? '#c0392b' : '#217a2c'}" title="Lucro com o valor final desta linha (depois do custo, entrega e imposto)">${C.brl(l.lucro)}</span>`}</td>
-          <td class="r">${buy}</td>
-          <td class="r"><div class="acp-acts">${l.venci
+          <td class="r m-off" data-l="Qtd">${C.qtdBR(it.qtd)}</td>
+          <td class="r m-off" data-l="Custo un.">${C.brl(c.custoUnit)}</td>
+          <td class="r m-off" data-l="Mínimo">${C.brl(c.minimo)}</td>
+          <td class="r m-off" data-l="Teto">${C.brl(c.teto)}</td>
+          <td class="r a-col" data-l="Colocação">${colocacaoInput(it)}</td>
+          <td class="r a-val" data-l="Valor"><input class="input${l.venci && it.lanceFinal == null ? ' vazio' : ''}" inputmode="decimal" data-acomp-lance="${it.id}" value="${it.lanceFinal == null ? '' : Number(it.lanceFinal).toFixed(2).replace('.', ',')}" placeholder="${l.unit == null ? '' : Number(l.unit).toFixed(2).replace('.', ',')}" title="Valor final unitário (lance). Vazio = valor mínimo, limitado ao teto"></td>
+          <td class="r a-tot" data-l="Total"><b>${C.brl(l.total)}</b></td>
+          <td class="r m-off" data-l="Lucro">${l.lucro == null ? '—' : `<span style="color:${l.lucro < 0 ? '#c0392b' : '#217a2c'}" title="Lucro com o valor final desta linha (depois do custo, entrega e imposto)">${C.brl(l.lucro)}</span>`}</td>
+          <td class="r a-buy" data-l="Comprar">${buy}</td>
+          <td class="r a-acts"><div class="acp-acts">${l.venci
             ? `<button type="button" class="btn sm" data-act="acomp-desfazer" data-id="${it.id}" title="Voltar para “posso ganhar”">Desfazer</button>`
             : `<button type="button" class="btn sm primary" data-act="acomp-venci" data-id="${it.id}">${icon('check', 'sm')} Venci</button><button type="button" class="btn sm ghost" data-act="acomp-tirar" data-id="${it.id}" title="Tirar da lista (desmarca “Posso ganhar”)">${icon('x', 'sm')}</button>`}</div></td>
         </tr>`;
@@ -4439,7 +4452,7 @@ input[type=color].input { padding: 4px; height: 46px; }
     const a = document.activeElement;
     if (a && main.contains(a) && /INPUT|TEXTAREA|SELECT/.test(a.tagName) && Guard.pending.size) return;
     const y = window.scrollY;
-    if ((UI.tab === 'itens' || UI.tab === 'acomp') && window.matchMedia && window.matchMedia('(max-width: 600px)').matches) { UI.tab = 'pregoes'; saveUI(); }
+    if ((UI.tab === 'itens' || UI.tab === 'certidoes') && window.matchMedia && window.matchMedia('(max-width: 600px)').matches) { UI.tab = 'pregoes'; saveUI(); }
     const fn = { painel: renderPainel, pregoes: renderPregoes, itens: renderItens, acomp: renderAcomp, pdf: renderPDF, certidoes: renderCertidoes, config: renderConfig }[UI.tab];
     main.classList.toggle('wide', UI.tab === 'acomp' || (UI.tab === 'itens' && UI.itensModo === 'tabela'));
     main.innerHTML = fn();
