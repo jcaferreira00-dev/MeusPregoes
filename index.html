@@ -1770,7 +1770,7 @@ input[type=color].input { padding: 4px; height: 46px; }
       pg.drawLine({ start: { x: M, y: PH - TOPO - headerH + 8 }, end: { x: PW - M, y: PH - TOPO - headerH + 8 }, thickness: 1.2, color: ACC });
     }
     function novaPagina() {
-      page = doc.addPage([PW, PH]); pages.push(page); desenharMarca(page); desenharCabecalho(page);
+      page = doc.addPage([PW, PH]); pages.push(page); desenharCabecalho(page);   // a marca d'água entra no fim, por cima de tudo (fotos inclusive)
       y = headerH ? PH - TOPO - headerH - 4 : PH - M;
     }
     const garantir = (h) => { if (y - h < BOTTOM) { novaPagina(); return true; } return false; };
@@ -1909,18 +1909,24 @@ input[type=color].input { padding: 4px; height: 46px; }
         }
         y -= 4;
         if (fotos.length) {
-          const gap = 10, n = fotos.length, cellW = (CW - 12 - gap * (n - 1)) / n;
+          // quadro com título "IMAGEM ILUSTRATIVA", borda e margem interna (mesmo estilo do quadro do item)
+          const gap = 10, pad = 10, hH = 16, n = fotos.length, cellW = (CW - pad * 2 - gap * (n - 1)) / n;
           const lado = Math.min(cellW, n === 1 ? 230 : n === 2 ? 210 : 160);   // quadro quadrado, igual para todas
           const larg = n * lado + gap * (n - 1), x00 = M + (CW - larg) / 2;
-          garantir(lado + 22); y -= 6;
+          garantir(hH + lado + pad * 2 + 6);
+          const yTop = y;
+          page.drawRectangle({ x: M, y: y - hH, width: CW, height: hH, color: ACC, opacity: 0.1 });
+          T(n > 1 ? 'IMAGENS ILUSTRATIVAS' : 'IMAGEM ILUSTRATIVA', M + 6, y - 11.5, 8, bold, ACCT);
+          y -= hH + pad;
           fotos.forEach((im, k) => {
             const s0 = Math.min(lado / im.width, lado / im.height), w = im.width * s0, hh = im.height * s0;
             const xq = x00 + k * (lado + gap), yq = y - lado;
-            page.drawRectangle({ x: xq, y: yq, width: lado, height: lado, color: rgb(1, 1, 1) });
             page.drawImage(im, { x: xq + (lado - w) / 2, y: yq + (lado - hh) / 2, width: w, height: hh });
             page.drawRectangle({ x: xq, y: yq, width: lado, height: lado, borderColor: rgb(0.8, 0.8, 0.82), borderWidth: 0.6 });
           });
-          y -= lado + 6;
+          y -= lado + pad;
+          page.drawRectangle({ x: M, y, width: CW, height: yTop - y, borderColor: ACC, borderWidth: 0.8 });
+          y -= 6;
         }
         y -= 14;
       }
@@ -1935,6 +1941,7 @@ input[type=color].input { padding: 4px; height: 46px; }
     if (o.catalogo) {
       doc.setTitle('Catálogo dos produtos — ' + (preg.numero || ''));
       await desenharCatalogo(false);
+      pages.forEach(desenharMarca);
       pages.forEach((pg, i) => { const s = `Página ${i + 1} de ${pages.length}`; pg.drawText(s, { x: PW / 2 - font.widthOfTextAtSize(s, 8) / 2, y: 20, size: 8, font, color: GRAY }); });
       const bytes = await doc.save();
       return { bytes, filename: `Catalogo_${slug(preg.numero) || 'compra'}_${slug(preg.orgao) || 'orgao'}.pdf`, total: L.total, linhas: L.linhas.length, semValor: 0, paginas: pages.length, catalogo: true };
@@ -2210,6 +2217,9 @@ input[type=color].input { padding: 4px; height: 46px; }
     /* ===== catálogo anexado ao final da proposta (opcional) ===== */
     if (o.anexarCatalogo && L.linhas.length) { novaPagina(); await desenharCatalogo(true); }
 
+    /* ===== marca d'água por último, por cima de tudo (assim as fotos do catálogo não a escondem) ===== */
+    pages.forEach(desenharMarca);
+
     /* ===== numeração de páginas (só se houver mais de uma) ===== */
     if (pages.length > 1) {
       pages.forEach((pg, i) => {
@@ -2305,7 +2315,9 @@ input[type=color].input { padding: 4px; height: 46px; }
         const fotos = ((o.imagens || {})[ln.id] || []).slice(0, 4);
         if (fotos.length) {
           const n = fotos.length, lado = Math.min(Math.floor((CW_EMU - 250000 * n) / n), n === 1 ? 2900000 : n === 2 ? 2650000 : 2000000), w = lado, h = lado;
-          body += p(fotos.map((u) => imagem(u, w, h)).join('<w:r><w:t xml:space="preserve">   </w:t></w:r>'), jc('center') + esp(120, 120));
+          body += p('', esp(0, 0)) + `<w:tbl><w:tblPr><w:tblW w:w="9638" w:type="dxa"/>${bordas(COR, 6)}<w:tblLayout w:type="fixed"/></w:tblPr><w:tblGrid><w:gridCol w:w="9638"/></w:tblGrid>
+          <w:tr><w:trPr><w:cantSplit/></w:trPr>${cel(p(run(n > 1 ? 'IMAGENS ILUSTRATIVAS' : 'IMAGEM ILUSTRATIVA', { b: true, cor: COR, sz: 16 })), 9638, 'F3F3F3')}</w:tr>
+          <w:tr><w:trPr><w:cantSplit/></w:trPr>${cel(p(fotos.map((u) => imagem(u, w, h)).join('<w:r><w:t xml:space="preserve">   </w:t></w:r>'), jc('center') + esp(120, 120)), 9638)}</w:tr></w:tbl>`;
         }
       }
       if (D.localData) {
