@@ -826,6 +826,9 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
   html .pq-grid .p-tags .prazo { font-size: 10.5px; padding: 2px 6px; line-height: 1.25; }
   html .pq-grid .p-tags .prazo svg { width: 11px; height: 11px; }
 }
+
+/* título do pregão (órgão) sempre em CAIXA ALTA na tela, do jeito que for digitado (v1.57) */
+.pcard h4, .ag-row h4, .pgc h4, .hero h2, .ghead h3, .mini-p .mp-org, .dtbl td.ell-td, .posrow .grow > b { text-transform: uppercase; }
 </style>
 </head>
 <body>
@@ -838,7 +841,7 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.56.2';
+  const APP_VERSION = '1.57.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Em disputa', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -3327,6 +3330,15 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
     const i = ordem.findIndex((p) => p.id === id);
     return PALETA[(i < 0 ? 0 : i) % PALETA.length];
   }
+  // cidade padronizada só na tela: "telêmaco borba/pr" ou "ORTIGUEIRA - PR" → "Telêmaco Borba/PR", "Ortigueira/PR"
+  const MINUSC = ['de', 'da', 'do', 'das', 'dos', 'e'];
+  function cidadeFmt(v) {
+    const t = String(v || '').trim().replace(/\s+/g, ' ');
+    if (!t) return '';
+    const m = /^(.*?)[\s]*[\/\-–][\s]*([A-Za-z]{2})$/.exec(t);
+    const nome = (m ? m[1] : t).toLocaleLowerCase('pt-BR').split(' ').map((w, i) => (i > 0 && MINUSC.includes(w)) ? w : w.replace(/^(\p{L})/u, (c) => c.toLocaleUpperCase('pt-BR')).replace(/'(\p{L})/u, (x) => x.toLocaleUpperCase('pt-BR'))).join(' ');
+    return m ? nome + '/' + m[2].toUpperCase() : nome;
+  }
   // nome curto (uma palavra) de cada status, só na tela; o valor salvo continua o mesmo
   const ST_CURTO = { 'Falta dados': 'Incompleto', 'Proposta enviada': 'Enviada', 'Em disputa': 'Disputa' };
   const stTxt = (s) => ST_CURTO[s] || s;
@@ -3450,7 +3462,7 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
     const po = posInfo(p);
     if (po && !p.pagoEm) { if (po.nivel === 'bad' || po.nivel === 'warn') al.push([po.nivel, po.curto]); else if (po.nivel === 'info') al.push(['off', po.curto]); }
     const pulse = al.some((a) => a[0] === 'bad') ? 'p-bad' : al.some((a) => a[0] === 'warn') ? 'p-warn' : p.status === 'Falta dados' ? 'p-falta' : p.status === 'Em disputa' ? 'p-disputa' : '';
-    const meta = (p.cidadeUf ? `<span>${icon('pin', 'sm')}${esc(p.cidadeUf)}</span>` : '')
+    const meta = (p.cidadeUf ? `<span>${icon('pin', 'sm')}${esc(cidadeFmt(p.cidadeUf))}</span>` : '')
       + (p.sessao ? `<span>${icon('calendar', 'sm')}${esc(C.fmtSessao(p.sessao))}</span>` : (p.prazoPropostas ? `<span>${icon('calendar', 'sm')}Propostas até ${esc(C.fmtSessao(p.prazoPropostas))}</span>` : ''));
     return `<article class="pgc ${pulse}${enviada ? ' enviada' : ''}${p.status === 'Falta dados' ? ' falta' : ''}" style="--sc:${cor}" data-act="abrir-pregao" data-id="${p.id}" tabindex="0" role="button" aria-label="Abrir pregão ${esc(p.numero)} ${esc(p.orgao)}">
       <button type="button" class="pgc-x" data-act="ocultar-painel" data-id="${p.id}" title="Tirar do painel (não exclui o pregão)" aria-label="Tirar do painel">${icon('x', 'sm')}</button>
@@ -3498,7 +3510,7 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
       <div class="ag-main">
         <div class="ag-top"><span class="ag-num">Nº ${esc(p.numero)}</span>${plat ? `<span class="ag-plat">${icon('web', 'sm')}${esc(plat)}</span>` : ''}${!p.sessao && p.prazoPropostas ? '<span class="ag-plat">propostas até</span>' : ''}</div>
         <h4 title="${esc(p.orgao)}">${esc(p.orgao)}</h4>
-        <div class="ag-sub">${p.cidadeUf ? `<span>${icon('pin', 'sm')}${esc(p.cidadeUf)}</span>` : ''}${pst.nItens ? `<span class="m-hide">${plural(pst.nItens, 'item', 'itens')}${pst.lucro ? ' · lucro ' + C.brl0(pst.lucro) : ''}</span>` : ''}</div>
+        <div class="ag-sub">${p.cidadeUf ? `<span>${icon('pin', 'sm')}${esc(cidadeFmt(p.cidadeUf))}</span>` : ''}${pst.nItens ? `<span class="m-hide">${plural(pst.nItens, 'item', 'itens')}${pst.lucro ? ' · lucro ' + C.brl0(pst.lucro) : ''}</span>` : ''}</div>
         ${al.length ? `<div class="ag-al">${al.map((a) => `<span class="pgc-al ${a[0]}"><i class="dot"></i>${esc(a[1])}</span>`).join('')}</div>` : ''}
       </div>
       <div class="ag-side">
@@ -3836,7 +3848,7 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
     return `<article class="pcard${pzCls}" style="--gc:${corDe(p.id)};--sc:${COR_STATUS[p.status] || '#2e75b6'}" data-act="abrir-pregao" data-id="${p.id}" tabindex="0" role="button">
       <div class="row between p-hd"><span class="num" style="color:var(--gc)" title="Pregão nº ${esc(p.numero)}">${/^preg/i.test(String(p.numero).trim()) ? esc(p.numero) : 'PREGÃO Nº ' + esc(p.numero)}</span><span class="m-acts">${url(p.link) ? `<a class="ic-btn" href="${esc(url(p.link))}" target="_blank" rel="noopener noreferrer" data-act="link-externo" title="Abrir edital" aria-label="Abrir edital">${icon('pdf', 'sm')}</a>` : '<span class="ic-btn ic-vazio" aria-hidden="true"></span>'}${url(p.linkProposta) ? `<a class="ic-btn" href="${esc(url(p.linkProposta))}" target="_blank" rel="noopener noreferrer" data-act="link-externo" title="Enviar proposta" aria-label="Enviar proposta">${icon('link', 'sm')}</a>` : '<span class="ic-btn ic-vazio" aria-hidden="true"></span>'}</span>${badgeStatus(p.status)}</div>
       <h4>${esc(p.orgao)}</h4>
-      <div class="small muted row wrap" style="gap:4px 14px;align-items:center">${url(p.linkProposta) ? `<a class="btn sm lk p-prop" href="${esc(url(p.linkProposta))}" target="_blank" rel="noopener noreferrer" data-act="link-externo">${icon('link', 'sm')} Proposta</a>` : ''}${p.cidadeUf ? `<span class="row" style="gap:4px">${icon('pin', 'sm')}${esc(p.cidadeUf)}</span>` : ''}${p.sessao ? `<span class="row" style="gap:4px">${icon('calendar', 'sm')}${esc(C.fmtSessao(p.sessao))}</span>` : ''}<span class="m-meta">${pst.itens.length ? pst.itens.length + (pst.itens.length === 1 ? ' item' : ' itens') : 'sem itens'}</span>${(p.obs || pst.itens.some((i) => String(i.obs || '').trim())) ? `<span class="m-meta m-obs" title="Tem observação">${icon('alert', 'sm')}</span>` : ''}</div>
+      <div class="small muted row wrap" style="gap:4px 14px;align-items:center">${url(p.linkProposta) ? `<a class="btn sm lk p-prop" href="${esc(url(p.linkProposta))}" target="_blank" rel="noopener noreferrer" data-act="link-externo">${icon('link', 'sm')} Proposta</a>` : ''}${p.cidadeUf ? `<span class="row" style="gap:4px">${icon('pin', 'sm')}${esc(cidadeFmt(p.cidadeUf))}</span>` : ''}${p.sessao ? `<span class="row" style="gap:4px">${icon('calendar', 'sm')}${esc(C.fmtSessao(p.sessao))}</span>` : ''}<span class="m-meta">${pst.itens.length ? pst.itens.length + (pst.itens.length === 1 ? ' item' : ' itens') : 'sem itens'}</span>${(p.obs || pst.itens.some((i) => String(i.obs || '').trim())) ? `<span class="m-meta m-obs" title="Tem observação">${icon('alert', 'sm')}</span>` : ''}</div>
       ${(() => {
         const tags = [
           pz ? `<span class="prazo ${pz.nivel}">${icon(pz.nivel === 'ok' ? 'calendar' : 'alert', 'sm')}${esc(pz.texto)}</span>` : '',
@@ -4019,7 +4031,7 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
       <div class="detail-top"><button class="back" data-act="voltar">${icon('back')} Pregões</button>
         <button type="button" class="icon-btn" data-act="pdf-pregao" data-id="${p.id}" title="Proposta PDF" aria-label="Proposta PDF">${icon('pdf')}</button></div>
       <div class="hero"><span class="num">PREGÃO Nº ${esc(p.numero)}</span><h2>${esc(p.orgao)}</h2>
-        <div class="m">${p.cidadeUf ? `<span>${esc(p.cidadeUf)}</span>` : ''}${p.sessao ? `<span>Sessão ${esc(C.fmtSessao(p.sessao))}</span>` : ''}</div></div>
+        <div class="m">${p.cidadeUf ? `<span>${esc(cidadeFmt(p.cidadeUf))}</span>` : ''}${p.sessao ? `<span>Sessão ${esc(C.fmtSessao(p.sessao))}</span>` : ''}</div></div>
       ${(() => {
         if (!p.modeloProprio && !p.linkModelo && !p.obs) return '';
         const u = String(p.linkModelo || '').trim(), href = u ? (/^https?:\/\//i.test(u) ? u : 'https://' + u) : '';
