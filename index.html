@@ -360,6 +360,7 @@ input.input[type=datetime-local]::-webkit-date-and-time-value, input.input[type=
 .stars { display: inline-flex; align-items: center; gap: 6px; font-size: 15px; letter-spacing: 1px; line-height: 1; color: #e0a800; white-space: nowrap; }
 .stars small { font-size: 11px; font-weight: 700; letter-spacing: 0; color: var(--muted); }
 .stars.s0 { color: var(--red); } .stars.s1, .stars.s2 { color: var(--amber); }
+.i-mvals, .comprar-btn .cifrao { display: none; }
 .i-vals { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
 .i-vals > div { border-radius: 10px; padding: 6px 8px; background: color-mix(in srgb, var(--muted) 9%, transparent); min-width: 0; }
 .i-vals span { display: block; font-size: 10px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); }
@@ -428,6 +429,21 @@ input.input[type=datetime-local]::-webkit-date-and-time-value, input.input[type=
   .pcard .nums, .pcard .chips, .icard .i-min, .icard .i-fin, .icard .i-teto, .gmeta .g-fin { display: none; }
   .i-vals { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .i-vals .v-mintot { display: none; }
+  /* celular: lance e mínimo em destaque; custo total e edital total pequenos */
+  .i-mvals { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+  .i-mvals > div { border-radius: 10px; padding: 6px 9px; min-width: 0; background: var(--blue-soft); }
+  .i-mvals .v-min { background: color-mix(in srgb, var(--green) 12%, transparent); }
+  .i-mvals .v-min.bad { background: var(--red-soft); }
+  .i-mvals span { display: block; font-size: 10px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); }
+  .i-mvals b { display: block; font-size: 15px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .icard .i-vals { display: flex; flex-wrap: wrap; gap: 2px 12px; padding: 0 2px; }
+  .icard .i-vals .v-mintot { display: none; }
+  .icard .i-vals > div { padding: 0; background: none; border-radius: 0; display: flex; align-items: baseline; gap: 4px; }
+  .icard .i-vals span { display: inline; font-size: 9px; letter-spacing: .02em; }
+  .icard .i-vals b { display: inline; font-size: 11px; font-weight: 700; color: var(--muted); }
+  .icard .comprar-btn { min-height: 34px !important; min-width: 40px; width: auto; padding: 4px 12px; justify-content: center; }
+  .icard .comprar-btn svg, .icard .comprar-btn .ell { display: none; }
+  .icard .comprar-btn .cifrao { display: inline; font-size: 17px; font-weight: 900; line-height: 1; }
   .pcard .p-itens { display: block; }
   .pcard .p-prop { display: inline-flex; min-height: 28px; padding: 2px 10px; font-size: 12px; gap: 5px; }
   .pcard, .icard { padding: 12px; gap: 6px; }
@@ -695,7 +711,7 @@ input[type=color].input { padding: 4px; height: 46px; }
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.49.0';
+  const APP_VERSION = '1.50.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Em disputa', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -3696,12 +3712,15 @@ input[type=color].input { padding: 4px; height: 46px; }
     const compra = cps.length ? `<div class="comprar">${cps.map((cp) => {
       const custo = !cp.principal && cp.custo != null ? ' · ' + C.brl(cp.custo) : '';
       return cp.href
-        ? `<a class="btn sm lk comprar-btn${cp.barato ? ' barato' : ''}" href="${esc(cp.href)}" target="_blank" rel="noopener noreferrer" data-act="link-externo">${icon('link', 'sm')}<span class="ell">${cp.principal ? 'Comprar' : esc(cp.label)}${custo}</span></a>`
+        ? `<a class="btn sm lk comprar-btn${cp.barato ? ' barato' : ''}" href="${esc(cp.href)}" target="_blank" rel="noopener noreferrer" data-act="link-externo" title="${esc((cp.principal ? 'Comprar' : cp.label) + custo)}">${icon('link', 'sm')}<span class="ell">${cp.principal ? 'Comprar' : esc(cp.label)}${custo}</span><b class="cifrao" aria-hidden="true">$</b></a>`
         : `<span class="chip">${icon('pin', 'sm')}${esc(cp.nome)}${custo}</span>`;
     }).join('')}</div>` : '';
     const venc = Number(it.vencedor) > 0 ? `<div><span class="chip venc">${icon('alert', 'sm')}Venceu por ${C.brl(it.vencedor)}</span></div>` : '';
     const obs = String(it.obs || '').trim() ? `<div class="obsline item">${esc(it.obs)}</div>` : '';
-    const vals = `<div class="i-vals"><div><span>Custo total</span><b>${it.custo > 0 && it.qtd > 0 ? C.brl(c.produtos) : '—'}</b></div><div class="v-mintot"><span>Mín. total</span><b>${C.brl(c.minTotal)}</b></div><div><span>Edital total</span><b>${c.tetoTotal != null ? C.brl(c.tetoTotal) : '—'}</b></div></div>`;
+    // celular: valor do meu lance (lance final; vazio = teto do edital) e mínimo pela margem
+    const meuLance = C.unitProposta(c, 'auto').unit;   // mesma regra do PDF: lance final prevalece; sem lance, o teto do edital
+    const mVals = `<div class="i-mvals"><div class="v-lance"><span>${c.lance !== null ? 'Meu lance' : 'Meu lance (teto)'}</span><b>${meuLance != null ? C.brl(meuLance) : '—'}</b></div><div class="v-min${c.sitTipo === 'bad' ? ' bad' : ''}"><span>Mínimo ${C.pct(c.margem, 0)}</span><b>${c.minimo != null ? C.brl(c.minimo) : '—'}</b></div></div>`;
+    const vals = mVals + `<div class="i-vals"><div><span>Custo total</span><b>${it.custo > 0 && it.qtd > 0 ? C.brl(c.produtos) : '—'}</b></div><div class="v-mintot"><span>Mín. total</span><b>${C.brl(c.minTotal)}</b></div><div><span>Edital total</span><b>${c.tetoTotal != null ? C.brl(c.tetoTotal) : '—'}</b></div></div>`;
     const acao = c.ganhou
       ? `<button type="button" class="btn sm venci-on" data-act="item-venci" data-id="${it.id}" title="Desmarcar">${icon('acomp', 'sm')} Venci</button>`
       : `<button type="button" class="btn sm ghost" data-act="item-venci" data-id="${it.id}" title="Marcar este item como ganho">${icon('acomp', 'sm')} Venci</button>` + `<button type="button" class="btn sm ${it.possivelGanhar ? 'pode-on' : 'ghost'}" data-act="item-pode" data-id="${it.id}">${icon('check', 'sm')} Posso ganhar</button><button type="button" class="btn sm ghost" data-act="item-fora" data-id="${it.id}">Deixar de fora</button>`;
