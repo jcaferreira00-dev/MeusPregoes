@@ -743,6 +743,49 @@ html body .pgc-st { border-radius: 6px; font-size: 10.5px; letter-spacing: .02em
   html body .pgc-foot b { font-size: 13px; }
   html body .pgc .pgc-plat { font-size: 10.5px; padding: 2px 7px; }
 }
+
+/* ---------- Painel: agenda dos pregões (v1.53) ---------- */
+.ag-hd { display: flex; align-items: center; gap: 8px; margin: 12px 2px 6px; font-size: 11px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; color: var(--muted); }
+.ag-card > h3 + .ag-hd { margin-top: 0; }
+.ag-hd span { font-size: 10.5px; padding: 1px 7px; border-radius: 99px; background: var(--line); color: var(--ink); letter-spacing: 0; }
+.ag-list { display: flex; flex-direction: column; gap: 6px; }
+.ag-row { position: relative; display: grid; grid-template-columns: 58px minmax(0, 1fr) auto 28px; gap: 14px; align-items: center; padding: 10px 10px 10px 12px; border: 1px solid var(--line); border-left: 3px solid var(--sc); border-radius: 10px; background: var(--card); cursor: pointer; min-width: 0; transition: background .15s, border-color .15s; }
+.ag-row:hover { background: color-mix(in srgb, var(--sc) 6%, var(--card)); border-color: color-mix(in srgb, var(--sc) 45%, var(--line)); border-left-color: var(--sc); }
+.ag-row:focus-visible { outline: 2px solid var(--sc); outline-offset: 2px; }
+.ag-row.urg { --pc: var(--red); animation: pgcPulse 1.6s ease-in-out infinite; }
+.ag-row.falta { border-color: color-mix(in srgb, var(--red) 55%, var(--line)); border-left-color: var(--red); }
+.ag-date { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 6px 0; border-radius: 8px; background: color-mix(in srgb, var(--sc) 12%, transparent); line-height: 1.05; text-align: center; }
+.ag-date b { font-size: 20px; font-weight: 800; font-variant-numeric: tabular-nums; color: var(--ink); }
+.ag-date span { font-size: 10px; font-weight: 800; letter-spacing: .08em; color: color-mix(in srgb, var(--sc) 70%, var(--ink)); }
+.ag-date small { font-size: 10.5px; font-weight: 700; color: var(--muted); margin-top: 3px; font-variant-numeric: tabular-nums; }
+.ag-date.vazio span { color: var(--muted); font-weight: 700; letter-spacing: .02em; line-height: 1.2; }
+.ag-main { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.ag-top { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 10px; font-size: 11px; color: var(--muted); }
+.ag-num { font-weight: 800; letter-spacing: .04em; color: color-mix(in srgb, var(--sc) 70%, var(--ink)); font-variant-numeric: tabular-nums; }
+.ag-plat { display: inline-flex; align-items: center; gap: 4px; font-weight: 600; } .ag-plat svg { width: 12px; height: 12px; }
+.ag-main h4 { font-size: 14.5px; font-weight: 700; line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ag-sub { display: flex; flex-wrap: wrap; gap: 2px 12px; font-size: 11.5px; color: var(--muted); }
+.ag-sub span { display: inline-flex; align-items: center; gap: 4px; } .ag-sub svg { width: 12px; height: 12px; }
+.ag-al { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 3px; }
+.ag-al .pgc-al { font-size: 11px; padding: 2px 7px; }
+.ag-side { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; text-align: right; }
+.ag-st { font-size: 10.5px; font-weight: 800; padding: 2px 8px; border-radius: 6px; white-space: nowrap; background: color-mix(in srgb, var(--sc) 18%, var(--card)); color: color-mix(in srgb, var(--sc) 70%, var(--ink)); }
+.ag-val { font-size: 15px; font-weight: 800; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.ag-cd { font-size: 11.5px; font-weight: 700; color: var(--muted); white-space: nowrap; }
+.ag-cd.hoje { color: var(--red); } .ag-cd.amanha { color: var(--amber); } .ag-cd.passou { opacity: .75; font-weight: 600; }
+.ag-x { width: 28px; height: 28px; border-radius: 50%; border: 0; background: transparent; color: var(--muted); display: grid; place-items: center; cursor: pointer; opacity: .6; }
+.ag-x:hover, .ag-x:focus-visible { opacity: 1; color: var(--red); background: var(--red-soft); }
+.pend-go { color: var(--muted); font-size: 20px; line-height: 1; }
+@media (max-width: 600px) {
+  .ag-row { grid-template-columns: 46px minmax(0, 1fr) auto; gap: 10px; padding: 8px 8px 8px 10px; }
+  .ag-x { position: absolute; top: 4px; right: 4px; width: 24px; height: 24px; }
+  .ag-side { padding-top: 16px; }
+  .ag-date b { font-size: 17px; } .ag-date span { font-size: 9.5px; }
+  .ag-main h4 { font-size: 13.5px; white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+  .ag-val { font-size: 13px; }
+  .ag-al .pgc-al { font-size: 10px; }
+  .ag-card h3 [data-v="pregoes"] { display: none; }
+}
 </style>
 </head>
 <body>
@@ -755,7 +798,7 @@ html body .pgc-st { border-radius: 6px; font-size: 10.5px; letter-spacing: .02em
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.52.0';
+  const APP_VERSION = '1.53.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Em disputa', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -3382,6 +3425,47 @@ html body .pgc-st { border-radius: 6px; font-size: 10.5px; letter-spacing: .02em
       ${al.length ? `<div class="pgc-alertas">${al.map((a) => `<span class="pgc-al ${a[0]}"><i class="dot"></i>${esc(a[1])}</span>`).join('')}</div>` : ''}
       <div class="pgc-foot"><span class="pgc-st">${esc(p.status)}</span>${pst.nItens ? `<b title="Valor da proposta (igual ao total do PDF); se ganhou só parte dos itens, o valor do que foi ganho">${(() => { const v = (pst.ganho && pst.nGanhos < pst.nItens) ? pst.propostaGanha : pst.proposta; return v > 0 ? C.brl(v) : '—'; })()}</b>` : '<span class="tiny muted">Sem itens</span>'}</div></article>`;
   }
+  // Painel = agenda (o que vem pela frente) — os cartões completos ficam na guia Pregões
+  const MESES3 = ['JAN', 'FEV', 'MAR', 'ABR', 'MAI', 'JUN', 'JUL', 'AGO', 'SET', 'OUT', 'NOV', 'DEZ'];
+  function valorPainel(pst) {
+    if (!pst.nItens) return null;
+    const v = (pst.ganho && pst.nGanhos < pst.nItens) ? pst.propostaGanha : pst.proposta;
+    return v > 0 ? v : null;
+  }
+  function agendaRow(pst) {
+    const p = pst.p, cor = COR_STATUS[p.status] || '#2e75b6';
+    const ref = p.sessao || p.prazoPropostas || '', dt = ref ? new Date(ref) : null, ok = dt && isFinite(dt.getTime());
+    const hora = (/T(\d{2}:\d{2})/.exec(ref) || [])[1];
+    const d = diasDesde(ref);
+    const cd = d === null ? '' : d === 0 ? 'Hoje' : d === -1 ? 'Amanhã' : d < 0 ? 'em ' + plural(-d, 'dia', 'dias') : 'há ' + plural(d, 'dia', 'dias');
+    const ativo = !C.INATIVOS.includes(p.status) && p.status !== 'Faturado';
+    const enviada = p.status === 'Proposta enviada';
+    const pz = prazoInfo(p), al = [];
+    if (!enviada && pz && (pz.nivel === 'bad' || pz.nivel === 'warn')) al.push([pz.nivel, 'Propostas: ' + pz.curto]);
+    else if (!enviada && pz && pz.nivel === 'off') al.push(['off', 'Propostas encerradas']);
+    if (pst.nGanhos && pst.ganho) al.push(['good', 'Venci ' + pst.nGanhos + (pst.nGanhos === 1 ? ' item' : ' itens')]);
+    if (pst.nPode) al.push(['good', 'Posso ganhar' + (pst.nPode > 1 ? ' (' + pst.nPode + ')' : '')]);
+    const po = posInfo(p);
+    if (po && !p.pagoEm) { if (po.nivel === 'bad' || po.nivel === 'warn') al.push([po.nivel, po.curto]); else if (po.nivel === 'info') al.push(['off', po.curto]); }
+    const urg = (ativo && (d === 0 || d === -1)) || al.some((a) => a[0] === 'bad');
+    const plat = plataformaDe(p);
+    const v = valorPainel(pst);
+    return `<article class="ag-row${urg ? ' urg' : ''}${p.status === 'Falta dados' ? ' falta' : ''}" style="--sc:${cor}" data-act="abrir-pregao" data-id="${p.id}" tabindex="0" role="button" aria-label="Abrir pregão ${esc(p.numero)} ${esc(p.orgao)}">
+      <div class="ag-date${ok ? '' : ' vazio'}">${ok ? `<b>${String(dt.getDate()).padStart(2, '0')}</b><span>${MESES3[dt.getMonth()]}</span>${hora ? `<small>${hora}</small>` : ''}` : '<span>sem<br>data</span>'}</div>
+      <div class="ag-main">
+        <div class="ag-top"><span class="ag-num">Nº ${esc(p.numero)}</span>${plat ? `<span class="ag-plat">${icon('web', 'sm')}${esc(plat)}</span>` : ''}${!p.sessao && p.prazoPropostas ? '<span class="ag-plat">propostas até</span>' : ''}</div>
+        <h4 title="${esc(p.orgao)}">${esc(p.orgao)}</h4>
+        <div class="ag-sub">${p.cidadeUf ? `<span>${icon('pin', 'sm')}${esc(p.cidadeUf)}</span>` : ''}${pst.nItens ? `<span class="m-hide">${plural(pst.nItens, 'item', 'itens')}${pst.lucro ? ' · lucro ' + C.brl0(pst.lucro) : ''}</span>` : ''}</div>
+        ${al.length ? `<div class="ag-al">${al.map((a) => `<span class="pgc-al ${a[0]}"><i class="dot"></i>${esc(a[1])}</span>`).join('')}</div>` : ''}
+      </div>
+      <div class="ag-side">
+        <span class="ag-st">${esc(p.status)}</span>
+        <b class="ag-val">${v != null ? C.brl(v) : (pst.nItens ? '—' : '<span class="tiny muted">Sem itens</span>')}</b>
+        ${cd ? `<span class="ag-cd${d === 0 ? ' hoje' : d === -1 ? ' amanha' : d > 0 ? ' passou' : ''}">${cd}</span>` : ''}
+      </div>
+      <button type="button" class="ag-x" data-act="ocultar-painel" data-id="${p.id}" title="Tirar do painel (não exclui o pregão)" aria-label="Tirar do painel">${icon('x', 'sm')}</button>
+    </article>`;
+  }
   function painelPregoesHtml(R) {
     const todos = [...R.pMap.values()];
     const vis = todos.filter((x) => !painelOculto(x.p)).sort((a, b) => (rankStatus(a.p.status) - rankStatus(b.p.status)) || ordemPainel(a, b));
@@ -3395,11 +3479,38 @@ html body .pgc-st { border-radius: 6px; font-size: 10.5px; letter-spacing: .02em
       const manual = painelOculto(x.p) === 'manual';
       return `<div class="strow"><div><b>${esc(x.p.orgao)}</b><div class="tiny muted">Nº ${esc(x.p.numero)} · ${manual ? 'tirado do painel por você' : 'prazo já passou'}</div></div>${manual ? `<button class="btn sm" data-act="mostrar-painel" data-id="${x.p.id}">Voltar ao painel</button>` : `<button class="btn sm" data-act="abrir-pregao" data-id="${x.p.id}">Abrir</button>`}</div>`;
     }).join('');
-    return `<div class="card"><h3><span class="grow">Pregões (${ativosV.length})</span>${oc.length ? `<button class="btn sm" data-act="painel-ocultos">${icon('eye', 'sm')} ${UI.mostrarOcultos ? 'Esconder' : 'Ver'} ocultos (${oc.length})</button>` : ''}</h3>
-      ${ativosV.length ? `<div class="pgrid">${ativosV.map(painelCard).join('')}</div>` : (enc.length || concl.length ? '' : `<p class="muted small">Nenhum pregão no painel agora. Os cadastrados continuam na aba Pregões.</p>`)}
+    // agenda: Em disputa primeiro; depois pela data (hoje, próximos dias, sem data, já passou)
+    const grupos = [['Em disputa', []], ['Hoje e amanhã', []], ['Próximos 7 dias', []], ['Mais adiante', []], ['Sem data', []], ['Sessão já passou', []]];
+    ativosV.slice().sort(ordemPainel).forEach((x) => {
+      const d = diasDesde(x.p.sessao || x.p.prazoPropostas);
+      const g = x.p.status === 'Em disputa' ? 0 : d === null ? 4 : d > 0 ? 5 : d >= -1 ? 1 : d >= -7 ? 2 : 3;
+      grupos[g][1].push(x);
+    });
+    const agenda = grupos.filter((g) => g[1].length).map(([t, arr]) => `<div class="ag-hd">${t}<span>${arr.length}</span></div><div class="ag-list">${arr.map(agendaRow).join('')}</div>`).join('');
+    return `<div class="card ag-card"><h3>${icon('calendar', 'sm')}<span class="grow">Agenda dos pregões (${ativosV.length})</span>${oc.length ? `<button class="btn sm" data-act="painel-ocultos">${icon('eye', 'sm')} ${UI.mostrarOcultos ? 'Esconder' : 'Ver'} ocultos (${oc.length})</button>` : ''}<button class="btn sm" data-act="tab" data-v="pregoes">Ver na guia Pregões</button></h3>
+      ${ativosV.length ? agenda : (enc.length || concl.length ? '' : `<p class="muted small">Nenhum pregão no painel agora. Os cadastrados continuam na aba Pregões.</p>`)}
       ${conclHtml}
       ${encHtml}
       ${UI.mostrarOcultos && oc.length ? `<div class="pgoc"><div class="small muted" style="margin-bottom:6px">Fora do painel (continuam na aba Pregões)</div>${lista}</div>` : ''}</div>`;
+  }
+
+  // o que precisa de ação agora: dados faltando, propostas por enviar, certidões vencendo
+  function painelPendenciasHtml(R) {
+    const ps = [...R.pMap.values()].filter((x) => !painelOculto(x.p) && !C.INATIVOS.includes(x.p.status));
+    const L = [];   // [nivel, título, detalhe, ação]
+    ps.filter((x) => x.p.status === 'Falta dados').forEach((x) => L.push(['bad', 'Completar dados', 'Nº ' + x.p.numero + ' · ' + x.p.orgao, `data-act="abrir-pregao" data-id="${x.p.id}"`]));
+    ps.filter((x) => ['Falta dados', 'Analisando'].includes(x.p.status)).forEach((x) => {
+      const pz = prazoInfo(x.p);
+      if (pz && (pz.nivel === 'bad' || pz.nivel === 'warn')) L.push([pz.nivel, 'Enviar proposta · ' + pz.curto, 'Nº ' + x.p.numero + ' · ' + x.p.orgao, `data-act="abrir-pregao" data-id="${x.p.id}"`]);
+      else if (x.p.status === 'Analisando' && (!pz || pz.nivel !== 'off')) L.push(['info', 'Proposta por enviar' + (pz ? ' · até ' + pz.curto : ''), 'Nº ' + x.p.numero + ' · ' + x.p.orgao, `data-act="abrir-pregao" data-id="${x.p.id}"`]);
+    });
+    ps.filter((x) => x.nItens === 0).forEach((x) => L.push(['warn', 'Cadastrar os itens', 'Nº ' + x.p.numero + ' · ' + x.p.orgao, `data-act="abrir-pregao" data-id="${x.p.id}"`]));
+    certidoes().forEach((c) => { const ci = certInfo(c); if (ci.nivel === 'bad' || ci.nivel === 'warn') L.push([ci.nivel, 'Certidão: ' + String(c.nome).split(' (')[0], ci.texto, 'data-act="tab" data-v="certidoes"']); });
+    const peso = { bad: 0, warn: 1, info: 2 };
+    L.sort((a, b) => peso[a[0]] - peso[b[0]]);
+    const rows = L.map((l) => `<div class="posrow ${l[0]}" ${l[3]} tabindex="0" role="button"><i class="posdot"></i><div class="grow"><b>${esc(l[1])}</b><span class="tiny muted">${esc(l[2])}</span></div><span class="pend-go">›</span></div>`).join('');
+    return `<div class="card"><h3>${icon('alert', 'sm')}<span class="grow">Pendências</span>${L.length ? `<span class="prazo ${L.some((l) => l[0] === 'bad') ? 'bad' : L.some((l) => l[0] === 'warn') ? 'warn' : 'good'}">${L.length}</span>` : ''}</h3>
+      ${L.length ? rows : `<div class="alert ok">${icon('check', 'sm')}<span>Nada pendente agora.</span></div>`}</div>`;
   }
 
   function painelEntregasHtml(R) {
@@ -3636,8 +3747,8 @@ html body .pgc-st { border-radius: 6px; font-size: 10.5px; letter-spacing: .02em
         <div class="kpi" style="--c:#b7791f"><div class="l">Lucro previsto</div><div class="v">${C.brl0(R.lucroPrevisto)}</div><div class="s">pregões ativos</div></div>
       </div>
       ${painelPregoesHtml(R)}
+      <div class="two-col">${painelPendenciasHtml(R)}${painelEntregasHtml(R) || `<div class="card m-hide"><h3>${icon('calendar', 'sm')}<span class="grow">Entregas e recebimentos</span></h3><p class="muted small">Nenhuma entrega ou recebimento pendente.</p></div>`}</div>
       ${painelDashboardHtml(R)}
-      ${painelEntregasHtml(R)}
       <div class="two-col">${painelCertidoesHtml(R)}${painelResultadosHtml(R)}</div>
       ${painelVencedorHtml(R, st)}
       <div class="card m-hide"><h3>Uso do limite do MEI</h3>
