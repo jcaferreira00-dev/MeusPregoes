@@ -810,7 +810,8 @@ html body .pgc-st { border-radius: 6px; font-size: 10.5px; letter-spacing: .02em
   html .pq-grid > .pcard { min-height: calc((100vw - 38px) / 2); padding: 11px; gap: 6px; border-radius: 12px; }
   html .pq-grid .pcard .p-hd { flex-wrap: wrap; gap: 4px 6px; }
   html .pq-grid .pcard .p-hd .num { flex: 1 1 100%; font-size: 10.5px; }
-  html .pq-grid .pcard .p-hd .badge { font-size: 10px; padding: 2px 6px; }
+  html .pq-grid .pcard .p-hd .badge { font-size: 10px; padding: 2px 6px; max-width: calc(100% - 64px); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  html .pq-grid .pcard .p-hd .m-acts { flex: none; }   /* ícones e status sempre na mesma linha, mesmo com nome de status maior */
   html .pq-grid .pcard .p-hd .m-acts { margin-left: auto; gap: 4px; }
   html .pq-grid .pcard .p-hd .m-acts .ic-btn { width: 26px; height: 26px; }
   html .pq-grid .pcard h4 { font-size: 13.5px; }
@@ -831,7 +832,7 @@ html body .pgc-st { border-radius: 6px; font-size: 10.5px; letter-spacing: .02em
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.56.0';
+  const APP_VERSION = '1.56.1';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Em disputa', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
