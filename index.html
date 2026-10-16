@@ -832,6 +832,24 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
 @media (max-width: 600px) { .ag-st { width: 74px; font-size: 10px; } }
 /* título do pregão (órgão) sempre em CAIXA ALTA na tela, do jeito que for digitado (v1.57) */
 .pcard h4, .ag-row h4, .pgc h4, .hero h2, .ghead h3, .mini-p .mp-org, .dtbl td.ell-td, .posrow .grow > b.org, .org-up { text-transform: uppercase; }
+
+/* cartão do item: linha 1 = nº do item | estrelas, % e situação; linha 2 = descrição sozinha (v1.58) */
+.icard .i-hd { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 26px; }
+.icard .i-hd .itag { margin: 0; flex: none; }
+.icard .i-hd .itag.vazio { opacity: .55; }
+.icard .i-hd .rcol { flex-direction: row; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 6px; min-width: 0; }
+.icard .i-hd .rcol .badge, .icard .i-hd .rcol .prazo { white-space: nowrap; }
+.icard .i-hd .stars { white-space: nowrap; }
+.icard .i-hd .rcol { flex-wrap: nowrap; }
+.icard .comprar > * { min-height: 34px !important; height: 34px; box-sizing: border-box; display: inline-flex; align-items: center; }   /* botão de compra e loja com a mesma altura */
+@media (max-width: 600px) {
+  .icard .i-hd { gap: 6px; }
+  .icard .i-hd .itag { font-size: 10.5px; padding: 2px 6px; }
+  .icard .i-hd .rcol { gap: 4px; }
+  .icard .i-hd .rcol .badge, .icard .i-hd .rcol .prazo { font-size: 10px; padding: 2px 6px; }
+  .icard .i-hd .stars { font-size: 12px; letter-spacing: 0; gap: 3px; } .icard .i-hd .stars small { font-size: 10px; }
+}
+.icard h4.i-desc { margin: 0; line-height: 1.3; min-height: 2.6em; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
 </style>
 </head>
 <body>
@@ -844,7 +862,7 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.57.1';
+  const APP_VERSION = '1.58.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Em disputa', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -3921,10 +3939,12 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
 
   function itemCard(it, c, opt) {
     const p = opt.pst && opt.pst.p;
-    const tag = String(it.itemEdital || '').trim() ? `<span class="itag">Item ${esc(String(it.itemEdital).trim())}</span>` : '';
+    const tag = String(it.itemEdital || '').trim() ? `<span class="itag">Item ${esc(String(it.itemEdital).trim())}</span>` : '<span class="itag vazio">Item s/nº</span>';
+    // descrição numa linha própria, logo abaixo do nº do item; longa termina com "…" (o texto todo aparece ao passar o dedo/mouse)
+    const desc = `<h4 class="i-desc" title="${esc(it.descricao)}">${esc(it.descricao)}</h4>`;
     if (c.fora) {
       return `<article class="icard fora" data-act="editar-item" data-id="${it.id}" tabindex="0" role="button">
-        <div class="row between" style="align-items:center"><h4 class="grow">${tag}${esc(it.descricao)}</h4><span class="badge off">Fora da disputa</span></div>
+        <div class="i-hd">${tag}<div class="rcol"><span class="badge off">Fora da disputa</span></div></div>${desc}
         <div class="icard-actions"><button type="button" class="btn sm ghost" data-act="item-fora" data-id="${it.id}">Voltar para a disputa</button></div></article>`;
     }
     const ganhoMode = false;
@@ -3945,7 +3965,8 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
       ? `<button type="button" class="btn sm venci-on" data-act="item-venci" data-id="${it.id}" title="Desmarcar">${icon('acomp', 'sm')} Venci</button>`
       : `<button type="button" class="btn sm ghost" data-act="item-venci" data-id="${it.id}" title="Marcar este item como ganho">${icon('acomp', 'sm')} Venci</button>` + `<button type="button" class="btn sm ${it.possivelGanhar ? 'pode-on' : 'ghost'}" data-act="item-pode" data-id="${it.id}">${icon('check', 'sm')} Posso ganhar</button><button type="button" class="btn sm ghost" data-act="item-fora" data-id="${it.id}">Deixar de fora</button>`;
     return `<article class="icard${c.naoGanhou && !it.possivelGanhar ? ' nao-ganho' : ''}${c.ganhou ? ' venci' : ''}" data-act="editar-item" data-id="${it.id}" tabindex="0" role="button">
-      <div class="row between" style="align-items:flex-start"><h4 class="grow">${tag}${esc(it.descricao)}</h4><div class="rcol">${c.ganhou ? '<span class="badge ok">Venci</span>' : (c.naoGanhou && !it.possivelGanhar ? '<span class="badge off">Não ganhou</span>' : '')}${it.possivelGanhar && !ganhoMode ? '<span class="prazo good">★ Posso ganhar</span>' : ''}${c.situacao ? `<span class="badge ${c.sitTipo}">${esc(c.situacao)}</span>` : ''}${estrelasHtml(c)}</div></div>
+      <div class="i-hd">${tag}<div class="rcol">${c.ganhou ? '<span class="badge ok">Venci</span>' : (c.naoGanhou && !it.possivelGanhar ? '<span class="badge off">Não ganhou</span>' : '')}${it.possivelGanhar && !ganhoMode ? '<span class="prazo good">★ Posso ganhar</span>' : ''}${c.situacao ? `<span class="badge ${c.sitTipo}">${esc(c.situacao)}</span>` : ''}${estrelasHtml(c)}</div></div>
+      ${desc}
       ${opt.showOrg && p ? `<div class="chips"><span class="chip org">#${esc(p.numero)} · ${esc(p.orgao)}</span></div>` : ''}
       <div class="small muted">${C.qtdBR(it.qtd)} ${esc(it.unidade || 'Un')} · custo ${C.brl(it.custo)}<span class="i-teto"> · teto ${C.brl(c.teto)}</span>${it.marca ? ' · ' + esc(it.marca) : ''}</div>
       ${vals}
