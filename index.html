@@ -786,6 +786,31 @@ html body .pgc-st { border-radius: 6px; font-size: 10.5px; letter-spacing: .02em
   .ag-al .pgc-al { font-size: 10px; }
   .ag-card h3 [data-v="pregoes"] { display: none; }
 }
+
+/* ---------- guia Pregões: blocos quadrados e simétricos (v1.54) ---------- */
+.pq-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); grid-auto-rows: 1fr; gap: 14px; }
+.pq-grid > .pcard { aspect-ratio: 1 / 1; height: 100%; min-width: 0; overflow: hidden; gap: 7px; border-radius: 14px; }
+.pq-grid .pcard .p-hd { align-items: flex-start; gap: 8px; }
+.pq-grid .pcard .p-hd .num { flex: 1; min-width: 0; }
+.pq-grid .pcard h4 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.25; }
+.pq-grid .pcard .prazo { max-width: 100%; white-space: normal; }
+.pq-grid .pcard .chips { flex-wrap: nowrap; overflow: hidden; }
+.pq-grid .pcard .chips .chip { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pq-grid .pcard .obsline { -webkit-line-clamp: 1; }
+.pq-grid .pcard .nums { margin-top: auto; }
+.pq-grid .pcard .lkrow { flex-wrap: wrap; }
+@media (max-width: 600px) {
+  .pq-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  html .pq-grid > .pcard { padding: 10px; gap: 5px; border-radius: 12px; }
+  html .pq-grid .pcard .p-hd { flex-wrap: wrap; gap: 4px; }
+  html .pq-grid .pcard .p-hd .num { flex: 1 1 100%; font-size: 10.5px; order: 0; }
+  html .pq-grid .pcard .p-hd .badge { order: 1; font-size: 10px; padding: 2px 6px; }
+  html .pq-grid .pcard .p-hd .m-acts { order: 2; margin-left: auto; }
+  html .pq-grid .pcard h4 { font-size: 13.5px; }
+  html .pq-grid .pcard > .small.row { font-size: 11px; gap: 2px 8px !important; }
+  html .pq-grid .pcard .prazo { font-size: 10.5px; padding: 2px 6px; line-height: 1.25; }
+  html .pq-grid .pcard .prazo svg { width: 11px; height: 11px; }
+}
 </style>
 </head>
 <body>
@@ -798,7 +823,7 @@ html body .pgc-st { border-radius: 6px; font-size: 10.5px; letter-spacing: .02em
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.53.0';
+  const APP_VERSION = '1.54.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Em disputa', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -3816,7 +3841,9 @@ html body .pgc-st { border-radius: 6px; font-size: 10.5px; letter-spacing: .02em
     // mesma ordem do Painel: por status e, dentro de cada status, a data mais próxima primeiro
     list.sort((a, b) => (rankStatus(a.p.status) - rankStatus(b.p.status)) || ordemPainel(a, b));
     if (!list.length) return `<div class="card empty"><p class="muted">Nenhum pregão encontrado.</p></div>`;
-    return `<div class="list">${list.map(pregaoCard).join('')}</div>`;
+    // ativos em blocos quadrados (grade simétrica); encerrados continuam em linha cinza no fim
+    const atv = list.filter((x) => !C.INATIVOS.includes(x.p.status)), ina = list.filter((x) => C.INATIVOS.includes(x.p.status));
+    return (atv.length ? `<div class="pq-grid">${atv.map(pregaoCard).join('')}</div>` : '') + (ina.length ? `<div class="list" style="margin-top:${atv.length ? 14 : 0}px">${ina.map(pregaoCard).join('')}</div>` : '');
   }
 
   function renderPregoes() {
