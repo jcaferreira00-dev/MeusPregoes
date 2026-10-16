@@ -827,8 +827,11 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
   html .pq-grid .p-tags .prazo svg { width: 11px; height: 11px; }
 }
 
+/* Painel: status com a mesma largura em todas as linhas (mesmo esquema dos blocos) */
+.ag-st { width: 88px; box-sizing: border-box; text-align: center; overflow: hidden; text-overflow: ellipsis; }
+@media (max-width: 600px) { .ag-st { width: 74px; font-size: 10px; } }
 /* título do pregão (órgão) sempre em CAIXA ALTA na tela, do jeito que for digitado (v1.57) */
-.pcard h4, .ag-row h4, .pgc h4, .hero h2, .ghead h3, .mini-p .mp-org, .dtbl td.ell-td, .posrow .grow > b { text-transform: uppercase; }
+.pcard h4, .ag-row h4, .pgc h4, .hero h2, .ghead h3, .mini-p .mp-org, .dtbl td.ell-td, .posrow .grow > b.org, .org-up { text-transform: uppercase; }
 </style>
 </head>
 <body>
@@ -841,7 +844,7 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.57.0';
+  const APP_VERSION = '1.57.1';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Em disputa', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -3532,7 +3535,7 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
     const encHtml = enc.length ? `<div class="mini-hd">Encerrados (${enc.length})</div><div class="mini-list">${(UI.mostrarEnc ? enc : enc.slice(0, 5)).map((x) => miniPregao(x.p, x.nPode > 0)).join('')}</div>${enc.length > 5 ? `<button class="btn sm ghost" style="margin-top:8px" data-act="painel-encerrados">${UI.mostrarEnc ? 'Mostrar menos' : 'Ver todos (' + enc.length + ')'}</button>` : ''}` : '';
     const lista = oc.map((x) => {
       const manual = painelOculto(x.p) === 'manual';
-      return `<div class="strow"><div><b>${esc(x.p.orgao)}</b><div class="tiny muted">Nº ${esc(x.p.numero)} · ${manual ? 'tirado do painel por você' : 'prazo já passou'}</div></div>${manual ? `<button class="btn sm" data-act="mostrar-painel" data-id="${x.p.id}">Voltar ao painel</button>` : `<button class="btn sm" data-act="abrir-pregao" data-id="${x.p.id}">Abrir</button>`}</div>`;
+      return `<div class="strow"><div><b class="org-up">${esc(x.p.orgao)}</b><div class="tiny muted">Nº ${esc(x.p.numero)} · ${manual ? 'tirado do painel por você' : 'prazo já passou'}</div></div>${manual ? `<button class="btn sm" data-act="mostrar-painel" data-id="${x.p.id}">Voltar ao painel</button>` : `<button class="btn sm" data-act="abrir-pregao" data-id="${x.p.id}">Abrir</button>`}</div>`;
     }).join('');
     // agenda: Em disputa primeiro; depois pela data (hoje, próximos dias, sem data, já passou)
     const grupos = [['Em disputa', []], ['Hoje e amanhã', []], ['Próximos 7 dias', []], ['Mais adiante', []], ['Sem data', []], ['Sessão já passou', []]];
@@ -3553,13 +3556,13 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
   function painelPendenciasHtml(R) {
     const ps = [...R.pMap.values()].filter((x) => !painelOculto(x.p) && !C.INATIVOS.includes(x.p.status));
     const L = [];   // [nivel, título, detalhe, ação]
-    ps.filter((x) => x.p.status === 'Falta dados').forEach((x) => L.push(['bad', 'Completar dados', 'Nº ' + x.p.numero + ' · ' + x.p.orgao, `data-act="abrir-pregao" data-id="${x.p.id}"`]));
+    ps.filter((x) => x.p.status === 'Falta dados').forEach((x) => L.push(['bad', 'Completar dados', 'Nº ' + x.p.numero + ' · ' + String(x.p.orgao || '').toLocaleUpperCase('pt-BR'), `data-act="abrir-pregao" data-id="${x.p.id}"`]));
     ps.filter((x) => ['Falta dados', 'Analisando'].includes(x.p.status)).forEach((x) => {
       const pz = prazoInfo(x.p);
-      if (pz && (pz.nivel === 'bad' || pz.nivel === 'warn')) L.push([pz.nivel, 'Enviar proposta · ' + pz.curto, 'Nº ' + x.p.numero + ' · ' + x.p.orgao, `data-act="abrir-pregao" data-id="${x.p.id}"`]);
-      else if (x.p.status === 'Analisando' && (!pz || pz.nivel !== 'off')) L.push(['info', 'Proposta por enviar' + (pz ? ' · até ' + pz.curto : ''), 'Nº ' + x.p.numero + ' · ' + x.p.orgao, `data-act="abrir-pregao" data-id="${x.p.id}"`]);
+      if (pz && (pz.nivel === 'bad' || pz.nivel === 'warn')) L.push([pz.nivel, 'Enviar proposta · ' + pz.curto, 'Nº ' + x.p.numero + ' · ' + String(x.p.orgao || '').toLocaleUpperCase('pt-BR'), `data-act="abrir-pregao" data-id="${x.p.id}"`]);
+      else if (x.p.status === 'Analisando' && (!pz || pz.nivel !== 'off')) L.push(['info', 'Proposta por enviar' + (pz ? ' · até ' + pz.curto : ''), 'Nº ' + x.p.numero + ' · ' + String(x.p.orgao || '').toLocaleUpperCase('pt-BR'), `data-act="abrir-pregao" data-id="${x.p.id}"`]);
     });
-    ps.filter((x) => x.nItens === 0).forEach((x) => L.push(['warn', 'Cadastrar os itens', 'Nº ' + x.p.numero + ' · ' + x.p.orgao, `data-act="abrir-pregao" data-id="${x.p.id}"`]));
+    ps.filter((x) => x.nItens === 0).forEach((x) => L.push(['warn', 'Cadastrar os itens', 'Nº ' + x.p.numero + ' · ' + String(x.p.orgao || '').toLocaleUpperCase('pt-BR'), `data-act="abrir-pregao" data-id="${x.p.id}"`]));
     certidoes().forEach((c) => { const ci = certInfo(c); if (ci.nivel === 'bad' || ci.nivel === 'warn') L.push([ci.nivel, 'Certidão: ' + String(c.nome).split(' (')[0], ci.texto, 'data-act="tab" data-v="certidoes"']); });
     const peso = { bad: 0, warn: 1, info: 2 };
     L.sort((a, b) => peso[a[0]] - peso[b[0]]);
@@ -3576,7 +3579,7 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
     lista.sort((a, b) => (peso[a.po.nivel] - peso[b.po.nivel]) || (dd(a) - dd(b)));
     const aEnt = lista.filter((o) => !o.x.p.entregueEm), aRec = lista.filter((o) => o.x.p.entregueEm);
     const soma = (arr) => arr.reduce((s, o) => s + (o.x.venda || 0), 0);
-    const rows = lista.map((o) => `<div class="posrow ${o.po.nivel}" data-act="abrir-pregao" data-id="${o.x.p.id}" tabindex="0" role="button"><i class="posdot"></i><div class="grow"><b>${esc(o.x.p.orgao)}</b><span class="tiny muted">Nº ${esc(o.x.p.numero)} · ${esc(o.po.texto)}</span></div><b class="posval">${C.brl0(o.x.venda)}</b></div>`).join('');
+    const rows = lista.map((o) => `<div class="posrow ${o.po.nivel}" data-act="abrir-pregao" data-id="${o.x.p.id}" tabindex="0" role="button"><i class="posdot"></i><div class="grow"><b class="org">${esc(o.x.p.orgao)}</b><span class="tiny muted">Nº ${esc(o.x.p.numero)} · ${esc(o.po.texto)}</span></div><b class="posval">${C.brl0(o.x.venda)}</b></div>`).join('');
     return `<div class="card"><h3>${icon('calendar', 'sm')}<span class="grow">Entregas e recebimentos</span></h3>
       <div class="possum"><span class="chip">A entregar: <b>${aEnt.length}</b> · ${C.brl0(soma(aEnt))}</span><span class="chip">A receber: <b>${aRec.length}</b> · ${C.brl0(soma(aRec))}</span></div>${rows}</div>`;
   }
