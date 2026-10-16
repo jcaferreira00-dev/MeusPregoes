@@ -787,29 +787,37 @@ html body .pgc-st { border-radius: 6px; font-size: 10.5px; letter-spacing: .02em
   .ag-card h3 [data-v="pregoes"] { display: none; }
 }
 
-/* ---------- guia Pregões: blocos quadrados e simétricos (v1.54) ---------- */
-.pq-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); grid-auto-rows: 1fr; gap: 14px; }
-.pq-grid > .pcard { aspect-ratio: 1 / 1; height: 100%; min-width: 0; overflow: hidden; gap: 7px; border-radius: 14px; }
-.pq-grid .pcard .p-hd { align-items: flex-start; gap: 8px; }
-.pq-grid .pcard .p-hd .num { flex: 1; min-width: 0; }
-.pq-grid .pcard h4 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.25; }
-.pq-grid .pcard .prazo { max-width: 100%; white-space: normal; }
+/* ---------- guia Pregões: blocos quadrados e simétricos (v1.55) ---------- */
+/* grade com colunas iguais; cada linha tem a altura do maior bloco; nada encolhe nem é cortado */
+.pq-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); grid-auto-rows: 1fr; gap: 16px; align-items: stretch; }
+.pq-grid > .pcard { min-height: 300px; min-width: 0; overflow: visible; gap: 8px; padding: 16px; border-radius: 14px; }
+.pq-grid .pcard > * { flex-shrink: 0; min-width: 0; }
+.pq-grid .pcard .p-hd { align-items: center; gap: 8px; flex-wrap: nowrap; }
+.pq-grid .pcard .p-hd .num { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-transform: uppercase; }
+.pq-grid .pcard .p-hd .badge { flex: none; white-space: nowrap; }
+.pq-grid .pcard h4 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.25; min-height: 2.5em; overflow-wrap: anywhere; }
+.p-tags { display: flex; flex-wrap: wrap; gap: 5px; }
+.pq-grid .p-tags .prazo { max-width: 100%; white-space: normal; font-size: 11.5px; padding: 3px 8px; line-height: 1.3; }
+.pq-grid .pcard .obsline { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 5px 9px; font-size: 12px; }
 .pq-grid .pcard .chips { flex-wrap: nowrap; overflow: hidden; }
 .pq-grid .pcard .chips .chip { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.pq-grid .pcard .obsline { -webkit-line-clamp: 1; }
 .pq-grid .pcard .nums { margin-top: auto; }
-.pq-grid .pcard .lkrow { flex-wrap: wrap; }
+.pq-grid .pcard .lkrow { flex-wrap: nowrap; gap: 6px !important; }
+.pq-grid .pcard .lkrow .btn { flex: 1 1 auto; min-width: 0; padding: 6px 8px; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; justify-content: center; }
+.pq-grid .pcard .lkrow .btn svg { flex: none; }
 @media (max-width: 600px) {
   .pq-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-  html .pq-grid > .pcard { padding: 10px; gap: 5px; border-radius: 12px; }
-  html .pq-grid .pcard .p-hd { flex-wrap: wrap; gap: 4px; }
-  html .pq-grid .pcard .p-hd .num { flex: 1 1 100%; font-size: 10.5px; order: 0; }
-  html .pq-grid .pcard .p-hd .badge { order: 1; font-size: 10px; padding: 2px 6px; }
-  html .pq-grid .pcard .p-hd .m-acts { order: 2; margin-left: auto; }
+  html .pq-grid > .pcard { min-height: calc((100vw - 38px) / 2); padding: 11px; gap: 6px; border-radius: 12px; }
+  html .pq-grid .pcard .p-hd { flex-wrap: wrap; gap: 4px 6px; }
+  html .pq-grid .pcard .p-hd .num { flex: 1 1 100%; font-size: 10.5px; }
+  html .pq-grid .pcard .p-hd .badge { font-size: 10px; padding: 2px 6px; }
+  html .pq-grid .pcard .p-hd .m-acts { margin-left: auto; gap: 4px; }
+  html .pq-grid .pcard .p-hd .m-acts .ic-btn { width: 26px; height: 26px; }
   html .pq-grid .pcard h4 { font-size: 13.5px; }
   html .pq-grid .pcard > .small.row { font-size: 11px; gap: 2px 8px !important; }
-  html .pq-grid .pcard .prazo { font-size: 10.5px; padding: 2px 6px; line-height: 1.25; }
-  html .pq-grid .pcard .prazo svg { width: 11px; height: 11px; }
+  html .pq-grid .p-tags { margin-top: auto; gap: 4px; }
+  html .pq-grid .p-tags .prazo { font-size: 10.5px; padding: 2px 6px; line-height: 1.25; }
+  html .pq-grid .p-tags .prazo svg { width: 11px; height: 11px; }
 }
 </style>
 </head>
@@ -823,7 +831,7 @@ html body .pgc-st { border-radius: 6px; font-size: 10.5px; letter-spacing: .02em
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.54.0';
+  const APP_VERSION = '1.55.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Em disputa', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -3814,16 +3822,21 @@ html body .pgc-st { border-radius: 6px; font-size: 10.5px; letter-spacing: .02em
     const pzCls = (!enviada && pz && (pz.nivel === 'warn' || pz.nivel === 'bad') ? ' prz-' + pz.nivel : '') + (p.status === 'Falta dados' ? ' falta-dados' : '') + (enviada ? ' enviada' : '');
     const url = (u) => { u = String(u || '').trim(); return u ? (/^https?:\/\//i.test(u) ? u : 'https://' + u) : ''; };
     const btn = (u, txt) => u ? `<a class="btn sm grow lk" href="${esc(u)}" target="_blank" rel="noopener noreferrer" data-act="link-externo">${icon('link', 'sm')} ${txt}</a>` : '';
-    const botoes = btn(url(p.link), 'Edital').replace('class="btn sm grow lk"', 'class="btn sm grow lk btn-edital"') + btn(url(p.linkModelo), 'Modelo de proposta') + btn(url(p.linkProposta), 'Enviar proposta') + btn(url(p.linkLicitacao), 'Licitações');
+    const botoes = btn(url(p.link), 'Edital').replace('class="btn sm grow lk"', 'class="btn sm grow lk btn-edital"') + btn(url(p.linkModelo), 'Modelo') + btn(url(p.linkProposta), 'Enviar proposta') + btn(url(p.linkLicitacao), 'Licitações');
     return `<article class="pcard${pzCls}" style="--gc:${corDe(p.id)};--sc:${COR_STATUS[p.status] || '#2e75b6'}" data-act="abrir-pregao" data-id="${p.id}" tabindex="0" role="button">
-      <div class="row between p-hd"><span class="num" style="color:var(--gc)">PREGÃO Nº ${esc(p.numero)}</span><span class="m-acts">${url(p.link) ? `<a class="ic-btn" href="${esc(url(p.link))}" target="_blank" rel="noopener noreferrer" data-act="link-externo" title="Abrir edital" aria-label="Abrir edital">${icon('pdf', 'sm')}</a>` : ''}${url(p.linkProposta) ? `<a class="ic-btn" href="${esc(url(p.linkProposta))}" target="_blank" rel="noopener noreferrer" data-act="link-externo" title="Enviar proposta" aria-label="Enviar proposta">${icon('link', 'sm')}</a>` : ''}</span>${badgeStatus(p.status)}</div>
+      <div class="row between p-hd"><span class="num" style="color:var(--gc)" title="Pregão nº ${esc(p.numero)}">${/^preg/i.test(String(p.numero).trim()) ? esc(p.numero) : 'PREGÃO Nº ' + esc(p.numero)}</span><span class="m-acts">${url(p.link) ? `<a class="ic-btn" href="${esc(url(p.link))}" target="_blank" rel="noopener noreferrer" data-act="link-externo" title="Abrir edital" aria-label="Abrir edital">${icon('pdf', 'sm')}</a>` : ''}${url(p.linkProposta) ? `<a class="ic-btn" href="${esc(url(p.linkProposta))}" target="_blank" rel="noopener noreferrer" data-act="link-externo" title="Enviar proposta" aria-label="Enviar proposta">${icon('link', 'sm')}</a>` : ''}</span>${badgeStatus(p.status)}</div>
       <h4>${esc(p.orgao)}</h4>
       <div class="small muted row wrap" style="gap:4px 14px;align-items:center">${url(p.linkProposta) ? `<a class="btn sm lk p-prop" href="${esc(url(p.linkProposta))}" target="_blank" rel="noopener noreferrer" data-act="link-externo">${icon('link', 'sm')} Proposta</a>` : ''}${p.cidadeUf ? `<span class="row" style="gap:4px">${icon('pin', 'sm')}${esc(p.cidadeUf)}</span>` : ''}${p.sessao ? `<span class="row" style="gap:4px">${icon('calendar', 'sm')}${esc(C.fmtSessao(p.sessao))}</span>` : ''}<span class="m-meta">${pst.itens.length ? pst.itens.length + (pst.itens.length === 1 ? ' item' : ' itens') : 'sem itens'}</span>${(p.obs || pst.itens.some((i) => String(i.obs || '').trim())) ? `<span class="m-meta m-obs" title="Tem observação">${icon('alert', 'sm')}</span>` : ''}</div>
-      ${pz ? `<div><span class="prazo ${pz.nivel}">${icon(pz.nivel === 'ok' ? 'calendar' : 'alert', 'sm')}${esc(pz.texto)}</span></div>` : ''}
-      ${pst.ganho ? `<div><span class="prazo good">${icon('acomp', 'sm')}Venci: ${pst.nGanhos} ${pst.nGanhos === 1 ? 'item' : 'itens'}</span></div>` : ''}
-      ${pst.nPode ? `<div><span class="prazo good">${icon('check', 'sm')}Posso ganhar: ${pst.nPode} ${pst.nPode === 1 ? 'item' : 'itens'}</span></div>` : ''}
-      ${po ? `<div><span class="prazo ${nivelCls(po.nivel)}">${icon(po.nivel === 'bad' || po.nivel === 'warn' ? 'alert' : 'calendar', 'sm')}${esc(po.texto)}</span></div>` : ''}
-      ${p.modeloProprio ? `<div><span class="prazo warn">${icon('alert', 'sm')}Modelo próprio de proposta</span></div>` : ''}
+      ${(() => {
+        const tags = [
+          pz ? `<span class="prazo ${pz.nivel}">${icon(pz.nivel === 'ok' ? 'calendar' : 'alert', 'sm')}${esc(pz.texto)}</span>` : '',
+          pst.ganho ? `<span class="prazo good">${icon('acomp', 'sm')}Venci: ${pst.nGanhos} ${pst.nGanhos === 1 ? 'item' : 'itens'}</span>` : '',
+          pst.nPode ? `<span class="prazo good">${icon('check', 'sm')}Posso ganhar: ${pst.nPode} ${pst.nPode === 1 ? 'item' : 'itens'}</span>` : '',
+          po ? `<span class="prazo ${nivelCls(po.nivel)}">${icon(po.nivel === 'bad' || po.nivel === 'warn' ? 'alert' : 'calendar', 'sm')}${esc(po.texto)}</span>` : '',
+          p.modeloProprio ? `<span class="prazo warn">${icon('alert', 'sm')}Modelo próprio de proposta</span>` : '',
+        ].filter(Boolean).join('');
+        return tags ? `<div class="p-tags">${tags}</div>` : '';
+      })()}
       ${p.obs ? `<div class="obsline"><span class="obs-ic">${icon('alert', 'sm')}</span><span class="obs-tx">${esc(p.obs)}</span></div>` : ''}
       ${porItemEdital(pst.itens).filter((i) => String(i.obs || '').trim()).map((i) => `<div class="obsline item"><span class="obs-ic">${icon('alert', 'sm')}</span><span class="obs-tx"><b>${esc(String(i.itemEdital || '').trim() ? 'Item ' + String(i.itemEdital).trim() : i.descricao)}:</b> ${esc(i.obs)}</span></div>`).join('')}
       <div class="chips">${chips || '<span class="chip">Sem itens ainda</span>'}</div>
