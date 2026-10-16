@@ -831,7 +831,7 @@ html body .pgc-st { border-radius: 6px; font-size: 10.5px; letter-spacing: .02em
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.55.0';
+  const APP_VERSION = '1.56.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Em disputa', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -2885,7 +2885,7 @@ html body .pgc-st { border-radius: 6px; font-size: 10.5px; letter-spacing: .02em
     const body = `
       <div class="formgrid">
         ${field({ label: 'Nº do pregão *', name: 'numero', value: v.numero, ph: 'ex.: 90001/2026', inputmode: 'text', hint: 'Só números e . - / (a proposta já escreve “Pregão nº” antes).' })}
-        ${field({ label: 'Status', name: 'status', type: 'select', value: v.status, options: (C.STATUS.includes(v.status) ? C.STATUS : [v.status].concat(C.STATUS)).map((s) => ({ v: s, l: s })), hint: 'Falta dados = ainda preenchendo. Itens ganhos: marque “Venci” no item. Concluído = terminou (sai do painel).' })}
+        ${field({ label: 'Status', name: 'status', type: 'select', value: v.status, options: (C.STATUS.includes(v.status) ? C.STATUS : [v.status].concat(C.STATUS)).map((s) => ({ v: s, l: stTxt(s) })), hint: 'Incompleto = ainda preenchendo. Itens ganhos: marque “Venci” no item. Concluído = terminou (sai do painel).' })}
         ${field({ label: 'Órgão / entidade *', name: 'orgao', value: v.orgao, full: true, ph: 'ex.: Universidade de Londrina' })}
         ${field({ label: 'Plataforma do pregão', name: 'plataforma', value: v.plataforma, full: true, ph: 'ex.: BLL, Compras.gov.br', list: PLATAFORMAS, hint: 'Onde a disputa acontece. Aparece no cartão do Painel. Se ficar vazio, o app tenta reconhecer pelo site da proposta.' })}
         ${field({ label: 'Local do pregão (cidade/UF)', name: 'cidadeUf', value: v.cidadeUf, full: true, ph: 'Londrina/PR', hint: 'Ao preencher, o trajeto de ida e volta a partir do endereço da sua empresa é calculado sozinho.' })}
@@ -3320,7 +3320,10 @@ html body .pgc-st { border-radius: 6px; font-size: 10.5px; letter-spacing: .02em
     const i = ordem.findIndex((p) => p.id === id);
     return PALETA[(i < 0 ? 0 : i) % PALETA.length];
   }
-  const badgeStatus = (s) => `<span class="badge st-${slugClass(s)}">${esc(s)}</span>`;
+  // nome curto (uma palavra) de cada status, só na tela; o valor salvo continua o mesmo
+  const ST_CURTO = { 'Falta dados': 'Incompleto', 'Proposta enviada': 'Enviada', 'Em disputa': 'Disputa' };
+  const stTxt = (s) => ST_CURTO[s] || s;
+  const badgeStatus = (s) => `<span class="badge st-${slugClass(s)}" title="${esc(s)}">${esc(stTxt(s))}</span>`;
 
   function draftDesc(key) {
     const [kind, id] = key.split(':');
@@ -3407,7 +3410,7 @@ html body .pgc-st { border-radius: 6px; font-size: 10.5px; letter-spacing: .02em
   // fora do painel? 'manual' (você tirou) | 'auto' (2 dias após a sessão ou 3 dias após o fim do prazo de propostas) | null
   function miniPregao(p, flag) {
     const conc = p.status === 'Concluído';
-    return `<article class="mini-p${conc ? ' conc' : ''}" data-act="abrir-pregao" data-id="${p.id}" tabindex="0" role="button" aria-label="Abrir pregão ${esc(p.numero)} ${esc(p.orgao)}">${conc ? `<span class="mp-ok">${icon('check', 'sm')}</span>` : ''}<span class="mp-num">Nº ${esc(p.numero)}</span><span class="mp-org ell">${esc(p.orgao)}</span>${flag ? '<span class="mp-star" title="Tem item que posso ganhar">★</span>' : ''}<span class="mp-st">${esc(p.status)}</span></article>`;
+    return `<article class="mini-p${conc ? ' conc' : ''}" data-act="abrir-pregao" data-id="${p.id}" tabindex="0" role="button" aria-label="Abrir pregão ${esc(p.numero)} ${esc(p.orgao)}">${conc ? `<span class="mp-ok">${icon('check', 'sm')}</span>` : ''}<span class="mp-num">Nº ${esc(p.numero)}</span><span class="mp-org ell">${esc(p.orgao)}</span>${flag ? '<span class="mp-star" title="Tem item que posso ganhar">★</span>' : ''}<span class="mp-st">${esc(stTxt(p.status))}</span></article>`;
   }
   function painelOculto(p) {
     if (p.ocultoPainel) return 'manual';
@@ -3456,7 +3459,7 @@ html body .pgc-st { border-radius: 6px; font-size: 10.5px; letter-spacing: .02em
         return cd || info ? `<div class="pgc-cd m-hide">${cd ? `<div><small>${rot}</small> <b class="${d === 0 ? 'hoje' : d < 0 && d >= -3 ? 'perto' : d > 0 ? 'passou' : ''}">${cd}</b></div>` : ''}${info ? `<span>${esc(info)}</span>` : ''}</div>` : '';
       })()}
       ${al.length ? `<div class="pgc-alertas">${al.map((a) => `<span class="pgc-al ${a[0]}"><i class="dot"></i>${esc(a[1])}</span>`).join('')}</div>` : ''}
-      <div class="pgc-foot"><span class="pgc-st">${esc(p.status)}</span>${pst.nItens ? `<b title="Valor da proposta (igual ao total do PDF); se ganhou só parte dos itens, o valor do que foi ganho">${(() => { const v = (pst.ganho && pst.nGanhos < pst.nItens) ? pst.propostaGanha : pst.proposta; return v > 0 ? C.brl(v) : '—'; })()}</b>` : '<span class="tiny muted">Sem itens</span>'}</div></article>`;
+      <div class="pgc-foot"><span class="pgc-st">${esc(stTxt(p.status))}</span>${pst.nItens ? `<b title="Valor da proposta (igual ao total do PDF); se ganhou só parte dos itens, o valor do que foi ganho">${(() => { const v = (pst.ganho && pst.nGanhos < pst.nItens) ? pst.propostaGanha : pst.proposta; return v > 0 ? C.brl(v) : '—'; })()}</b>` : '<span class="tiny muted">Sem itens</span>'}</div></article>`;
   }
   // Painel = agenda (o que vem pela frente) — os cartões completos ficam na guia Pregões
   const MESES3 = ['JAN', 'FEV', 'MAR', 'ABR', 'MAI', 'JUN', 'JUL', 'AGO', 'SET', 'OUT', 'NOV', 'DEZ'];
@@ -3492,7 +3495,7 @@ html body .pgc-st { border-radius: 6px; font-size: 10.5px; letter-spacing: .02em
         ${al.length ? `<div class="ag-al">${al.map((a) => `<span class="pgc-al ${a[0]}"><i class="dot"></i>${esc(a[1])}</span>`).join('')}</div>` : ''}
       </div>
       <div class="ag-side">
-        <span class="ag-st">${esc(p.status)}</span>
+        <span class="ag-st">${esc(stTxt(p.status))}</span>
         <b class="ag-val">${v != null ? C.brl(v) : (pst.nItens ? '—' : '<span class="tiny muted">Sem itens</span>')}</b>
         ${cd ? `<span class="ag-cd${d === 0 ? ' hoje' : d === -1 ? ' amanha' : d > 0 ? ' passou' : ''}">${cd}</span>` : ''}
       </div>
@@ -3866,7 +3869,7 @@ html body .pgc-st { border-radius: 6px; font-size: 10.5px; letter-spacing: .02em
     const fl = ['todos', ...C.STATUS];
     return `<div class="page">
       <div class="search">${icon('search')}<input class="input" id="busca" type="search" placeholder="Buscar por número, órgão ou item" value="${esc(UI.busca)}"></div>
-      <div class="filters">${fl.map((s) => `<button data-act="filtro" data-v="${esc(s)}" class="${UI.filtro === s ? 'on' : ''}">${s === 'todos' ? 'Todos' : esc(s)}</button>`).join('')}</div>
+      <div class="filters">${fl.map((s) => `<button data-act="filtro" data-v="${esc(s)}" class="${UI.filtro === s ? 'on' : ''}">${s === 'todos' ? 'Todos' : esc(stTxt(s))}</button>`).join('')}</div>
       <div id="plist">${pregoesListHtml()}</div></div>
       <button class="fab" data-act="novo-pregao" aria-label="Novo pregão">${icon('plus')}</button>`;
   }
@@ -4019,7 +4022,7 @@ html body .pgc-st { border-radius: 6px; font-size: 10.5px; letter-spacing: .02em
           ${p.obs ? `<div class="obstxt">${esc(p.obs)}</div>` : ''}</div>`;
       })()}
       <div class="card"><div class="field" style="margin:0"><label for="stsel">Status do pregão</label>
-        <select class="input" id="stsel" data-status-pregao="${p.id}">${C.STATUS.map((s) => `<option${s === p.status ? ' selected' : ''}>${esc(s)}</option>`).join('')}</select></div></div>
+        <select class="input" id="stsel" data-status-pregao="${p.id}">${C.STATUS.map((s) => `<option value="${esc(s)}"${s === p.status ? ' selected' : ''}>${esc(stTxt(s))}</option>`).join('')}</select></div></div>
       ${posCardHtml(pst)}
       ${ganhosCardHtml(pst)}
       <div class="kpis">
