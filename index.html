@@ -792,9 +792,12 @@ html body .pgc-st { border-radius: 6px; font-size: 10.5px; letter-spacing: .02em
 .pq-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); grid-auto-rows: 1fr; gap: 16px; align-items: stretch; }
 .pq-grid > .pcard { min-height: 300px; min-width: 0; overflow: visible; gap: 8px; padding: 16px; border-radius: 14px; }
 .pq-grid .pcard > * { flex-shrink: 0; min-width: 0; }
+/* a borda do 'Incompleto' é 1px mais grossa: tira 1px do respiro para o conteúdo ficar na mesma posição dos outros */
+html .pq-grid > .pcard.falta-dados { padding: 15px; }
 .pq-grid .pcard .p-hd { align-items: center; gap: 8px; flex-wrap: nowrap; }
 .pq-grid .pcard .p-hd .num { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-transform: uppercase; }
-.pq-grid .pcard .p-hd .badge { flex: none; white-space: nowrap; }
+.pq-grid .pcard .p-hd .badge { flex: none; white-space: nowrap; width: 88px; box-sizing: border-box; text-align: center; justify-content: center; overflow: hidden; text-overflow: ellipsis; }
+.pq-grid .pcard .p-hd .ic-vazio { display: none; }
 .pq-grid .pcard h4 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.25; min-height: 2.5em; overflow-wrap: anywhere; }
 .p-tags { display: flex; flex-wrap: wrap; gap: 5px; }
 .pq-grid .p-tags .prazo { max-width: 100%; white-space: normal; font-size: 11.5px; padding: 3px 8px; line-height: 1.3; }
@@ -808,14 +811,17 @@ html body .pgc-st { border-radius: 6px; font-size: 10.5px; letter-spacing: .02em
 @media (max-width: 600px) {
   .pq-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
   html .pq-grid > .pcard { min-height: calc((100vw - 38px) / 2); padding: 11px; gap: 6px; border-radius: 12px; }
-  html .pq-grid .pcard .p-hd { flex-wrap: wrap; gap: 4px 6px; }
-  html .pq-grid .pcard .p-hd .num { flex: 1 1 100%; font-size: 10.5px; }
-  html .pq-grid .pcard .p-hd .badge { font-size: 10px; padding: 2px 6px; max-width: calc(100% - 64px); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  html .pq-grid .pcard .p-hd .m-acts { flex: none; }   /* ícones e status sempre na mesma linha, mesmo com nome de status maior */
-  html .pq-grid .pcard .p-hd .m-acts { margin-left: auto; gap: 4px; }
+  html .pq-grid > .pcard.falta-dados { padding: 10px; }
+  /* cabeçalho fixo: linha 1 = número; linha 2 = [edital][proposta] à esquerda e status à direita, sempre no mesmo lugar */
+  html .pq-grid .pcard .p-hd { display: grid; grid-template-columns: auto 1fr auto; grid-template-areas: "num num num" "acts . st"; align-items: center; gap: 5px 6px; }
+  html .pq-grid .pcard .p-hd .num { grid-area: num; font-size: 10.5px; }
+  html .pq-grid .pcard .p-hd .m-acts { grid-area: acts; display: inline-flex; gap: 4px; margin: 0; }
   html .pq-grid .pcard .p-hd .m-acts .ic-btn { width: 26px; height: 26px; }
+  html .pq-grid .pcard .p-hd .ic-vazio { display: inline-grid; visibility: hidden; }
+  html .pq-grid .pcard .p-hd .badge { grid-area: st; width: 74px; box-sizing: border-box; text-align: center; justify-content: center; font-size: 10px; padding: 3px 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   html .pq-grid .pcard h4 { font-size: 13.5px; }
   html .pq-grid .pcard > .small.row { font-size: 11px; gap: 2px 8px !important; }
+  html .pq-grid .pcard > .small.row > span.row { flex: 1 1 100%; }   /* cidade, data e itens sempre em linhas próprias */
   html .pq-grid .p-tags { margin-top: auto; gap: 4px; }
   html .pq-grid .p-tags .prazo { font-size: 10.5px; padding: 2px 6px; line-height: 1.25; }
   html .pq-grid .p-tags .prazo svg { width: 11px; height: 11px; }
@@ -832,7 +838,7 @@ html body .pgc-st { border-radius: 6px; font-size: 10.5px; letter-spacing: .02em
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.56.1';
+  const APP_VERSION = '1.56.2';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Em disputa', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -3828,7 +3834,7 @@ html body .pgc-st { border-radius: 6px; font-size: 10.5px; letter-spacing: .02em
     const btn = (u, txt) => u ? `<a class="btn sm grow lk" href="${esc(u)}" target="_blank" rel="noopener noreferrer" data-act="link-externo">${icon('link', 'sm')} ${txt}</a>` : '';
     const botoes = btn(url(p.link), 'Edital').replace('class="btn sm grow lk"', 'class="btn sm grow lk btn-edital"') + btn(url(p.linkModelo), 'Modelo') + btn(url(p.linkProposta), 'Enviar proposta') + btn(url(p.linkLicitacao), 'Licitações');
     return `<article class="pcard${pzCls}" style="--gc:${corDe(p.id)};--sc:${COR_STATUS[p.status] || '#2e75b6'}" data-act="abrir-pregao" data-id="${p.id}" tabindex="0" role="button">
-      <div class="row between p-hd"><span class="num" style="color:var(--gc)" title="Pregão nº ${esc(p.numero)}">${/^preg/i.test(String(p.numero).trim()) ? esc(p.numero) : 'PREGÃO Nº ' + esc(p.numero)}</span><span class="m-acts">${url(p.link) ? `<a class="ic-btn" href="${esc(url(p.link))}" target="_blank" rel="noopener noreferrer" data-act="link-externo" title="Abrir edital" aria-label="Abrir edital">${icon('pdf', 'sm')}</a>` : ''}${url(p.linkProposta) ? `<a class="ic-btn" href="${esc(url(p.linkProposta))}" target="_blank" rel="noopener noreferrer" data-act="link-externo" title="Enviar proposta" aria-label="Enviar proposta">${icon('link', 'sm')}</a>` : ''}</span>${badgeStatus(p.status)}</div>
+      <div class="row between p-hd"><span class="num" style="color:var(--gc)" title="Pregão nº ${esc(p.numero)}">${/^preg/i.test(String(p.numero).trim()) ? esc(p.numero) : 'PREGÃO Nº ' + esc(p.numero)}</span><span class="m-acts">${url(p.link) ? `<a class="ic-btn" href="${esc(url(p.link))}" target="_blank" rel="noopener noreferrer" data-act="link-externo" title="Abrir edital" aria-label="Abrir edital">${icon('pdf', 'sm')}</a>` : '<span class="ic-btn ic-vazio" aria-hidden="true"></span>'}${url(p.linkProposta) ? `<a class="ic-btn" href="${esc(url(p.linkProposta))}" target="_blank" rel="noopener noreferrer" data-act="link-externo" title="Enviar proposta" aria-label="Enviar proposta">${icon('link', 'sm')}</a>` : '<span class="ic-btn ic-vazio" aria-hidden="true"></span>'}</span>${badgeStatus(p.status)}</div>
       <h4>${esc(p.orgao)}</h4>
       <div class="small muted row wrap" style="gap:4px 14px;align-items:center">${url(p.linkProposta) ? `<a class="btn sm lk p-prop" href="${esc(url(p.linkProposta))}" target="_blank" rel="noopener noreferrer" data-act="link-externo">${icon('link', 'sm')} Proposta</a>` : ''}${p.cidadeUf ? `<span class="row" style="gap:4px">${icon('pin', 'sm')}${esc(p.cidadeUf)}</span>` : ''}${p.sessao ? `<span class="row" style="gap:4px">${icon('calendar', 'sm')}${esc(C.fmtSessao(p.sessao))}</span>` : ''}<span class="m-meta">${pst.itens.length ? pst.itens.length + (pst.itens.length === 1 ? ' item' : ' itens') : 'sem itens'}</span>${(p.obs || pst.itens.some((i) => String(i.obs || '').trim())) ? `<span class="m-meta m-obs" title="Tem observação">${icon('alert', 'sm')}</span>` : ''}</div>
       ${(() => {
