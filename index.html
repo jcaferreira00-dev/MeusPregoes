@@ -862,7 +862,7 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.58.0';
+  const APP_VERSION = '1.59.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Em disputa', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -1054,6 +1054,22 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
     return (ab && mes >= 1 && mes <= 12 && ab === Number(cfg.anoRef)) ? 13 - mes : 12;
   }
 
+  // ordem do edital: primeiro o lote (1, 2, 10…), depois o item (2, 3, 4A…); sem nº ficam no fim, na ordem de cadastro
+  function ordemLoteItem(list) {
+    const cmp = (x, y) => x.localeCompare(y, 'pt-BR', { numeric: true, sensitivity: 'base' });
+    const k = (it, c) => String(it[c] || '').trim();
+    return list.map((it, i) => ({ it, i })).sort((a, b) => {
+      for (const c of ['loteEdital', 'itemEdital']) {
+        const x = k(a.it, c), y = k(b.it, c);
+        if (x === y) continue;
+        if (!x) return 1;
+        if (!y) return -1;
+        const d = cmp(x, y); if (d) return d;
+      }
+      return a.i - b.i;
+    }).map((o) => o.it);
+  }
+
   function computeAll(state) {
     const cfg = state.config;
     const pregoes = state.pregoes.filter((p) => !p.deleted);
@@ -1065,7 +1081,7 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
     }
     const pMap = new Map();
     for (const p of pregoes) {
-      const listAll = byP.get(p.id) || [];
+      const listAll = ordemLoteItem(byP.get(p.id) || []);   // sempre por lote e item do edital (proposta, telas e PDF)
       const list = listAll.filter((i) => !i.semLance);   // item que ficou de fora (sem lance) não entra nas contas
       // itens com local de entrega próprio formam grupos com rota e custo próprios; os demais usam a rota do pregão
       const ovr = (it) => { const l = normLocal(it.localEntrega); return !!l && l !== normLocal(p.cidadeUf); };
@@ -1515,7 +1531,7 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
   const api = {
     APP_VERSION, STATUS, INATIVOS, DECL_PADRAO, uid, n0, round2, ceil2, parseBR, brl, brl0, pct, numBR, qtdBR,
     fmtSessao, dataExtensa, hojeISO, defaultConfig, emptyState, migrate, custoViagem, localEntregaPadrao, calcItem, limiteMEI,
-    computeAll, dasMensal, mesesAtivos, previewItem, linhasProposta, unitProposta, resolverPdfOpts, COLUNAS_DESC, CAMPOS_FORNECEDOR, CAMPOS_BANCO, mergeState, diffState, paraNuvem, createStore, demoState,
+    computeAll, ordemLoteItem, dasMensal, mesesAtivos, previewItem, linhasProposta, unitProposta, resolverPdfOpts, COLUNAS_DESC, CAMPOS_FORNECEDOR, CAMPOS_BANCO, mergeState, diffState, paraNuvem, createStore, demoState,
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   root.Core = api;
@@ -3915,19 +3931,8 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
   }
 
   // itens sempre na ordem do edital (04, 10, 4A…); sem número ficam no fim, na ordem de cadastro
-  function porItemEdital(list) {
-    const k = (it) => String(it.itemEdital || '').trim(), kl = (it) => String(it.loteEdital || '').trim();
-    const cmp = (x, y) => x.localeCompare(y, 'pt-BR', { numeric: true, sensitivity: 'base' });
-    return list.map((it, i) => ({ it, i })).sort((a, b) => {
-      const la = kl(a.it), lb = kl(b.it);
-      if (la !== lb) { if (!la) return 1; if (!lb) return -1; return cmp(la, lb); }   // primeiro o lote
-      const ka = k(a.it), kb = k(b.it);
-      if (!ka && !kb) return a.i - b.i;
-      if (!ka) return 1;
-      if (!kb) return -1;
-      return cmp(ka, kb) || a.i - b.i;
-    }).map((x) => x.it);
-  }
+  // itens sempre na ordem do edital: lote e depois item
+  const porItemEdital = (list) => C.ordemLoteItem(list);
 
   function estrelasHtml(c) {
     if (!c || c.estrelas == null) return '';
@@ -3939,7 +3944,8 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
 
   function itemCard(it, c, opt) {
     const p = opt.pst && opt.pst.p;
-    const tag = String(it.itemEdital || '').trim() ? `<span class="itag">Item ${esc(String(it.itemEdital).trim())}</span>` : '<span class="itag vazio">Item s/nº</span>';
+    const _lt = String(it.loteEdital || '').trim(), _it = String(it.itemEdital || '').trim();
+    const tag = (_lt || _it) ? `<span class="itag">${_lt ? 'Lote ' + esc(_lt) + (_it ? ' · ' : '') : ''}${_it ? 'Item ' + esc(_it) : ''}</span>` : '<span class="itag vazio">Item s/nº</span>';
     // descrição numa linha própria, logo abaixo do nº do item; longa termina com "…" (o texto todo aparece ao passar o dedo/mouse)
     const desc = `<h4 class="i-desc" title="${esc(it.descricao)}">${esc(it.descricao)}</h4>`;
     if (c.fora) {
@@ -4075,7 +4081,7 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
         <div class="kpi" style="--c:#b7791f"><div class="l">Margem real</div><div class="v">${C.pct(pst.margem, 1)}</div></div>
       </div>
       <div class="card"><h3><span class="grow">Itens deste pregão (${pst.nItens})</span><button class="btn sm primary" data-act="novo-item" data-pid="${p.id}">${icon('plus', 'sm')} Item</button></h3>
-        ${pst.todosItens.length ? `<div class="list">${foraNoFim(porItemEdital(pst.todosItens), R).map((it) => itemCard(it, R.iMap.get(it.id), { pst, showOrg: false })).join('')}</div>` : `<p class="muted small">Nenhum item ainda. Toque em “Item” para adicionar o primeiro.</p>`}</div>
+        ${pst.todosItens.length ? `<div class="list">${porItemEdital(pst.todosItens).map((it) => itemCard(it, R.iMap.get(it.id), { pst, showOrg: false })).join('')}</div>` : `<p class="muted small">Nenhum item ainda. Toque em “Item” para adicionar o primeiro.</p>`}</div>
       <div class="card"><h3>Dados do pregão</h3><div class="kv-list">
         ${(() => { const z = prazoInfo(p); return z ? kv('Envio das propostas', `<span class="prazo ${z.nivel}">${esc(z.texto)}</span>`) : ''; })()}${kv('Local de entrega', esc(C.localEntregaPadrao(p)))}${kv('Intervalo mín. lances', esc(p.intervaloMin))}${kv('Prazo de entrega', p.prazoEntregaDias ? esc(p.prazoEntregaDias) + ' dias' : '')}${kv('Exigências', esc(p.exigencias))}
         ${pst.ents ? kv('Entregas', pst.ents.map((x, i) => `${i + 1}. ${esc(x.local)} · ${C.numBR(x.e.km || 0, 1)} km · ${x.e.viagens || 0} viagem(ns)${x.e.pedagio ? ' · pedágio ' + C.brl(x.e.pedagio) : ''} = <b>${C.brl(x.custo)}</b> · ${x.nItens} ${x.nItens === 1 ? 'item' : 'itens'}`).join('<br>') + (pst.ents.length > 1 ? `<br>Total: ${C.brl(pst.viagem)}` : '')) : ''}
@@ -4095,7 +4101,7 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
     const groups = [...R.pMap.values()].sort((a, b) => (enc(a) - enc(b)) || (disp(a) - disp(b)) || (b.p.createdAt || 0) - (a.p.createdAt || 0));   // encerrados sempre no fim
     let html = '', n = 0;
     for (const g of groups) {
-      const its = foraNoFim(porItemEdital(g.todosItens), R).filter((i) => !q || (i.descricao + ' ' + (i.marca || '') + ' ' + (i.onde || '') + ' ' + g.p.orgao + ' ' + g.p.numero).toLowerCase().includes(q));
+      const its = porItemEdital(g.todosItens).filter((i) => !q || (i.descricao + ' ' + (i.marca || '') + ' ' + (i.onde || '') + ' ' + g.p.orgao + ' ' + g.p.numero).toLowerCase().includes(q));
       if (!its.length) continue;
       n += its.length;
       if (enc(g)) { html += miniPregao(g.p, g.nPode > 0); continue; }
