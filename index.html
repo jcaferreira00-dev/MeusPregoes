@@ -922,6 +922,15 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
 .icard .i-meta { display: flex; align-items: center; gap: 10px; }
 .icard .i-meta .i-meta-tx { flex: 1; min-width: 0; }
 .icard .i-meta .foto-tag { margin-left: auto; flex: none; width: 86px; justify-content: center; }
+
+/* catálogo: títulos das especificações (v1.70) */
+.cat-tits { margin-top: 10px; display: flex; flex-direction: column; gap: 6px; }
+.cat-tit-add { display: flex; gap: 6px; align-items: stretch; }
+.cat-tit-add .input { flex: 1; min-width: 0; text-transform: uppercase; }
+.cat-tit-add .input::placeholder { text-transform: none; }
+.cat-tit-add .btn { flex: none; width: 44px; justify-content: center; padding: 0; }
+.cat-tit-sug { display: flex; flex-wrap: wrap; gap: 6px; }
+.cat-tit-sug .chip { cursor: pointer; font-weight: 700; font-size: 11.5px; }
 </style>
 </head>
 <body>
@@ -934,7 +943,7 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.69.0';
+  const APP_VERSION = '1.70.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Em disputa', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -1373,8 +1382,14 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
   //       'final'   = só os itens vencidos, valor ajustado (lance final; sem lance, o teto do edital)
   //       vazio     = regra antiga (usada por quem não informa o tipo)
   // rótulo no PDF: "LOTE 1 - ITEM 1"; só lote → "LOTE 1"; só item → "ITEM 1" (sem nenhum, o nº sequencial)
+  // nº de lote/item com 2 dígitos: "1" → "01", "4A" → "04A"; 10 em diante fica como está
+  function padLE(v) {
+    const t = String(v == null ? '' : v).trim();
+    const m = /^0*(\d)([A-Za-z]?)$/.exec(t);
+    return m ? '0' + m[1] + m[2].toUpperCase() : t;
+  }
   function rotuloLoteItem(it, n) {
-    const lote = String(it.loteEdital || '').trim(), item = String(it.itemEdital || '').trim();
+    const lote = padLE(it.loteEdital), item = padLE(it.itemEdital);
     if (lote && item) return 'LOTE ' + lote + ' - ITEM ' + item;
     if (lote) return 'LOTE ' + lote;
     return 'ITEM ' + (item || String(n).padStart(2, '0'));
@@ -1413,7 +1428,7 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
       const totS = unitS !== null ? round2(qtd * unitS) : null;
       if (totS !== null) totalS += totS;
       linhas.push({
-        n, id: it.id, catalogo: String(it.catalogoDesc || '').trim(), numeroItem: (it.itemEdital && String(it.itemEdital).trim()) || String(n).padStart(2, '0'), rotulo: rotuloLoteItem(it, n),
+        n, id: it.id, catalogo: String(it.catalogoDesc || '').trim(), numeroItem: padLE(it.itemEdital) || String(n).padStart(2, '0'), rotulo: rotuloLoteItem(it, n),
         descricao: it.descricao || '', descEdital: (it.descEdital && it.descEdital.trim()) || it.descricao || '',
         marca: it.marca || '', especificacoes: String(it.especificacoes || '').trim(), un: it.unidade || 'Un', qtd,
         recongelar: tipo === 'inicial' && velho, unit, total: tot, aliq, unitS, totalS: totS, teto: c.teto, minimo: c.minimo, lance: c.lance, precoInicial: temIni(it) ? it.precoInicial : null, acimaTeto: (unit !== null && c.teto !== null && unit > c.teto + 1e-9), limitadoTeto, unitOriginal, abaixoMinimo,
@@ -1624,7 +1639,7 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
   const api = {
     APP_VERSION, STATUS, INATIVOS, DECL_PADRAO, uid, n0, round2, ceil2, parseBR, brl, brl0, pct, numBR, qtdBR,
     fmtSessao, dataExtensa, hojeISO, defaultConfig, emptyState, migrate, custoViagem, localEntregaPadrao, calcItem, limiteMEI,
-    computeAll, ordemLoteItem, dasMensal, mesesAtivos, previewItem, linhasProposta, unitProposta, resolverPdfOpts, COLUNAS_DESC, CAMPOS_FORNECEDOR, CAMPOS_BANCO, mergeState, diffState, paraNuvem, createStore, demoState,
+    computeAll, ordemLoteItem, padLE, dasMensal, mesesAtivos, previewItem, linhasProposta, unitProposta, resolverPdfOpts, COLUNAS_DESC, CAMPOS_FORNECEDOR, CAMPOS_BANCO, mergeState, diffState, paraNuvem, createStore, demoState,
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   root.Core = api;
@@ -3270,7 +3285,7 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
     const m = C.parseBR(x.margem);
     const old = id && id !== 'new' ? store.get().itens.find((i) => i.id === id) : null;
     return {
-      id: id || 'new', pregaoId: x.pregaoId, loteEdital: String(x.loteEdital || '').trim(), itemEdital: x.itemEdital.trim(), descricao: x.descricao.trim(), descEdital: x.descEdital.trim(), marca: x.marca.trim(), especificacoes: old && old.especificacoes ? old.especificacoes : '', unidade: x.unidade.trim() || 'Un',
+      id: id || 'new', pregaoId: x.pregaoId, loteEdital: C.padLE(x.loteEdital), itemEdital: C.padLE(x.itemEdital), descricao: x.descricao.trim(), descEdital: x.descEdital.trim(), marca: x.marca.trim(), especificacoes: old && old.especificacoes ? old.especificacoes : '', unidade: x.unidade.trim() || 'Un',
       qtd: C.parseBR(x.qtd), onde: x.onde.trim(), ondeLink: urlSeg(x.ondeLink), obs: String(x.obs || '').trim(), possivelGanhar: !!x.possivelGanhar, vencedor: C.parseBR(x.vencedor),
       alternativas: [0, 1].map((n) => ({ loja: String(x['alt' + n + 'Loja'] || '').trim(), link: urlSeg(x['alt' + n + 'Link']), custo: C.parseBR(x['alt' + n + 'Custo']) })).filter((a) => a.loja || a.link || a.custo != null),
       custo: C.parseBR(x.custo), teto: C.parseBR(x.teto), frete: C.parseBR(x.frete) || 0,
@@ -3291,6 +3306,14 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
     return `<div class="field"><label for="f_entregaId">Em qual entrega este item vai?</label><select class="input" id="f_entregaId" name="entregaId">${p.entregas.map((e, i) => `<option value="${esc(e.id)}"${(ok ? e.id === sel : i === 0) ? ' selected' : ''}>Entrega ${i + 1} · ${esc(e.local)}</option>`).join('')}</select><div class="hint">O custo da entrega é dividido só entre os itens dela.</div></div>`;
   }
   // botão "Fotos e descrição para o catálogo" no formulário do item: salva e vai direto ao catálogo deste pregão
+  document.addEventListener('keydown', (e) => {   // catálogo: Enter no campo de título inclui o título
+    const t = e.target;
+    if (e.key === 'Enter' && t && t.dataset && t.dataset.catTitIn) { e.preventDefault(); if (String(t.value).trim()) incluirTituloCatalogo(t.dataset.catTitIn, t.value); }
+  });
+  document.addEventListener('focusout', (e) => {   // lote/item: ajusta para 2 dígitos ao sair do campo
+    const t = e.target;
+    if (t && (t.name === 'loteEdital' || t.name === 'itemEdital')) { const v = C.padLE(t.value); if (v !== t.value) { t.value = v; t.dispatchEvent(new Event('input', { bubbles: true })); } }
+  });
   document.addEventListener('click', (e) => {
     const b = e.target.closest('[data-ir-catalogo]');
     if (!b) return;
@@ -3339,7 +3362,7 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
       ${field({ label: 'Item que vou comprar *', name: 'descricao', value: v.descricao, ph: 'ex.: Caixa organizadora plástica 30 L' })}
       <div class="formgrid">
         ${field({ label: 'Nº do lote', name: 'loteEdital', value: v.loteEdital, ph: 'ex.: 1', hint: 'Vazio = sai só o item' })}
-        ${field({ label: 'Nº do item', name: 'itemEdital', value: v.itemEdital, ph: 'ex.: 04', hint: 'Sai “LOTE 1 - ITEM 04” no PDF' })}
+        ${field({ label: 'Nº do item', name: 'itemEdital', value: v.itemEdital, ph: 'ex.: 04', hint: 'Sai “LOTE 01 - ITEM 04” no PDF (1 vira 01 sozinho)' })}
         ${field({ label: 'Unidade', name: 'unidade', value: v.unidade, ph: 'Un, Cx, Resma…' })}
         ${field({ label: 'Marca / modelo', name: 'marca', value: v.marca, full: true, ph: 'ex.: SONE/Bico RN Anatômico' })}
         ${field({ label: 'Quantidade *', name: 'qtd', value: v.qtd, inputmode: 'decimal' })}
@@ -4071,7 +4094,7 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
 
   function itemCard(it, c, opt) {
     const p = opt.pst && opt.pst.p;
-    const _lt = String(it.loteEdital || '').trim(), _it = String(it.itemEdital || '').trim();
+    const _lt = C.padLE(it.loteEdital), _it = C.padLE(it.itemEdital);
     const tag = (_lt || _it) ? `<span class="itag">${_lt ? 'Lote ' + esc(_lt) + (_it ? ' · ' : '') : ''}${_it ? 'Item ' + esc(_it) : ''}</span>` : '<span class="itag vazio">Item s/nº</span>';
     // descrição numa linha própria, logo abaixo do nº do item; longa termina com "…" (o texto todo aparece ao passar o dedo/mouse)
     const desc = `<h4 class="i-desc" title="${esc(it.descricao)}">${esc(it.descricao)}</h4>`;
@@ -4606,7 +4629,7 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
   function catalogoCardHtml(st, L) {
     if (!L.linhas.length) return '';
     const itens = L.linhas.map((ln) => { const itc = st.itens.find((i) => i.id === ln.id); return `<div class="clause cat-item" id="cat-${esc(ln.id)}" style="scroll-margin-top:80px">
-        <div class="small cat-hd"><span class="cat-tit"><b>${(() => { const lt = String((itc && itc.loteEdital) || '').trim(), ni = String((itc && itc.itemEdital) || '').trim(); return lt ? 'Lote ' + esc(lt) + (ni ? ' · Item ' + esc(ni) : '') : 'Item ' + esc(ln.numeroItem); })()}</b> · ${esc(ln.descricao)}${ln.marca ? ` <span class="muted">· ${esc(ln.marca)}</span>` : ''}</span><span class="cat-dir"><span class="cat-custo" title="Custo unitário que você colocou no item (para conferir com o site)">custo un. <b>${itc && itc.custo != null ? C.brl(itc.custo) : '—'}</b></span><button type="button" class="ic-btn cat-edit" data-act="cat-editar" data-id="${esc(ln.id)}" title="Editar este item" aria-label="Editar este item">${icon('edit', 'sm')}</button></span></div>
+        <div class="small cat-hd"><span class="cat-tit"><b>${(() => { const lt = C.padLE(itc && itc.loteEdital), ni = C.padLE(itc && itc.itemEdital); return lt ? 'Lote ' + esc(lt) + (ni ? ' · Item ' + esc(ni) : '') : 'Item ' + esc(ln.numeroItem); })()}</b> · ${esc(ln.descricao)}${ln.marca ? ` <span class="muted">· ${esc(ln.marca)}</span>` : ''}</span><span class="cat-dir"><span class="cat-custo" title="Custo unitário que você colocou no item (para conferir com o site)">custo un. <b>${itc && itc.custo != null ? C.brl(itc.custo) : '—'}</b></span><button type="button" class="ic-btn cat-edit" data-act="cat-editar" data-id="${esc(ln.id)}" title="Editar este item" aria-label="Editar este item">${icon('edit', 'sm')}</button></span></div>
         <div class="cat-thumbs" data-cat-thumbs="${esc(ln.id)}" style="display:flex;flex-wrap:wrap;gap:8px;margin:8px 0"></div>
         <div class="cat-acts"><label class="btn sm" style="cursor:pointer">${icon('image', 'sm')} Incluir imagem<input type="file" accept="image/png,image/jpeg,image/webp" multiple data-cat-file="${esc(ln.id)}" class="sr-only" style="position:absolute;width:1px;height:1px;opacity:0;overflow:hidden"></label>${(() => {
           // link(s) de compra do item: abre o site da loja para pegar as fotos sem sair procurando
@@ -4615,10 +4638,13 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
           return cps.map((cp) => `<a class="btn sm cat-buy" href="${esc(cp.href)}" target="_blank" rel="noopener noreferrer" data-act="link-externo" title="Abrir o site da compra deste item">${icon('cart', 'sm')}<span class="ell">${cp.principal ? 'Ver na loja' : esc(cp.label)}</span></a>`).join('') || `<span class="btn sm cat-buy off" title="Coloque o link de compra no item para abrir a loja daqui">${icon('cart', 'sm')}<span class="ell">Sem link</span></span>`;
         })()}</div>
         <div class="cat-edital"><b>Exigido no edital</b>${ln.descEdital ? esc(ln.descEdital) : '<span class="muted">Sem descrição do edital no item. Preencha “Descrição completa (vai para o edital)” no item.</span>'}</div>
+        <div class="cat-tits"><div class="cat-tit-add"><input class="input" list="catTitList" data-cat-tit-in="${esc(ln.id)}" placeholder="Título (ex.: Marca, Modelo, Voltagem)" autocapitalize="characters" enterkeyhint="done"><button type="button" class="btn sm primary" data-act="cat-tit-add" data-id="${esc(ln.id)}" title="Incluir título na descrição" aria-label="Incluir título">${icon('plus', 'sm')}</button></div>
+          ${catTitSug(ln.catalogo, ln.id)}</div>
         <textarea class="input" rows="5" data-cat-desc="${esc(ln.id)}" placeholder="Descrição pormenorizada do produto (características técnicas, medidas, material, composição, normas, garantia…)" style="margin-top:8px">${esc(ln.catalogo)}</textarea>
       </div>`; }).join('');
     setTimeout(preencherFotosCatalogo, 0);
-    return `<div class="card" id="catCard" style="scroll-margin-top:80px"><h3>${icon('image', 'sm')} Catálogo dos produtos</h3>
+    const dl = `<datalist id="catTitList">${catTitulosOrdem().map((t) => `<option value="${esc(t)}">`).join('')}</datalist>`;
+    return `<div class="card" id="catCard" style="scroll-margin-top:80px">${dl}<h3>${icon('image', 'sm')} Catálogo dos produtos</h3>
         <p class="tiny muted" style="margin:0 0 10px">Para o pregoeiro confrontar o edital com o que você oferece. Cada item sai com o que o edital exige, a marca/modelo, as especificações, a sua descrição detalhada e as fotos (até 4 por item). As fotos são reduzidas e sincronizadas com a sua conta (Config › Nuvem), para aparecerem nos outros aparelhos.</p>
         ${itens}
         <label class="switch" style="margin-top:4px"><span>Anexar o catálogo ao final da proposta<small class="hint" style="display:block;font-weight:500">Ligado: o botão “Gerar PDF da proposta” já sai com o catálogo nas últimas páginas, num arquivo só.</small></span><input type="checkbox" data-cfg="proposta.catalogoJunto" data-type="check" ${st.config.proposta.catalogoJunto ? 'checked' : ''}></label>
@@ -4749,7 +4775,7 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
       w.innerHTML = `<div class="dlg dlg-precos" role="dialog" aria-modal="true"><h3>Confirme os preços da proposta final</h3>
         <p>${L.ganho ? 'Itens vencidos' : 'Nenhum item marcado como Venci: entram todos os itens'}. Ajuste o valor unitário final se precisar.</p>
         <div class="tbl-scroll"><table class="tbl"><thead><tr><th class="c">Lote</th><th class="c">Item</th><th>Descrição</th><th class="r">Qtd</th><th class="r">Frete</th><th class="c">Comprar</th><th class="r">Inicial</th><th class="r">Mínimo</th><th class="r">Teto</th><th class="r">Valor unit.</th><th class="r">Total</th></tr></thead><tbody>
-        ${L.linhas.map((x) => { const it = st.itens.find((i) => i.id === x.id) || {}; const cps = comprasDoItem(it).filter((k) => k.href); return `<tr><td class="c">${esc(String(it.loteEdital || '').trim() || '—')}</td><td class="c"><b>${esc(String(it.itemEdital || '').trim() || x.numeroItem)}</b></td><td class="pf-desc" title="${esc(x.descricao)}"><div>${esc(x.descricao)}</div></td><td class="r">${C.qtdBR(x.qtd)}</td><td class="r">${C.brl(it.frete || 0)}</td>
+        ${L.linhas.map((x) => { const it = st.itens.find((i) => i.id === x.id) || {}; const cps = comprasDoItem(it).filter((k) => k.href); return `<tr><td class="c">${esc(C.padLE(it.loteEdital) || '—')}</td><td class="c"><b>${esc(C.padLE(it.itemEdital) || x.numeroItem)}</b></td><td class="pf-desc" title="${esc(x.descricao)}"><div>${esc(x.descricao)}</div></td><td class="r">${C.qtdBR(x.qtd)}</td><td class="r">${C.brl(it.frete || 0)}</td>
           <td class="c">${cps.length ? cps.map((k) => `<a class="buy" href="${esc(k.href)}" target="_blank" rel="noopener noreferrer" title="Conferir preço e estoque: ${esc(k.label || 'link')}">$</a>`).join('') : '<span class="muted">—</span>'}</td>
           <td class="r">${C.brl(x.precoInicial)}</td><td class="r">${C.brl(x.minimo)}</td><td class="r">${C.brl(x.teto)}</td>
           <td class="r"><input class="input" inputmode="decimal" style="width:110px;text-align:right" data-pf="${x.id}" value="${esc(v2(x.unit))}"></td><td class="r pf-lt" data-pf-tot="${x.id}">${x.total != null ? C.brl(x.total) : '—'}</td></tr>`; }).join('')}
@@ -4778,6 +4804,33 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
       });
       const first = w.querySelector('[data-pf]'); if (first) first.focus();
     });
+  }
+  /* títulos das especificações do catálogo (MARCA:, MODELO:…): aprende com o uso e sugere os mais usados */
+  const TIT_BASE = ['MARCA', 'MODELO', 'FABRICANTE', 'DIMENSÕES', 'PESO', 'MATERIAL', 'COR', 'VOLTAGEM', 'POTÊNCIA', 'CAPACIDADE', 'GARANTIA', 'COMPOSIÇÃO'];
+  const titNorm = (t) => String(t || '').replace(/:+\s*$/, '').replace(/\s+/g, ' ').trim().toLocaleUpperCase('pt-BR');
+  const catTitUso = () => Object.assign({}, store.get().config.catalogoTitulos || {});
+  function catTitulosOrdem() {
+    const u = catTitUso();
+    const todos = [...new Set(Object.keys(u).concat(TIT_BASE))];
+    return todos.sort((a, b) => ((u[b] || 0) - (u[a] || 0)) || (TIT_BASE.indexOf(a) + 99 * (TIT_BASE.indexOf(a) < 0)) - (TIT_BASE.indexOf(b) + 99 * (TIT_BASE.indexOf(b) < 0)) || a.localeCompare(b, 'pt-BR'));
+  }
+  const titsNoTexto = (txt) => new Set(String(txt || '').split('\n').map((l) => (/^\s*([^:\n]{1,40}):/.exec(l) || [])[1]).filter(Boolean).map(titNorm));
+  function catTitSug(txt, id) {
+    const ja = titsNoTexto(txt);
+    const sug = catTitulosOrdem().filter((t) => !ja.has(t)).slice(0, 8);
+    return sug.length ? `<div class="cat-tit-sug" data-cat-sug="${esc(id)}">${sug.map((t) => `<button type="button" class="chip" data-act="cat-tit-add" data-id="${esc(id)}" data-v="${esc(t)}">+ ${esc(t)}</button>`).join('')}</div>` : `<div class="cat-tit-sug" data-cat-sug="${esc(id)}"></div>`;
+  }
+  function incluirTituloCatalogo(id, titulo) {
+    const t = titNorm(titulo);
+    const ta = document.querySelector('[data-cat-desc="' + id + '"]');
+    if (!t || !ta) return;
+    const atual = ta.value.replace(/\s+$/, '');
+    ta.value = (atual ? atual + '\n' : '') + t + ': ';
+    ta.focus(); const fim = ta.value.length; ta.setSelectionRange(fim, fim);
+    salvarDescCatalogo(ta);
+    const u = catTitUso(); u[t] = (u[t] || 0) + 1; store.setConfigPath('catalogoTitulos', u, { silent: true });
+    const inp = document.querySelector('[data-cat-tit-in="' + id + '"]'); if (inp) inp.value = '';
+    const box = document.querySelector('[data-cat-sug="' + id + '"]'); if (box) box.outerHTML = catTitSug(ta.value, id);
   }
   function salvarDescCatalogo(el) {
     const id = el.dataset.catDesc, v = el.value;
@@ -5214,6 +5267,7 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
       case 'novo-item': openItemForm(null, t.dataset.pid); break;
       case 'editar-item': openItemForm(id); break;
       case 'cat-ir': { e.stopPropagation(); const it = store.get().itens.find((i) => i.id === id && !i.deleted); if (!it) break; UI.irCatalogo = { pregaoId: it.pregaoId, itemId: id }; irParaCatalogo(); break; }
+      case 'cat-tit-add': { const v = t.dataset.v || ((document.querySelector('[data-cat-tit-in="' + id + '"]') || {}).value || ''); if (!String(v).trim()) { const inp = document.querySelector('[data-cat-tit-in="' + id + '"]'); if (inp) inp.focus(); toast('Digite o título (ex.: Marca)'); break; } incluirTituloCatalogo(id, v); break; }
       case 'cat-editar': {   // do catálogo: volta ao item dentro do pregão e já abre a edição
         const it = store.get().itens.find((i) => i.id === id && !i.deleted); if (!it) break;
         UI.tab = 'pregoes'; UI.detailId = it.pregaoId; history.pushState({ detail: it.pregaoId }, ''); saveUI(); render();
