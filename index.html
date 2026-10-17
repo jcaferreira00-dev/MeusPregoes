@@ -860,6 +860,14 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
 .cat-acts .btn { flex: 1 1 0; min-width: 0; justify-content: center; text-decoration: none; }
 .cat-acts .cat-buy { color: var(--blue); }
 .cat-acts .cat-buy.off { color: var(--muted); opacity: .6; cursor: default; border-style: dashed; }
+
+/* catálogo: cada item bem separado (evita escrever a descrição no item errado) + custo na linha do título (v1.62) */
+.clause.cat-item { margin: 0 0 22px; padding: 12px 12px 14px; border: 1.5px solid color-mix(in srgb, var(--blue) 40%, var(--line)); border-left: 5px solid var(--blue); border-radius: 12px; background: color-mix(in srgb, var(--blue) 5%, var(--card)); }
+.cat-item .cat-hd { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; padding-bottom: 8px; margin-bottom: 8px; border-bottom: 1px solid var(--line); }
+.cat-item .cat-tit { min-width: 0; overflow-wrap: anywhere; }
+.cat-item .cat-custo { flex: none; white-space: nowrap; color: var(--muted); font-size: 12px; }
+.cat-item .cat-custo b { color: var(--ink); font-size: 13.5px; font-variant-numeric: tabular-nums; }
+.cat-item .cat-thumbs:empty { display: none !important; }
 </style>
 </head>
 <body>
@@ -872,7 +880,7 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.61.0';
+  const APP_VERSION = '1.62.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Em disputa', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -4513,8 +4521,8 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
   }
   function catalogoCardHtml(st, L) {
     if (!L.linhas.length) return '';
-    const itens = L.linhas.map((ln) => `<div class="clause" id="cat-${esc(ln.id)}" style="margin-bottom:12px;scroll-margin-top:80px">
-        <div class="small"><b>Item ${esc(ln.numeroItem)}</b> · ${esc(ln.descricao)}${ln.marca ? ` <span class="muted">· ${esc(ln.marca)}</span>` : ''}</div>
+    const itens = L.linhas.map((ln) => { const itc = st.itens.find((i) => i.id === ln.id); return `<div class="clause cat-item" id="cat-${esc(ln.id)}" style="scroll-margin-top:80px">
+        <div class="small cat-hd"><span class="cat-tit"><b>Item ${esc(ln.numeroItem)}</b> · ${esc(ln.descricao)}${ln.marca ? ` <span class="muted">· ${esc(ln.marca)}</span>` : ''}</span><span class="cat-custo" title="Custo unitário que você colocou no item (para conferir com o site)">custo un. <b>${itc && itc.custo != null ? C.brl(itc.custo) : '—'}</b></span></div>
         <div class="cat-thumbs" data-cat-thumbs="${esc(ln.id)}" style="display:flex;flex-wrap:wrap;gap:8px;margin:8px 0"></div>
         <div class="cat-acts"><label class="btn sm" style="cursor:pointer">${icon('image', 'sm')} Incluir imagem<input type="file" accept="image/png,image/jpeg,image/webp" multiple data-cat-file="${esc(ln.id)}" class="sr-only" style="position:absolute;width:1px;height:1px;opacity:0;overflow:hidden"></label>${(() => {
           // link(s) de compra do item: abre o site da loja para pegar as fotos sem sair procurando
@@ -4524,7 +4532,7 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
         })()}</div>
         <div class="cat-edital"><b>Exigido no edital</b>${ln.descEdital ? esc(ln.descEdital) : '<span class="muted">Sem descrição do edital no item. Preencha “Descrição completa (vai para o edital)” no item.</span>'}</div>
         <textarea class="input" rows="5" data-cat-desc="${esc(ln.id)}" placeholder="Descrição pormenorizada do produto (características técnicas, medidas, material, composição, normas, garantia…)" style="margin-top:8px">${esc(ln.catalogo)}</textarea>
-      </div>`).join('');
+      </div>`; }).join('');
     setTimeout(preencherFotosCatalogo, 0);
     return `<div class="card" id="catCard" style="scroll-margin-top:80px"><h3>${icon('image', 'sm')} Catálogo dos produtos</h3>
         <p class="tiny muted" style="margin:0 0 10px">Para o pregoeiro confrontar o edital com o que você oferece. Cada item sai com o que o edital exige, a marca/modelo, as especificações, a sua descrição detalhada e as fotos (até 4 por item). As fotos são reduzidas e sincronizadas com a sua conta (Config › Nuvem), para aparecerem nos outros aparelhos.</p>
