@@ -173,6 +173,10 @@ svg.i.sm { width: 16px; height: 16px; }
 .minbox.bad .t { color: var(--red); }
 .minbox .v { font-size: 19px; font-weight: 800; color: var(--green); font-variant-numeric: tabular-nums; white-space: nowrap; flex: none; }
 .minbox.bad .v { color: var(--red); }
+/* caixa do valor mínimo na cor da avaliação (v1.67): verde = Bom ou melhor, amarelo = Viável/Apertado, vermelho = prejuízo */
+.minbox.warn { background: var(--amber-soft); } .minbox.warn .t, .minbox.warn .v { color: var(--amber); }
+.minbox .mb-viab { font-weight: 700; }
+.i-mvals .v-min.warn { background: var(--amber-soft); }
 .empty { text-align: center; padding: 34px 18px; display: flex; flex-direction: column; align-items: center; gap: 12px; }
 .empty > svg { width: 46px; height: 46px; color: var(--blue); stroke-width: 1.5; }
 .empty .btn { width: 100%; }
@@ -910,7 +914,7 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.66.0';
+  const APP_VERSION = '1.67.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Em disputa', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -3421,7 +3425,7 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
           .map((a) => `<div class="altdica">${icon('info', 'sm')}<span>${esc(a.loja || 'A opção ' + (a.n + 2))} custa ${C.brl(cm - a.custo)} a menos por unidade.</span><button type="button" class="btn sm" data-usar-alt="${a.n}">Usar esta</button></div>`).join('');
         if (!c || c.minimo == null) { el.innerHTML = `<div class="small muted">Informe quantidade e custo para ver o valor mínimo da proposta.</div>${dica}`; return; }
         const bad = c.sitTipo === 'bad';
-        el.innerHTML = `<div class="minbox ${bad ? 'bad' : ''}"><div><div class="t">Valor mínimo p/ proposta (unit.)</div><div class="tiny muted">margem ${C.pct(c.margem, 1)} sobre o preço</div></div><div class="v">${C.brl(c.minimo)}</div></div>
+        el.innerHTML = `<div class="minbox ${viabCls(c)}"><div><div class="t">Valor mínimo p/ proposta (unit.)</div><div class="tiny muted">margem ${C.pct(c.margem, 1)} sobre o preço</div>${viabLinha(c)}</div><div class="v">${C.brl(c.minimo)}</div></div>
           <div class="kv"><span>Custo unit. final <b>${C.brl(c.custoUnit)}</b></span><span>Entrega rateada <b>${C.brl(c.entrega)}</b></span>
           <span>Posso baixar do teto <b>${c.folgaRs != null ? C.brl(c.folgaRs) + ' (' + C.pct(c.folgaPct, 0) + ')' : '—'}</b></span>
           ${c.impostoTotal > 0 ? `<span>Impostos <b>${C.brl(c.impostoTotal)}</b></span>` : ''}</div>
@@ -4030,6 +4034,9 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
   // itens sempre na ordem do edital: lote e depois item
   const porItemEdital = (list) => C.ordemLoteItem(list);
 
+  // cor da avaliação no preço que vai na proposta (lance; sem lance, o teto)
+  const viabCls = (c) => (c && c.viabTipo) || (c && c.sitTipo === 'bad' ? 'bad' : '');
+  const viabLinha = (c) => (c && c.viab && c.margemReal != null) ? `<div class="tiny mb-viab">${c.lance !== null ? 'No seu lance' : 'No teto'}: ${C.pct(c.margemReal, 0)} de lucro (${C.brl(c.lucro)}) · ${esc(c.viab)}</div>` : '';
   function estrelasHtml(c) {
     if (!c || c.estrelas == null) return '';
     const n = c.estrelas, nota = c.nota != null ? c.nota : n;
@@ -4065,7 +4072,7 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
     const obs = String(it.obs || '').trim() ? `<div class="obsline item">${esc(it.obs)}</div>` : '';
     // celular: valor do meu lance (lance final; vazio = teto do edital) e mínimo pela margem
     const meuLance = C.unitProposta(c, 'auto').unit;   // mesma regra do PDF: lance final prevalece; sem lance, o teto do edital
-    const mVals = `<div class="i-mvals"><div class="v-lance"><span>${c.lance !== null ? 'Meu lance' : 'Meu lance (teto)'}</span><b>${meuLance != null ? C.brl(meuLance) : '—'}</b></div><div class="v-min${c.sitTipo === 'bad' ? ' bad' : ''}"><span>Mínimo ${C.pct(c.margem, 0)}</span><b>${c.minimo != null ? C.brl(c.minimo) : '—'}</b></div></div>`;
+    const mVals = `<div class="i-mvals"><div class="v-lance"><span>${c.lance !== null ? 'Meu lance' : 'Meu lance (teto)'}</span><b>${meuLance != null ? C.brl(meuLance) : '—'}</b></div><div class="v-min ${viabCls(c)}"><span>Mínimo ${C.pct(c.margem, 0)}</span><b>${c.minimo != null ? C.brl(c.minimo) : '—'}</b></div></div>`;
     const vals = mVals + `<div class="i-vals"><div><span>Custo total</span><b>${it.custo > 0 && it.qtd > 0 ? C.brl(c.produtos) : '—'}</b></div><div class="v-mintot"><span>Mín. total</span><b>${C.brl(c.minTotal)}</b></div><div><span>Edital total</span><b>${c.tetoTotal != null ? C.brl(c.tetoTotal) : '—'}</b></div></div>`;
     const acao = c.ganhou
       ? `<button type="button" class="btn sm venci-on" data-act="item-venci" data-id="${it.id}" title="Desmarcar">${icon('acomp', 'sm')} Venci</button>`
@@ -4079,7 +4086,7 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
       ${compra}
       ${obs}
       ${venc}
-      <div class="minbox i-min ${c.sitTipo === 'bad' ? 'bad' : ''}"><div><div class="t">Valor mínimo p/ proposta (unit.)</div><div class="tiny muted">margem ${C.pct(c.margem, 0)} · custo final ${C.brl(c.custoUnit)}</div></div><div class="v">${C.brl(c.minimo)}</div></div>
+      <div class="minbox i-min ${viabCls(c)}"><div><div class="t">Valor mínimo p/ proposta (unit.)</div><div class="tiny muted">margem ${C.pct(c.margem, 0)} · custo final ${C.brl(c.custoUnit)}</div>${viabLinha(c)}</div><div class="v">${C.brl(c.minimo)}</div></div>
       <div class="row between wrap small muted i-fin" style="gap:4px 10px"><span>Posso baixar do teto: <b style="color:var(--ink)">${c.folgaRs != null ? C.brl(c.folgaRs) + ' (' + C.pct(c.folgaPct, 0) + ')' : '—'}</b></span><span>${c.impostoTotal > 0 ? 'Impostos ' + C.brl(c.impostoTotal) + ' · ' : ''}Lucro: <b style="color:var(--ink)">${C.brl(c.lucro)}</b></span></div>
       ${p && !c.fora && (p.status === 'Em disputa' || it.possivelGanhar || it.colocacao) ? `<div class="coloc-row">${colocacaoInput(it)}${it.colocacao ? `<span class="coloc-badge ${it.colocacao === 1 ? 'c1' : it.colocacao <= 3 ? 'c3' : ''}">${colocTxt(it.colocacao)} lugar</span>` : ''}</div>` : ''}
       <div class="icard-actions">${acao}</div></article>`;
@@ -4579,7 +4586,7 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
   function catalogoCardHtml(st, L) {
     if (!L.linhas.length) return '';
     const itens = L.linhas.map((ln) => { const itc = st.itens.find((i) => i.id === ln.id); return `<div class="clause cat-item" id="cat-${esc(ln.id)}" style="scroll-margin-top:80px">
-        <div class="small cat-hd"><span class="cat-tit"><b>Item ${esc(ln.numeroItem)}</b> · ${esc(ln.descricao)}${ln.marca ? ` <span class="muted">· ${esc(ln.marca)}</span>` : ''}</span><span class="cat-dir"><span class="cat-custo" title="Custo unitário que você colocou no item (para conferir com o site)">custo un. <b>${itc && itc.custo != null ? C.brl(itc.custo) : '—'}</b></span><button type="button" class="ic-btn cat-edit" data-act="cat-editar" data-id="${esc(ln.id)}" title="Editar este item" aria-label="Editar este item">${icon('edit', 'sm')}</button></span></div>
+        <div class="small cat-hd"><span class="cat-tit"><b>${(() => { const lt = String((itc && itc.loteEdital) || '').trim(), ni = String((itc && itc.itemEdital) || '').trim(); return lt ? 'Lote ' + esc(lt) + (ni ? ' · Item ' + esc(ni) : '') : 'Item ' + esc(ln.numeroItem); })()}</b> · ${esc(ln.descricao)}${ln.marca ? ` <span class="muted">· ${esc(ln.marca)}</span>` : ''}</span><span class="cat-dir"><span class="cat-custo" title="Custo unitário que você colocou no item (para conferir com o site)">custo un. <b>${itc && itc.custo != null ? C.brl(itc.custo) : '—'}</b></span><button type="button" class="ic-btn cat-edit" data-act="cat-editar" data-id="${esc(ln.id)}" title="Editar este item" aria-label="Editar este item">${icon('edit', 'sm')}</button></span></div>
         <div class="cat-thumbs" data-cat-thumbs="${esc(ln.id)}" style="display:flex;flex-wrap:wrap;gap:8px;margin:8px 0"></div>
         <div class="cat-acts"><label class="btn sm" style="cursor:pointer">${icon('image', 'sm')} Incluir imagem<input type="file" accept="image/png,image/jpeg,image/webp" multiple data-cat-file="${esc(ln.id)}" class="sr-only" style="position:absolute;width:1px;height:1px;opacity:0;overflow:hidden"></label>${(() => {
           // link(s) de compra do item: abre o site da loja para pegar as fotos sem sair procurando
