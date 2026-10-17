@@ -871,6 +871,22 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
 
 .cat-item .cat-dir { flex: none; display: inline-flex; align-items: center; gap: 8px; }
 .cat-item .cat-edit { width: 30px; height: 30px; }
+
+/* cabeçalho do pregão com os atalhos (edital, proposta/lances…) à direita (v1.65) */
+.hero { flex-direction: row; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; }
+.hero .hero-info { display: flex; flex-direction: column; gap: 6px; min-width: 0; flex: 1 1 260px; }
+.hero-lks { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
+.hero-lk { display: inline-flex; align-items: center; gap: 7px; padding: 9px 14px; border-radius: 10px; background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.28); color: #fff; font-weight: 700; font-size: 13px; text-decoration: none; white-space: nowrap; cursor: pointer; font-family: inherit; }
+.hero-lk:hover { background: rgba(255,255,255,.24); }
+.hero-lk.vazio { opacity: .75; border-style: dashed; background: transparent; }
+.hero-lk .sm { display: none; }
+@media (max-width: 600px) { .hero-lk .sm { display: inline; } }
+@media (max-width: 600px) {
+  .hero-lks { width: 100%; display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); }   /* todos na mesma linha, do mesmo tamanho */
+  .hero-lk { justify-content: center; padding: 9px 6px; font-size: 12.5px; min-width: 0; gap: 5px; }
+  .hero-lk .tx { overflow: hidden; text-overflow: ellipsis; }
+  .hero-lk .lg { display: none; }
+}
 </style>
 </head>
 <body>
@@ -883,7 +899,7 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.64.0';
+  const APP_VERSION = '1.65.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Em disputa', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -4112,8 +4128,14 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
     return `<div class="page">
       <div class="detail-top"><button class="back" data-act="voltar">${icon('back')} Pregões</button>
         <button type="button" class="icon-btn" data-act="pdf-pregao" data-id="${p.id}" title="Proposta PDF" aria-label="Proposta PDF">${icon('pdf')}</button></div>
-      <div class="hero"><span class="num">PREGÃO Nº ${esc(p.numero)}</span><h2>${esc(p.orgao)}</h2>
+      <div class="hero"><div class="hero-info"><span class="num">${/^preg/i.test(String(p.numero).trim()) ? esc(p.numero) : 'PREGÃO Nº ' + esc(p.numero)}</span><h2>${esc(p.orgao)}</h2>
         <div class="m">${p.cidadeUf ? `<span>${esc(cidadeFmt(p.cidadeUf))}</span>` : ''}${p.sessao ? `<span>Sessão ${esc(C.fmtSessao(p.sessao))}</span>` : ''}</div></div>
+        ${(() => {   // atalhos do pregão no cabeçalho: edital, site da proposta/lances, licitação e modelo
+          const u = (v) => { v = String(v || '').trim(); return v ? (/^https?:\/\//i.test(v) ? v : 'https://' + v) : ''; };
+          const bt = (href, ic, txt, tip) => href ? `<a class="hero-lk" href="${esc(href)}" target="_blank" rel="noopener noreferrer" data-act="link-externo" title="${tip}">${icon(ic, 'sm')}<span class="tx">${txt}</span></a>` : '';
+          const h = bt(u(p.link), 'pdf', 'Edital', 'Abrir o edital') + bt(u(p.linkProposta), 'link', '<span class="lg">Proposta / lances</span><span class="sm">Lances</span>', 'Site para enviar a proposta e dar lances') + bt(u(p.linkLicitacao), 'web', 'Licitação', 'Site que lista a licitação') + bt(u(p.linkModelo), 'pdf', 'Modelo', 'Modelo de proposta do órgão');
+          return h ? `<div class="hero-lks">${h}</div>` : `<button type="button" class="hero-lk vazio" data-act="editar-pregao" data-id="${p.id}">${icon('edit', 'sm')}<span>Cadastrar links</span></button>`;
+        })()}</div>
       ${(() => {
         if (!p.modeloProprio && !p.linkModelo && !p.obs) return '';
         const u = String(p.linkModelo || '').trim(), href = u ? (/^https?:\/\//i.test(u) ? u : 'https://' + u) : '';
