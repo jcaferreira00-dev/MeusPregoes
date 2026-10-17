@@ -862,7 +862,7 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.59.1';
+  const APP_VERSION = '1.59.2';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Em disputa', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -1059,8 +1059,9 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
     const cmp = (x, y) => x.localeCompare(y, 'pt-BR', { numeric: true, sensitivity: 'base' });
     const k = (it, c) => String(it[c] || '').trim();
     // um lote só (ex.: todos "1", ou alguns em branco): ordena direto pelo item
-    const lotes = new Set(list.map((it) => k(it, 'loteEdital')).filter(Boolean));
-    const campos = lotes.size > 1 ? ['loteEdital', 'itemEdital'] : ['itemEdital'];
+    // um item só (ex.: todo lote tem só o "item 1"): ordena direto pelo lote
+    const varia = (c) => new Set(list.map((it) => k(it, c)).filter(Boolean)).size > 1;
+    const campos = ['loteEdital', 'itemEdital'].filter(varia);
     return list.map((it, i) => ({ it, i })).sort((a, b) => {
       for (const c of campos) {
         const x = k(a.it, c), y = k(b.it, c);
