@@ -910,6 +910,11 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
 .foto-tag svg { width: 12px; height: 12px; }
 .foto-tag.tem { background: var(--green-soft); color: var(--green); }
 .foto-tag.sem { background: transparent; color: var(--muted); border: 1px dashed color-mix(in srgb, var(--muted) 50%, transparent); }
+
+/* sinal de foto sempre no mesmo lugar (canto direito da linha), seja qual for o tamanho do texto (v1.68.2) */
+.icard .i-meta { display: flex; align-items: center; gap: 10px; }
+.icard .i-meta .i-meta-tx { flex: 1; min-width: 0; }
+.icard .i-meta .foto-tag { margin-left: auto; flex: none; width: 86px; justify-content: center; }
 </style>
 </head>
 <body>
@@ -922,7 +927,7 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.68.1';
+  const APP_VERSION = '1.68.2';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Em disputa', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -4089,7 +4094,7 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
       <div class="i-hd">${tag}<div class="rcol">${c.ganhou ? '<span class="badge ok">Venci</span>' : (c.naoGanhou && !it.possivelGanhar ? '<span class="badge off">Não ganhou</span>' : '')}${it.possivelGanhar && !ganhoMode ? '<span class="prazo good">★ Posso ganhar</span>' : ''}${c.situacao ? `<span class="badge ${c.sitTipo}" title="${esc(c.situacao)}"><span class="s-lg">${esc(c.situacao)}</span><span class="s-sm">${esc(c.sitCurta || c.situacao)}</span></span>` : ''}${estrelasHtml(c)}</div></div>
       ${desc}
       ${opt.showOrg && p ? `<div class="chips"><span class="chip org">#${esc(p.numero)} · ${esc(p.orgao)}</span></div>` : ''}
-      <div class="small muted">${C.qtdBR(it.qtd)} ${esc(it.unidade || 'Un')} · custo ${C.brl(it.custo)}<span class="i-teto"> · teto ${C.brl(c.teto)}</span>${it.marca ? ' · ' + esc(it.marca) : ''}${(() => { const nf = Number(it.fotosN) || 0; return `<button type="button" class="foto-tag hide-m ${nf ? 'tem' : 'sem'}" data-act="cat-ir" data-id="${it.id}" title="${nf ? 'Tem foto no catálogo. Clique para ver.' : 'Sem foto no catálogo. Clique para incluir.'}">${icon('image', 'sm')}${nf ? nf + (nf === 1 ? ' foto' : ' fotos') : 'Sem foto'}</button>`; })()}</div>
+      <div class="small muted i-meta"><span class="i-meta-tx">${C.qtdBR(it.qtd)} ${esc(it.unidade || 'Un')} · custo ${C.brl(it.custo)}<span class="i-teto"> · teto ${C.brl(c.teto)}</span>${it.marca ? ' · ' + esc(it.marca) : ''}</span>${(() => { const nf = Number(it.fotosN) || 0; return `<button type="button" class="foto-tag hide-m ${nf ? 'tem' : 'sem'}" data-act="cat-ir" data-id="${it.id}" title="${nf ? 'Tem foto no catálogo. Clique para ver.' : 'Sem foto no catálogo. Clique para incluir.'}">${icon('image', 'sm')}${nf ? nf + (nf === 1 ? ' foto' : ' fotos') : 'Sem foto'}</button>`; })()}</div>
       ${vals}
       ${compra}
       ${obs}
