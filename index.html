@@ -762,11 +762,11 @@ html body .pgc-st { border-radius: 6px; font-size: 10.5px; letter-spacing: .02em
 .ag-card > h3 + .ag-hd { margin-top: 0; }
 .ag-hd span { font-size: 10.5px; padding: 1px 7px; border-radius: 99px; background: var(--line); color: var(--ink); letter-spacing: 0; }
 .ag-list { display: flex; flex-direction: column; gap: 6px; }
-.ag-row { position: relative; display: grid; grid-template-columns: 58px minmax(0, 1fr) auto 28px; gap: 14px; align-items: center; padding: 10px 10px 10px 12px; border: 1px solid var(--line); border-left: 3px solid var(--sc); border-radius: 10px; background: var(--card); cursor: pointer; min-width: 0; transition: background .15s, border-color .15s; }
-.ag-row:hover { background: color-mix(in srgb, var(--sc) 6%, var(--card)); border-color: color-mix(in srgb, var(--sc) 45%, var(--line)); border-left-color: var(--sc); }
+.ag-row { position: relative; display: grid; grid-template-columns: 58px minmax(0, 1fr) auto 28px; gap: 14px; align-items: center; padding: 10px 10px 10px 12px; border: 2px solid var(--line); box-shadow: inset 4px 0 0 var(--sc); border-radius: 10px; background: var(--card); cursor: pointer; min-width: 0; transition: background .15s, border-color .15s; }   /* mesma espessura de borda em todas as categorias = conteúdo alinhado */
+.ag-row:hover { background: color-mix(in srgb, var(--sc) 6%, var(--card)); border-color: color-mix(in srgb, var(--sc) 45%, var(--line)); }
 .ag-row:focus-visible { outline: 2px solid var(--sc); outline-offset: 2px; }
 .ag-row.urg { --pc: var(--red); animation: pgcPulse 1.6s ease-in-out infinite; }
-.ag-row.falta { border-color: color-mix(in srgb, var(--red) 55%, var(--line)); border-left-color: var(--red); }
+.ag-row.falta { border-color: color-mix(in srgb, var(--red) 55%, var(--line)); box-shadow: inset 4px 0 0 var(--red); }
 .ag-date { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 6px 0; border-radius: 8px; background: color-mix(in srgb, var(--sc) 12%, transparent); line-height: 1.05; text-align: center; }
 .ag-date b { font-size: 20px; font-weight: 800; font-variant-numeric: tabular-nums; color: var(--ink); }
 .ag-date span { font-size: 10px; font-weight: 800; letter-spacing: .08em; color: color-mix(in srgb, var(--sc) 70%, var(--ink)); }
@@ -931,6 +931,18 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
 .cat-tit-add .btn { flex: none; width: 44px; justify-content: center; padding: 0; }
 .cat-tit-sug { display: flex; flex-wrap: wrap; gap: 6px; }
 .cat-tit-sug .chip { cursor: pointer; font-weight: 700; font-size: 11.5px; }
+
+/* Painel › agenda por categoria (v1.71): Enviadas com cor viva; Analisando com borda colorida em movimento suave */
+.ag-list.ag-env .ag-row { background: linear-gradient(90deg, color-mix(in srgb, var(--sc) 30%, var(--card)), color-mix(in srgb, var(--sc) 14%, var(--card))); border-color: var(--sc); box-shadow: inset 6px 0 0 var(--sc); }
+.ag-list.ag-env .ag-row:hover { background: color-mix(in srgb, var(--sc) 32%, var(--card)); }
+.ag-list.ag-env .ag-num { color: color-mix(in srgb, var(--sc) 55%, var(--ink)); }
+.ag-list.ag-env .ag-st { background: var(--sc); color: #fff; }
+.ag-list.ag-ana .ag-row { border: 2px solid transparent; box-shadow: none; background: linear-gradient(var(--card), var(--card)) padding-box, linear-gradient(90deg, var(--sc), color-mix(in srgb, var(--sc) 15%, transparent), var(--sc), color-mix(in srgb, var(--sc) 15%, transparent), var(--sc)) border-box; background-size: 100% 100%, 300% 100%; animation: agBorda 6s linear infinite; }
+.ag-list.ag-ana .ag-row:hover { background: linear-gradient(color-mix(in srgb, var(--sc) 6%, var(--card)), color-mix(in srgb, var(--sc) 6%, var(--card))) padding-box, linear-gradient(90deg, var(--sc), color-mix(in srgb, var(--sc) 15%, transparent), var(--sc), color-mix(in srgb, var(--sc) 15%, transparent), var(--sc)) border-box; background-size: 100% 100%, 300% 100%; }
+@keyframes agBorda { from { background-position: 0 0, 0% 0; } to { background-position: 0 0, 150% 0; } }
+.ag-list.ag-ana .ag-row.urg { animation: agBorda 6s linear infinite, pgcPulse 1.6s ease-in-out infinite; }
+.ag-hd.env { color: #5c6bc0; } .ag-hd.ana { color: #2e75b6; } .ag-hd.disp { color: #d99a1c; } .ag-hd.inc { color: var(--red); }
+@media (prefers-reduced-motion: reduce) { .ag-list.ag-ana .ag-row { animation: none; } }
 </style>
 </head>
 <body>
@@ -943,7 +955,7 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.70.0';
+  const APP_VERSION = '1.71.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Em disputa', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -3715,13 +3727,11 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
       return `<div class="strow"><div><b class="org-up">${esc(x.p.orgao)}</b><div class="tiny muted">Nº ${esc(x.p.numero)} · ${manual ? 'tirado do painel por você' : 'prazo já passou'}</div></div>${manual ? `<button class="btn sm" data-act="mostrar-painel" data-id="${x.p.id}">Voltar ao painel</button>` : `<button class="btn sm" data-act="abrir-pregao" data-id="${x.p.id}">Abrir</button>`}</div>`;
     }).join('');
     // agenda: Em disputa primeiro; depois pela data (hoje, próximos dias, sem data, já passou)
-    const grupos = [['Em disputa', []], ['Hoje e amanhã', []], ['Próximos 7 dias', []], ['Mais adiante', []], ['Sem data', []], ['Sessão já passou', []]];
-    ativosV.slice().sort(ordemPainel).forEach((x) => {
-      const d = diasDesde(x.p.sessao || x.p.prazoPropostas);
-      const g = x.p.status === 'Em disputa' ? 0 : d === null ? 4 : d > 0 ? 5 : d >= -1 ? 1 : d >= -7 ? 2 : 3;
-      grupos[g][1].push(x);
-    });
-    const agenda = grupos.filter((g) => g[1].length).map(([t, arr]) => `<div class="ag-hd">${t}<span>${arr.length}</span></div><div class="ag-list">${arr.map(agendaRow).join('')}</div>`).join('');
+    // agenda por categoria (status); dentro de cada uma, pela data (próximas primeiro)
+    const grupos = [['Em disputa', [], 'disp'], ['Enviadas', [], 'env'], ['Analisando', [], 'ana'], ['Incompletos', [], 'inc'], ['Ganhos e faturados', [], 'gan'], ['Outros', [], '']];
+    const gDe = (st) => ({ 'Em disputa': 0, 'Proposta enviada': 1, 'Analisando': 2, 'Falta dados': 3, 'Ganhou': 4, 'Faturado': 4 })[st];
+    ativosV.slice().sort(ordemPainel).forEach((x) => { const g = gDe(x.p.status); grupos[g == null ? 5 : g][1].push(x); });
+    const agenda = grupos.filter((g) => g[1].length).map(([t, arr, k]) => `<div class="ag-hd ${k}">${t}<span>${arr.length}</span></div><div class="ag-list ag-${k}">${arr.map(agendaRow).join('')}</div>`).join('');
     return `<div class="card ag-card"><h3>${icon('calendar', 'sm')}<span class="grow">Agenda dos pregões (${ativosV.length})</span>${oc.length ? `<button class="btn sm" data-act="painel-ocultos">${icon('eye', 'sm')} ${UI.mostrarOcultos ? 'Esconder' : 'Ver'} ocultos (${oc.length})</button>` : ''}<button class="btn sm" data-act="tab" data-v="pregoes">Ver na guia Pregões</button></h3>
       ${ativosV.length ? agenda : (enc.length || concl.length ? '' : `<p class="muted small">Nenhum pregão no painel agora. Os cadastrados continuam na aba Pregões.</p>`)}
       ${conclHtml}
