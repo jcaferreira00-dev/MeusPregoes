@@ -868,6 +868,9 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
 .cat-item .cat-custo { flex: none; white-space: nowrap; color: var(--muted); font-size: 12px; }
 .cat-item .cat-custo b { color: var(--ink); font-size: 13.5px; font-variant-numeric: tabular-nums; }
 .cat-item .cat-thumbs:empty { display: none !important; }
+
+.cat-item .cat-dir { flex: none; display: inline-flex; align-items: center; gap: 8px; }
+.cat-item .cat-edit { width: 30px; height: 30px; }
 </style>
 </head>
 <body>
@@ -880,7 +883,7 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.62.0';
+  const APP_VERSION = '1.63.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Em disputa', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -4522,7 +4525,7 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
   function catalogoCardHtml(st, L) {
     if (!L.linhas.length) return '';
     const itens = L.linhas.map((ln) => { const itc = st.itens.find((i) => i.id === ln.id); return `<div class="clause cat-item" id="cat-${esc(ln.id)}" style="scroll-margin-top:80px">
-        <div class="small cat-hd"><span class="cat-tit"><b>Item ${esc(ln.numeroItem)}</b> · ${esc(ln.descricao)}${ln.marca ? ` <span class="muted">· ${esc(ln.marca)}</span>` : ''}</span><span class="cat-custo" title="Custo unitário que você colocou no item (para conferir com o site)">custo un. <b>${itc && itc.custo != null ? C.brl(itc.custo) : '—'}</b></span></div>
+        <div class="small cat-hd"><span class="cat-tit"><b>Item ${esc(ln.numeroItem)}</b> · ${esc(ln.descricao)}${ln.marca ? ` <span class="muted">· ${esc(ln.marca)}</span>` : ''}</span><span class="cat-dir"><span class="cat-custo" title="Custo unitário que você colocou no item (para conferir com o site)">custo un. <b>${itc && itc.custo != null ? C.brl(itc.custo) : '—'}</b></span><button type="button" class="ic-btn cat-edit" data-act="cat-editar" data-id="${esc(ln.id)}" title="Editar este item" aria-label="Editar este item">${icon('edit', 'sm')}</button></span></div>
         <div class="cat-thumbs" data-cat-thumbs="${esc(ln.id)}" style="display:flex;flex-wrap:wrap;gap:8px;margin:8px 0"></div>
         <div class="cat-acts"><label class="btn sm" style="cursor:pointer">${icon('image', 'sm')} Incluir imagem<input type="file" accept="image/png,image/jpeg,image/webp" multiple data-cat-file="${esc(ln.id)}" class="sr-only" style="position:absolute;width:1px;height:1px;opacity:0;overflow:hidden"></label>${(() => {
           // link(s) de compra do item: abre o site da loja para pegar as fotos sem sair procurando
@@ -5128,6 +5131,12 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
       case 'editar-certidao': openCertidaoForm(id); break;
       case 'novo-item': openItemForm(null, t.dataset.pid); break;
       case 'editar-item': openItemForm(id); break;
+      case 'cat-editar': {   // do catálogo: volta ao item dentro do pregão e já abre a edição
+        const it = store.get().itens.find((i) => i.id === id && !i.deleted); if (!it) break;
+        UI.tab = 'pregoes'; UI.detailId = it.pregaoId; history.pushState({ detail: it.pregaoId }, ''); saveUI(); render();
+        setTimeout(() => { const card = document.querySelector('.icard[data-id="' + id + '"]'); if (card) card.scrollIntoView({ block: 'center' }); openItemForm(id); }, 30);
+        break;
+      }
       case 'filtro': UI.filtro = t.dataset.v; UI.keepScroll = true; render(); break;
       case 'rascunho': openDraft(t.dataset.key); break;
       case 'demo': store.mergeDemo(); toast('Dados de exemplo carregados'); break;
