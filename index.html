@@ -541,7 +541,7 @@ input.input[type=datetime-local]::-webkit-date-and-time-value, input.input[type=
 .cat-edital { margin-top: 8px; font-size: 12.5px; line-height: 1.45; white-space: pre-wrap; max-height: 140px; overflow: auto; padding: 8px 10px; border-radius: 10px; background: color-mix(in srgb, var(--blue) 6%, var(--card)); border: 1px dashed var(--line); }
 .cat-edital b { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: .4px; color: var(--muted); margin-bottom: 2px; }
 .dlg.dlg-foto { max-width: 340px; align-items: stretch; max-height: 94vh; overflow: auto; }
-.dlg-foto .foto-prev { align-self: center; border-radius: 12px; border: 1px solid var(--line); touch-action: none; background: #fff; }
+.dlg-foto .foto-prev { align-self: center; border-radius: 12px; border: 1px solid var(--line); touch-action: none; background: repeating-conic-gradient(#e6e9ef 0% 25%, #fff 0% 50%) 50% / 20px 20px; }   /* xadrez = transparente */
 .coloc-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .coloc-in { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 700; color: var(--muted); cursor: default; }
 .coloc-in input.input { width: 52px; min-height: 32px; padding: 3px 6px; text-align: center; font-weight: 800; }
@@ -883,7 +883,7 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.63.0';
+  const APP_VERSION = '1.64.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Em disputa', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -4555,10 +4555,10 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
   async function preencherFotosCatalogo() {
     for (const el of $$('[data-cat-thumbs]')) {
       const id = el.dataset.catThumbs, arr = await fotosDoItem(id);
-      el.innerHTML = arr.map((u, k) => `<div style="position:relative"><img alt="" src="${u}" style="width:84px;height:84px;object-fit:contain;border:1px solid var(--line, #ddd);border-radius:8px;background:#fff"><button type="button" class="btn sm danger" data-act="cat-del" data-id="${esc(id)}" data-v="${k}" title="Remover foto" style="position:absolute;top:2px;right:2px;padding:2px 6px;min-height:0">${icon('x', 'sm')}</button></div>`).join('');
+      el.innerHTML = arr.map((u, k) => `<div style="position:relative"><img alt="" src="${u}" style="width:84px;height:84px;object-fit:contain;border:1px solid var(--line, #ddd);border-radius:8px;background:repeating-conic-gradient(#e6e9ef 0% 25%, #fff 0% 50%) 50% / 14px 14px"><button type="button" class="btn sm danger" data-act="cat-del" data-id="${esc(id)}" data-v="${k}" title="Remover foto" style="position:absolute;top:2px;right:2px;padding:2px 6px;min-height:0">${icon('x', 'sm')}</button></div>`).join('');
     }
   }
-  // ao incluir: mostra a foto num quadrado; você escolhe "Recortar" (preenche, com zoom e arrastar) ou "Inteira" (fundo branco)
+  // ao incluir: a foto entra inteira num quadrado com fundo transparente (padrão único; sem recorte)
   function fotoCatalogo(file, n, total) {
     return new Promise((resolve, reject) => {
       const url = URL.createObjectURL(file), img = new Image();
@@ -4566,20 +4566,19 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
       img.onload = () => {
         URL.revokeObjectURL(url);
         const P = 280;   // tamanho da prévia
-        const st = { modo: 'recortar', zoom: 1, dx: 0, dy: 0 };
+        const st = { modo: 'inteira', zoom: 1, dx: 0, dy: 0 };
         const w = document.createElement('div');
         w.className = 'dlg-wrap';
         w.innerHTML = `<div class="dlg dlg-foto" role="dialog" aria-modal="true"><h3>Ajustar foto${total > 1 ? ` (${n} de ${total})` : ''}</h3>
-          <p>As fotos do catálogo ficam todas quadradas. ${img.width === img.height ? 'Esta já é quadrada.' : 'Sugestão: <b>Recortar</b> para preencher o quadrado (arraste para enquadrar) ou <b>Inteira</b> para não cortar nada.'}</p>
+          <p>A foto entra inteira, sem cortar nada, num quadrado com <b>fundo transparente</b>.</p>
           <canvas width="${P * 2}" height="${P * 2}" class="foto-prev" style="width:${P}px;height:${P}px"></canvas>
-          <div class="seg-ctl">${[['recortar', 'Recortar (preencher)'], ['inteira', 'Inteira (fundo branco)']].map(([v, l]) => `<button type="button" data-fm="${v}" class="${v === st.modo ? 'on' : ''}">${l}</button>`).join('')}</div>
-          <div class="field foto-zoom"><label>Zoom</label><input type="range" min="1" max="3" step="0.05" value="1" data-fz></div>
+          <div class="field foto-zoom" style="display:none"><input type="range" min="1" max="3" step="0.05" value="1" data-fz></div>
           <div class="btns"><button type="button" class="btn primary" data-fok>Usar esta foto</button><button type="button" class="btn ghost" data-fno>Pular esta foto</button></div></div>`;
         document.body.appendChild(w);
         const cv = w.querySelector('canvas'), g = cv.getContext('2d');
         // desenha a foto num quadrado de lado L conforme o modo
         const desenhar = (ctx, L) => {
-          ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, L, L);
+          ctx.clearRect(0, 0, L, L);   // fundo transparente
           if (st.modo === 'inteira') { const s0 = L / Math.max(img.width, img.height); const ww = img.width * s0, hh = img.height * s0; ctx.drawImage(img, (L - ww) / 2, (L - hh) / 2, ww, hh); return; }
           const s0 = (L / Math.min(img.width, img.height)) * st.zoom; const ww = img.width * s0, hh = img.height * s0;
           const mx = Math.max(0, (ww - L) / 2), my = Math.max(0, (hh - L) / 2);
@@ -4602,9 +4601,10 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
           if (m) { st.modo = m.dataset.fm; w.querySelectorAll('[data-fm]').forEach((b) => b.classList.toggle('on', b === m)); prev(); return; }
           if (e.target.closest('[data-fno]')) { w.remove(); resolve(null); return; }
           if (!e.target.closest('[data-fok]')) return;
-          const gera = (L, q) => { const c2 = document.createElement('canvas'); c2.width = L; c2.height = L; desenhar(c2.getContext('2d'), L); return c2.toDataURL('image/jpeg', q); };
-          let out = gera(900, 0.75);
-          for (const [L, q] of [[800, 0.65], [700, 0.6], [600, 0.55], [480, 0.5]]) { if (out.length <= 200000) break; out = gera(L, q); }
+          // PNG para manter o fundo transparente; reduz o tamanho até ficar leve para sincronizar
+          const gera = (L) => { const c2 = document.createElement('canvas'); c2.width = L; c2.height = L; desenhar(c2.getContext('2d'), L); return c2.toDataURL('image/png'); };
+          let out = gera(900);
+          for (const L of [800, 700, 600, 520, 450, 400, 360, 320]) { if (out.length <= 230000) break; out = gera(L); }
           w.remove(); resolve(out);
         });
       };
