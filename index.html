@@ -367,7 +367,9 @@ input.input[type=datetime-local]::-webkit-date-and-time-value, input.input[type=
 .stars small { font-size: 11px; font-weight: 700; letter-spacing: 0; color: var(--muted); }
 .stars.s0 { color: var(--red); } .stars.s1, .stars.s2 { color: var(--amber); }
 .i-mvals, .comprar-btn .cifrao { display: none; }
-.i-vals { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.i-vals { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+.i-vals .v-lance-pc { background: var(--blue-soft); } .i-vals .v-lance-pc b { color: var(--blue); }
+.i-vals .v-lance-pc.warn b { color: var(--amber); } .i-vals .v-lance-pc.bad b { color: var(--red); }
 .i-vals > div { border-radius: 10px; padding: 6px 8px; background: color-mix(in srgb, var(--muted) 9%, transparent); min-width: 0; }
 .i-vals span { display: block; font-size: 10px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); }
 .i-vals b { display: block; font-size: 12.5px; font-variant-numeric: tabular-nums; white-space: nowrap; }
@@ -434,7 +436,7 @@ input.input[type=datetime-local]::-webkit-date-and-time-value, input.input[type=
   .cchip { padding: 5px 9px; }
   .pcard .nums, .pcard .chips, .icard .i-min, .icard .i-fin, .icard .i-teto, .gmeta .g-fin { display: none; }
   .i-vals { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .i-vals .v-mintot { display: none; }
+  .i-vals .v-mintot, .i-vals .v-lance-pc { display: none !important; }   /* no celular o lance já aparece em destaque em cima */
   /* celular: lance e mínimo em destaque; custo total e edital total pequenos */
   .i-mvals { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
   .i-mvals > div { border-radius: 10px; padding: 6px 9px; min-width: 0; background: var(--blue-soft); }
@@ -920,7 +922,7 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.68.0';
+  const APP_VERSION = '1.68.1';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Em disputa', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -4079,7 +4081,7 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
     // celular: valor do meu lance (lance final; vazio = teto do edital) e mínimo pela margem
     const meuLance = C.unitProposta(c, 'auto').unit;   // mesma regra do PDF: lance final prevalece; sem lance, o teto do edital
     const mVals = `<div class="i-mvals"><div class="v-lance"><span>${c.lance !== null ? 'Meu lance' : 'Meu lance (teto)'}</span><b>${meuLance != null ? C.brl(meuLance) : '—'}</b></div><div class="v-min ${viabCls(c)}"><span>Mínimo ${C.pct(c.margem, 0)}</span><b>${c.minimo != null ? C.brl(c.minimo) : '—'}</b></div></div>`;
-    const vals = mVals + `<div class="i-vals"><div><span>Custo total</span><b>${it.custo > 0 && it.qtd > 0 ? C.brl(c.produtos) : '—'}</b></div><div class="v-mintot"><span>Mín. total</span><b>${C.brl(c.minTotal)}</b></div><div><span>Edital total</span><b>${c.tetoTotal != null ? C.brl(c.tetoTotal) : '—'}</b></div></div>`;
+    const vals = mVals + `<div class="i-vals"><div class="v-lance-pc ${viabCls(c)}"><span>${c.lance !== null ? 'Meu lance (unit.)' : 'Meu lance (teto)'}</span><b>${meuLance != null ? C.brl(meuLance) : '—'}</b></div><div><span>Custo total</span><b>${it.custo > 0 && it.qtd > 0 ? C.brl(c.produtos) : '—'}</b></div><div class="v-mintot"><span>Mín. total</span><b>${C.brl(c.minTotal)}</b></div><div><span>Edital total</span><b>${c.tetoTotal != null ? C.brl(c.tetoTotal) : '—'}</b></div></div>`;
     const acao = c.ganhou
       ? `<button type="button" class="btn sm venci-on" data-act="item-venci" data-id="${it.id}" title="Desmarcar">${icon('acomp', 'sm')} Venci</button>`
       : `<button type="button" class="btn sm ghost" data-act="item-venci" data-id="${it.id}" title="Marcar este item como ganho">${icon('acomp', 'sm')} Venci</button>` + `<button type="button" class="btn sm ${it.possivelGanhar ? 'pode-on' : 'ghost'}" data-act="item-pode" data-id="${it.id}">${icon('check', 'sm')} Posso ganhar</button><button type="button" class="btn sm ghost" data-act="item-fora" data-id="${it.id}">Deixar de fora</button>`;
