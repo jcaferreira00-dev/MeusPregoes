@@ -955,7 +955,7 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.72.0';
+  const APP_VERSION = '1.72.1';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Em disputa', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -3750,11 +3750,14 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
       else if (x.p.status === 'Analisando' && (!pz || pz.nivel !== 'off')) L.push(['info', 'Proposta por enviar' + (pz ? ' · até ' + pz.curto : ''), 'Nº ' + x.p.numero + ' · ' + String(x.p.orgao || '').toLocaleUpperCase('pt-BR'), `data-act="abrir-pregao" data-id="${x.p.id}"`]);
     });
     ps.filter((x) => x.nItens === 0).forEach((x) => L.push(['warn', 'Cadastrar os itens', 'Nº ' + x.p.numero + ' · ' + String(x.p.orgao || '').toLocaleUpperCase('pt-BR'), `data-act="abrir-pregao" data-id="${x.p.id}"`]));
-    // itens cadastrados ainda sem foto no catálogo (por pregão); toque leva ao 1º item sem foto
+    // catálogo incompleto: itens sem foto e/ou sem descrição detalhada (por pregão); toque leva ao 1º item pendente
     ps.filter((x) => ['Falta dados', 'Analisando', 'Proposta enviada', 'Em disputa'].includes(x.p.status)).forEach((x) => {
-      const sem = x.itens.filter((i) => !(Number(i.fotosN) > 0));
-      if (!sem.length) return;
-      L.push(['info', 'Incluir fotos · ' + sem.length + ' de ' + x.itens.length + (x.itens.length === 1 ? ' item' : ' itens') + ' sem foto', 'Nº ' + x.p.numero + ' · ' + String(x.p.orgao || '').toLocaleUpperCase('pt-BR'), `data-act="cat-ir" data-id="${sem[0].id}"`]);
+      const semFoto = x.itens.filter((i) => !(Number(i.fotosN) > 0));
+      const semDesc = x.itens.filter((i) => !String(i.catalogoDesc || '').trim());
+      const pend = x.itens.find((i) => !(Number(i.fotosN) > 0) || !String(i.catalogoDesc || '').trim());
+      if (!pend) return;
+      const partes = [semFoto.length ? semFoto.length + ' sem foto' : '', semDesc.length ? semDesc.length + ' sem detalhamento' : ''].filter(Boolean).join(' · ');
+      L.push(['info', 'Completar catálogo · ' + partes, 'Nº ' + x.p.numero + ' · ' + String(x.p.orgao || '').toLocaleUpperCase('pt-BR') + ' · ' + x.itens.length + (x.itens.length === 1 ? ' item' : ' itens'), `data-act="cat-ir" data-id="${pend.id}"`]);
     });
     certidoes().forEach((c) => { const ci = certInfo(c); if (ci.nivel === 'bad' || ci.nivel === 'warn') L.push([ci.nivel, 'Certidão: ' + String(c.nome).split(' (')[0], ci.texto, 'data-act="tab" data-v="certidoes"']); });
     const peso = { bad: 0, warn: 1, info: 2 };
