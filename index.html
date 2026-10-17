@@ -854,6 +854,12 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
 /* atalho do item para o catálogo (v1.60) */
 .cat-atalho { margin: 2px 0 10px; } .cat-atalho .hint { margin-top: 4px; }
 .clause.cat-foco { outline: 2px solid var(--blue); outline-offset: 4px; border-radius: 10px; transition: outline-color .4s; }
+
+/* catálogo: incluir imagem + link da compra lado a lado (v1.61) */
+.cat-acts { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.cat-acts .btn { flex: 1 1 0; min-width: 0; justify-content: center; text-decoration: none; }
+.cat-acts .cat-buy { color: var(--blue); }
+.cat-acts .cat-buy.off { color: var(--muted); opacity: .6; cursor: default; border-style: dashed; }
 </style>
 </head>
 <body>
@@ -866,7 +872,7 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.60.0';
+  const APP_VERSION = '1.61.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Em disputa', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -4510,7 +4516,12 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
     const itens = L.linhas.map((ln) => `<div class="clause" id="cat-${esc(ln.id)}" style="margin-bottom:12px;scroll-margin-top:80px">
         <div class="small"><b>Item ${esc(ln.numeroItem)}</b> · ${esc(ln.descricao)}${ln.marca ? ` <span class="muted">· ${esc(ln.marca)}</span>` : ''}</div>
         <div class="cat-thumbs" data-cat-thumbs="${esc(ln.id)}" style="display:flex;flex-wrap:wrap;gap:8px;margin:8px 0"></div>
-        <label class="btn sm" style="cursor:pointer">${icon('image', 'sm')} Incluir imagem<input type="file" accept="image/png,image/jpeg,image/webp" multiple data-cat-file="${esc(ln.id)}" class="sr-only" style="position:absolute;width:1px;height:1px;opacity:0;overflow:hidden"></label>
+        <div class="cat-acts"><label class="btn sm" style="cursor:pointer">${icon('image', 'sm')} Incluir imagem<input type="file" accept="image/png,image/jpeg,image/webp" multiple data-cat-file="${esc(ln.id)}" class="sr-only" style="position:absolute;width:1px;height:1px;opacity:0;overflow:hidden"></label>${(() => {
+          // link(s) de compra do item: abre o site da loja para pegar as fotos sem sair procurando
+          const it = st.itens.find((i) => i.id === ln.id);
+          const cps = it ? comprasDoItem(it).filter((cp) => cp.href) : [];
+          return cps.map((cp) => `<a class="btn sm cat-buy" href="${esc(cp.href)}" target="_blank" rel="noopener noreferrer" data-act="link-externo" title="Abrir o site da compra deste item">${icon('cart', 'sm')}<span class="ell">${cp.principal ? 'Ver na loja' : esc(cp.label)}</span></a>`).join('') || `<span class="btn sm cat-buy off" title="Coloque o link de compra no item para abrir a loja daqui">${icon('cart', 'sm')}<span class="ell">Sem link</span></span>`;
+        })()}</div>
         <div class="cat-edital"><b>Exigido no edital</b>${ln.descEdital ? esc(ln.descEdital) : '<span class="muted">Sem descrição do edital no item. Preencha “Descrição completa (vai para o edital)” no item.</span>'}</div>
         <textarea class="input" rows="5" data-cat-desc="${esc(ln.id)}" placeholder="Descrição pormenorizada do produto (características técnicas, medidas, material, composição, normas, garantia…)" style="margin-top:8px">${esc(ln.catalogo)}</textarea>
       </div>`).join('');
