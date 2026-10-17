@@ -887,6 +887,17 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
   .hero-lk .tx { overflow: hidden; text-overflow: ellipsis; }
   .hero-lk .lg { display: none; }
 }
+
+/* avaliação do item (v1.66): PC = 5 estrelas + % + avaliação; celular = nota + uma estrela que enche */
+.st-one { display: none; align-items: center; gap: 3px; font-weight: 800; font-size: 12px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.st-one i { font-style: normal; font-size: 16px; line-height: 1; background: linear-gradient(90deg, #e0a800 var(--f), color-mix(in srgb, var(--muted) 35%, transparent) var(--f)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.st-one.bad { color: var(--red); } .st-one.warn b { color: var(--amber); }
+.badge .s-sm { display: none; }
+@media (max-width: 600px) {
+  .icard .st-full { display: none; }
+  .icard .st-one { display: inline-flex; }
+  .icard .badge .s-lg { display: none; } .icard .badge .s-sm { display: inline; }
+}
 </style>
 </head>
 <body>
@@ -899,7 +910,7 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.65.0';
+  const APP_VERSION = '1.66.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Em disputa', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -961,6 +972,7 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
   /* ---------- estado padrão ---------- */
   const defaultConfig = () => ({
     margemPadrao: 0.20,
+    lucroBom: 1000,   // lucro em R$ num item que já compensa, mesmo com margem menor
     consumo: 10,
     combustivel: 6,
     desgaste: 0.30,
@@ -1058,19 +1070,35 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
     if (lance !== null) totalVenda = qtd * lance; else if (teto !== null) totalVenda = qtd * teto;
     const imposto = totalVenda !== null ? totalVenda * impPct : 0;        // imposto sobre a venda (% da config)
     const lucro = totalVenda !== null ? totalVenda - custoTotal - imposto : null;
-    let situacao = '', sitTipo = '';
-    if (minimo !== null && teto !== null) {
-      if (minimo > teto) { situacao = 'Inviável: mínimo acima do teto'; sitTipo = 'bad'; }
-      else if (lance !== null && lance < minimo) { situacao = 'Lance abaixo do mínimo'; sitTipo = 'bad'; }
-      else { situacao = 'OK'; sitTipo = 'ok'; }
-    }
-    // classificação por estrelas pelo lucro real sobre a venda (depois de imposto e entrega)
+    // classificação pelo lucro real (depois de imposto e entrega): a % sobre a venda E o valor em R$
     const margemReal = (totalVenda !== null && totalVenda > 0) ? lucro / totalVenda : null;
-    let estrelas = null;
-    if (margemReal !== null) estrelas = margemReal <= 0 ? 0 : margemReal >= 0.5 ? 5 : margemReal >= 0.35 ? 4 : margemReal >= 0.25 ? 3 : margemReal >= 0.15 ? 2 : 1;
+    // nota de 0 a 5 (com fração): pela % (0% → 0,5 · 15% → 2 · 25% → 3 · 35% → 4 · 50% → 5) + bônus se o lucro em R$ já compensa
+    let nota = null, viab = '', viabTipo = '';
+    if (margemReal !== null) {
+      if (lucro <= 0) nota = 0;
+      else {
+        const P = [[0, 0.5], [0.15, 2], [0.25, 3], [0.35, 4], [0.5, 5]];
+        let base = 5;
+        for (let k = 1; k < P.length; k++) { if (margemReal < P[k][0]) { const [x0, y0] = P[k - 1], [x1, y1] = P[k]; base = y0 + (y1 - y0) * (margemReal - x0) / (x1 - x0); break; } }
+        const bom = n0(cfg.lucroBom) > 0 ? n0(cfg.lucroBom) : 1000;
+        const bonus = lucro >= bom ? 1 : lucro >= bom / 2 ? 0.5 : 0;
+        nota = Math.min(5, Math.round((base + bonus) * 10) / 10);
+      }
+      viab = nota >= 4.5 ? 'Excelente' : nota >= 3.5 ? 'Ótimo' : nota >= 2.5 ? 'Bom' : nota >= 1.5 ? 'Viável' : nota > 0 ? 'Apertado' : 'Prejuízo';
+      viabTipo = nota >= 2.5 ? 'ok' : nota > 0 ? 'warn' : 'bad';
+    }
+    const estrelas = nota === null ? null : (nota > 0 ? Math.max(1, Math.round(nota)) : 0);
+    // situação: só é "Inviável" quando dá prejuízo; abaixo da margem padrão mas com lucro = "Abaixo da meta" (pode valer a pena)
+    let situacao = '', sitTipo = '', sitCurta = '';
+    if (minimo !== null && teto !== null) {
+      if (lucro !== null && lucro <= 0) { situacao = lance !== null ? 'Inviável: o lance dá prejuízo' : 'Inviável: prejuízo até no teto'; sitCurta = 'Inviável'; sitTipo = 'bad'; }
+      else if (lance !== null && lance < minimo) { situacao = 'Lance abaixo da sua margem padrão (ainda com lucro)'; sitCurta = 'Abaixo da meta'; sitTipo = 'warn'; }
+      else if (minimo > teto) { situacao = 'Teto abaixo da sua margem padrão (ainda com lucro)'; sitCurta = 'Abaixo da meta'; sitTipo = 'warn'; }
+      else { situacao = 'OK'; sitCurta = 'OK'; sitTipo = 'ok'; }
+    }
     const minTotal = minimo !== null ? round2(minimo * qtd) : null;
     const tetoTotal = teto !== null ? round2(teto * qtd) : null;
-    return { margemReal, estrelas, minTotal, tetoTotal, compra, entrega, custoTotal, custoUnit, margem, minimo, teto, lance, folgaRs, folgaPct, totalVenda, lucro, situacao, sitTipo, produtos: qtd * custo, frete, impostoCompra, imposto, impostoTotal: impostoCompra + imposto };
+    return { nota, viab, viabTipo, sitCurta, margemReal, estrelas, minTotal, tetoTotal, compra, entrega, custoTotal, custoUnit, margem, minimo, teto, lance, folgaRs, folgaPct, totalVenda, lucro, situacao, sitTipo, produtos: qtd * custo, frete, impostoCompra, imposto, impostoTotal: impostoCompra + imposto };
   }
 
   function limiteMEI(cfg) {
@@ -4004,8 +4032,12 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
 
   function estrelasHtml(c) {
     if (!c || c.estrelas == null) return '';
-    const n = c.estrelas;
-    return `<span class="stars s${n}" title="Lucro ${C.pct(c.margemReal, 0)} sobre a venda · ${n} de 5 estrelas">${'★'.repeat(n)}${'☆'.repeat(5 - n)}<small>${C.pct(c.margemReal, 0)}</small></span>`;
+    const n = c.estrelas, nota = c.nota != null ? c.nota : n;
+    const tip = `Nota ${String(nota).replace('.', ',')} de 5 · ${c.viab || ''} · lucro ${C.pct(c.margemReal, 0)} sobre a venda (${C.brl(c.lucro)})`;
+    // PC: 5 estrelas + % + avaliação · celular: uma estrela que vai enchendo, com a nota na frente
+    const fill = Math.max(0, Math.min(100, nota / 5 * 100)).toFixed(0);
+    return `<span class="stars s${n} st-full" title="${esc(tip)}">${'★'.repeat(n)}${'☆'.repeat(5 - n)}<small>${C.pct(c.margemReal, 0)}${c.viab ? ' · ' + c.viab : ''}</small></span>`
+      + `<span class="st-one ${c.viabTipo || ''}" title="${esc(tip)}"><b>${String(nota.toFixed ? nota.toFixed(1) : nota).replace('.', ',')}</b><i style="--f:${fill}%">★</i></span>`;
   }
   // itens que ficaram de fora da disputa vão para o fim da lista
   const foraNoFim = (list, R) => list.slice().sort((a, b) => ((R.iMap.get(a.id) || {}).fora ? 1 : 0) - ((R.iMap.get(b.id) || {}).fora ? 1 : 0));
@@ -4039,7 +4071,7 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
       ? `<button type="button" class="btn sm venci-on" data-act="item-venci" data-id="${it.id}" title="Desmarcar">${icon('acomp', 'sm')} Venci</button>`
       : `<button type="button" class="btn sm ghost" data-act="item-venci" data-id="${it.id}" title="Marcar este item como ganho">${icon('acomp', 'sm')} Venci</button>` + `<button type="button" class="btn sm ${it.possivelGanhar ? 'pode-on' : 'ghost'}" data-act="item-pode" data-id="${it.id}">${icon('check', 'sm')} Posso ganhar</button><button type="button" class="btn sm ghost" data-act="item-fora" data-id="${it.id}">Deixar de fora</button>`;
     return `<article class="icard${c.naoGanhou && !it.possivelGanhar ? ' nao-ganho' : ''}${c.ganhou ? ' venci' : ''}" data-act="editar-item" data-id="${it.id}" tabindex="0" role="button">
-      <div class="i-hd">${tag}<div class="rcol">${c.ganhou ? '<span class="badge ok">Venci</span>' : (c.naoGanhou && !it.possivelGanhar ? '<span class="badge off">Não ganhou</span>' : '')}${it.possivelGanhar && !ganhoMode ? '<span class="prazo good">★ Posso ganhar</span>' : ''}${c.situacao ? `<span class="badge ${c.sitTipo}">${esc(c.situacao)}</span>` : ''}${estrelasHtml(c)}</div></div>
+      <div class="i-hd">${tag}<div class="rcol">${c.ganhou ? '<span class="badge ok">Venci</span>' : (c.naoGanhou && !it.possivelGanhar ? '<span class="badge off">Não ganhou</span>' : '')}${it.possivelGanhar && !ganhoMode ? '<span class="prazo good">★ Posso ganhar</span>' : ''}${c.situacao ? `<span class="badge ${c.sitTipo}" title="${esc(c.situacao)}"><span class="s-lg">${esc(c.situacao)}</span><span class="s-sm">${esc(c.sitCurta || c.situacao)}</span></span>` : ''}${estrelasHtml(c)}</div></div>
       ${desc}
       ${opt.showOrg && p ? `<div class="chips"><span class="chip org">#${esc(p.numero)} · ${esc(p.orgao)}</span></div>` : ''}
       <div class="small muted">${C.qtdBR(it.qtd)} ${esc(it.unidade || 'Un')} · custo ${C.brl(it.custo)}<span class="i-teto"> · teto ${C.brl(c.teto)}</span>${it.marca ? ' · ' + esc(it.marca) : ''}</div>
@@ -4857,6 +4889,7 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
       <p class="small muted" style="margin-top:-8px">As alterações são salvas automaticamente.</p>
       <div class="card"><h3>Margem e entrega de carro</h3><div class="formgrid">
         ${fld('Minha margem padrão (%)', 'margemPadrao', 'pct', C.numBR(c.margemPadrao * 100, 2), { im: 'decimal', hint: 'Sobre o preço de venda. Vale para itens sem margem própria.' })}
+        ${fld('Lucro que já compensa (R$ por item)', 'lucroBom', 'num', C.numBR(c.lucroBom != null ? c.lucroBom : 1000, 2), { im: 'decimal', hint: 'Item que dá esse lucro (ou metade dele) ganha nota maior, mesmo com margem abaixo da padrão.' })}
         ${fld('Consumo do carro (km/l)', 'consumo', 'num', C.numBR(c.consumo, 2), { im: 'decimal' })}
         ${fld('Combustível (R$/l)', 'combustivel', 'num', C.numBR(c.combustivel, 2), { im: 'decimal' })}
         ${fld('Desgaste do carro (R$/km)', 'desgaste', 'num', C.numBR(c.desgaste, 2), { im: 'decimal', hint: 'Pneu, óleo, manutenção. Estimativa: ajuste ou zere.' })}</div></div>
