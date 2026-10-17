@@ -538,8 +538,15 @@ input.input[type=datetime-local]::-webkit-date-and-time-value, input.input[type=
 .egstat { margin: 0 0 8px; overflow-wrap: anywhere; }
 .prazo { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 8px; background: var(--blue-soft); color: var(--blue); max-width: 100%; }
 .prazo.warn { background: var(--amber-soft); color: var(--amber); } .prazo.bad { background: var(--red-soft); color: var(--red); } .prazo.off { background: var(--line); color: var(--muted); }
-.dlg.dlg-precos { width: min(820px, 96vw); max-width: 96vw; }
-.dlg.dlg-precos .tbl { min-width: 640px; }
+.dlg.dlg-precos { width: min(1040px, 96vw); max-width: 96vw; }
+.dlg.dlg-precos .tbl { min-width: 900px; }
+/* confirmação da proposta final: colunas alinhadas (v1.69) */
+.dlg-precos .tbl th, .dlg-precos .tbl td { vertical-align: middle; white-space: nowrap; }
+.dlg-precos .tbl .c { text-align: center; width: 58px; } .dlg-precos .tbl .r { text-align: right; font-variant-numeric: tabular-nums; }
+.dlg-precos .tbl td.pf-desc { white-space: normal; width: 100%; min-width: 160px; }
+.dlg-precos .tbl td.pf-desc > div { overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow-wrap: anywhere; }
+.dlg-precos .tbl td.pf-lt { font-weight: 800; }
+.dlg-precos .tbl tfoot td { font-weight: 800; }
 .pf-check { margin: 12px 0 8px; padding: 10px 12px; border-radius: 10px; background: var(--amber-soft); color: var(--ink); font-size: 13px; }
 .pf-check > b { display: flex; align-items: center; gap: 6px; color: var(--amber); }
 .pf-check ul { margin: 6px 0 0 18px; padding: 0; line-height: 1.5; }
@@ -927,7 +934,7 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.68.2';
+  const APP_VERSION = '1.69.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Em disputa', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -4741,19 +4748,19 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
       w.className = 'dlg-wrap';
       w.innerHTML = `<div class="dlg dlg-precos" role="dialog" aria-modal="true"><h3>Confirme os preços da proposta final</h3>
         <p>${L.ganho ? 'Itens vencidos' : 'Nenhum item marcado como Venci: entram todos os itens'}. Ajuste o valor unitário final se precisar.</p>
-        <div class="tbl-scroll"><table class="tbl"><thead><tr><th>Item</th><th class="r">Qtd</th><th class="r">Frete</th><th class="r">Comprar</th><th class="r">Inicial</th><th class="r">Mínimo</th><th class="r">Teto</th><th class="r">Valor final</th></tr></thead><tbody>
-        ${L.linhas.map((x) => { const it = st.itens.find((i) => i.id === x.id) || {}; const cps = comprasDoItem(it).filter((k) => k.href); return `<tr><td><b>${esc(x.numeroItem)}</b> · ${esc(x.descricao)}</td><td class="r">${C.qtdBR(x.qtd)}</td><td class="r">${C.brl(it.frete || 0)}</td>
-          <td class="r">${cps.length ? cps.map((k) => `<a class="buy" href="${esc(k.href)}" target="_blank" rel="noopener noreferrer" title="Conferir preço e estoque: ${esc(k.label || 'link')}">$</a>`).join('') : '<span class="muted">—</span>'}</td>
+        <div class="tbl-scroll"><table class="tbl"><thead><tr><th class="c">Lote</th><th class="c">Item</th><th>Descrição</th><th class="r">Qtd</th><th class="r">Frete</th><th class="c">Comprar</th><th class="r">Inicial</th><th class="r">Mínimo</th><th class="r">Teto</th><th class="r">Valor unit.</th><th class="r">Total</th></tr></thead><tbody>
+        ${L.linhas.map((x) => { const it = st.itens.find((i) => i.id === x.id) || {}; const cps = comprasDoItem(it).filter((k) => k.href); return `<tr><td class="c">${esc(String(it.loteEdital || '').trim() || '—')}</td><td class="c"><b>${esc(String(it.itemEdital || '').trim() || x.numeroItem)}</b></td><td class="pf-desc" title="${esc(x.descricao)}"><div>${esc(x.descricao)}</div></td><td class="r">${C.qtdBR(x.qtd)}</td><td class="r">${C.brl(it.frete || 0)}</td>
+          <td class="c">${cps.length ? cps.map((k) => `<a class="buy" href="${esc(k.href)}" target="_blank" rel="noopener noreferrer" title="Conferir preço e estoque: ${esc(k.label || 'link')}">$</a>`).join('') : '<span class="muted">—</span>'}</td>
           <td class="r">${C.brl(x.precoInicial)}</td><td class="r">${C.brl(x.minimo)}</td><td class="r">${C.brl(x.teto)}</td>
-          <td class="r"><input class="input" inputmode="decimal" style="width:110px;text-align:right" data-pf="${x.id}" value="${esc(v2(x.unit))}"></td></tr>`; }).join('')}
-        </tbody><tfoot><tr><td colspan="7">Total</td><td class="r" id="pfTot">${C.brl(L.total)}</td></tr></tfoot></table></div>
+          <td class="r"><input class="input" inputmode="decimal" style="width:110px;text-align:right" data-pf="${x.id}" value="${esc(v2(x.unit))}"></td><td class="r pf-lt" data-pf-tot="${x.id}">${x.total != null ? C.brl(x.total) : '—'}</td></tr>`; }).join('')}
+        </tbody><tfoot><tr><td colspan="10" class="r">Total da proposta</td><td class="r" id="pfTot">${C.brl(L.total)}</td></tr></tfoot></table></div>
         <div class="pf-check"><b>${icon('alert', 'sm')} Antes de gerar, confira (só lembrete):</b>
           <ul><li>O frete continua o mesmo da cotação?</li><li>O fornecedor ainda tem a quantidade disponível? (toque no <b>$</b> para abrir o link de compra)</li><li>O preço de compra se manteve desde a cotação?</li><li>O prazo de entrega do edital ainda é viável?</li></ul></div>
         <label class="switch pf-ok"><span><b>Confirmo os valores acima</b> para esta proposta final, mesmo que sejam iguais aos de antes.</span><input type="checkbox" data-pf-conf></label>
         <div class="btns"><button type="button" class="btn primary" data-pf-ok disabled>Confirmar e gerar</button><button type="button" class="btn ghost" data-pf-no>Cancelar</button></div></div>`;
       document.body.appendChild(w);
       const qtd = Object.fromEntries(L.linhas.map((x) => [x.id, x.qtd]));
-      const soma = () => { let t = 0; w.querySelectorAll('[data-pf]').forEach((el) => { const v = C.parseBR(el.value); if (v > 0) t += v * qtd[el.dataset.pf]; }); $('#pfTot', w).textContent = C.brl(Math.round(t * 100) / 100); };
+      const soma = () => { let t = 0; w.querySelectorAll('[data-pf]').forEach((el) => { const v = C.parseBR(el.value); const lt = v > 0 ? Math.round(v * qtd[el.dataset.pf] * 100) / 100 : null; if (lt != null) t += lt; const c = w.querySelector('[data-pf-tot="' + el.dataset.pf + '"]'); if (c) c.textContent = lt != null ? C.brl(lt) : '—'; }); $('#pfTot', w).textContent = C.brl(Math.round(t * 100) / 100); };
       w.addEventListener('input', soma);
       // confirmação obrigatória: o botão só libera com a caixinha marcada (desmarca se mudar algum valor depois)
       const btnOk = w.querySelector('[data-pf-ok]'), conf = w.querySelector('[data-pf-conf]');
