@@ -955,7 +955,7 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.73.0';
+  const APP_VERSION = '1.74.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Em disputa', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -1089,10 +1089,27 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
     return (n0(p.km) / consumo * n0(cfg.combustivel) + n0(p.km) * n0(cfg.desgaste) + n0(p.pedagio)) * n0(p.viagens);
   }
 
-  const compraBase = (it) => n0(it.qtd) * n0(it.custo) * (1 + n0(it.impostoCompraPct)) + n0(it.frete);
+  // compra dividida entre fornecedores: opções de compra com quantidade preenchida levam essa parte;
+  // o resto sai da opção principal. Custo = média ponderada; frete = soma do frete de cada fornecedor usado.
+  // Sem quantidade nas opções, vale o custo e o frete digitados no item (como sempre foi).
+  function divisaoCompra(it) {
+    const qtd = n0(it.qtd);
+    const alts = (Array.isArray(it.alternativas) ? it.alternativas : []).filter((a) => a && n0(a.qtd) > 0 && a.custo !== null && a.custo !== undefined && a.custo !== '');
+    if (!alts.length || qtd <= 0) return null;
+    const qAlt = alts.reduce((t, a) => t + n0(a.qtd), 0);
+    const qMain = Math.max(0, qtd - qAlt);
+    const partes = [{ principal: true, loja: it.onde || '', qtd: qMain, custo: n0(it.custo), frete: qMain > 0 ? n0(it.frete) : 0 }]
+      .concat(alts.map((a) => ({ principal: false, loja: a.loja || '', qtd: n0(a.qtd), custo: n0(a.custo), frete: n0(a.frete) })));
+    const produtos = partes.reduce((t, x) => t + x.qtd * x.custo, 0);
+    const frete = partes.reduce((t, x) => t + x.frete, 0);
+    return { custo: produtos / qtd, frete, produtos, qMain, qAlt, excesso: Math.max(0, qAlt - qtd), partes: partes.filter((x) => x.qtd > 0) };
+  }
+  const custoCompra = (it) => { const d = divisaoCompra(it); return d ? d.custo : n0(it.custo); };
+  const freteCompra = (it) => { const d = divisaoCompra(it); return d ? d.frete : n0(it.frete); };
+  const compraBase = (it) => n0(it.qtd) * custoCompra(it) * (1 + n0(it.impostoCompraPct)) + freteCompra(it);
 
   function calcItem(it, pst, cfg) {
-    const qtd = n0(it.qtd), custo = n0(it.custo), frete = n0(it.frete);
+    const qtd = n0(it.qtd), custo = custoCompra(it), frete = freteCompra(it);
     const impostoCompra = qtd * custo * n0(it.impostoCompraPct);   // ICMS-ST/antecipação pago na compra
     const compra = compraBase(it);
     const impPct = Math.max(0, n0(cfg.impostoPct));
@@ -1145,7 +1162,7 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
     }
     const minTotal = minimo !== null ? round2(minimo * qtd) : null;
     const tetoTotal = teto !== null ? round2(teto * qtd) : null;
-    return { nota, viab, viabTipo, sitCurta, margemReal, estrelas, minTotal, tetoTotal, compra, entrega, custoTotal, custoUnit, margem, minimo, teto, lance, folgaRs, folgaPct, totalVenda, lucro, situacao, sitTipo, produtos: qtd * custo, frete, impostoCompra, imposto, impostoTotal: impostoCompra + imposto };
+    return { nota, viab, viabTipo, sitCurta, margemReal, estrelas, minTotal, tetoTotal, compra, entrega, custoTotal, custoUnit, margem, minimo, teto, lance, folgaRs, folgaPct, totalVenda, lucro, situacao, sitTipo, produtos: qtd * custo, frete, divisao: divisaoCompra(it), custoCompra: custo, impostoCompra, imposto, impostoTotal: impostoCompra + imposto };
   }
 
   function limiteMEI(cfg) {
@@ -1720,7 +1737,7 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
   const api = {
     APP_VERSION, STATUS, INATIVOS, DECL_PADRAO, uid, n0, round2, ceil2, parseBR, brl, brl0, pct, numBR, qtdBR,
     fmtSessao, dataExtensa, hojeISO, defaultConfig, emptyState, migrate, custoViagem, localEntregaPadrao, calcItem, limiteMEI,
-    computeAll, ordemLoteItem, padLE, dasMensal, mesesAtivos, previewItem, linhasProposta, unitProposta, resolverPdfOpts, camposModelo, pendenciasModelo, CAMPOS_MODELO, identificaEmpresa, COLUNAS_DESC, CAMPOS_FORNECEDOR, CAMPOS_BANCO, mergeState, diffState, paraNuvem, createStore, demoState,
+    computeAll, divisaoCompra, ordemLoteItem, padLE, dasMensal, mesesAtivos, previewItem, linhasProposta, unitProposta, resolverPdfOpts, camposModelo, pendenciasModelo, CAMPOS_MODELO, identificaEmpresa, COLUNAS_DESC, CAMPOS_FORNECEDOR, CAMPOS_BANCO, mergeState, diffState, paraNuvem, createStore, demoState,
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   root.Core = api;
@@ -3441,7 +3458,7 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
     return {
       pregaoId: it.pregaoId || '', loteEdital: it.loteEdital || '', itemEdital: it.itemEdital || '', descricao: it.descricao || '', descEdital: it.descEdital || '', marca: it.marca || '', especificacoes: it.especificacoes || '', unidade: it.unidade || 'Un',
       qtd: it.qtd == null ? '' : C.numBR(it.qtd, 3), onde: pareceUrl(it.onde) ? '' : (it.onde || ''), ondeLink: it.ondeLink || (pareceUrl(it.onde) ? urlSeg(it.onde) : ''), obs: it.obs || '', possivelGanhar: !!it.possivelGanhar, vencedor: it.vencedor == null ? '' : C.numBR(it.vencedor),
-      ...(() => { const o = {}; [0, 1].forEach((n) => { const a = (it.alternativas || [])[n] || {}; o['alt' + n + 'Loja'] = a.loja || ''; o['alt' + n + 'Link'] = a.link || ''; o['alt' + n + 'Custo'] = a.custo == null ? '' : C.numBR(a.custo); }); return o; })(),
+      ...(() => { const o = {}; [0, 1].forEach((n) => { const a = (it.alternativas || [])[n] || {}; o['alt' + n + 'Loja'] = a.loja || ''; o['alt' + n + 'Link'] = a.link || ''; o['alt' + n + 'Custo'] = a.custo == null ? '' : C.numBR(a.custo); o['alt' + n + 'Frete'] = a.frete ? C.numBR(a.frete) : ''; o['alt' + n + 'Qtd'] = a.qtd ? C.numBR(a.qtd, 3) : ''; }); return o; })(),
       custo: it.custo == null ? '' : C.numBR(it.custo), teto: it.teto == null ? '' : C.numBR(it.teto), frete: it.frete ? C.numBR(it.frete) : '',
       margem: it.margem == null ? '' : C.numBR(it.margem * 100, 2), lanceFinal: it.lanceFinal == null ? '' : C.numBR(it.lanceFinal), colocacao: it.colocacao == null ? '' : String(it.colocacao),
       entregaId: it.entregaId || '',
@@ -3455,7 +3472,7 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
     return {
       id: id || 'new', pregaoId: x.pregaoId, loteEdital: C.padLE(x.loteEdital), itemEdital: C.padLE(x.itemEdital), descricao: x.descricao.trim(), descEdital: x.descEdital.trim(), marca: x.marca.trim(), especificacoes: old && old.especificacoes ? old.especificacoes : '', unidade: x.unidade.trim() || 'Un',
       qtd: C.parseBR(x.qtd), onde: x.onde.trim(), ondeLink: urlSeg(x.ondeLink), obs: String(x.obs || '').trim(), possivelGanhar: !!x.possivelGanhar, vencedor: C.parseBR(x.vencedor),
-      alternativas: [0, 1].map((n) => ({ loja: String(x['alt' + n + 'Loja'] || '').trim(), link: urlSeg(x['alt' + n + 'Link']), custo: C.parseBR(x['alt' + n + 'Custo']) })).filter((a) => a.loja || a.link || a.custo != null),
+      alternativas: [0, 1].map((n) => ({ loja: String(x['alt' + n + 'Loja'] || '').trim(), link: urlSeg(x['alt' + n + 'Link']), custo: C.parseBR(x['alt' + n + 'Custo']), frete: C.parseBR(x['alt' + n + 'Frete']) || 0, qtd: C.parseBR(x['alt' + n + 'Qtd']) || 0 })).filter((a) => a.loja || a.link || a.custo != null || a.frete || a.qtd),
       custo: C.parseBR(x.custo), teto: C.parseBR(x.teto), frete: C.parseBR(x.frete) || 0,
       margem: m == null ? null : m / 100, lanceFinal: C.parseBR(x.lanceFinal), colocacao: colocacaoDe(x.colocacao),
       // campos retirados do formulário: o que já estava salvo no item continua valendo
@@ -3514,8 +3531,10 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
     const altFields = (n) => `<div class="full"><div class="lbl" style="margin:2px 0 8px">Opção ${n + 2}</div></div>
           ${field({ label: 'Loja ou site', name: 'alt' + n + 'Loja', value: v['alt' + n + 'Loja'] })}
           ${field({ label: 'Custo unit. (R$)', name: 'alt' + n + 'Custo', value: v['alt' + n + 'Custo'], inputmode: 'decimal' })}
+          ${field({ label: 'Frete (R$, total)', name: 'alt' + n + 'Frete', value: v['alt' + n + 'Frete'], inputmode: 'decimal' })}
+          ${field({ label: 'Comprar aqui (qtd)', name: 'alt' + n + 'Qtd', value: v['alt' + n + 'Qtd'], inputmode: 'decimal', ph: 'opcional' })}
           ${field({ label: 'Link', name: 'alt' + n + 'Link', type: 'url', value: v['alt' + n + 'Link'], full: true, ph: 'https://…', inputmode: 'url' })}`;
-    const altQtd = [0, 1].filter((n) => v['alt' + n + 'Loja'] || v['alt' + n + 'Link'] || v['alt' + n + 'Custo']).length;
+    const altQtd = [0, 1].filter((n) => v['alt' + n + 'Loja'] || v['alt' + n + 'Link'] || v['alt' + n + 'Custo'] || v['alt' + n + 'Frete'] || v['alt' + n + 'Qtd']).length;
     const body = `
       <div class="preview" id="prev"></div>
       ${field({ label: 'Pregão / órgão *', name: 'pregaoId', type: 'select', value: v.pregaoId, options: list.map((p) => ({ v: p.id, l: pregaoLabel(p) })) })}
@@ -3553,7 +3572,7 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
         <div class="altpop" id="altPop" hidden role="dialog" aria-modal="true" aria-label="Outras opções de compra"><div class="altpop-box">
           <div class="altpop-hd"><b>Outras opções de compra</b><button type="button" class="btn ghost sm" data-alt="fechar" aria-label="Fechar">✕</button></div>
           <div class="formgrid">${altFields(0)}${altFields(1)}</div>
-          <div class="hint" style="margin-bottom:12px">Compare 2 ou 3 fornecedores. Se uma opção sair mais barata, o app avisa e você troca com um toque.</div>
+          <div class="hint" style="margin-bottom:12px">Compare 2 ou 3 fornecedores. Se uma opção sair mais barata (com o frete), o app avisa e você troca com um toque.<br>Para dividir a compra, preencha “Comprar aqui”: essa quantidade sai desta opção e o resto da opção principal; o app recalcula o custo médio e soma o frete de cada fornecedor. Vazio = vale o custo e o frete do item.</div>
           <button type="button" class="btn primary block" data-alt="fechar">OK</button></div></div>
         ${field({ label: 'Observações do item', name: 'obs', type: 'textarea', value: v.obs, full: true, ph: 'Ex.: cotar o frete amanhã; não consegui cotar com o fornecedor Y', hint: 'Aparece no cartão do pregão (guia Pregões) e no cartão do item.' })}
         <div class="full"><label class="switch"><span>Posso ganhar<small class="hint" style="display:block;font-weight:500">Marque se ficou perto do 1º colocado neste item e ainda é possível ganhar. Dá para filtrar no Dashboard.</small></span><input type="checkbox" name="possivelGanhar"${v.possivelGanhar ? ' checked' : ''}></label></div>
@@ -3605,7 +3624,7 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
         form.addEventListener('click', (e) => {
           const b = e.target.closest('[data-usar-alt]'); if (!b) return;
           const n = b.dataset.usarAlt, g = (k) => $('[name=' + k + ']', form);
-          [['onde', 'alt' + n + 'Loja'], ['ondeLink', 'alt' + n + 'Link'], ['custo', 'alt' + n + 'Custo']].forEach(([a, c]) => { const A = g(a), B = g(c), tmp = A.value; A.value = B.value; B.value = tmp; });
+          [['onde', 'alt' + n + 'Loja'], ['ondeLink', 'alt' + n + 'Link'], ['custo', 'alt' + n + 'Custo'], ['frete', 'alt' + n + 'Frete']].forEach(([a, c]) => { const A = g(a), B = g(c), tmp = A.value; A.value = B.value; B.value = tmp; });
           g('custo').dispatchEvent(new Event('input', { bubbles: true }));
         });
         // link de compra: depois de colar vira um botão clicável (lápis para editar)
@@ -3632,8 +3651,15 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
         const c = C.previewItem(store.get(), itemFromForm(x, id));
         const el = $('#prev', form);
         const cm = C.parseBR(x.custo);
-        const dica = [0, 1].map((n) => ({ n, custo: C.parseBR(x['alt' + n + 'Custo']), loja: String(x['alt' + n + 'Loja'] || '').trim() })).filter((a) => a.custo != null && cm != null && a.custo < cm)
-          .map((a) => `<div class="altdica">${icon('info', 'sm')}<span>${esc(a.loja || 'A opção ' + (a.n + 2))} custa ${C.brl(cm - a.custo)} a menos por unidade.</span><button type="button" class="btn sm" data-usar-alt="${a.n}">Usar esta</button></div>`).join('');
+        const qx = C.parseBR(x.qtd) || 0, fm = C.parseBR(x.frete) || 0;
+        const itDraft = itemFromForm(x, id), dv = C.divisaoCompra(itDraft);
+        let dica = dv ? '' : [0, 1].map((n) => ({ n, custo: C.parseBR(x['alt' + n + 'Custo']), frete: C.parseBR(x['alt' + n + 'Frete']) || 0, loja: String(x['alt' + n + 'Loja'] || '').trim() }))
+          .filter((a) => a.custo != null && cm != null && (qx > 0 ? (a.custo * qx + a.frete) < (cm * qx + fm) - 0.005 : a.custo < cm))
+          .map((a) => `<div class="altdica">${icon('info', 'sm')}<span>${esc(a.loja || 'A opção ' + (a.n + 2))} ${qx > 0 ? 'sai ' + C.brl((cm * qx + fm) - (a.custo * qx + a.frete)) + ' mais barato no total, com o frete' : 'custa ' + C.brl(cm - a.custo) + ' a menos por unidade'}.</span><button type="button" class="btn sm" data-usar-alt="${a.n}">Usar esta</button></div>`).join('');
+        if (dv) {
+          const nomeP = (k) => k.principal ? (String(x.onde || '').trim() || 'Opção principal') : (k.loja || 'Outra opção');
+          dica = `<div class="altdica" style="display:block">${icon('cart', 'sm')} <b>Compra dividida:</b> ${dv.partes.map((k) => `${esc(nomeP(k))} ${C.qtdBR(k.qtd)} × ${C.brl(k.custo)}${k.frete ? ' + frete ' + C.brl(k.frete) : ''}`).join(' · ')}<br>Custo médio <b>${C.brl(dv.custo)}</b> por unidade · frete total <b>${C.brl(dv.frete)}</b>${dv.excesso ? `<br><b>Atenção:</b> as opções somam ${C.qtdBR(dv.qAlt)}, mais que a quantidade do item (${C.qtdBR(qx)}).` : ''}</div>`;
+        }
         if (!c || c.minimo == null) { el.innerHTML = `<div class="small muted">Informe quantidade e custo para ver o valor mínimo da proposta.</div>${dica}`; return; }
         const bad = c.sitTipo === 'bad';
         el.innerHTML = `<div class="minbox ${viabCls(c)}"><div><div class="t">Valor mínimo p/ proposta (unit.)</div><div class="tiny muted">margem ${C.pct(c.margem, 1)} sobre o preço</div>${viabLinha(c)}</div><div class="v">${C.brl(c.minimo)}</div></div>
@@ -4300,7 +4326,7 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
       <div class="i-hd">${tag}<div class="rcol">${c.ganhou ? '<span class="badge ok">Venci</span>' : (c.naoGanhou && !it.possivelGanhar ? '<span class="badge off">Não ganhou</span>' : '')}${it.possivelGanhar && !ganhoMode ? '<span class="prazo good">★ Posso ganhar</span>' : ''}${c.situacao ? `<span class="badge ${c.sitTipo}" title="${esc(c.situacao)}"><span class="s-lg">${esc(c.situacao)}</span><span class="s-sm">${esc(c.sitCurta || c.situacao)}</span></span>` : ''}${estrelasHtml(c)}</div></div>
       ${desc}
       ${opt.showOrg && p ? `<div class="chips"><span class="chip org">#${esc(p.numero)} · ${esc(p.orgao)}</span></div>` : ''}
-      <div class="small muted i-meta"><span class="i-meta-tx">${C.qtdBR(it.qtd)} ${esc(it.unidade || 'Un')} · custo ${C.brl(it.custo)}<span class="i-teto"> · teto ${C.brl(c.teto)}</span>${it.marca ? ' · ' + esc(it.marca) : ''}</span>${(() => { const nf = Number(it.fotosN) || 0; return `<button type="button" class="foto-tag hide-m ${nf ? 'tem' : 'sem'}" data-act="cat-ir" data-id="${it.id}" title="${nf ? 'Tem foto no catálogo. Clique para ver.' : 'Sem foto no catálogo. Clique para incluir.'}">${icon('image', 'sm')}${nf ? nf + (nf === 1 ? ' foto' : ' fotos') : 'Sem foto'}</button>`; })()}</div>
+      <div class="small muted i-meta"><span class="i-meta-tx">${C.qtdBR(it.qtd)} ${esc(it.unidade || 'Un')} · custo ${c.divisao ? C.brl(c.custoCompra) + ' (média de ' + c.divisao.partes.length + ' fornecedores)' : C.brl(it.custo)}<span class="i-teto"> · teto ${C.brl(c.teto)}</span>${it.marca ? ' · ' + esc(it.marca) : ''}</span>${(() => { const nf = Number(it.fotosN) || 0; return `<button type="button" class="foto-tag hide-m ${nf ? 'tem' : 'sem'}" data-act="cat-ir" data-id="${it.id}" title="${nf ? 'Tem foto no catálogo. Clique para ver.' : 'Sem foto no catálogo. Clique para incluir.'}">${icon('image', 'sm')}${nf ? nf + (nf === 1 ? ' foto' : ' fotos') : 'Sem foto'}</button>`; })()}</div>
       ${vals}
       ${compra}
       ${obs}
@@ -4470,7 +4496,7 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
         <td class="r">${esc(ie || '—')}</td>
         <td class="it-desc"><b>${esc(it.descricao)}</b>${it.marca ? `<small>${esc(it.marca)}</small>` : ''}${String(it.obs || '').trim() ? `<small class="it-obs">${icon('alert', 'sm')} ${esc(it.obs)}</small>` : ''}</td>
         <td class="r">${C.qtdBR(it.qtd)}</td>
-        <td class="r">${C.brl(it.custo)}</td>
+        <td class="r">${c.divisao ? `${C.brl(c.custoCompra)}<small>média</small>` : C.brl(it.custo)}</td>
         <td class="r"><b>${C.brl(c.minimo)}</b></td>
         <td class="r">${C.brl(c.teto)}</td>
         <td class="r">${c.lance != null ? C.brl(c.lance) : '—'}</td>
