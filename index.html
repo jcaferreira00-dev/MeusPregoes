@@ -955,7 +955,7 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.72.1';
+  const APP_VERSION = '1.73.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Em disputa', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -1026,9 +1026,11 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
     anoAbertura: null,
     mesAbertura: null,
     fatFora: 0,
+    capitalGiro: 0,   // quanto há para comprar antes de receber (aviso da entrega parcelada)
     empresa: {
       nome: '', cnpj: '', cpf: '', ie: '', endereco: '', bairro: '', cep: '', cidade: 'Telêmaco Borba', uf: 'PR', telefone: '', email: '', responsavel: '',
       banco: '', agencia: '', conta: '', pix: '', favorecido: '',
+      rg: '', rgOrgao: '', estadoCivil: '', nacionalidade: 'brasileiro', profissao: 'empresário', enderecoResidencial: '',
     },
     proposta: {
       validadeDias: 60, condPagamento: '30 dias', textoDeclaracao: DECL_PADRAO, cor: '#FFC000',
@@ -1309,7 +1311,7 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
 
   /* ---------- opções do PDF por pregão ("chavinhas" do que aparece) ---------- */
   const COLUNAS_DESC = [
-    ['lote', 'Lote / item', 8, true], ['desc', 'Descrição', 28, true], ['marca', 'Marca / modelo', 14, false], ['un', 'Unidade', 7, false],
+    ['lote', 'Lote / item', 8, true], ['cod', 'Código do produto', 8, false], ['desc', 'Descrição', 28, true], ['marca', 'Marca / modelo', 14, false], ['un', 'Unidade', 7, false],
     ['qtd', 'Quantidade', 12.5, true], ['vub', 'Valor unitário bruto', 12, true], ['vtb', 'Valor total bruto', 13, true],
     ['vus', 'Valor unitário s/ ICMS', 12, true], ['vts', 'Valor total s/ ICMS', 13, true], ['aliq', 'Alíquota % ICMS', 9, true],
   ];
@@ -1337,7 +1339,7 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
         titulo: true, tituloTexto: 'ANEXO III\nMODELO DE DESCRITIVO DA PROPOSTA DE PREÇOS',
         faixa: true, faixaTexto: 'PREGÃO ELETRÔNICO - EDITAL nº {numero}',
         fornecedor: true, campos,
-        tabela: true, tabelaTitulo: '1. Especificações técnicas:', rotuloItem: 'Lote', colunas,
+        tabela: false, tabelaTitulo: '1. Especificações técnicas:', rotuloItem: 'Lote', colunas,
         total: false, extenso: false,
         blocos: [],
         localData: true, localDataModo: 'preenchido',
@@ -1361,7 +1363,13 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
     if (m.marca === null || m.marca === undefined) m.marca = true;
     { const antigo = [ov, pad].map((x) => x && x.desc).find((d) => d && d.tituloTexto === undefined && (d.titulo1 !== undefined || d.titulo2 !== undefined));
       if (antigo) m.desc.tituloTexto = [antigo.titulo1, antigo.titulo2].filter(Boolean).join('\n'); }
+    // tabela de especificações técnicas: sempre desligada por padrão (o detalhamento vai no catálogo); só liga no pregão que pedir
+    m.desc.tabela = !!(ov.desc && ov.desc.tabela === true);
+    // proposta inicial sem identificação (edital que proíbe identificar o licitante): só deste pregão e nunca na final
+    m.anonima = ov.anonima === true && tipo !== 'final';
     m.desc.blocos = Array.isArray(ov.desc && ov.desc.blocos) ? ov.desc.blocos : (Array.isArray(pad.desc && pad.desc.blocos) ? pad.desc.blocos : []);
+    m.documentos = Array.isArray(ov.documentos) ? ov.documentos : [];   // declarações do edital: só deste pregão (nunca viram padrão)
+    if (m.com.documentos === undefined) m.com.documentos = true;
     // proposta final: parte da inicial deste pregão + ajustes próprios (não viram padrão e não mexem na inicial)
     if (tipo === 'final') {
       const f = (pregao && pregao.pdfOptsFinal) || {};
@@ -1386,6 +1394,67 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
     if (!doLance && unit !== null && c.teto !== null && unit > c.teto + 1e-9) { unit = c.teto; limitado = true; }
     const acima = doLance && unit !== null && c.teto !== null && unit > c.teto + 1e-9;
     return { unit, original, limitado, doLance, acima };
+  }
+
+  /* ---------- modelo do edital: campos que o texto pode usar ({rg}, {cpf}...) e conferência antes de gerar ---------- */
+  // [chave, nome para o aviso, onde corrigir]
+  const CAMPOS_MODELO = [
+    ['razao', 'Nome / razão social', 'Config › Empresa'], ['cnpj', 'CNPJ', 'Config › Empresa'], ['ie', 'Inscrição Estadual', 'Config › Empresa'],
+    ['endereco', 'Endereço', 'Config › Empresa'], ['bairro', 'Bairro', 'Config › Empresa'], ['cep', 'CEP', 'Config › Empresa'],
+    ['cidade', 'Cidade', 'Config › Empresa'], ['uf', 'UF', 'Config › Empresa'], ['enderecoCompleto', 'Endereço', 'Config › Empresa'],
+    ['telefone', 'Telefone', 'Config › Empresa'], ['email', 'E-mail', 'Config › Empresa'], ['responsavel', 'Nome do titular', 'Config › Empresa'],
+    ['cpf', 'CPF do titular', 'Config › Empresa'], ['rg', 'RG do titular', 'Config › Empresa'], ['rgOrgao', 'Órgão emissor do RG', 'Config › Empresa'],
+    ['estadoCivil', 'Estado civil', 'Config › Empresa'], ['nacionalidade', 'Nacionalidade', 'Config › Empresa'], ['profissao', 'Profissão', 'Config › Empresa'],
+    ['enderecoResidencial', 'Endereço residencial do titular', 'Config › Empresa'],
+    ['banco', 'Banco', 'Config › Dados bancários'], ['agencia', 'Agência', 'Config › Dados bancários'], ['conta', 'Conta', 'Config › Dados bancários'],
+    ['pix', 'PIX', 'Config › Dados bancários'], ['favorecido', 'Favorecido', 'Config › Dados bancários'],
+    ['numero', 'Nº do pregão', 'cadastro do pregão'], ['orgao', 'Órgão', 'cadastro do pregão'],
+    ['total', 'Valor total', 'itens'], ['totalExtenso', 'Valor total por extenso', 'itens'], ['data', 'Data', 'proposta'],
+  ];
+  function camposModelo(emp, preg, extra) {
+    emp = emp || {}; preg = preg || {}; extra = extra || {};
+    const endC = [emp.endereco, emp.bairro, emp.cep ? 'CEP ' + emp.cep : '', [emp.cidade, emp.uf].filter(Boolean).join('/')].filter(Boolean).join(', ');
+    return {
+      razao: emp.nome, cnpj: emp.cnpj, ie: emp.ie, endereco: emp.endereco, bairro: emp.bairro, cep: emp.cep, cidade: emp.cidade, uf: emp.uf, enderecoCompleto: endC,
+      telefone: emp.telefone, email: emp.email, responsavel: emp.responsavel || emp.nome, cpf: emp.cpf, rg: emp.rg, rgOrgao: emp.rgOrgao,
+      estadoCivil: emp.estadoCivil, nacionalidade: emp.nacionalidade, profissao: emp.profissao, enderecoResidencial: emp.enderecoResidencial,
+      banco: emp.banco, agencia: emp.agencia, conta: emp.conta, pix: emp.pix, favorecido: emp.favorecido || emp.nome,
+      numero: preg.numero, orgao: preg.orgao,
+      total: extra.total !== undefined && extra.total !== null ? brl(extra.total) : '', totalExtenso: extra.totalExtenso || '', data: extra.data ? dataExtensa(extra.data) : '',
+    };
+  }
+  // textos do modelo que usam {campos}: título, faixa, cláusulas e declarações do edital
+  function textosModelo(op) {
+    const D = op.desc || {}, out = [];
+    if (D.titulo) out.push(D.tituloTexto); if (D.faixa) out.push(D.faixaTexto);
+    (D.blocos || []).forEach((b) => out.push(b.titulo, b.texto));
+    if (op.com && op.com.documentos !== false) (op.documentos || []).forEach((d) => { if (d && d.ativo !== false) { out.push(d.titulo, d.subtitulo); (d.blocos || []).forEach((b) => out.push(b.titulo, b.texto)); } });
+    return out.filter(Boolean).join('\n');
+  }
+  // o que falta conferir antes de gerar a proposta (lista vazia = tudo certo)
+  // campos que identificam a empresa: na proposta sem identificação, a cláusula que usa algum deles fica de fora
+  const CAMPOS_IDENTIFICAM = ['razao', 'cnpj', 'ie', 'endereco', 'bairro', 'cep', 'cidade', 'uf', 'enderecoCompleto', 'telefone', 'email', 'responsavel', 'cpf', 'rg', 'rgOrgao',
+    'estadoCivil', 'nacionalidade', 'profissao', 'enderecoResidencial', 'banco', 'agencia', 'conta', 'pix', 'favorecido'];
+  const identificaEmpresa = (txt) => (String(txt || '').match(/\{([a-zA-Z]+)\}/g) || []).some((m) => CAMPOS_IDENTIFICAM.includes(m.slice(1, -1)));
+  function pendenciasModelo(state, pregaoId, tipo, fonte) {
+    const p = state.pregoes.find((x) => x.id === pregaoId && !x.deleted);
+    if (!p) return [];
+    const op = resolverPdfOpts(p, state.config, tipo);
+    const L = linhasProposta(state, pregaoId, fonte || 'auto', op.icmsAliq, tipo);
+    const cm = camposModelo(state.config.empresa, p, { total: L.total, totalExtenso: 'x', data: '2026-01-01' });
+    const txt = op.anonima ? '' : textosModelo(op), out = [], vistos = new Set();   // sem identificação: os dados da empresa não saem, não há o que conferir
+    (txt.match(/\{([a-zA-Z]+)\}/g) || []).forEach((m) => {
+      const k = m.slice(1, -1), def = CAMPOS_MODELO.find((c) => c[0] === k);
+      if (!def || vistos.has(k)) return; vistos.add(k);
+      if (!String(cm[k] || '').trim()) out.push(`${def[1]}: em branco (preencha em ${def[2]})`);
+    });
+    const usaMarca = (op.desc.tabela && op.desc.colunas && op.desc.colunas.marca) || op.com.itens;
+    if (usaMarca) { const sem = L.linhas.filter((l) => !String(l.marca || '').trim()).map((l) => l.rotulo); if (sem.length) out.push(`Item sem marca/modelo: ${sem.join(', ')}`); }
+    if (op.desc.tabela && op.desc.colunas && op.desc.colunas.cod) { const sem = L.linhas.filter((l) => !l.codigo).map((l) => l.rotulo); if (sem.length) out.push(`Item sem código do produto: ${sem.join(', ')}`); }
+    if (L.semValor) out.push(`${L.semValor} item(ns) sem valor`);
+    if (L.lanceAcima) out.push(`${L.lanceAcima} item(ns) com lance final acima do teto do edital`);
+    if (!L.linhas.length) out.push('Nenhum item na proposta');
+    return out;
   }
 
   /* ---------- linhas da proposta (PDF) ---------- */
@@ -1442,7 +1511,7 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
       linhas.push({
         n, id: it.id, catalogo: String(it.catalogoDesc || '').trim(), numeroItem: padLE(it.itemEdital) || String(n).padStart(2, '0'), rotulo: rotuloLoteItem(it, n),
         descricao: it.descricao || '', descEdital: (it.descEdital && it.descEdital.trim()) || it.descricao || '',
-        marca: it.marca || '', especificacoes: String(it.especificacoes || '').trim(), un: it.unidade || 'Un', qtd,
+        marca: it.marca || '', codigo: String(it.codigo || '').trim(), especificacoes: String(it.especificacoes || '').trim(), un: it.unidade || 'Un', qtd,
         recongelar: tipo === 'inicial' && velho, unit, total: tot, aliq, unitS, totalS: totS, teto: c.teto, minimo: c.minimo, lance: c.lance, precoInicial: temIni(it) ? it.precoInicial : null, acimaTeto: (unit !== null && c.teto !== null && unit > c.teto + 1e-9), limitadoTeto, unitOriginal, abaixoMinimo,
       });
     }
@@ -1651,7 +1720,7 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
   const api = {
     APP_VERSION, STATUS, INATIVOS, DECL_PADRAO, uid, n0, round2, ceil2, parseBR, brl, brl0, pct, numBR, qtdBR,
     fmtSessao, dataExtensa, hojeISO, defaultConfig, emptyState, migrate, custoViagem, localEntregaPadrao, calcItem, limiteMEI,
-    computeAll, ordemLoteItem, padLE, dasMensal, mesesAtivos, previewItem, linhasProposta, unitProposta, resolverPdfOpts, COLUNAS_DESC, CAMPOS_FORNECEDOR, CAMPOS_BANCO, mergeState, diffState, paraNuvem, createStore, demoState,
+    computeAll, ordemLoteItem, padLE, dasMensal, mesesAtivos, previewItem, linhasProposta, unitProposta, resolverPdfOpts, camposModelo, pendenciasModelo, CAMPOS_MODELO, identificaEmpresa, COLUNAS_DESC, CAMPOS_FORNECEDOR, CAMPOS_BANCO, mergeState, diffState, paraNuvem, createStore, demoState,
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   root.Core = api;
@@ -1974,7 +2043,7 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
   function fitSize(text, f, size, maxW, min) {
     const w = f.widthOfTextAtSize(safe(text), size);
     if (w <= maxW) return size;
-    return Math.max(min || 6.5, size * maxW / w);
+    return Math.max(min || 6.5, size * maxW / w * 0.98);   // folga de 2%: o arredondamento não pode quebrar a palavra
   }
 
   function dataUrlToBytes(url) {
@@ -1995,11 +2064,42 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
   };
   const cap = (t) => t ? t.charAt(0).toUpperCase() + t.slice(1) : t;
 
+  // proposta inicial sem identificação: gera e confere se algum dado da empresa foi parar no PDF
   async function gerarProposta(state, pregaoId, o) {
+    const cfg = state.config, emp = cfg.empresa || {};
+    const pregao0 = state.pregoes.find((p) => p.id === pregaoId && !p.deleted);
+    const op = C.resolverPdfOpts(pregao0 || {}, cfg, o && o.tipo);
+    if (!op.anonima) return gerarProposta0(state, pregaoId, o);
+    const P = PL().PDFPage.prototype, orig = P.drawText, textos = [];
+    P.drawText = function (t, opt) { textos.push(String(t)); return orig.call(this, t, opt); };
+    try {
+      const res = await gerarProposta0(state, pregaoId, o);
+      const norm = (x) => String(x || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/\s+/g, ' ').trim();
+      const dig = (x) => String(x || '').replace(/\D/g, '');
+      const tudo = norm(textos.join(' ')), digitos = dig(textos.join(' '));
+      const achou = [];
+      [['nome da empresa', emp.nome], ['nome do titular', emp.responsavel], ['e-mail', emp.email], ['endereço', emp.endereco], ['PIX', emp.pix]]
+        .forEach(([r, v]) => { const n = norm(v); if (n.length >= 5 && tudo.includes(n)) achou.push(r); });
+      [['CNPJ', emp.cnpj], ['CPF', emp.cpf], ['telefone', emp.telefone], ['RG', emp.rg], ['inscrição estadual', emp.ie]]
+        .forEach(([r, v]) => { const d = dig(v); if (d.length >= 8 && digitos.includes(d)) achou.push(r); });
+      res.anonima = true; res.identificacao = achou;
+      return res;
+    } finally { P.drawText = orig; }
+  }
+  async function gerarProposta0(state, pregaoId, o) {
     const { PDFDocument, StandardFonts, rgb, degrees } = PL();
-    const cfg = state.config, emp = cfg.empresa;
+    const cfg = state.config;
     const pregao0 = state.pregoes.find((p) => p.id === pregaoId && !p.deleted);
     const op = C.resolverPdfOpts(pregao0 || {}, cfg, o && o.tipo);          // chavinhas do que aparece (padrão do app <- padrão do usuário <- este pregão)
+    // sem identificação: some tudo que mostra quem é a empresa (cabeçalho, fornecedor, banco, local, assinatura, declarações)
+    const anon = !!op.anonima;
+    const emp = anon ? {} : cfg.empresa;
+    if (anon) {
+      op.cabecalho = false; op.desc.fornecedor = false; op.com.fornecedor = false; op.com.bancarios = false;
+      op.desc.localData = false; op.desc.assinatura = false; op.com.localData = false; op.com.assinatura = false; op.com.documentos = false;
+      const md = cfg.marcaDagua || {};
+      if (md.tipo === 'imagem' || (md.tipo === 'texto' && cfg.empresa && cfg.empresa.nome && String(md.texto || '').toLowerCase().includes(String(cfg.empresa.nome).toLowerCase()))) op.marca = false;
+    }
     o = Object.assign({ fonte: 'auto', cor: cfg.proposta.cor, data: C.hojeISO(), marcaDagua: cfg.marcaDagua, cabecalho: cfg.cabecalho }, o || {});
     o.validadeDias = op.validade; o.condPagamento = op.pagamento; o.prazoEntrega = op.prazoEntrega; o.localEntrega = op.localEntrega;
     o.observacoes = op.observacoes; o.incluirExtenso = op.com.extenso; o.incluirBancarios = op.com.bancarios;
@@ -2165,6 +2265,7 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
       // órgão + quadro com os dados do fornecedor (você)
       wrapMixed([{ t: 'Órgão: ', f: bold }, { t: preg.orgao || '—', f: font }], 9.5, CW - 12).forEach((l) => { garantir(13); drawMixed2(l, M + 6, y - 10, 9.5); y -= 12.5; });
       y -= 4;
+      if (!anon) {
       const fornL = [
         [['Fornecedor: ', emp.nome || '—'], ['CNPJ: ', emp.cnpj || '—']],
         [['Endereço: ', endCompleto || '—']],
@@ -2178,6 +2279,7 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
       T('DADOS DO FORNECEDOR', M + 8, y - 11, 8.5, bold, ACCT);
       fLines.forEach((l, k) => drawMixed2(l, M + 8, y - 16 - 10 - k * 12, 9));
       y -= hF + 12;
+      }   // sem identificação: o catálogo sai sem o quadro do fornecedor
       const imgs = o.imagens || {};
       for (const ln of L.linhas) {
         const fotos = [];
@@ -2284,7 +2386,9 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
     const subst = (t, c) => safe(t)
       .replace(/\{validade\}/g, `${op.validade} (${inteiroExtenso(Number(op.validade) || 0)}) dias`)
       .replace(/\{prorrogacao\}/g, `${op.prorrogacao} (${inteiroExtenso(Number(op.prorrogacao) || 0)}) dias`)
-      .replace(/\{numero\}/g, preg.numero || '').replace(/\{orgao\}/g, preg.orgao || '').replace(/\{pai\}/g, (c && c.paiRotulo) || '4');
+      .replace(/\{numero\}/g, preg.numero || '').replace(/\{orgao\}/g, preg.orgao || '').replace(/\{pai\}/g, (c && c.paiRotulo) || '4')
+      .replace(/\{([a-zA-Z]+)\}/g, (m, k) => (Object.prototype.hasOwnProperty.call(CM, k) ? (String(CM[k] || '').trim() ? safe(String(CM[k])) : '__________') : m));
+    const CM = C.camposModelo(emp, preg, { total: L.total, totalExtenso: L.total > 0 ? cap(valorExtenso(L.total)) : '', data: o.data });
 
     // --- títulos e faixa do edital
     if (D.titulo) {
@@ -2339,7 +2443,8 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
       const pares = defs.filter(([id]) => cf[id]).map(([, l, v, full]) => [l, v, full]);
       if (pares.length) {
         garantir(24 + 40);
-        T('DADOS DO FORNECEDOR', M + 8, y - 12, 12, font, INK); y -= 18;
+        if (D.fornecedorTitulo) { T(subst(D.fornecedorTitulo), M + 2, y - 11, 10.5, bold, BLK); y -= 17; }
+        else { T('DADOS DO FORNECEDOR', M + 8, y - 12, 12, font, INK); y -= 18; }
         grade(pares);
         y -= 10;
       }
@@ -2356,6 +2461,9 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
       grade(bancoPares);
       y -= 10;
     }
+
+    // cláusulas marcadas "antes" (ex.: "Responsável pela proposta" do modelo do edital) saem aqui, antes dos itens
+    desenharBlocos((D.blocos || []).filter((b) => b && b.antes));
 
     const fmtNum = (n) => new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n);
     const brlTxt = (n) => 'R$ ' + fmtNum(n);
@@ -2414,21 +2522,22 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
     // --- tabela de especificações técnicas (cada coluna liga/desliga)
     if (D.tabela) {
       if (op.com.itens) y -= 14;
-      if (D.tabelaTitulo) { garantir(40); T(D.tabelaTitulo, M + 2, y - 11, 11.5, bold, BLK); y -= 17; }
-      const rotC = { lote: D.rotuloItem || 'Lote', desc: 'Descrição', marca: 'Marca/Modelo', un: 'Unid.', qtd: 'Quantidade', vub: 'Valor Unitário Bruto', vtb: 'Valor Total Bruto', vus: 'Valor Unitário s/ ICMS', vts: 'Valor Total s/ ICMS', aliq: 'Alíquota % ICMS' };
-      const cols = C.COLUNAS_DESC.filter(([id]) => D.colunas[id]).map(([id, , w]) => ({ id, w }));
+      const rotC = { lote: D.rotuloItem || 'Lote', cod: 'Código', desc: 'Descrição', marca: 'Marca/Modelo', un: 'Unid.', qtd: 'Quantidade', vub: 'Valor Unitário Bruto', vtb: 'Valor Total Bruto', vus: 'Valor Unitário s/ ICMS', vts: 'Valor Total s/ ICMS', aliq: 'Alíquota % ICMS' };
+      const LW = (D.larguras && typeof D.larguras === 'object') ? D.larguras : {};   // larguras próprias (modelo do edital), senão as padrão
+      const cols = C.COLUNAS_DESC.filter(([id]) => D.colunas[id]).map(([id, , w]) => ({ id, w: Number(LW[id]) > 0 ? Number(LW[id]) : w }));
       const wsum = cols.reduce((a, c) => a + c.w, 0) || 1;
       cols.forEach((c) => { c.pw = CW * c.w / wsum; });
       const cellTxt = (c, ln) => ({
-        lote: ln.rotulo, desc: ln.descEdital, marca: (ln.marca || '—') + (ln.especificacoes ? '\n' + ln.especificacoes : ''), un: ln.un, qtd: new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 3 }).format(ln.qtd),
+        lote: ln.rotulo, cod: ln.codigo || '—', desc: ln.descEdital, marca: (ln.marca || '—') + (ln.especificacoes ? '\n' + ln.especificacoes : ''), un: ln.un, qtd: new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 3 }).format(ln.qtd),
         vub: bT(ln.unit), vtb: bT(ln.total), vus: bT(ln.unitS), vts: bT(ln.totalS), aliq: fN(ln.aliq * 100) + '%',
       })[c.id];
-      const cabecalhoTab = () => {
+      const cabecalhoTab = (minLinha, comTitulo) => {
         // fonte do cabeçalho: a maior palavra precisa caber inteira na coluna (sem quebrar no meio da palavra)
         const hfs = (c) => Math.min(...safe(rotC[c.id]).split(/\s+/).map((wd) => fitSize(wd, bold, 9, c.pw - 6, 6)));
         const hs = cols.map((c) => wrap(rotC[c.id], bold, hfs(c), c.pw - 6));
         const h = Math.max(...hs.map((x) => x.length)) * 11 + 9;
-        garantir(h + 30);
+        garantir(h + Math.max(30, minLinha || 0) + (comTitulo ? 17 : 0));   // título e cabeçalho nunca ficam sozinhos no pé da página
+        if (comTitulo) { T(D.tabelaTitulo, M + 2, y - 11, 11.5, bold, BLK); y -= 17; }
         let x = M;
         cols.forEach((c, k) => {
           page.drawRectangle({ x, y: y - h, width: c.pw, height: h, color: AZUL, borderColor: BLK, borderWidth: 0.9 });
@@ -2439,12 +2548,13 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
         y -= h;
       };
       if (cols.length) {
-        cabecalhoTab();
-        L.linhas.forEach((ln) => {
+        const medirLinha = (ln) => {
           const fsz = cols.map((c) => (c.id === 'desc' || c.id === 'marca') ? 9 : fitSize(String(cellTxt(c, ln)), font, 9, c.pw - 8, 6.5));
           const cells = cols.map((c, k) => wrap(String(cellTxt(c, ln)), font, fsz[k], c.pw - 8));
+          return { fsz, cells, h: Math.max(...cells.map((x) => x.length)) * 11 + 8 };
+        };
+        const desenharLinha = (fsz, cells) => {
           const h = Math.max(...cells.map((x) => x.length)) * 11 + 8;
-          if (y - h < BOTTOM) { novaPagina(); cabecalhoTab(); }
           let x = M;
           cols.forEach((c, k) => {
             page.drawRectangle({ x, y: y - h, width: c.pw, height: h, borderColor: BLK, borderWidth: 0.9 });
@@ -2458,6 +2568,21 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
             x += c.pw;
           });
           y -= h;
+        };
+        const MIN_PARTE = 120;   // descrição longa: continua na página seguinte em vez de deixar meia página em branco
+        cabecalhoTab(L.linhas.length ? Math.min(medirLinha(L.linhas[0]).h, MIN_PARTE) : 0, !!D.tabelaTitulo);
+        L.linhas.forEach((ln) => {
+          let { fsz, cells, h } = medirLinha(ln);
+          while (y - h < BOTTOM) {
+            const cabe = Math.floor((y - BOTTOM - 8) / 11);
+            if (y - BOTTOM < MIN_PARTE || cabe < 4) { novaPagina(); cabecalhoTab(Math.min(h, MIN_PARTE)); continue; }
+            // parte 1: as primeiras linhas da descrição/marca + os valores; parte 2 (próxima página): o restante do texto
+            desenharLinha(fsz, cells.map((cl) => cl.slice(0, cabe)));
+            cells = cells.map((cl, k) => (cols[k].id === 'desc' || cols[k].id === 'marca') ? cl.slice(cabe) : []);
+            h = Math.max(1, ...cells.map((x) => x.length)) * 11 + 8;
+            novaPagina(); cabecalhoTab(Math.min(h, MIN_PARTE));
+          }
+          desenharLinha(fsz, cells);
         });
         if (!L.linhas.length) { garantir(20); T('Nenhum item cadastrado neste pregão.', M + 4, y - 14, 9.5, ital, GRAY); y -= 22; }
       }
@@ -2508,9 +2633,11 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
       wrap(o.textoDeclaracao, font, 10, CW - 30).forEach((l) => { garantir(14); T(l, M + 14, y - 10, 10, font, INK); y -= 13; });
     }
 
-    // --- cláusulas livres: título em caixa alta e negrito + descrição justificada
-    if ((D.blocos || []).some((b) => (b.titulo || b.texto || '').trim())) y -= 8;
-    (D.blocos || []).forEach((b) => {
+    // --- cláusulas livres: título em caixa alta e negrito + descrição justificada (usado também nas declarações do edital)
+    function desenharBlocos(blocos) {
+    if ((blocos || []).some((b) => (b.titulo || b.texto || '').trim())) y -= 8;
+    (blocos || []).forEach((b) => {
+      if (anon && C.identificaEmpresa(String(b.titulo || '') + ' ' + String(b.texto || ''))) return;   // cláusula com dados da empresa: fora da proposta sem identificação
       const ti = subst(String(b.titulo || '')).toUpperCase().trim();
       const tx = subst(String(b.texto || '')).trim();
       if (!ti && !tx) return;
@@ -2523,11 +2650,17 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
       });
       y -= 6;
     });
+    }
+    desenharBlocos((D.blocos || []).filter((b) => b && !b.antes));
 
-    // --- local e data
+    // --- local e data + assinatura (usado também no fim de cada declaração do edital)
     const ESPACO_ASSIN = 60;   // espaço livre acima da linha para a assinatura digital
-    if (D.localData) {
-      garantir(D.assinatura ? 60 + ESPACO_ASSIN + 50 : 60); y -= 14;   // local/data e assinatura ficam juntos na mesma página
+    const desenharLocalAssin = (comLocal, comAssin) => {
+    // se faltar pouco espaço, aperta o espaço da assinatura (até a metade) em vez de levar só a assinatura para outra página
+    let espaco = ESPACO_ASSIN;
+    if (comLocal && comAssin) { const precisa = 14 + 36 + ESPACO_ASSIN + 48; if (y - precisa < BOTTOM && y - (precisa - ESPACO_ASSIN / 2) >= BOTTOM) espaco = Math.max(ESPACO_ASSIN / 2, y - BOTTOM - 14 - 36 - 48); }
+    if (comLocal) {
+      garantir(comAssin ? 14 + 36 + espaco + 48 : 60); y -= 14;   // local/data e assinatura ficam juntos na mesma página
       const ano = new Date().getFullYear();
       const txt = D.localDataModo === 'branco'
         ? `______________________, ____ de ______________________ de ${ano}.`
@@ -2535,9 +2668,9 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
       TC(txt, PW / 2, y - 11, 11, font, BLK); y -= 36;
     }
     // --- assinatura
-    if (D.assinatura) {
-      garantir(70 + ESPACO_ASSIN); if (!D.localData) y -= 24;
-      y -= ESPACO_ASSIN;
+    if (comAssin) {
+      garantir(48 + espaco); if (!comLocal) y -= 24;
+      y -= espaco;
       const sigW = 260, sx = (PW - sigW) / 2;
       page.drawLine({ start: { x: sx, y }, end: { x: sx + sigW, y }, thickness: 0.9, color: BLK });
       let yy = y - 14;
@@ -2547,6 +2680,22 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
       if (D.assinaturaNome && nm) { TC(nm, PW / 2, yy, 10.5, bold, BLK); yy -= 13; }
       if (D.assinaturaDoc && dc) { TC(dc, PW / 2, yy, 10.5, font, BLK); yy -= 13; }
       y = yy;
+    }
+    };
+    desenharLocalAssin(D.localData, D.assinatura);
+
+    /* ===== declarações do edital (modelo próprio): cada uma numa página, com local, data e assinatura ===== */
+    if (op.com.documentos !== false && Array.isArray(op.documentos)) {
+      op.documentos.forEach((dd) => {
+        if (!dd || dd.ativo === false) return;
+        novaPagina();
+        const tt = subst(String(dd.titulo || '')).toUpperCase().trim();
+        if (tt) { tt.split(/\n/).forEach((par) => wrap(par, bold, 12.5, CW - 8).forEach((l) => { garantir(20); TC(l, PW / 2, y - 12, 12.5, bold, BLK); y -= 16; })); y -= 4; }
+        const st = subst(String(dd.subtitulo || '')).trim();
+        if (st) { wrap(st, font, 10.5, CW - 8).forEach((l) => { garantir(16); TC(l, PW / 2, y - 11, 10.5, font, BLK); y -= 14; }); y -= 4; }
+        desenharBlocos(dd.blocos || []);
+        if (dd.assinatura !== false) desenharLocalAssin(true, true);
+      });
     }
 
     /* ===== catálogo anexado ao final da proposta (opcional) ===== */
@@ -2816,7 +2965,7 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
     return new Promise((resolve) => {
       const w = document.createElement('div');
       w.className = 'dlg-wrap';
-      w.innerHTML = `<div class="dlg" role="alertdialog" aria-modal="true"><h3>${esc(title)}</h3><p>${esc(text || '')}</p><div class="btns">${
+      w.innerHTML = `<div class="dlg" role="alertdialog" aria-modal="true"><h3>${esc(title)}</h3><p style="white-space:pre-line">${esc(text || '')}</p><div class="btns">${
         buttons.map((b, i) => `<button type="button" class="btn ${b.cls || ''}" data-i="${i}">${esc(b.label)}</button>`).join('')}</div></div>`;
       document.body.appendChild(w);
       const done = (v) => { w.remove(); resolve(v); };
@@ -2967,6 +3116,7 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
       entregaDiferente: !!p.entregaDiferente, locaisEntrega: p.locaisEntrega || '',
       link: p.link || '', linkProposta: p.linkProposta || '', linkLicitacao: p.linkLicitacao || '', obs: p.obs || '',
       modeloProprio: !!p.modeloProprio, linkModelo: p.linkModelo || '',
+      entregaParcelada: !!p.entregaParcelada, entregaParceladaObs: p.entregaParceladaObs || '',
       empenhoNum: p.empenhoNum || '', empenhoData: p.empenhoData || '', entregaPrazo: p.entregaPrazo || '', entregueEm: p.entregueEm || '',
       pagamentoDias: p.pagamentoDias == null ? '' : String(p.pagamentoDias), pagoEm: p.pagoEm || '',
     };
@@ -3077,6 +3227,11 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
         <div class="full"><label class="switch"><span>Este edital tem modelo próprio de proposta<small class="hint" style="display:block;font-weight:500">Marque quando o órgão exigir que a proposta siga um formato específico. O aviso fica em destaque no cartão e no início do pregão.</small></span><input type="checkbox" name="modeloProprio"${v.modeloProprio ? ' checked' : ''}></label></div>
         ${field({ label: 'Link do modelo de proposta ou documento adicional', name: 'linkModelo', type: 'url', value: v.linkModelo, full: true, ph: 'https://…', hint: 'Cole o link do arquivo (Google Drive, site do órgão etc.). Vira o botão “Modelo de proposta”.' })}
         ${field({ label: 'Exigências (IE, certidões)', name: 'exigencias', type: 'textarea', value: v.exigencias, full: true, ph: 'SICAF, CND estadual…' })}
+      </div>
+      <div class="sect">${icon('alert', 'sm')} Entrega parcelada</div>
+      <div class="formgrid">
+        <div class="full"><label class="switch"><span>O edital pede entrega parcelada (aos poucos)<small class="hint" style="display:block;font-weight:500">Ex.: registro de preços com pedidos durante a vigência da ata. O aviso fica no cartão e no início do pregão, com a conta do capital de giro.</small></span><input type="checkbox" name="entregaParcelada"${v.entregaParcelada ? ' checked' : ''}></label></div>
+        ${field({ label: 'Como é a entrega', name: 'entregaParceladaObs', type: 'textarea', value: v.entregaParceladaObs, full: true, ph: 'Pedidos conforme a necessidade por 12 meses; 10 dias para entregar cada pedido…' })}
       </div>
       <div class="sect">${icon('pin', 'sm')} Entrega de carro</div>
       <div class="formgrid">
@@ -3228,6 +3383,7 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
           prazoEntregaDias: x.prazoEntregaDias ? parseInt(x.prazoEntregaDias, 10) : null, exigencias: x.exigencias.trim(), status: x.status,
           link: x.link.trim(), linkProposta: (x.linkProposta || '').trim(), linkLicitacao: (x.linkLicitacao || '').trim(), obs: x.obs.trim(),
           modeloProprio: !!x.modeloProprio, linkModelo: (x.linkModelo || '').trim(),
+          entregaParcelada: !!x.entregaParcelada, entregaParceladaObs: (x.entregaParceladaObs || '').trim(),
           empenhoNum: (x.empenhoNum || '').trim(), empenhoData: x.empenhoData || '', entregaPrazo: x.entregaPrazo || '', entregueEm: x.entregueEm || '',
           pagamentoDias: x.pagamentoDias ? (parseInt(x.pagamentoDias, 10) || null) : null, pagoEm: x.pagoEm || '',
         };
@@ -4055,6 +4211,7 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
           pst.nPode ? `<span class="prazo good">${icon('check', 'sm')}Posso ganhar: ${pst.nPode} ${pst.nPode === 1 ? 'item' : 'itens'}</span>` : '',
           po ? `<span class="prazo ${nivelCls(po.nivel)}">${icon(po.nivel === 'bad' || po.nivel === 'warn' ? 'alert' : 'calendar', 'sm')}${esc(po.texto)}</span>` : '',
           p.modeloProprio ? `<span class="prazo warn">${icon('alert', 'sm')}Modelo próprio de proposta</span>` : '',
+          p.entregaParcelada ? `<span class="prazo warn">${icon('pin', 'sm')}Entrega parcelada</span>` : '',
         ].filter(Boolean).join('');
         return tags ? `<div class="p-tags">${tags}</div>` : '';
       })()}
@@ -4202,6 +4359,21 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
     if (n >= 1) setTimeout(() => openGanhosForm(id), 400);
   }
 
+  // entrega parcelada: aviso com a conta do capital de giro (pior caso = pedirem tudo de uma vez)
+  function parceladaHtml(p, pst) {
+    const cfg = store.get().config, cap = C.n0(cfg.capitalGiro);
+    const custo = pst ? pst.custo : 0;
+    const dE = Number(p.prazoEntregaDias) || 0, dP = Number(p.pagamentoDias) || 0;
+    const volta = dE || dP ? ` O dinheiro volta cerca de <b>${dE + dP} dias</b> depois de cada pedido (${dE ? dE + ' para entregar' : 'prazo de entrega não informado'} + ${dP ? dP + ' para pagar' : 'prazo de pagamento não informado'}).` : '';
+    let comp = '';
+    if (custo > 0 && cap > 0) comp = cap >= custo
+      ? `<br>Seu capital de giro (${C.brl(cap)}) cobre o pior caso.`
+      : `<br><b>Seu capital de giro (${C.brl(cap)}) não cobre o pior caso: faltam ${C.brl(custo - cap)}.</b> Dá para atender só pedidos de até ${C.brl(cap)} por vez.`;
+    else if (custo > 0) comp = '<br><span class="small">Informe o capital de giro em Config para o app comparar.</span>';
+    return `<div class="alert warn" style="margin-bottom:10px">${icon('pin', 'sm')}<div class="grow"><b>Entrega parcelada:</b> o órgão pede aos poucos, conforme a necessidade.${p.entregaParceladaObs ? '<br><span style="white-space:pre-wrap">' + esc(p.entregaParceladaObs) + '</span>' : ''}
+      <br><b>Capital de giro:</b> se pedirem tudo de uma vez, a compra sai cerca de <b>${C.brl(custo)}</b> (custo dos itens em disputa, com frete e viagem).${volta}${comp}
+      <br><span class="small">Comprar tudo antes para garantir o preço deixa o dinheiro parado até a última entrega. Cada pedido também é uma viagem: confira o nº de viagens.</span></div></div>`;
+  }
   function posCardHtml(pst) {
     const p = pst.p, po = posInfo(p);
     if (!po) return '';
@@ -4238,10 +4410,11 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
           return h ? `<div class="hero-lks">${h}</div>` : `<button type="button" class="hero-lk vazio" data-act="editar-pregao" data-id="${p.id}">${icon('edit', 'sm')}<span>Cadastrar links</span></button>`;
         })()}</div>
       ${(() => {
-        if (!p.modeloProprio && !p.linkModelo && !p.obs) return '';
+        if (!p.modeloProprio && !p.linkModelo && !p.obs && !p.entregaParcelada) return '';
         const u = String(p.linkModelo || '').trim(), href = u ? (/^https?:\/\//i.test(u) ? u : 'https://' + u) : '';
         return `<div class="card obsbox"><h3>${icon('alert', 'sm')} <span class="grow">Atenção neste edital</span><button class="btn sm" data-act="editar-pregao" data-id="${p.id}">${icon('edit', 'sm')} Editar</button></h3>
           ${p.modeloProprio ? `<div class="alert warn" style="margin-bottom:10px">${icon('alert', 'sm')}<div class="grow">Este edital tem modelo próprio de proposta. Use o documento do órgão em vez do modelo padrão.</div></div>` : ''}
+          ${p.entregaParcelada ? parceladaHtml(p, pst) : ''}
           ${href ? `<a class="btn block" style="margin-bottom:10px" href="${esc(href)}" target="_blank" rel="noopener noreferrer">${icon('link', 'sm')} Abrir modelo de proposta / documento adicional</a>` : ''}
           ${p.obs ? `<div class="obstxt">${esc(p.obs)}</div>` : ''}</div>`;
       })()}
@@ -4485,6 +4658,8 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
     const cab = `
       <div class="card"><h3>2 · Documento da proposta <span class="grow"></span><span class="saved-ind" id="savedInd">Salvo</span></h3>
         <p class="tiny muted" style="margin:0 0 8px">Um único modelo, com tudo ligado por padrão. Desligue na chavinha o que não quiser na proposta. O que você mudar aqui (chavinhas e textos) vira o padrão dos próximos pregões; prazo e local de entrega, observações e ICMS valem só para o pregão.</p>
+        ${UI.pdf.tipo === 'final' ? '' : swp(o, 'anonima', 'Proposta inicial sem identificação da empresa', 'Para o edital que proíbe identificar o licitante. Sai sem nome, CNPJ, cabeçalho, dados bancários, local, assinatura, declarações e cláusulas com dados da empresa. Vale só para este pregão; a proposta final sai identificada.')}
+        ${o.anonima ? `<div class="alert warn" style="margin:4px 0 10px">${icon('alert', 'sm')}<div class="grow">Sem identificação: ao gerar, o app confere se o nome, CNPJ, CPF, e-mail ou telefone aparecem no PDF. Confira também as fotos do catálogo (logo ou etiqueta da empresa).</div></div>` : ''}
         ${swp(o, 'cabecalho', 'Cabeçalho (nome e imagem)', 'Aparece em todas as páginas')}
         ${swp(o, 'marca', 'Marca d’água')}
         <div class="field full" style="margin-top:8px"><label>Cor do documento (rótulos, faixas e bordas)</label><input class="input" type="color" data-cfg="proposta.cor" data-type="text" value="${esc(cfg.proposta.cor)}"></div>
@@ -4505,12 +4680,17 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
       acc('acc-forn', 'Dados do fornecedor', `${swp(o, 'desc.fornecedor', 'Mostrar o quadro “Dados do fornecedor”')}<div class="swgrid">${campos}</div><p class="tiny muted">Os dados vêm de Config › Empresa. Campo desligado some do quadro.</p>`),
       acc('acc-banco', 'Dados bancários', `${swp(o, 'com.bancarios', 'Mostrar o quadro “Dados bancários”')}<div class="swgrid">${camposBanco}</div>`),
       acc('acc-itens', 'Itens da proposta (um bloco por item)', `${swp(o, 'com.itens', 'Mostrar os itens em blocos, com descrição e marca')}`),
-      acc('acc-tab', 'Tabela de especificações', `${swp(o, 'desc.tabela', 'Mostrar a tabela')}<div class="formgrid">${fp(o, 'desc.tabelaTitulo', 'Título da tabela')}${fp(o, 'desc.rotuloItem', 'Nome da coluna do item', { hint: 'Lote, Item…' })}${fp(o, 'icmsAliq', 'Alíquota ICMS padrão (%)', { type: 'pct', im: 'decimal', hint: 'MEI: 0. Por item, edite o item.' })}</div>
+      acc('acc-tab', 'Tabela de especificações', `${swp(o, 'desc.tabela', 'Mostrar a tabela', 'Desligada por padrão (o detalhamento vai no catálogo). Ligar vale só para este pregão.')}<div class="formgrid">${fp(o, 'desc.tabelaTitulo', 'Título da tabela')}${fp(o, 'desc.rotuloItem', 'Nome da coluna do item', { hint: 'Lote, Item…' })}${fp(o, 'icmsAliq', 'Alíquota ICMS padrão (%)', { type: 'pct', im: 'decimal', hint: 'MEI: 0. Por item, edite o item.' })}</div>
          <div class="lbl" style="margin:6px 0">Colunas</div><div class="swgrid">${colunas}</div>`),
       acc('acc-resumo', 'Valor total', `${swp(o, 'com.resumo', 'Resumo comercial (valor global)', 'Com a coluna “Valor total s/ ICMS” ligada, mostra também esse total')}${swp(o, 'com.extenso', 'Valor por extenso')}`),
       acc('acc-obs', 'Observações e declaração', `${swp(o, 'com.observacoes', 'Observações')}${fp(o, 'observacoes', 'Texto das observações (saem no PDF)', { area: true, rows: 2, full: true })}
          ${swp(o, 'com.declaracao', 'Declaração de preços')}<div class="field full"><label>Texto da declaração</label><textarea class="input" rows="3" data-cfg="proposta.textoDeclaracao" data-type="text">${esc(cfg.proposta.textoDeclaracao)}</textarea></div>`),
-      acc('acc-bl', 'Cláusulas', `<p class="tiny muted">Cada cláusula tem título (caixa alta e negrito) e descrição justificada. Use {validade}, {prorrogacao}, {numero} ou {orgao} no texto, se quiser.</p>${blocosUi}<button type="button" class="btn sm block" data-act="bloco-add">${icon('plus', 'sm')} Incluir cláusula</button>`),
+      acc('acc-bl', 'Cláusulas', `<p class="tiny muted">Cada cláusula tem título (caixa alta e negrito) e descrição justificada. Use {validade}, {prorrogacao}, {numero}, {orgao}, {razao}, {cnpj}, {ie}, {enderecoCompleto}, {responsavel}, {cpf}, {rg}, {rgOrgao}, {estadoCivil}, {banco}, {agencia}, {conta}, {total} ou {totalExtenso}: viram os dados de Config.</p>${blocosUi}<button type="button" class="btn sm block" data-act="bloco-add">${icon('plus', 'sm')} Incluir cláusula</button>`),
+      acc('acc-docs', `Declarações do edital (${(o.documentos || []).length})`, (o.documentos || []).length
+        ? `${swp(o, 'com.documentos', 'Incluir as declarações do edital no PDF', 'Cada uma sai numa página própria, com local, data e assinatura')}
+           <ul class="small" style="margin:6px 0 4px 18px">${o.documentos.map((d) => `<li>${esc(String(d.titulo || 'Declaração').split('\n').map((x) => x.trim()).filter(Boolean).join(' — '))}</li>`).join('')}</ul>
+           <p class="tiny muted">Vieram com o arquivo de importação do pregão, no texto do modelo do edital. Os dados ({rg}, {cpf}, {estadoCivil}…) saem de Config › Empresa.</p>`
+        : '<p class="tiny muted">Este pregão não tem declarações do edital. Elas vêm no arquivo de importação quando o edital tem modelo próprio.</p>'),
       acc('acc-fim', 'Local, data e assinatura',
         `${swp(o, 'desc.localData', 'Local e data')}<div class="seg-ctl" style="margin:4px 0 10px">${[['preenchido', 'Preenchido'], ['branco', 'Em branco']].map(([v, l]) => `<button type="button" data-act="pdf-datamodo" data-v="${v}" class="${D.localDataModo === v ? 'on' : ''}">${l}</button>`).join('')}</div>
          <div class="field"><label>Data do documento</label><input class="input" type="date" data-ui="data" value="${esc(UI.pdf.data)}"></div>
@@ -4583,8 +4763,9 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
         <div class="field"><label>Ajuste vertical: <span id="lbWy">${w.offY || 0}</span></label><input type="range" min="-200" max="200" step="2" data-cfg="marcaDagua.offY" data-type="range" data-lb="lbWy" value="${w.offY || 0}"></div>` : ''}
       </div>
       ${faltaEmpresaHtml(opts, cfg.empresa)}
+      ${(() => { const pend = C.pendenciasModelo(st, UI.pdf.pregaoId, UI.pdf.tipo, UI.pdf.fonte); return pend.length ? `<div class="alert warn">${icon('alert', 'sm')}<div class="grow"><b>Confira antes de gerar:</b><br>${pend.map((x) => esc(x)).join('<br>')}</div></div>` : `<div class="alert ok">${icon('check', 'sm')}<span>Dados conferidos: nenhum campo em branco, todos os itens com marca e valor.</span></div>`; })()}
       <button class="btn primary block" data-act="pdf-gerar" ${UI.pdf.busy ? 'disabled' : ''}>${icon('pdf')} ${UI.pdf.busy ? 'Gerando…' : 'Gerar PDF da proposta'}</button>
-      ${r ? `<div class="card" id="pdfPronto"><h3>${r.docx ? 'Catálogo em Word pronto' : r.catalogo ? 'Catálogo pronto' : r.comCatalogo ? 'PDF pronto (proposta + catálogo)' : 'PDF pronto'}</h3><p class="small"><b>${esc(r.name)}</b><br><span class="muted">${r.docx ? 'Arquivo do Word, separado da proposta' : r.paginas + ' página(s)'}${r.catalogo ? '' : ' · total ' + C.brl(r.total)}</span></p>
+      ${r ? `<div class="card" id="pdfPronto"><h3>${r.docx ? 'Catálogo em Word pronto' : r.catalogo ? 'Catálogo pronto' : r.comCatalogo ? 'PDF pronto (proposta + catálogo)' : 'PDF pronto'}</h3><p class="small"><b>${esc(r.name)}</b><br><span class="muted">${r.docx ? 'Arquivo do Word, separado da proposta' : r.paginas + ' página(s)'}${r.catalogo ? '' : ' · total ' + C.brl(r.total)}</span>${r.anonima ? (r.identificacao && r.identificacao.length ? `<br><span style="color:var(--red);font-weight:700">Identifica a empresa: ${esc(r.identificacao.join(', '))}</span>` : '<br><span style="color:var(--green);font-weight:700">Sem identificação: nenhum dado da empresa no texto.</span>') : ''}</p>
         ${r.semValor ? `<div class="alert warn" style="margin:10px 0">${icon('alert', 'sm')}<span>Gerado com ${r.semValor} item(ns) sem valor.</span></div>` : ''}
         <div class="grid2" style="margin-top:12px"><button class="btn" data-act="pdf-abrir">${icon('eye', 'sm')} Abrir</button><button class="btn" data-act="pdf-baixar">${icon('download', 'sm')} Baixar</button></div>
         ${navigator.canShare ? `<button class="btn block" style="margin-top:10px" data-act="pdf-compartilhar">${icon('share', 'sm')} Compartilhar</button>` : ''}</div>` : ''}
@@ -4883,7 +5064,7 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
     return el.value;
   }
   // o que for alterado na proposta vira o padrão dos próximos pregões (campos próprios de cada edital ficam só no pregão)
-  const PDF_SO_NO_PREGAO = ['prazoEntrega', 'localEntrega', 'observacoes', 'icmsAliq'];
+  const PDF_SO_NO_PREGAO = ['prazoEntrega', 'localEntrega', 'observacoes', 'icmsAliq', 'desc.tabela', 'anonima'];
   const clonar = (x) => JSON.parse(JSON.stringify(x));
   const OPK = () => (UI.pdf.tipo === 'final' ? 'pdfOptsFinal' : 'pdfOpts');   // a final guarda os seus ajustes à parte
   function lembrarPadraoPdf(path, v) {
@@ -4941,6 +5122,11 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
     const id = UI.pdf.pregaoId;
     if (!id) { toast('Escolha um pregão'); return; }
     if (UI.pdf.tipo === 'final' && !(await confirmarPrecosFinal(id))) return;
+    const pend = C.pendenciasModelo(store.get(), id, UI.pdf.tipo, UI.pdf.fonte);
+    if (pend.length) {
+      const v = await dialog({ title: 'Confira antes de gerar', text: pend.map((x) => '• ' + x).join('\n'), buttons: [{ label: 'Corrigir', value: false, cls: 'primary' }, { label: 'Gerar mesmo assim', value: true, cls: 'ghost' }] });
+      if (!v) return;
+    }
     UI.pdf.busy = true; render();
     try {
       await ensurePdfLib();
@@ -4957,8 +5143,11 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
       }
       if (UI.pdf.result) URL.revokeObjectURL(UI.pdf.result.url);
       const blob = new Blob([res.bytes], { type: 'application/pdf' });
-      UI.pdf.result = { blob, url: URL.createObjectURL(blob), name: res.filename, total: res.total, paginas: res.paginas, semValor: res.semValor, comCatalogo: junto };
+      UI.pdf.result = { blob, url: URL.createObjectURL(blob), name: res.filename, total: res.total, paginas: res.paginas, semValor: res.semValor, comCatalogo: junto, anonima: !!res.anonima, identificacao: res.identificacao || [] };
       toast('PDF gerado');
+      if (res.anonima && res.identificacao && res.identificacao.length) {
+        setTimeout(() => dialog({ title: 'A proposta identifica a empresa', text: 'O edital pede proposta sem identificação, mas o PDF tem: ' + res.identificacao.join(', ') + '.\nProcure esse dado na descrição, na marca ou nas cláusulas e tire antes de enviar.', buttons: [{ label: 'Entendi', value: true, cls: 'primary' }] }), 300);
+      }
     } catch (e) { console.error(e); toast('Erro ao gerar o PDF: ' + (e.message || e)); }
     UI.pdf.busy = false; render();
     const card = $('#pdfPronto'); if (card && UI.pdf.result) card.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -4991,7 +5180,8 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
         ${fld('Lucro que já compensa (R$ por item)', 'lucroBom', 'num', C.numBR(c.lucroBom != null ? c.lucroBom : 1000, 2), { im: 'decimal', hint: 'Item que dá esse lucro (ou metade dele) ganha nota maior, mesmo com margem abaixo da padrão.' })}
         ${fld('Consumo do carro (km/l)', 'consumo', 'num', C.numBR(c.consumo, 2), { im: 'decimal' })}
         ${fld('Combustível (R$/l)', 'combustivel', 'num', C.numBR(c.combustivel, 2), { im: 'decimal' })}
-        ${fld('Desgaste do carro (R$/km)', 'desgaste', 'num', C.numBR(c.desgaste, 2), { im: 'decimal', hint: 'Pneu, óleo, manutenção. Estimativa: ajuste ou zere.' })}</div></div>
+        ${fld('Desgaste do carro (R$/km)', 'desgaste', 'num', C.numBR(c.desgaste, 2), { im: 'decimal', hint: 'Pneu, óleo, manutenção. Estimativa: ajuste ou zere.' })}
+        ${fld('Capital de giro disponível (R$)', 'capitalGiro', 'num', C.numBR(c.capitalGiro || 0, 2), { im: 'decimal', hint: 'Quanto dá para comprar antes de receber. O aviso de entrega parcelada compara com ele.' })}</div></div>
       <div class="card"><h3>Limite do MEI</h3><div class="formgrid">
         ${fld('Ano de referência', 'anoRef', 'int', c.anoRef, { im: 'numeric' })}
         ${fld('Limite anual cheio (R$)', 'limiteCheio', 'num', C.numBR(c.limiteCheio, 2), { im: 'decimal', hint: 'Valor de referência. Confirme o vigente.' })}
@@ -5014,6 +5204,11 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
         ${fld('CPF do titular (assinatura)', 'empresa.cpf', 'text', e.cpf, { im: 'numeric', ph: '000.000.000-00' })}
         ${fld('Inscrição Estadual', 'empresa.ie', 'text', e.ie, { full: true, ph: 'deixe vazio se não tiver' })}
         ${fld('Nome do titular (assinatura)', 'empresa.responsavel', 'text', e.responsavel, { full: true })}
+        ${fld('RG do titular', 'empresa.rg', 'text', e.rg, { ph: '00.000.000-0' })}
+        ${fld('Órgão emissor do RG', 'empresa.rgOrgao', 'text', e.rgOrgao, { ph: 'SESP/PR' })}
+        ${fld('Estado civil', 'empresa.estadoCivil', 'text', e.estadoCivil, { ph: 'solteiro, casado…' })}
+        ${fld('Profissão', 'empresa.profissao', 'text', e.profissao, { ph: 'empresário' })}
+        ${fld('Endereço residencial do titular', 'empresa.enderecoResidencial', 'text', e.enderecoResidencial, { full: true, hint: 'Alguns editais pedem nas declarações. Usado só no PDF.' })}
         ${fld('Endereço', 'empresa.endereco', 'text', e.endereco, { full: true })}
         ${fld('Bairro', 'empresa.bairro', 'text', e.bairro)}
         ${fld('CEP', 'empresa.cep', 'text', e.cep, { im: 'numeric', ph: '00000-000' })}
@@ -5312,7 +5507,7 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
       case 'pdf-compartilhar': compartilharPDF(); break;
       case 'pdf-modelo': commitAllPending(); store.patchPregao(UI.pdf.pregaoId, (p) => { p.pdfOpts = p.pdfOpts || {}; p.pdfOpts.modelo = t.dataset.v; }, true); UI.pdf.result = null; UI.keepScroll = true; render(); break;
       case 'pdf-datamodo': { const k = OPK(); store.patchPregao(UI.pdf.pregaoId, (p) => { p[k] = p[k] || {}; setPathObj(p[k], 'desc.localDataModo', t.dataset.v); }, true); } lembrarPadraoPdf('desc.localDataModo', t.dataset.v); UI.keepScroll = true; render(); break;
-      case 'pdf-padrao': { if (UI.pdf.tipo === 'final') { toast('Ajustes da proposta final não viram padrão'); break; } commitAllPending(); const p = store.get().pregoes.find((x) => x.id === UI.pdf.pregaoId); store.setConfigPath('pdfPadrao', JSON.parse(JSON.stringify((p && p.pdfOpts) || {})), { silent: true }); toast('Estas opções agora são o padrão dos novos pregões'); break; }
+      case 'pdf-padrao': { if (UI.pdf.tipo === 'final') { toast('Ajustes da proposta final não viram padrão'); break; } commitAllPending(); const p = store.get().pregoes.find((x) => x.id === UI.pdf.pregaoId); { const pad = JSON.parse(JSON.stringify((p && p.pdfOpts) || {})); delete pad.documentos; if (pad.desc) delete pad.desc.tabela; delete pad.anonima; store.setConfigPath('pdfPadrao', pad, { silent: true }); } toast('Estas opções agora são o padrão dos novos pregões'); break; }
       case 'pdf-reset': { const fin = UI.pdf.tipo === 'final'; confirmar('Voltar ao padrão?', fin ? 'Os ajustes da proposta final deste pregão são apagados: ela volta a ficar igual à proposta inicial.' : 'As chavinhas e textos deste pregão voltam ao padrão do app (ou ao padrão que você salvou).', 'Voltar ao padrão', false).then((ok) => { if (ok) { store.patchPregao(UI.pdf.pregaoId, (p) => { if (fin) p.pdfOptsFinal = null; else p.pdfOpts = null; }, true); UI.keepScroll = true; render(); } }); break; }
       case 'pdf-tipo': commitAllPending(); UI.pdf.tipo = t.dataset.v; UI.pdf.result = null; saveUI(); UI.keepScroll = true; render(); break;
       case 'pdf-recalcular': confirmar('Recalcular a proposta inicial?', 'Os preços guardados da proposta inicial deste pregão são apagados. Na próxima vez que você gerar, ela usa os valores atuais (e guarda de novo).', 'Recalcular', false).then((ok) => { if (!ok) return; store.get().itens.filter((i) => i.pregaoId === id && !i.deleted).forEach((i) => store.patchItem(i.id, (x) => { delete x.precoInicial; })); store.patchPregao(id, (p) => { delete p.precoInicialEm; }); UI.keepScroll = true; toast('Preços da proposta inicial liberados'); }); break;
@@ -5395,12 +5590,23 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
     }
     if (t.hasAttribute('data-import') && t.files && t.files[0]) importarBackup(t.files[0]);
   }
+  // mesclar: o registro do arquivo que for mais novo atualiza o do aparelho campo a campo. O que o arquivo não traz
+  // (fotos do catálogo, descrição do catálogo, lance final, preços já guardados...) continua como estava no aparelho.
+  function completarComLocal(data) {
+    const st = store.get(), t = Date.now();
+    const junta = (locais, vindos) => vindos.map((r) => {
+      const l = r && locais.find((x) => x.id === r.id);
+      if (!l || l.deleted || !((r.updatedAt || 0) > (l.updatedAt || 0))) return r;
+      return Object.assign({}, l, r, { updatedAt: Math.max(t, r.updatedAt || 0) });
+    });
+    return Object.assign({}, data, { pregoes: junta(st.pregoes, data.pregoes), itens: junta(st.itens, data.itens) });
+  }
   async function importarBackup(file) {
     try {
       const data = JSON.parse(await file.text());
       if (!data || !Array.isArray(data.pregoes) || !Array.isArray(data.itens)) throw new Error('Arquivo não parece um backup do app.');
       const v = await dialog({ title: 'Importar backup', text: `${data.pregoes.length} pregão(ões) e ${data.itens.length} item(ns).`, buttons: [{ label: 'Mesclar com os dados atuais', value: 'mesclar', cls: 'primary' }, { label: 'Substituir tudo', value: 'subst', cls: 'danger' }, { label: 'Cancelar', value: null, cls: 'ghost' }] });
-      if (v === 'mesclar') { store.mergeFrom(data); S.schedule('importação'); toast('Backup mesclado'); }
+      if (v === 'mesclar') { store.mergeFrom(completarComLocal(data)); S.schedule('importação'); toast('Backup mesclado'); }
       else if (v === 'subst') { store.replaceAll(data); toast('Backup restaurado'); }
     } catch (e) { toast(e.message || 'Não foi possível ler o arquivo'); }
     $$('[data-import]').forEach((i) => { i.value = ''; });
