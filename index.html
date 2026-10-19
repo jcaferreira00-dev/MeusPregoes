@@ -955,7 +955,7 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.74.0';
+  const APP_VERSION = '1.75.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Em disputa', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -4151,6 +4151,49 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
     return `<section class="dash m-hide">${barra}<div class="two-col">${funilCard}${evoCard}</div><div class="two-col">${mgCard}${orgCard}</div>${tabela}</section>`;
   }
 
+  // capital de giro: quanto dinheiro sai antes de receber, somando os pregões ativos (pior caso = pedirem tudo de uma vez)
+  function painelCapitalHtml(R, st) {
+    const cap = C.n0(st.config.capitalGiro);
+    const ABERTOS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Em disputa'];
+    const rows = [];
+    for (const pst of R.pMap.values()) {
+      const p = pst.p;
+      if (C.INATIVOS.includes(p.status) || !(pst.custo > 0)) continue;
+      let tipo = null;
+      if (pst.ganho) { if (!p.pagoEm) tipo = 'comp'; }
+      else if (ABERTOS.includes(p.status)) tipo = 'poss';
+      if (!tipo) continue;
+      const dias = (Number(p.prazoEntregaDias) || 0) + (Number(p.pagamentoDias) || 0);
+      rows.push({ p, tipo, custo: pst.custo, dias });
+    }
+    if (!rows.length) return '';
+    rows.sort((a, b) => (a.tipo === b.tipo ? b.custo - a.custo : a.tipo === 'comp' ? -1 : 1));
+    const comp = rows.filter((r) => r.tipo === 'comp').reduce((t, r) => t + r.custo, 0);
+    const poss = rows.filter((r) => r.tipo === 'poss').reduce((t, r) => t + r.custo, 0);
+    const tudo = comp + poss, livre = Math.max(0, cap - tudo);
+    const scale = Math.max(cap, tudo) || 1, w = (x) => (Math.max(0, x) / scale * 100).toFixed(2) + '%';
+    const meter = (x) => `<div class="meter ${x >= 1 ? 'red' : ''}"><div style="width:${Math.min(100, x * 100).toFixed(1)}%"></div></div>`;
+    const pc = cap > 0 ? comp / cap : null, pt = cap > 0 ? tudo / cap : null;
+    const nivel = !cap ? 'info' : comp > cap ? 'bad' : tudo > cap ? 'warn' : 'ok';
+    const msg = !cap ? 'Informe o capital de giro em Config › Margem e entrega de carro para o app comparar.'
+      : comp > cap ? `ATENÇÃO: só o que você já ganhou e ainda não recebeu passa do seu capital em ${C.brl0(comp - cap)}.`
+      : tudo > cap ? `Se pedirem tudo de uma vez em todos os pregões, faltam ${C.brl0(tudo - cap)}. Registro de preços costuma pedir aos poucos: acompanhe cada pedido.`
+      : 'Seu capital de giro cobre o pior caso de todos os pregões ativos.';
+    const nome = (p) => `${/^preg/i.test(String(p.numero).trim()) ? esc(p.numero) : 'Nº ' + esc(p.numero)} · ${esc(p.cidadeUf || p.orgao)}`;
+    return `<div class="card"><h3>Capital de giro</h3>
+        <div class="stack" role="img" aria-label="Uso do capital de giro">
+          <div class="seg" style="width:${w(comp)};background:#1f3864"></div><div class="seg" style="width:${w(poss)};background:#f4b183"></div><div class="seg" style="width:${w(livre)};background:#a9d18e"></div>
+          ${cap > 0 && scale > cap ? `<div class="mark" style="left:${(cap / scale * 100).toFixed(2)}%"></div>` : ''}
+        </div>
+        <div class="legend"><span><i style="background:#1f3864"></i>Ganho, a receber ${C.brl0(comp)}</span><span><i style="background:#f4b183"></i>Em análise/disputa ${C.brl0(poss)}</span><span><i style="background:#a9d18e"></i>Livre ${C.brl0(livre)}</span>${cap > 0 ? `<span>Capital ${C.brl0(cap)}</span>` : ''}</div>
+        ${cap > 0 ? `<div style="margin-top:14px" class="row between small"><b>Já comprometido</b><span>${C.pct(pc, 0)}</span></div>${meter(pc)}
+        <div style="margin-top:10px" class="row between small"><b>Se pedirem tudo</b><span>${C.pct(pt, 0)}</span></div>${meter(pt)}` : ''}
+        <div class="alert ${nivel}" style="margin-top:14px">${icon(nivel === 'ok' ? 'check' : nivel === 'info' ? 'info' : 'alert', 'sm')}<span>${msg}</span></div>
+        <div class="kv-list trib" style="margin-top:14px">${rows.map((r) => `<div data-act="abrir-pregao" data-id="${r.p.id}" style="cursor:pointer"><span>${nome(r.p)}<span class="tiny muted" style="display:block;margin-top:2px">${r.tipo === 'comp' ? 'ganho' : 'em análise'}${r.p.entregaParcelada ? ' · parcelada' : ''}${r.dias ? ' · volta em ~' + r.dias + ' dias' : ''}</span></span><b>${C.brl0(r.custo)}</b></div>`).join('')}</div>
+        <p class="tiny muted" style="margin-top:10px">Custo de compra dos itens (com frete e viagem) se pedirem tudo de uma vez. Pregão ganho conta até você marcar o pagamento recebido.</p>
+      </div>`;
+  }
+
   function renderPainel() {
     const st = store.get();
     if (!st.pregoes.some((p) => !p.deleted)) return emptyWelcome();
@@ -4199,6 +4242,7 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
         <div class="alert ${m.alerta}" style="margin-top:14px">${icon(m.alerta === 'ok' ? 'check' : 'alert', 'sm')}<span>${alertTxt}</span></div>
         <p class="tiny muted" style="margin-top:10px">O total de cada pregão usa o lance final; sem lance, usa o valor do edital (pior caso para o teto).</p>
       </div>
+      ${painelCapitalHtml(R, st)}
       <div class="card m-hide"><h3>Tributos do MEI</h3><div class="kv-list trib">
         <div><span>DAS mensal</span><b>${C.brl(R.tributos.das)} <span class="tiny muted" style="font-weight:500">fixo, não muda com as vendas</span></b></div>
         <div><span>DAS no ano (${R.tributos.meses} meses)</span><b>${C.brl(R.tributos.dasAno)}</b></div>
