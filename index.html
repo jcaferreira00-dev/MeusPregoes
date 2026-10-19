@@ -921,7 +921,7 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
 /* sinal de foto sempre no mesmo lugar (canto direito da linha), seja qual for o tamanho do texto (v1.68.2) */
 .icard .i-meta { display: flex; align-items: center; gap: 10px; }
 .icard .i-meta .i-meta-tx { flex: 1; min-width: 0; }
-.icard .i-meta .foto-tag { margin-left: auto; flex: none; width: 86px; justify-content: center; }
+.icard .i-meta .foto-tag { margin-left: auto; flex: none; width: 96px; justify-content: center; white-space: nowrap; }
 
 /* catálogo: títulos das especificações (v1.70) */
 .cat-tits { margin-top: 10px; display: flex; flex-direction: column; gap: 6px; }
@@ -943,6 +943,27 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
 .ag-list.ag-ana .ag-row.urg { animation: agBorda 6s linear infinite, pgcPulse 1.6s ease-in-out infinite; }
 .ag-hd.env { color: #5c6bc0; } .ag-hd.ana { color: #2e75b6; } .ag-hd.disp { color: #d99a1c; } .ag-hd.inc { color: var(--red); }
 @media (prefers-reduced-motion: reduce) { .ag-list.ag-ana .ag-row { animation: none; } }
+
+/* cartão do item: lápis para editar (o cartão não abre mais a edição ao clicar) (v1.76) */
+.icard { cursor: default; }
+.icard .i-edit { width: 28px; height: 28px; flex: none; }
+/* simulador de lance */
+.sim { border: 1.5px dashed color-mix(in srgb, var(--blue) 55%, var(--line)); border-radius: 12px; padding: 10px 12px; background: color-mix(in srgb, var(--blue) 5%, var(--card)); display: flex; flex-direction: column; gap: 8px; cursor: default; }
+.sim-hd { display: flex; align-items: baseline; justify-content: space-between; gap: 4px 10px; flex-wrap: wrap; }
+.sim-hd b { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--blue); }
+.sim-row { display: flex; align-items: center; gap: 6px; }
+.sim-row .sim-rs { font-weight: 800; color: var(--muted); }
+.sim-row .input { flex: 1; min-width: 0; max-width: 180px; text-align: right; font-weight: 800; font-size: 16px; font-variant-numeric: tabular-nums; }
+.sim-row .btn.primary { margin-left: auto; }
+.sim-kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+.sim-kpis > div { border-radius: 9px; padding: 5px 8px; background: var(--green-soft); min-width: 0; }
+.sim-kpis.warn > div { background: var(--amber-soft); } .sim-kpis.bad > div { background: var(--red-soft); }
+.sim-kpis span { display: block; font-size: 10px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); }
+.sim-kpis b { display: block; font-size: 13.5px; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sim-kpis.ok b { color: var(--green); } .sim-kpis.warn b { color: var(--amber); } .sim-kpis.bad b { color: var(--red); }
+.sim-nota i { font-style: normal; background: linear-gradient(90deg, #e0a800 var(--f), color-mix(in srgb, var(--muted) 35%, transparent) var(--f)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.sim-acima { color: var(--red); }
+@media (max-width: 600px) { .sim-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } .sim-row .input { max-width: none; } }
 </style>
 </head>
 <body>
@@ -955,7 +976,7 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.75.0';
+  const APP_VERSION = '1.76.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Em disputa', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -2920,6 +2941,7 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
 
   /* ---------- estado da interface ---------- */
   const UI = {
+    sim: {},   // lances simulados (só na memória; não entram na proposta)
     tab: 'painel', detailId: null, filtro: 'todos', busca: '', buscaI: '', mostrarOcultos: false, mostrarEnc: false, mostrarConcl: false, dash: { periodo: 'tudo', etapa: null, orgao: null, mes: null, pode: null, todos: false },
     acomp: { filtro: 'todos' }, itensModo: 'cards', pdf: { pregaoId: null, tipo: 'inicial', fonte: 'auto', data: C.hojeISO(), busy: false, result: null }, acc: new Set(['acc-forn']),
     ignorePop: 0, deferredPrompt: null, reloadPending: false, updateBanner: false,
@@ -4344,9 +4366,11 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
     const tag = (_lt || _it) ? `<span class="itag">${_lt ? 'Lote ' + esc(_lt) + (_it ? ' · ' : '') : ''}${_it ? 'Item ' + esc(_it) : ''}</span>` : '<span class="itag vazio">Item s/nº</span>';
     // descrição numa linha própria, logo abaixo do nº do item; longa termina com "…" (o texto todo aparece ao passar o dedo/mouse)
     const desc = `<h4 class="i-desc" title="${esc(it.descricao)}">${esc(it.descricao)}</h4>`;
+    // editar só pelo lápis (clicar no cartão não abre mais a edição)
+    const btnEditar = `<button type="button" class="ic-btn i-edit" data-act="editar-item" data-id="${it.id}" title="Editar item" aria-label="Editar item">${icon('edit', 'sm')}</button>`;
     if (c.fora) {
-      return `<article class="icard fora" data-act="editar-item" data-id="${it.id}" tabindex="0" role="button">
-        <div class="i-hd">${tag}<div class="rcol"><span class="badge off">Fora da disputa</span></div></div>${desc}
+      return `<article class="icard fora" data-id="${it.id}">
+        <div class="i-hd">${tag}<div class="rcol"><span class="badge off">Fora da disputa</span>${btnEditar}</div></div>${desc}
         <div class="icard-actions"><button type="button" class="btn sm ghost" data-act="item-fora" data-id="${it.id}">Voltar para a disputa</button></div></article>`;
     }
     const ganhoMode = false;
@@ -4366,8 +4390,8 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
     const acao = c.ganhou
       ? `<button type="button" class="btn sm venci-on" data-act="item-venci" data-id="${it.id}" title="Desmarcar">${icon('acomp', 'sm')} Venci</button>`
       : `<button type="button" class="btn sm ghost" data-act="item-venci" data-id="${it.id}" title="Marcar este item como ganho">${icon('acomp', 'sm')} Venci</button>` + `<button type="button" class="btn sm ${it.possivelGanhar ? 'pode-on' : 'ghost'}" data-act="item-pode" data-id="${it.id}">${icon('check', 'sm')} Posso ganhar</button><button type="button" class="btn sm ghost" data-act="item-fora" data-id="${it.id}">Deixar de fora</button>`;
-    return `<article class="icard${c.naoGanhou && !it.possivelGanhar ? ' nao-ganho' : ''}${c.ganhou ? ' venci' : ''}" data-act="editar-item" data-id="${it.id}" tabindex="0" role="button">
-      <div class="i-hd">${tag}<div class="rcol">${c.ganhou ? '<span class="badge ok">Venci</span>' : (c.naoGanhou && !it.possivelGanhar ? '<span class="badge off">Não ganhou</span>' : '')}${it.possivelGanhar && !ganhoMode ? '<span class="prazo good">★ Posso ganhar</span>' : ''}${c.situacao ? `<span class="badge ${c.sitTipo}" title="${esc(c.situacao)}"><span class="s-lg">${esc(c.situacao)}</span><span class="s-sm">${esc(c.sitCurta || c.situacao)}</span></span>` : ''}${estrelasHtml(c)}</div></div>
+    return `<article class="icard${c.naoGanhou && !it.possivelGanhar ? ' nao-ganho' : ''}${c.ganhou ? ' venci' : ''}" data-id="${it.id}">
+      <div class="i-hd">${tag}<div class="rcol">${c.ganhou ? '<span class="badge ok">Venci</span>' : (c.naoGanhou && !it.possivelGanhar ? '<span class="badge off">Não ganhou</span>' : '')}${it.possivelGanhar && !ganhoMode ? '<span class="prazo good">★ Posso ganhar</span>' : ''}${c.situacao ? `<span class="badge ${c.sitTipo}" title="${esc(c.situacao)}"><span class="s-lg">${esc(c.situacao)}</span><span class="s-sm">${esc(c.sitCurta || c.situacao)}</span></span>` : ''}${estrelasHtml(c)}${btnEditar}</div></div>
       ${desc}
       ${opt.showOrg && p ? `<div class="chips"><span class="chip org">#${esc(p.numero)} · ${esc(p.orgao)}</span></div>` : ''}
       <div class="small muted i-meta"><span class="i-meta-tx">${C.qtdBR(it.qtd)} ${esc(it.unidade || 'Un')} · custo ${c.divisao ? C.brl(c.custoCompra) + ' (média de ' + c.divisao.partes.length + ' fornecedores)' : C.brl(it.custo)}<span class="i-teto"> · teto ${C.brl(c.teto)}</span>${it.marca ? ' · ' + esc(it.marca) : ''}</span>${(() => { const nf = Number(it.fotosN) || 0; return `<button type="button" class="foto-tag hide-m ${nf ? 'tem' : 'sem'}" data-act="cat-ir" data-id="${it.id}" title="${nf ? 'Tem foto no catálogo. Clique para ver.' : 'Sem foto no catálogo. Clique para incluir.'}">${icon('image', 'sm')}${nf ? nf + (nf === 1 ? ' foto' : ' fotos') : 'Sem foto'}</button>`; })()}</div>
@@ -4378,7 +4402,51 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
       <div class="minbox i-min ${viabCls(c)}"><div><div class="t">Valor mínimo p/ proposta (unit.)</div><div class="tiny muted">margem ${C.pct(c.margem, 0)} · custo final ${C.brl(c.custoUnit)}</div>${viabLinha(c)}</div><div class="v">${C.brl(c.minimo)}</div></div>
       <div class="row between wrap small muted i-fin" style="gap:4px 10px"><span>Posso baixar do teto: <b style="color:var(--ink)">${c.folgaRs != null ? C.brl(c.folgaRs) + ' (' + C.pct(c.folgaPct, 0) + ')' : '—'}</b></span><span>${c.impostoTotal > 0 ? 'Impostos ' + C.brl(c.impostoTotal) + ' · ' : ''}Lucro: <b style="color:var(--ink)">${C.brl(c.lucro)}</b></span></div>
       ${p && !c.fora && (p.status === 'Em disputa' || it.possivelGanhar || it.colocacao) ? `<div class="coloc-row">${colocacaoInput(it)}${it.colocacao ? `<span class="coloc-badge ${it.colocacao === 1 ? 'c1' : it.colocacao <= 3 ? 'c3' : ''}">${colocTxt(it.colocacao)} lugar</span>` : ''}</div>` : ''}
+      ${p && ['Em disputa', 'Proposta enviada'].includes(p.status) ? simLanceHtml(it, c, meuLance) : ''}
       <div class="icard-actions">${acao}</div></article>`;
+  }
+
+  /* ---------- simulador de lance (na disputa): calcula na hora, só grava com 2 confirmações ---------- */
+  function simCalc(it, v) {
+    if (!(v > 0)) return null;
+    return C.previewItem(store.get(), Object.assign({}, it, { lanceFinal: v }));
+  }
+  function simResHtml(it, v) {
+    const c = simCalc(it, v);
+    if (!c) return '<span class="tiny muted">Digite um valor unitário para ver lucro, margem e viabilidade. Nada é salvo.</span>';
+    const nota = c.nota != null ? String(c.nota.toFixed(1)).replace('.', ',') : '—';
+    const fill = c.nota != null ? Math.max(0, Math.min(100, c.nota / 5 * 100)).toFixed(0) : 0;
+    const vsMin = c.minimo != null ? (v >= c.minimo ? `acima do mínimo (${C.brl(c.minimo)})` : `<b>${C.brl(c.minimo - v)} abaixo</b> do mínimo (${C.brl(c.minimo)})`) : '';
+    const vsTeto = c.teto != null && v > c.teto ? ` · <b class="sim-acima">acima do teto (${C.brl(c.teto)})</b>` : '';
+    return `<div class="sim-kpis ${c.viabTipo || ''}">
+        <div><span>Total</span><b>${C.brl(c.totalVenda)}</b></div>
+        <div><span>Lucro</span><b>${C.brl(c.lucro)}</b></div>
+        <div><span>Margem</span><b>${C.pct(c.margemReal, 1)}</b></div>
+        <div class="sim-nota"><span>Avaliação</span><b><i style="--f:${fill}%">★</i> ${nota} · ${esc(c.viab || '')}</b></div></div>
+      <div class="tiny muted sim-ref">${vsMin}${vsTeto}</div>`;
+  }
+  function simLanceHtml(it, c, meuLance) {
+    const v = UI.sim[it.id] || '';
+    const atual = c.lance !== null ? 'lance gravado ' + C.brl(c.lance) : 'sem lance gravado (vale o teto ' + C.brl(meuLance) + ')';
+    return `<div class="sim" data-act="noop">
+      <div class="sim-hd"><b>${icon('acomp', 'sm')} Simular lance</b><span class="tiny muted">${atual} · simulação não altera a proposta</span></div>
+      <div class="sim-row"><span class="sim-rs">R$</span><input class="input" inputmode="decimal" autocomplete="off" data-sim="${it.id}" value="${esc(v)}" placeholder="valor unitário">
+        <button type="button" class="btn sm ghost" data-act="sim-limpar" data-id="${it.id}" title="Limpar simulação">${icon('x', 'sm')}</button>
+        <button type="button" class="btn sm primary" data-act="sim-gravar" data-id="${it.id}" ${C.parseBR(v) > 0 ? '' : 'disabled'}>Gravar lance</button></div>
+      <div class="sim-res" data-sim-res="${it.id}">${simResHtml(it, C.parseBR(v))}</div></div>`;
+  }
+  async function gravarLanceSimulado(id) {
+    const it = store.get().itens.find((i) => i.id === id && !i.deleted); if (!it) return;
+    const v = C.parseBR(UI.sim[id]); if (!(v > 0)) { toast('Digite o valor do lance'); return; }
+    const c = simCalc(it, v), antes = it.lanceFinal != null ? C.brl(it.lanceFinal) : 'nenhum (vale o teto)';
+    const nome = (C.padLE(it.itemEdital) ? 'Item ' + C.padLE(it.itemEdital) + ' · ' : '') + it.descricao;
+    const ok1 = await confirmar('Gravar este lance?', `${nome}\nNovo lance: ${C.brl(v)} (total ${C.brl(c && c.totalVenda)})\nLucro ${C.brl(c && c.lucro)} · margem ${C.pct(c && c.margemReal, 1)} · ${c && c.viab ? c.viab : ''}\nLance atual: ${antes}`, 'Sim, continuar', false);
+    if (!ok1) return;
+    const ok2 = await dialog({ title: 'Confirmação final', text: `O lance de ${C.brl(v)} vai substituir o valor do item e entra na proposta (PDF). Confirma?`, buttons: [{ label: 'Cancelar', value: false, cls: 'ghost' }, { label: 'Confirmo, gravar ' + C.brl(v), value: true, cls: 'primary' }] });
+    if (!ok2) return;
+    UI.keepScroll = true; delete UI.sim[id];
+    store.upsertItem({ id, lanceFinal: v });
+    toast('Lance gravado: ' + C.brl(v));
   }
 
   function ganhosCardHtml(pst) {
@@ -5517,6 +5585,9 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
     if (!t) return;
     const a = t.dataset.act, id = t.dataset.id;
     switch (a) {
+      case 'noop': break;
+      case 'sim-limpar': { delete UI.sim[id]; const inp = document.querySelector('[data-sim="' + id + '"]'); if (inp) { inp.value = ''; inp.dispatchEvent(new Event('input', { bubbles: true })); inp.focus(); } break; }
+      case 'sim-gravar': gravarLanceSimulado(id); break;
       case 'tab': setTab(t.dataset.v); break;
       case 'itens-ganhos': openGanhosForm(id); break;
       case 'item-venci': { UI.keepScroll = true; const c = Rc().iMap.get(id); marcarGanho(id, !(c && c.ganhou)); break; }
@@ -5607,6 +5678,13 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
   }
   function onInput(e) {
     const t = e.target;
+    if (t.dataset && t.dataset.sim) {   // simulador de lance: recalcula na hora, sem salvar
+      const id = t.dataset.sim; UI.sim[id] = t.value;
+      const it = store.get().itens.find((i) => i.id === id); const box = document.querySelector('[data-sim-res="' + id + '"]');
+      if (it && box) box.innerHTML = simResHtml(it, C.parseBR(t.value));
+      const bt = document.querySelector('[data-act="sim-gravar"][data-id="' + id + '"]'); if (bt) bt.disabled = !(C.parseBR(t.value) > 0);
+      return;
+    }
     if (t.id === 'busca') { UI.busca = t.value; $('#plist').innerHTML = pregoesListHtml(); return; }
     if (t.id === 'buscaI') { UI.buscaI = t.value; $('#ilist').innerHTML = itensListHtml(); return; }
     if (t.dataset.ui) {
