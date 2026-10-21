@@ -1041,7 +1041,7 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.82.1';
+  const APP_VERSION = '1.83.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Em disputa', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -1274,8 +1274,9 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
     const ref = c.lance !== null ? c.lance : c.teto;
     const lucro = ref !== null ? qtd * ref * (1 - impPct) - custoTotal : null;
     const margemReal = ref ? lucro / (qtd * ref) : null;
+    const lucroTeto = c.teto !== null ? qtd * c.teto * (1 - impPct) - custoTotal : null;
     const risco = lucro === null ? '' : lucro <= 0 ? 'bad' : (minimo !== null && ref < minimo) ? 'warn' : 'ok';
-    return { entrega, extra, custoTotal, empate, minimo, lucro, margemReal, risco, relevante: extra > 0.5 };
+    return { entrega, extra, custoTotal, empate, minimo, lucro, lucroTeto, margemReal, risco, relevante: extra > 0.5 };
   }
 
   function limiteMEI(cfg) {
@@ -4502,11 +4503,15 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
       return { com: true, cls, titulo: 'Meu lucro no lance', curto: 'Lucro ' + (c.margemReal != null ? C.pct(c.margemReal, 0) : ''), valor: c.lucro != null ? C.brl(c.lucro) : '—',
         sub: `lance ${C.brl(c.lance)} · ${C.pct(c.margemReal, 1)} sobre a venda${c.viab ? ' · ' + esc(c.viab) : ''} · custo final ${C.brl(c.custoUnit)}` };
     }
-    const sm = soloMin(c) != null && c.solo.minimo != null ? c.solo.minimo : null;
-    const min = sm != null ? sm : c.minimo;
-    const cls = min == null || c.teto == null ? '' : (sm != null && c.solo.empate > c.teto) ? 'bad' : min > c.teto ? 'warn' : 'ok';
-    return { com: false, cls, titulo: 'Valor mínimo p/ proposta (unit.)', curto: 'Mínimo ' + C.pct(c.margem, 0) + (sm != null ? ' só este' : ''), valor: min != null ? C.brl(min) : '—',
-      sub: `meta ${C.pct(c.margem, 0)}${sm != null ? ' · se ganhar só este item (viagem toda nele) · junto com os outros: ' + C.brl(c.minimo) : ' · custo final ' + C.brl(c.custoUnit)}` };
+    // mínimo ganhando só este, mas só se couber no teto (lance acima do teto não é permitido)
+    const cabe = (v) => v != null && (c.teto == null || v <= c.teto + 0.004);
+    const solo = soloMin(c) != null ? c.solo : null;
+    let min = c.minimo, curto = 'Mínimo ' + C.pct(c.margem, 0), cls, sub;
+    if (solo && cabe(solo.minimo)) { min = solo.minimo; curto += ' só este'; sub = `meta ${C.pct(c.margem, 0)} · se ganhar só este item (viagem toda nele) · junto com os outros: ${C.brl(c.minimo)}`; cls = 'ok'; }
+    else if (solo && cabe(solo.empate)) { min = solo.empate; curto = 'Mín. sem prejuízo'; sub = `se ganhar só este item, a meta de ${C.pct(c.margem, 0)} não cabe no teto: este é o mínimo sem prejuízo · junto com os outros (meta): ${C.brl(c.minimo)}`; cls = 'warn'; }
+    else if (solo) { sub = `meta ${C.pct(c.margem, 0)} junto com os outros itens · <b>sozinho não compensa</b> (prejuízo mesmo no teto)`; cls = min != null && c.teto != null && min > c.teto ? 'bad' : 'warn'; }
+    else { sub = `meta ${C.pct(c.margem, 0)} · custo final ${C.brl(c.custoUnit)}`; cls = min == null || c.teto == null ? '' : min > c.teto ? 'warn' : 'ok'; }
+    return { com: false, cls, titulo: 'Valor mínimo p/ proposta (unit.)', curto, valor: min != null ? C.brl(min) : '—', sub };
   }
   function destaqueHtml(c) {
     const d = destaqueInfo(c);
@@ -4522,11 +4527,18 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
   function soloHtml(c) {
     const s = c && c.solo;
     if (!s || !s.relevante || c.ganhou || c.resultado === 'perdi' || c.desclass) return '';
-    const ref = c.lance !== null ? 'no lance' : 'no teto';
     const q = c.qtd || 0, un = String(c.unidade || 'un').toLowerCase(), tot = (v) => (v == null ? null : Math.round(v * q * 100) / 100);
+    const cabe = (v) => v != null && (c.teto == null || v <= c.teto + 0.004);   // lance acima do teto não é permitido: valor acima dele não serve
     const tip = `Se este for o único item ganho, ele paga sozinho a entrega de carro (${C.brl(s.entrega)}, ${C.brl(s.extra)} a mais que no rateio). Custo total ${C.brl(s.custoTotal)}.`;
-    return `<div class="solo ${s.risco}" title="${esc(tip)}">${icon('truck', 'sm')}<span class="solo-t"><span class="s-lg">Se ganhar só este · total ${C.qtdBR(q)} ${esc(un)}</span><span class="s-sm">Só este</span></span>
-      <span class="solo-v"><span>sem prejuízo <b>${C.brl(tot(s.empate))}</b> <small class="solo-un">(${C.brl(s.empate)}/${esc(un)})</small></span><span class="solo-mg">margem ${C.pct(c.margem, 0)} <b>${C.brl(tot(s.minimo))}</b> <small class="solo-un">(${C.brl(s.minimo)}/${esc(un)})</small></span><span class="solo-lc">${ref}: <b>${s.lucro <= 0 ? 'prejuízo ' + C.brl(-s.lucro) : C.brl(s.lucro) + ' (' + C.pct(s.margemReal, 0) + ')'}</b></span></span>${c.lance !== null && abaixoSolo(c, c.lance) ? `<span class="solo-alerta">${icon('alert', 'sm')}Seu lance (${C.brl(c.lance)}) está abaixo do mínimo sem prejuízo</span>` : ''}</div>`;
+    const hd = `${icon('truck', 'sm')}<span class="solo-t"><span class="s-lg">Se ganhar só este · total ${C.qtdBR(q)} ${esc(un)}</span><span class="s-sm">Só este</span></span>`;
+    const resLance = c.lance !== null ? `<span class="solo-lc">no seu lance: <b>${s.lucro <= 0 ? 'prejuízo ' + C.brl(-s.lucro) : C.brl(s.lucro) + ' (' + C.pct(s.margemReal, 0) + ')'}</b></span>` : '';
+    if (!cabe(s.empate)) {
+      return `<div class="solo bad" title="${esc(tip)}">${hd}<span class="solo-v"><span><b>não compensa</b>: prejuízo de <b>${C.brl(-(s.lucroTeto || 0))}</b> mesmo vendendo pelo teto (${C.brl(tot(c.teto))})</span>${c.lance !== null && c.lance < c.teto - 0.004 ? resLance : ''}</span></div>`;
+    }
+    const mg = cabe(s.minimo) ? `<span class="solo-mg">margem ${C.pct(c.margem, 0)} <b>${C.brl(tot(s.minimo))}</b> <small class="solo-un">(${C.brl(s.minimo)}/${esc(un)})</small></span>` : '';
+    const res = c.lance !== null ? resLance : `<span class="solo-lc">vendendo pelo teto: <b>${s.lucro <= 0 ? 'prejuízo ' + C.brl(-s.lucro) : C.brl(s.lucro) + ' (' + C.pct(s.margemReal, 0) + ')'}</b></span>`;
+    return `<div class="solo ${s.risco}" title="${esc(tip)}">${hd}
+      <span class="solo-v"><span>sem prejuízo <b>${C.brl(tot(s.empate))}</b> <small class="solo-un">(${C.brl(s.empate)}/${esc(un)})</small></span>${mg}${res}</span>${c.lance !== null && abaixoSolo(c, c.lance) ? `<span class="solo-alerta">${icon('alert', 'sm')}Seu lance (${C.brl(c.lance)}) está abaixo do mínimo sem prejuízo</span>` : ''}</div>`;
   }
 
   function itemCard(it, c, opt) {
