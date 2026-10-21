@@ -947,6 +947,10 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
 .ag-list.ag-ana .ag-row:hover { background: linear-gradient(color-mix(in srgb, var(--sc) 6%, var(--card)), color-mix(in srgb, var(--sc) 6%, var(--card))) padding-box, linear-gradient(90deg, var(--sc), color-mix(in srgb, var(--sc) 15%, transparent), var(--sc), color-mix(in srgb, var(--sc) 15%, transparent), var(--sc)) border-box; background-size: 100% 100%, 300% 100%; }
 @keyframes agBorda { from { background-position: 0 0, 0% 0; } to { background-position: 0 0, 150% 0; } }
 .ag-list.ag-ana .ag-row.urg { animation: agBorda 6s linear infinite, pgcPulse 1.6s ease-in-out infinite; }
+.ag-hd.gan { color: var(--green); } .ag-hd.gan span { background: var(--green); color: #fff; }
+.ag-list.ag-gan .ag-row { --sc: var(--green); border: 2px solid var(--green); background: color-mix(in srgb, var(--green) 12%, var(--card)); box-shadow: inset 6px 0 0 var(--green), 0 0 0 2px color-mix(in srgb, var(--green) 20%, transparent); }
+.ag-list.ag-gan .ag-row:hover { background: color-mix(in srgb, var(--green) 18%, var(--card)); }
+.ag-list.ag-gan .ag-st { background: var(--green); color: #fff; }
 .ag-hd.env { color: #5c6bc0; } .ag-hd.ana { color: #2e75b6; } .ag-hd.disp { color: #d99a1c; } .ag-hd.inc { color: var(--red); }
 @media (prefers-reduced-motion: reduce) { .ag-list.ag-ana .ag-row { animation: none; } }
 
@@ -980,7 +984,7 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
 .comprar-btn.so-ic { min-width: 40px; justify-content: center; }
 .icard .badge .s-lg { display: none; } .icard .badge .s-sm { display: inline; }
 .solo { display: flex; align-items: center; gap: 6px 10px; flex-wrap: wrap; font-size: 12px; border-radius: 10px; padding: 6px 10px; border: 1px dashed var(--line); color: var(--muted); }
-.solo .s-sm { display: none; } @media (max-width: 600px) { .solo .s-sm { display: inline; } }
+.solo .s-sm { display: none; } .solo .solo-un { font-size: 11px; opacity: .8; } @media (max-width: 600px) { .solo .solo-un { display: none; } } @media (max-width: 600px) { .solo .s-sm { display: inline; } }
 .solo .solo-t { font-weight: 800; text-transform: uppercase; font-size: 10.5px; letter-spacing: .04em; }
 .solo .solo-v { display: flex; flex-wrap: wrap; gap: 2px 14px; }
 .solo b { color: var(--ink); font-variant-numeric: tabular-nums; }
@@ -1037,7 +1041,7 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.81.0';
+  const APP_VERSION = '1.82.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Em disputa', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -1244,7 +1248,7 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
     }
     const minTotal = minimo !== null ? round2(minimo * qtd) : null;
     const tetoTotal = teto !== null ? round2(teto * qtd) : null;
-    return { nota, viab, viabTipo, sitCurta, margemReal, estrelas, minTotal, tetoTotal, compra, entrega, custoTotal, custoUnit, margem, minimo, teto, lance, folgaRs, folgaPct, totalVenda, lucro, situacao, sitTipo, produtos: qtd * custo, frete, divisao: divisaoCompra(it), custoCompra: custo, impostoCompra, imposto, impostoTotal: impostoCompra + imposto };
+    return { qtd, unidade: it.unidade, nota, viab, viabTipo, sitCurta, margemReal, estrelas, minTotal, tetoTotal, compra, entrega, custoTotal, custoUnit, margem, minimo, teto, lance, folgaRs, folgaPct, totalVenda, lucro, situacao, sitTipo, produtos: qtd * custo, frete, divisao: divisaoCompra(it), custoCompra: custo, impostoCompra, imposto, impostoTotal: impostoCompra + imposto };
   }
 
   // "se eu ganhar só este item": ele paga sozinho a viagem inteira da rota dele (frete do fornecedor já é do item).
@@ -4052,10 +4056,10 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
     }).join('');
     // agenda: Em disputa primeiro; depois pela data (hoje, próximos dias, sem data, já passou)
     // agenda por categoria (status); dentro de cada uma, pela data (próximas primeiro)
-    const grupos = [['Em disputa', [], 'disp'], ['Enviadas', [], 'env'], ['Analisando', [], 'ana'], ['Incompletos', [], 'inc'], ['Ganhos (aguardando empenho / faturados)', [], 'gan'], ['Outros', [], '']];
+    const grupos = [['Em disputa', [], 'disp'], ['Enviadas', [], 'env'], ['Analisando', [], 'ana'], ['Incompletos', [], 'inc'], ['Venci (aguardando empenho / faturados)', [], 'gan'], ['Outros', [], '']];
     const gDe = (st) => ({ 'Em disputa': 0, 'Proposta enviada': 1, 'Analisando': 2, 'Falta dados': 3, 'Ganhou': 4, 'Faturado': 4 })[st];
     ativosV.slice().sort(ordemPainel).forEach((x) => { const g = x.ganho ? 4 : gDe(x.p.status); grupos[g == null ? 5 : g][1].push(x); });
-    const agenda = grupos.filter((g) => g[1].length).map(([t, arr, k]) => `<div class="ag-hd ${k}">${t}<span>${arr.length}</span></div><div class="ag-list ag-${k}">${arr.map(agendaRow).join('')}</div>`).join('');
+    const agenda = [grupos[4]].concat(grupos.filter((g, i) => i !== 4)).filter((g) => g[1].length).map(([t, arr, k]) => `<div class="ag-hd ${k}">${t}<span>${arr.length}</span></div><div class="ag-list ag-${k}">${arr.map(agendaRow).join('')}</div>`).join('');
     return `<div class="card ag-card"><h3>${icon('calendar', 'sm')}<span class="grow">Agenda dos pregões (${ativosV.length})</span>${oc.length ? `<button class="btn sm" data-act="painel-ocultos">${icon('eye', 'sm')} ${UI.mostrarOcultos ? 'Esconder' : 'Ver'} ocultos (${oc.length})</button>` : ''}<button class="btn sm" data-act="tab" data-v="pregoes">Ver na guia Pregões</button></h3>
       ${ativosV.length ? agenda : (enc.length || concl.length ? '' : `<p class="muted small">Nenhum pregão no painel agora. Os cadastrados continuam na aba Pregões.</p>`)}
       ${conclHtml}
@@ -4519,9 +4523,10 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
     const s = c && c.solo;
     if (!s || !s.relevante || c.ganhou || c.resultado === 'perdi' || c.desclass) return '';
     const ref = c.lance !== null ? 'no lance' : 'no teto';
+    const q = c.qtd || 0, un = String(c.unidade || 'un').toLowerCase(), tot = (v) => (v == null ? null : Math.round(v * q * 100) / 100);
     const tip = `Se este for o único item ganho, ele paga sozinho a entrega de carro (${C.brl(s.entrega)}, ${C.brl(s.extra)} a mais que no rateio). Custo total ${C.brl(s.custoTotal)}.`;
-    return `<div class="solo ${s.risco}" title="${esc(tip)}">${icon('truck', 'sm')}<span class="solo-t"><span class="s-lg">Se ganhar só este</span><span class="s-sm">Só este</span></span>
-      <span class="solo-v"><span>sem prejuízo <b>${C.brl(s.empate)}</b></span><span class="solo-mg">margem ${C.pct(c.margem, 0)} <b>${C.brl(s.minimo)}</b></span><span class="solo-lc">${ref}: <b>${s.lucro <= 0 ? 'prejuízo ' + C.brl(-s.lucro) : C.brl(s.lucro) + ' (' + C.pct(s.margemReal, 0) + ')'}</b></span></span>${c.lance !== null && abaixoSolo(c, c.lance) ? `<span class="solo-alerta">${icon('alert', 'sm')}Seu lance (${C.brl(c.lance)}) está abaixo do mínimo sem prejuízo</span>` : ''}</div>`;
+    return `<div class="solo ${s.risco}" title="${esc(tip)}">${icon('truck', 'sm')}<span class="solo-t"><span class="s-lg">Se ganhar só este · total ${C.qtdBR(q)} ${esc(un)}</span><span class="s-sm">Só este</span></span>
+      <span class="solo-v"><span>sem prejuízo <b>${C.brl(tot(s.empate))}</b> <small class="solo-un">(${C.brl(s.empate)}/${esc(un)})</small></span><span class="solo-mg">margem ${C.pct(c.margem, 0)} <b>${C.brl(tot(s.minimo))}</b> <small class="solo-un">(${C.brl(s.minimo)}/${esc(un)})</small></span><span class="solo-lc">${ref}: <b>${s.lucro <= 0 ? 'prejuízo ' + C.brl(-s.lucro) : C.brl(s.lucro) + ' (' + C.pct(s.margemReal, 0) + ')'}</b></span></span>${c.lance !== null && abaixoSolo(c, c.lance) ? `<span class="solo-alerta">${icon('alert', 'sm')}Seu lance (${C.brl(c.lance)}) está abaixo do mínimo sem prejuízo</span>` : ''}</div>`;
   }
 
   function itemCard(it, c, opt) {
