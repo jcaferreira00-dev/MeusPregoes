@@ -360,6 +360,12 @@ input.input[type=datetime-local]::-webkit-date-and-time-value, input.input[type=
 .mini-p.conc .mp-num { color: var(--muted); }
 .mini-p.conc .mp-st { background: var(--green-soft); color: var(--green); border-color: transparent; }
 .mini-hd.conc { color: var(--green); }
+.mini-p.desc { filter: none; opacity: 1; color: var(--ink); border-color: color-mix(in srgb, var(--red) 45%, var(--line)); border-left: 4px solid var(--red); background: color-mix(in srgb, var(--red) 7%, var(--card)); }
+.mini-p.desc .mp-ok { flex: none; width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; background: var(--red); color: #fff; }
+.mini-p.desc .mp-ok svg { width: 12px; height: 12px; stroke-width: 2.6; }
+.mini-p.desc .mp-num { color: var(--muted); }
+.mini-p.desc .mp-st { background: var(--red-soft); color: var(--red); border-color: transparent; }
+.mini-p .mp-rever { flex: none; font-size: 11px; font-weight: 800; color: #fff; background: var(--red); border-radius: 99px; padding: 2px 9px; }
 .mini-hd { margin: 14px 2px 8px; font-size: 11px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
 /* item: estrelas, valores, fora da disputa, link */
 .icard .rcol { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex: none; }
@@ -1031,7 +1037,7 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.80.0';
+  const APP_VERSION = '1.81.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Em disputa', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -3933,9 +3939,12 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
     return Math.round((iniDia(new Date()) - iniDia(d)) / DIA_MS);
   }
   // fora do painel? 'manual' (você tirou) | 'auto' (2 dias após a sessão ou 3 dias após o fim do prazo de propostas) | null
+  // pedi desclassificação (status Desclassificado ou algum item com "Desclassif."): fica em destaque para rever
+  const descPedidaDe = (p) => p.status === 'Desclassificado' || store.get().itens.some((i) => i.pregaoId === p.id && !i.deleted && i.desclassPedida);
+  const descPrimeiro = (a, b) => (descPedidaDe(b.p) ? 1 : 0) - (descPedidaDe(a.p) ? 1 : 0);
   function miniPregao(p, flag) {
-    const conc = p.status === 'Concluído';
-    return `<article class="mini-p${conc ? ' conc' : ''}" data-act="abrir-pregao" data-id="${p.id}" tabindex="0" role="button" aria-label="Abrir pregão ${esc(p.numero)} ${esc(p.orgao)}">${conc ? `<span class="mp-ok">${icon('check', 'sm')}</span>` : ''}<span class="mp-num">Nº ${esc(p.numero)}</span><span class="mp-org ell">${esc(p.orgao)}</span>${flag ? '<span class="mp-star" title="Tem item que posso ganhar">★</span>' : ''}<span class="mp-st">${esc(stTxt(p.status))}</span></article>`;
+    const conc = p.status === 'Concluído', desc = !conc && descPedidaDe(p);
+    return `<article class="mini-p${conc ? ' conc' : ''}${desc ? ' desc' : ''}" data-act="abrir-pregao" data-id="${p.id}" tabindex="0" role="button" aria-label="Abrir pregão ${esc(p.numero)} ${esc(p.orgao)}"${desc ? ' title="Pedi desclassificação: rever"' : ''}>${conc ? `<span class="mp-ok">${icon('check', 'sm')}</span>` : ''}${desc ? `<span class="mp-ok mp-desc">${icon('alert', 'sm')}</span>` : ''}<span class="mp-num">Nº ${esc(p.numero)}</span><span class="mp-org ell">${esc(p.orgao)}</span>${flag ? '<span class="mp-star" title="Tem item que posso ganhar">★</span>' : ''}${desc ? '<span class="mp-rever">Rever</span>' : ''}<span class="mp-st">${esc(stTxt(p.status))}</span></article>`;
   }
   function painelOculto(p) {
     if (p.ocultoPainel) return 'manual';
@@ -4034,7 +4043,7 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
     const oc = todos.filter((x) => painelOculto(x.p)).sort(ordemPainel);
     const ativosV = vis.filter((x) => !C.INATIVOS.includes(x.p.status));
     const concl = vis.filter((x) => x.p.status === 'Concluído');
-    const enc = vis.filter((x) => C.INATIVOS.includes(x.p.status) && x.p.status !== 'Concluído');
+    const enc = vis.filter((x) => C.INATIVOS.includes(x.p.status) && x.p.status !== 'Concluído').sort(descPrimeiro);
     const conclHtml = concl.length ? `<div class="mini-hd conc">Concluídos (${concl.length})</div><div class="mini-list">${(UI.mostrarConcl ? concl : concl.slice(0, 5)).map((x) => miniPregao(x.p, false)).join('')}</div>${concl.length > 5 ? `<button class="btn sm ghost" style="margin-top:8px" data-act="painel-concluidos">${UI.mostrarConcl ? 'Mostrar menos' : 'Ver todos (' + concl.length + ')'}</button>` : ''}` : '';
     const encHtml = enc.length ? `<div class="mini-hd">Encerrados (${enc.length})</div><div class="mini-list">${(UI.mostrarEnc ? enc : enc.slice(0, 5)).map((x) => miniPregao(x.p, x.nPode > 0)).join('')}</div>${enc.length > 5 ? `<button class="btn sm ghost" style="margin-top:8px" data-act="painel-encerrados">${UI.mostrarEnc ? 'Mostrar menos' : 'Ver todos (' + enc.length + ')'}</button>` : ''}` : '';
     const lista = oc.map((x) => {
@@ -4443,7 +4452,7 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
     list.sort((a, b) => (rankStatus(a.p.status) - rankStatus(b.p.status)) || ordemPainel(a, b));
     if (!list.length) return `<div class="card empty"><p class="muted">Nenhum pregão encontrado.</p></div>`;
     // ativos em blocos quadrados (grade simétrica); encerrados continuam em linha cinza no fim
-    const atvAll = list.filter((x) => !C.INATIVOS.includes(x.p.status)), ina = list.filter((x) => C.INATIVOS.includes(x.p.status));
+    const atvAll = list.filter((x) => !C.INATIVOS.includes(x.p.status)), ina = list.filter((x) => C.INATIVOS.includes(x.p.status)).sort(descPrimeiro);
     const venc = atvAll.filter((x) => x.ganho), atv = atvAll.filter((x) => !x.ganho);
     const titulo = (ic, t, n, cls) => `<div class="pq-sec ${cls || ''}">${icon(ic, 'sm')}<span>${t}</span><b>${n}</b></div>`;
     return (venc.length ? titulo('acomp', 'Venci', venc.length, 'venci') + `<div class="pq-grid">${venc.map(pregaoCard).join('')}</div>` : '')
