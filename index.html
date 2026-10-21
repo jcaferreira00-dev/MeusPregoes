@@ -964,6 +964,23 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
 .sim-nota i { font-style: normal; background: linear-gradient(90deg, #e0a800 var(--f), color-mix(in srgb, var(--muted) 35%, transparent) var(--f)); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .sim-acima { color: var(--red); }
 @media (max-width: 600px) { .sim-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } .sim-row .input { max-width: none; } }
+
+/* resultado do item (v1.77): seletor Venci / Não ganhei / Desclassif. e cor do valor */
+.res-sel { display: inline-flex; gap: 0; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.res-sel .btn { border: 0; border-radius: 0; background: transparent; color: var(--muted); }
+.res-sel .btn + .btn { border-left: 1px solid var(--line); }
+.res-sel .btn.res-venci.on { background: var(--green-soft); color: var(--green); }
+.res-sel .btn.res-perdi.on { background: color-mix(in srgb, var(--muted) 16%, transparent); color: var(--ink); }
+.res-sel .btn.res-desc.on { background: var(--red-soft); color: var(--red); }
+.icard.res-venci .v-lance b, .icard.res-venci .v-lance-pc b { color: var(--green) !important; }
+.icard.res-perdi .v-lance b, .icard.res-perdi .v-lance-pc b { color: var(--muted) !important; text-decoration: line-through; }
+.icard.res-desc { border-color: color-mix(in srgb, var(--red) 55%, var(--line)); background: color-mix(in srgb, var(--red) 4%, var(--card)); }
+.icard.res-desc .minbox, .icard.res-desc .i-vals, .icard.res-desc .i-mvals { opacity: .6; }
+.icard.res-desc .v-lance b, .icard.res-desc .v-lance-pc b { color: var(--red) !important; text-decoration: line-through; }
+.icard.res-aguard .v-lance b, .icard.res-aguard .v-lance-pc b { color: var(--amber) !important; }
+.obsline.desc-line { display: flex; gap: 6px; align-items: center; color: var(--red); background: var(--red-soft); }
+.icard-actions { flex-wrap: wrap; }
+@media (max-width: 600px) { .res-sel { width: 100%; } .res-sel .btn { flex: 1; justify-content: center; padding-left: 4px; padding-right: 4px; } }
 </style>
 </head>
 <body>
@@ -976,7 +993,7 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.76.0';
+  const APP_VERSION = '1.77.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Em disputa', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -1237,10 +1254,20 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
     for (const p of pregoes) {
       const listAll = ordemLoteItem(byP.get(p.id) || []);   // sempre por lote e item do edital (proposta, telas e PDF)
       const list = listAll.filter((i) => !i.semLance);   // item que ficou de fora (sem lance) não entra nas contas
+      // resultado por item: venci (ganhou: true) · não ganhei (ganhou: false) · pedi desclassificação (desclassPedida) · aguardando (sem marcação)
+      const marcados = listAll.some((i) => typeof i.ganhou === 'boolean' || i.desclassPedida);
+      const legado = !marcados && ['Ganhou', 'Faturado'].includes(p.status);
+      const ganhouIt = (i) => !i.semLance && !i.desclassPedida && (marcados ? i.ganhou === true : (legado && !i.naoGanhou));
+      const perdeuIt = (i) => !!i.desclassPedida || (marcados && i.ganhou === false);
+      const nGanhos = list.filter(ganhouIt).length;
+      // proteção contra orçamento inflado: com algum item ganho, só os ganhos contam (os "aguardando" ficam fora até virarem Venci);
+      // perdidos e desclassificados nunca contam. Viagem/entrega é rateada só entre o que conta.
+      const conta = (i) => !i.semLance && !perdeuIt(i) && (nGanhos === 0 || ganhouIt(i));
+      const listConta = list.filter(conta);
       // itens com local de entrega próprio formam grupos com rota e custo próprios; os demais usam a rota do pregão
       const ovr = (it) => { const l = normLocal(it.localEntrega); return !!l && l !== normLocal(p.cidadeUf); };
       const grupos = new Map();
-      for (const it of list.filter(ovr)) {
+      for (const it of listConta.filter(ovr)) {
         const k = normLocal(it.localEntrega);
         const g = grupos.get(k) || { k, local: String(it.localEntrega).trim(), e: { km: 0, viagens: 1, pedagio: 0 }, custo: 0, base: 0, nItens: 0 };
         if (!(g.e.km > 0) && n0(it.kmEntrega) > 0) g.e = { km: n0(it.kmEntrega), viagens: it.viagensEntrega == null || it.viagensEntrega === '' ? 1 : n0(it.viagensEntrega), pedagio: n0(it.pedagioEntrega) };
@@ -1249,7 +1276,7 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
       }
       for (const g of grupos.values()) g.custo = custoViagem(g.e, cfg);
       const grupoOf = (it) => (ovr(it) ? grupos.get(normLocal(it.localEntrega)) : null);
-      const padrao = list.filter((it) => !ovr(it));
+      const padrao = listConta.filter((it) => !ovr(it));
       let base = 0;
       for (const it of padrao) base += compraBase(it);
       const custoGrupos = [...grupos.values()].reduce((a, g) => a + g.custo, 0);
@@ -1261,21 +1288,23 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
         for (const it of padrao) { const x = entOf(it); x.base += compraBase(it); x.nItens += 1; }
         pool = ents.filter((x) => x.base === 0).reduce((a, x) => a + x.custo, 0);   // viagem sem itens: o custo é dividido entre todos
       }
-      // itens ganhos: marcados um a um (ganhou: true/false); dados antigos com o pregão "Ganhou"/"Faturado" = todos menos os "não ganhei"
-      const marcados = listAll.some((i) => typeof i.ganhou === 'boolean');
-      const legado = !marcados && ['Ganhou', 'Faturado'].includes(p.status);
-      const ganhouIt = (i) => !i.semLance && (marcados ? i.ganhou === true : (legado && !i.naoGanhou));
-      const nGanhos = list.filter(ganhouIt).length;
-      pMap.set(p.id, { ganhouIt, ganho: nGanhos > 0, p, viagemPadrao: padrao.length ? custoViagem(p, cfg) : 0, viagem: (padrao.length ? (ents ? ents.reduce((a, x) => a + x.custo, 0) : custoViagem(p, cfg)) : 0) + custoGrupos, ents, entOf, pool, base, grupos: [...grupos.values()], grupoOf, itens: list, todosItens: listAll, nItens: list.length, nGanhos, nPode: list.filter((i) => i.possivelGanhar && !ganhouIt(i)).length, venda: 0, custo: 0, lucro: 0, imposto: 0, margem: null });
+      const nDesc = list.filter((i) => i.desclassPedida).length, nPerd = list.filter((i) => !i.desclassPedida && perdeuIt(i)).length;
+      pMap.set(p.id, { ganhouIt, conta, nDesc, nPerd, nAguard: nGanhos > 0 ? list.filter((i) => !ganhouIt(i) && !perdeuIt(i)).length : 0, ganho: nGanhos > 0, p, viagemPadrao: padrao.length ? custoViagem(p, cfg) : 0, viagem: (padrao.length ? (ents ? ents.reduce((a, x) => a + x.custo, 0) : custoViagem(p, cfg)) : 0) + custoGrupos, ents, entOf, pool, base, grupos: [...grupos.values()], grupoOf, itens: list, todosItens: listAll, nItens: list.length, nGanhos, nPode: list.filter((i) => i.possivelGanhar && !ganhouIt(i)).length, venda: 0, custo: 0, lucro: 0, imposto: 0, margem: null });
     }
     const iMap = new Map();
     for (const it of itens) {
       const pst = pMap.get(it.pregaoId) || null;
-      const c = calcItem(it, pst, cfg);
+      // item fora das contas (aguardando, perdido, desclassificado): mostra a conta "se eu ganhar também" (entra no rateio da viagem), sem afetar os ganhos
+      let pc = pst;
+      if (pst && !it.semLance && !pst.conta(it) && !pst.ents && !(pst.grupoOf && pst.grupoOf(it))) pc = Object.assign({}, pst, { base: pst.base + compraBase(it), viagemPadrao: custoViagem(pst.p, cfg) });
+      const c = calcItem(it, pc, cfg);
       c.fora = !!it.semLance;
       // pregão com itens ganhos: os itens não ganhos ficam fora das contas e das estatísticas
       c.ganhou = !!(pst && pst.ganhouIt(it));
-      c.naoGanhou = !!(pst && pst.ganho && !c.ganhou);
+      c.desclass = !!it.desclassPedida;
+      c.naoGanhou = !!(pst && !it.semLance && !pst.conta(it));   // fora das contas: perdido, desclassificado ou aguardando num pregão com ganhos
+      c.aguardando = !!(pst && pst.ganho && !c.ganhou && !c.desclass && it.ganhou !== false && !it.semLance);
+      c.resultado = c.ganhou ? 'venci' : c.desclass ? 'desc' : (it.ganhou === false && !it.semLance) ? 'perdi' : c.aguardando ? 'aguard' : '';
       iMap.set(it.id, c);
       if (pst && !it.semLance && !c.naoGanhou) { pst.custo += c.custoTotal; pst.venda += c.totalVenda || 0; pst.lucro += c.lucro || 0; pst.imposto += c.impostoTotal; }
     }
@@ -3894,7 +3923,8 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
     const pz = prazoInfo(p), al = [];
     if (!enviada && pz && (pz.nivel === 'bad' || pz.nivel === 'warn')) al.push([pz.nivel, 'Propostas: ' + pz.curto]);
     else if (!enviada && pz && pz.nivel === 'off') al.push(['off', 'Propostas encerradas']);
-    if (pst.nGanhos && pst.ganho) al.push(['good', 'Venci ' + pst.nGanhos + (pst.nGanhos === 1 ? ' item' : ' itens')]);
+    if (pst.nGanhos && pst.ganho) al.push(['good', 'Venci ' + pst.nGanhos + ' de ' + pst.itens.length]);
+    if (pst.nDesc) al.push(['bad', pst.nDesc + ' desclassif. pedida' + (pst.nDesc > 1 ? 's' : '')]);
     if (pst.nPode) al.push(['good', 'Posso ganhar' + (pst.nPode > 1 ? ' (' + pst.nPode + ')' : '')]);
     const po = posInfo(p);
     if (po && !p.pagoEm) { if (po.nivel === 'bad' || po.nivel === 'warn') al.push([po.nivel, po.curto]); else if (po.nivel === 'info') al.push(['off', po.curto]); }
@@ -3932,9 +3962,9 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
     }).join('');
     // agenda: Em disputa primeiro; depois pela data (hoje, próximos dias, sem data, já passou)
     // agenda por categoria (status); dentro de cada uma, pela data (próximas primeiro)
-    const grupos = [['Em disputa', [], 'disp'], ['Enviadas', [], 'env'], ['Analisando', [], 'ana'], ['Incompletos', [], 'inc'], ['Ganhos e faturados', [], 'gan'], ['Outros', [], '']];
+    const grupos = [['Em disputa', [], 'disp'], ['Enviadas', [], 'env'], ['Analisando', [], 'ana'], ['Incompletos', [], 'inc'], ['Ganhos (aguardando empenho / faturados)', [], 'gan'], ['Outros', [], '']];
     const gDe = (st) => ({ 'Em disputa': 0, 'Proposta enviada': 1, 'Analisando': 2, 'Falta dados': 3, 'Ganhou': 4, 'Faturado': 4 })[st];
-    ativosV.slice().sort(ordemPainel).forEach((x) => { const g = gDe(x.p.status); grupos[g == null ? 5 : g][1].push(x); });
+    ativosV.slice().sort(ordemPainel).forEach((x) => { const g = x.ganho ? 4 : gDe(x.p.status); grupos[g == null ? 5 : g][1].push(x); });
     const agenda = grupos.filter((g) => g[1].length).map(([t, arr, k]) => `<div class="ag-hd ${k}">${t}<span>${arr.length}</span></div><div class="ag-list ag-${k}">${arr.map(agendaRow).join('')}</div>`).join('');
     return `<div class="card ag-card"><h3>${icon('calendar', 'sm')}<span class="grow">Agenda dos pregões (${ativosV.length})</span>${oc.length ? `<button class="btn sm" data-act="painel-ocultos">${icon('eye', 'sm')} ${UI.mostrarOcultos ? 'Esconder' : 'Ver'} ocultos (${oc.length})</button>` : ''}<button class="btn sm" data-act="tab" data-v="pregoes">Ver na guia Pregões</button></h3>
       ${ativosV.length ? agenda : (enc.length || concl.length ? '' : `<p class="muted small">Nenhum pregão no painel agora. Os cadastrados continuam na aba Pregões.</p>`)}
@@ -3954,6 +3984,11 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
       else if (x.p.status === 'Analisando' && (!pz || pz.nivel !== 'off')) L.push(['info', 'Proposta por enviar' + (pz ? ' · até ' + pz.curto : ''), 'Nº ' + x.p.numero + ' · ' + String(x.p.orgao || '').toLocaleUpperCase('pt-BR'), `data-act="abrir-pregao" data-id="${x.p.id}"`]);
     });
     ps.filter((x) => x.nItens === 0).forEach((x) => L.push(['warn', 'Cadastrar os itens', 'Nº ' + x.p.numero + ' · ' + String(x.p.orgao || '').toLocaleUpperCase('pt-BR'), `data-act="abrir-pregao" data-id="${x.p.id}"`]));
+    // sessão passou há 2+ dias e nenhum item tem resultado: lembrar de registrar (senão a previsão conta o pregão inteiro)
+    ps.filter((x) => ['Proposta enviada', 'Em disputa'].includes(x.p.status) && x.p.sessao && (diasDesde(x.p.sessao) || 0) >= 2).forEach((x) => {
+      const algum = x.todosItens.some((i) => typeof i.ganhou === 'boolean' || i.desclassPedida);
+      if (!algum) L.push(['warn', 'Registrar resultado do pregão', 'Nº ' + x.p.numero + ' · ' + String(x.p.orgao || '').toLocaleUpperCase('pt-BR') + ' · sessão há ' + diasDesde(x.p.sessao) + ' dias', `data-act="abrir-pregao" data-id="${x.p.id}"`]);
+    });
     // catálogo incompleto: itens sem foto e/ou sem descrição detalhada (por pregão); toque leva ao 1º item pendente
     ps.filter((x) => ['Falta dados', 'Analisando', 'Proposta enviada', 'Em disputa'].includes(x.p.status)).forEach((x) => {
       const semFoto = x.itens.filter((i) => !(Number(i.fotosN) > 0));
@@ -4245,7 +4280,7 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
         <div class="kpi" style="--c:#1f3864"><div class="l">Limite do MEI</div><div class="v" style="color:var(--ink)">${C.brl0(m.limite)}</div><div class="s">no ano de ${st.config.anoRef}</div></div>
         <div class="kpi" style="--c:#2e75b6"><div class="l">Comprometido</div><div class="v">${C.brl0(m.comprometido)}</div><div class="s">faturado + ganho · ${C.pct(m.pctComprometido, 0)}</div></div>
         <div class="kpi" style="--c:${m.saldoAgora < 0 ? '#c0392b' : '#2f7d3a'}"><div class="l">Saldo disponível</div><div class="v">${C.brl0(m.saldoAgora)}</div><div class="s">se ganhar tudo: ${C.brl0(m.saldoSeGanhar)}</div></div>
-        <div class="kpi" style="--c:#b7791f"><div class="l">Lucro previsto</div><div class="v">${C.brl0(R.lucroPrevisto)}</div><div class="s">pregões ativos</div></div>
+        <div class="kpi" style="--c:#b7791f"><div class="l">Lucro previsto</div><div class="v">${C.brl0(R.lucroPrevisto)}</div><div class="s">${(() => { let g = 0, d = 0; for (const x of R.pMap.values()) { if (C.INATIVOS.includes(x.p.status)) continue; if (x.ganho) g += x.lucro; else d += x.lucro; } return 'ganho ' + C.brl0(g) + ' · em disputa ' + C.brl0(d); })()}</div></div>
       </div>
       ${painelPregoesHtml(R)}
       <div class="two-col">${painelPendenciasHtml(R)}${painelEntregasHtml(R) || `<div class="card m-hide"><h3>${icon('calendar', 'sm')}<span class="grow">Entregas e recebimentos</span></h3><p class="muted small">Nenhuma entrega ou recebimento pendente.</p></div>`}</div>
@@ -4299,7 +4334,9 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
       ${(() => {
         const tags = [
           pz ? `<span class="prazo ${pz.nivel}">${icon(pz.nivel === 'ok' ? 'calendar' : 'alert', 'sm')}${esc(pz.texto)}</span>` : '',
-          pst.ganho ? `<span class="prazo good">${icon('acomp', 'sm')}Venci: ${pst.nGanhos} ${pst.nGanhos === 1 ? 'item' : 'itens'}</span>` : '',
+          pst.ganho ? `<span class="prazo good">${icon('acomp', 'sm')}Venci ${pst.nGanhos} de ${pst.itens.length} · ${C.brl0(pst.propostaGanha)}</span>` : '',
+          pst.nDesc ? `<span class="prazo bad">${icon('alert', 'sm')}${pst.nDesc} desclassificação${pst.nDesc > 1 ? 'ões' : ''} pedida${pst.nDesc > 1 ? 's' : ''}</span>` : '',
+          pst.nAguard ? `<span class="prazo warn" title="Fora das contas até você marcar Venci">${pst.nAguard} aguardando resultado</span>` : '',
           pst.nPode ? `<span class="prazo good">${icon('check', 'sm')}Posso ganhar: ${pst.nPode} ${pst.nPode === 1 ? 'item' : 'itens'}</span>` : '',
           po ? `<span class="prazo ${nivelCls(po.nivel)}">${icon(po.nivel === 'bad' || po.nivel === 'warn' ? 'alert' : 'calendar', 'sm')}${esc(po.texto)}</span>` : '',
           p.modeloProprio ? `<span class="prazo warn">${icon('alert', 'sm')}Modelo próprio de proposta</span>` : '',
@@ -4387,22 +4424,26 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
     const meuLance = C.unitProposta(c, 'auto').unit;   // mesma regra do PDF: lance final prevalece; sem lance, o teto do edital
     const mVals = `<div class="i-mvals"><div class="v-lance"><span>${c.lance !== null ? 'Meu lance' : 'Meu lance (teto)'}</span><b>${meuLance != null ? C.brl(meuLance) : '—'}</b></div><div class="v-min ${viabCls(c)}"><span>Mínimo ${C.pct(c.margem, 0)}</span><b>${c.minimo != null ? C.brl(c.minimo) : '—'}</b></div></div>`;
     const vals = mVals + `<div class="i-vals"><div class="v-lance-pc ${viabCls(c)}"><span>${c.lance !== null ? 'Meu lance (unit.)' : 'Meu lance (teto)'}</span><b>${meuLance != null ? C.brl(meuLance) : '—'}</b></div><div><span>Custo total</span><b>${it.custo > 0 && it.qtd > 0 ? C.brl(c.produtos) : '—'}</b></div><div class="v-mintot"><span>Mín. total</span><b>${C.brl(c.minTotal)}</b></div><div><span>Edital total</span><b>${c.tetoTotal != null ? C.brl(c.tetoTotal) : '—'}</b></div></div>`;
-    const acao = c.ganhou
-      ? `<button type="button" class="btn sm venci-on" data-act="item-venci" data-id="${it.id}" title="Desmarcar">${icon('acomp', 'sm')} Venci</button>`
-      : `<button type="button" class="btn sm ghost" data-act="item-venci" data-id="${it.id}" title="Marcar este item como ganho">${icon('acomp', 'sm')} Venci</button>` + `<button type="button" class="btn sm ${it.possivelGanhar ? 'pode-on' : 'ghost'}" data-act="item-pode" data-id="${it.id}">${icon('check', 'sm')} Posso ganhar</button><button type="button" class="btn sm ghost" data-act="item-fora" data-id="${it.id}">Deixar de fora</button>`;
-    return `<article class="icard${c.naoGanhou && !it.possivelGanhar ? ' nao-ganho' : ''}${c.ganhou ? ' venci' : ''}" data-id="${it.id}">
-      <div class="i-hd">${tag}<div class="rcol">${c.ganhou ? '<span class="badge ok">Venci</span>' : (c.naoGanhou && !it.possivelGanhar ? '<span class="badge off">Não ganhou</span>' : '')}${it.possivelGanhar && !ganhoMode ? '<span class="prazo good">★ Posso ganhar</span>' : ''}${c.situacao ? `<span class="badge ${c.sitTipo}" title="${esc(c.situacao)}"><span class="s-lg">${esc(c.situacao)}</span><span class="s-sm">${esc(c.sitCurta || c.situacao)}</span></span>` : ''}${estrelasHtml(c)}${btnEditar}</div></div>
+    // resultado do item: seletor (toque de novo no mesmo volta para "aguardando")
+    const RES = [['venci', 'Venci', 'acomp'], ['perdi', 'Não ganhei', 'x'], ['desc', 'Desclassif.', 'alert']];
+    const acao = `<div class="res-sel" role="group" aria-label="Resultado do item">${RES.map(([v, l, ic]) => `<button type="button" class="btn sm res-${v}${c.resultado === v ? ' on' : ''}" data-act="item-res" data-v="${v}" data-id="${it.id}" title="${c.resultado === v ? 'Desmarcar' : l}">${icon(ic, 'sm')} ${l}</button>`).join('')}</div>`
+      + (c.ganhou || c.resultado === 'perdi' || c.desclass ? '' : `<button type="button" class="btn sm ${it.possivelGanhar ? 'pode-on' : 'ghost'}" data-act="item-pode" data-id="${it.id}">${icon('check', 'sm')} Posso ganhar</button><button type="button" class="btn sm ghost" data-act="item-fora" data-id="${it.id}">Deixar de fora</button>`);
+    const resBadge = c.resultado === 'venci' ? '<span class="badge ok">Venci</span>' : c.resultado === 'desc' ? `<span class="badge bad" title="${esc('Pedido em ' + C.fmtSessao(it.desclassEm || '') + (it.desclassMotivo ? ' · ' + it.desclassMotivo : ''))}">Desclassif.</span>` : c.resultado === 'perdi' ? '<span class="badge off">Não ganhei</span>' : c.resultado === 'aguard' ? '<span class="badge warn" title="Fora das contas até você marcar Venci">Aguardando</span>' : '';
+    const descLinha = c.desclass ? `<div class="obsline desc-line">${icon('alert', 'sm')}<span>Desclassificação pedida em ${esc(C.fmtSessao(it.desclassEm || ''))}${it.desclassMotivo ? ' · ' + esc(it.desclassMotivo) : ''}</span></div>` : '';
+    return `<article class="icard${c.naoGanhou && !it.possivelGanhar && !c.aguardando && !c.desclass ? ' nao-ganho' : ''}${c.ganhou ? ' venci' : ''}${c.resultado ? ' res-' + c.resultado : ''}" data-id="${it.id}">
+      <div class="i-hd">${tag}<div class="rcol">${resBadge}${it.possivelGanhar && !ganhoMode ? '<span class="prazo good">★ Posso ganhar</span>' : ''}${c.situacao ? `<span class="badge ${c.sitTipo}" title="${esc(c.situacao)}"><span class="s-lg">${esc(c.situacao)}</span><span class="s-sm">${esc(c.sitCurta || c.situacao)}</span></span>` : ''}${estrelasHtml(c)}${btnEditar}</div></div>
       ${desc}
       ${opt.showOrg && p ? `<div class="chips"><span class="chip org">#${esc(p.numero)} · ${esc(p.orgao)}</span></div>` : ''}
       <div class="small muted i-meta"><span class="i-meta-tx">${C.qtdBR(it.qtd)} ${esc(it.unidade || 'Un')} · custo ${c.divisao ? C.brl(c.custoCompra) + ' (média de ' + c.divisao.partes.length + ' fornecedores)' : C.brl(it.custo)}<span class="i-teto"> · teto ${C.brl(c.teto)}</span>${it.marca ? ' · ' + esc(it.marca) : ''}</span>${(() => { const nf = Number(it.fotosN) || 0; return `<button type="button" class="foto-tag hide-m ${nf ? 'tem' : 'sem'}" data-act="cat-ir" data-id="${it.id}" title="${nf ? 'Tem foto no catálogo. Clique para ver.' : 'Sem foto no catálogo. Clique para incluir.'}">${icon('image', 'sm')}${nf ? nf + (nf === 1 ? ' foto' : ' fotos') : 'Sem foto'}</button>`; })()}</div>
       ${vals}
       ${compra}
       ${obs}
+      ${descLinha}
       ${venc}
       <div class="minbox i-min ${viabCls(c)}"><div><div class="t">Valor mínimo p/ proposta (unit.)</div><div class="tiny muted">margem ${C.pct(c.margem, 0)} · custo final ${C.brl(c.custoUnit)}</div>${viabLinha(c)}</div><div class="v">${C.brl(c.minimo)}</div></div>
       <div class="row between wrap small muted i-fin" style="gap:4px 10px"><span>Posso baixar do teto: <b style="color:var(--ink)">${c.folgaRs != null ? C.brl(c.folgaRs) + ' (' + C.pct(c.folgaPct, 0) + ')' : '—'}</b></span><span>${c.impostoTotal > 0 ? 'Impostos ' + C.brl(c.impostoTotal) + ' · ' : ''}Lucro: <b style="color:var(--ink)">${C.brl(c.lucro)}</b></span></div>
       ${p && !c.fora && (p.status === 'Em disputa' || it.possivelGanhar || it.colocacao) ? `<div class="coloc-row">${colocacaoInput(it)}${it.colocacao ? `<span class="coloc-badge ${it.colocacao === 1 ? 'c1' : it.colocacao <= 3 ? 'c3' : ''}">${colocTxt(it.colocacao)} lugar</span>` : ''}</div>` : ''}
-      ${p && ['Em disputa', 'Proposta enviada'].includes(p.status) ? simLanceHtml(it, c, meuLance) : ''}
+      ${p && ['Em disputa', 'Proposta enviada'].includes(p.status) && !['perdi', 'desc'].includes(c.resultado) ? simLanceHtml(it, c, meuLance) : ''}
       <div class="icard-actions">${acao}</div></article>`;
   }
 
@@ -4638,13 +4679,43 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
     if (!temGanho && st === 'Ganhou') st = 'Em disputa';
     store.patchPregao(pid, (x) => { x.status = st; });   // grava e redesenha
   }
+  // resultado do item pelo seletor do cartão: venci · perdi · desc (pedi desclassificação) · '' (volta para aguardando/disputa)
+  function definirResultado(itemId, res) {
+    const it = store.get().itens.find((i) => i.id === itemId && !i.deleted); if (!it) return;
+    if (res === 'venci') { marcarGanho(itemId, true); return; }
+    if (res === 'desc') { pedirDesclassificacao(itemId); return; }
+    store.patchItem(itemId, (x) => { x.desclassPedida = false; delete x.desclassEm; delete x.desclassMotivo; if (res === 'perdi') { x.ganhou = false; x.possivelGanhar = false; } else delete x.ganhou; });
+    const algum = store.get().itens.some((i) => i.pregaoId === it.pregaoId && !i.deleted && !i.semLance && i.ganhou === true && !i.desclassPedida);
+    ajustarStatusAoGanhar(it.pregaoId, algum);
+    toast(res === 'perdi' ? 'Item marcado como não ganho' : 'Item voltou para aguardando resultado');
+  }
+  function pedirDesclassificacao(itemId) {
+    const it = store.get().itens.find((i) => i.id === itemId && !i.deleted); if (!it) return;
+    openForm({
+      key: 'desclass:' + itemId,
+      title: 'Pedido de desclassificação',
+      values: { desclassEm: it.desclassEm || C.hojeISO(), desclassMotivo: it.desclassMotivo || '' },
+      top: `<p class="small muted" style="margin:0 0 10px">${esc((C.padLE(it.itemEdital) ? 'Item ' + C.padLE(it.itemEdital) + ' · ' : '') + it.descricao)}. O item sai das contas, das estatísticas e da proposta final. Guarde o motivo: pela Lei 14.133 (arts. 155 e 156) a desistência após a adjudicação pode gerar sanção.</p>`,
+      body: `<div class="formgrid">${field({ label: 'Data do pedido', name: 'desclassEm', type: 'date', value: it.desclassEm || C.hojeISO() })}${field({ label: 'Motivo', name: 'desclassMotivo', type: 'textarea', value: it.desclassMotivo || '', full: true, ph: 'Ex.: fornecedor sem estoque; erro na cotação; produto fora de linha' })}</div>`,
+      saveLabel: 'Registrar desclassificação',
+      onSave: (x) => {
+        store.patchItem(itemId, (o) => { o.desclassPedida = true; o.ganhou = false; o.possivelGanhar = false; o.desclassEm = x.desclassEm || C.hojeISO(); o.desclassMotivo = String(x.desclassMotivo || '').trim(); });
+        const algum = store.get().itens.some((i) => i.pregaoId === it.pregaoId && !i.deleted && !i.semLance && i.ganhou === true && !i.desclassPedida);
+        ajustarStatusAoGanhar(it.pregaoId, algum);
+        toast('Desclassificação registrada');
+        return true;
+      },
+    });
+  }
   // marca/desmarca um item como ganho (a qualquer momento: no dia, ou 30 dias depois por desclassificação dos outros)
   function marcarGanho(itemId, val, voltarPode) {
     const st = store.get(), it = st.itens.find((i) => i.id === itemId); if (!it) return;
     const R0 = C.computeAll(st);
     // fixa o estado atual de todos os itens do pregão (dados antigos não tinham a marcação por item)
-    st.itens.filter((i) => i.pregaoId === it.pregaoId && !i.deleted && typeof i.ganhou !== 'boolean').forEach((i) => store.patchItem(i.id, (x) => { x.ganhou = !!(R0.iMap.get(i.id) || {}).ganhou; }));
-    store.patchItem(itemId, (x) => { x.ganhou = !!val; if (val) { x.possivelGanhar = false; x.ganhouEm = C.hojeISO(); } else if (voltarPode) x.possivelGanhar = true; });
+    const pz = st.pregoes.find((p) => p.id === it.pregaoId);
+    const legado = pz && ['Ganhou', 'Faturado'].includes(pz.status) && !st.itens.some((i) => i.pregaoId === it.pregaoId && !i.deleted && (typeof i.ganhou === 'boolean' || i.desclassPedida));
+    if (legado) st.itens.filter((i) => i.pregaoId === it.pregaoId && !i.deleted && typeof i.ganhou !== 'boolean').forEach((i) => store.patchItem(i.id, (x) => { x.ganhou = !!(R0.iMap.get(i.id) || {}).ganhou; }));
+    store.patchItem(itemId, (x) => { x.ganhou = !!val; x.desclassPedida = false; if (val) { x.possivelGanhar = false; x.ganhouEm = C.hojeISO(); } else if (voltarPode) x.possivelGanhar = true; });
     const algum = store.get().itens.some((i) => i.pregaoId === it.pregaoId && !i.deleted && !i.semLance && i.ganhou === true);
     ajustarStatusAoGanhar(it.pregaoId, algum);
     toast(val ? 'Item marcado como vencido' : (voltarPode ? 'Item voltou para “posso ganhar”' : 'Item desmarcado'));
@@ -5590,6 +5661,7 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
       case 'sim-gravar': gravarLanceSimulado(id); break;
       case 'tab': setTab(t.dataset.v); break;
       case 'itens-ganhos': openGanhosForm(id); break;
+      case 'item-res': { UI.keepScroll = true; const c = Rc().iMap.get(id); const v = t.dataset.v; definirResultado(id, c && c.resultado === v ? '' : v); break; }
       case 'item-venci': { UI.keepScroll = true; const c = Rc().iMap.get(id); marcarGanho(id, !(c && c.ganhou)); break; }
       case 'item-ganho': { UI.keepScroll = true; const it = store.get().itens.find((i) => i.id === id); const perdeu = !(it && it.naoGanhou); store.upsertItem({ id, naoGanhou: perdeu }); toast(perdeu ? 'Item marcado como não ganho' : 'Item marcado como ganho'); break; }
       case 'item-pode': { UI.keepScroll = true; const it = store.get().itens.find((i) => i.id === id); const liga = !(it && it.possivelGanhar); store.upsertItem({ id, possivelGanhar: liga }); toast(liga ? 'Item marcado: posso ganhar' : 'Marcação removida'); break; }
