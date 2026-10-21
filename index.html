@@ -998,6 +998,30 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
 .pcard.p-venci, .pcard.p-venci.enviada { border: 3px solid var(--green); background: color-mix(in srgb, var(--green) 9%, var(--card)); box-shadow: 0 0 0 3px color-mix(in srgb, var(--green) 22%, transparent), var(--shadow); }
 html .pq-grid > .pcard.p-venci { padding: 15px; }
 .pcard.p-venci .p-tags .prazo.good { background: var(--green); color: #fff; }
+.dec { border-radius: 12px; border: 1.5px solid var(--line); background: var(--card); overflow: hidden; }
+.dec-hd { display: flex; align-items: center; gap: 8px; padding: 8px 12px; font-size: 12.5px; font-weight: 800; }
+.dec.ok .dec-hd { background: var(--green-soft); color: var(--green); } .dec.ok { border-color: color-mix(in srgb, var(--green) 45%, var(--line)); }
+.dec.warn .dec-hd { background: var(--amber-soft); color: var(--amber); } .dec.warn { border-color: color-mix(in srgb, var(--amber) 55%, var(--line)); }
+.dec.bad .dec-hd { background: var(--red-soft); color: var(--red); } .dec.bad { border-color: var(--red); }
+.dec-cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); grid-auto-flow: column; }
+.dec-cols > div { padding: 9px 12px; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.dec-cols > div + div { border-left: 1px solid var(--line); }
+.dec-cols small { font-size: 10px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); }
+.dec-cols b { font-size: 17px; font-weight: 800; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.dec-cols em { font-style: normal; font-size: 11px; color: var(--muted); }
+.dec-cols .neg { color: var(--red); }
+.dec:not(.com-lance) .dec-min b { font-size: 20px; }
+.dec.com-lance .dec-l b { font-size: 19px; }
+.dec.ok:not(.com-lance) .dec-min b { color: var(--green); } .dec.warn:not(.com-lance) .dec-min b { color: var(--amber); }
+.dec.com-lance .dec-l b:not(:has(.neg)) { color: var(--green); }
+@media (max-width: 600px) {
+  .dec-hd { padding: 6px 10px; font-size: 11.5px; }
+  .dec-cols { grid-auto-flow: row; grid-template-columns: 1fr 1fr; }
+  .dec-cols .dec-min { display: none; }
+  .dec-cols > div { padding: 6px 10px; } .dec-cols > div + div { border-left: 1px solid var(--line); }
+  .dec-cols b, .dec.com-lance .dec-l b { font-size: 14px; } .dec-cols em { display: none; }
+}
+.neg-tx { color: var(--red); font-weight: 800; white-space: nowrap; }
 .solo-alerta { display: flex; align-items: center; gap: 6px; width: 100%; font-weight: 800; color: var(--red); font-size: 12px; }
 .sim-res .solo-alerta { margin-top: 6px; }
 .i-vals .v-lance-pc.solo-baixo, .i-mvals .v-lance.solo-baixo { background: var(--red-soft) !important; box-shadow: inset 0 0 0 1.5px var(--red); }
@@ -1041,7 +1065,7 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.83.0';
+  const APP_VERSION = '1.84.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Em disputa', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -3796,11 +3820,10 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
         }
         if (!c || c.minimo == null) { el.innerHTML = `<div class="small muted">Informe quantidade e custo para ver o valor mínimo da proposta.</div>${dica}`; return; }
         const bad = c.sitTipo === 'bad';
-        el.innerHTML = `<div class="minbox ${viabCls(c)}"><div><div class="t">Valor mínimo p/ proposta (unit.)</div><div class="tiny muted">margem ${C.pct(c.margem, 1)} sobre o preço</div>${viabLinha(c)}</div><div class="v">${C.brl(c.minimo)}</div></div>
+        el.innerHTML = `${decisaoHtml(c)}
           <div class="kv"><span>Custo unit. final <b>${C.brl(c.custoUnit)}</b></span><span>Entrega rateada <b>${C.brl(c.entrega)}</b></span>
-          <span>Posso baixar do teto <b>${c.folgaRs != null ? C.brl(c.folgaRs) + ' (' + C.pct(c.folgaPct, 0) + ')' : '—'}</b></span>
+          ${(() => { const d = decisao(c); return d.min != null && c.teto ? `<span>Posso baixar do teto até o mínimo <b>${C.brl(c.teto - d.min)} (${C.pct(1 - d.min / c.teto, 0)})</b></span>` : ''; })()}
           ${c.impostoTotal > 0 ? `<span>Impostos <b>${C.brl(c.impostoTotal)}</b></span>` : ''}</div>
-          ${soloHtml(c)}
           ${c.situacao ? `<div><span class="badge ${c.sitTipo}">${esc(c.situacao)}</span> ${estrelasHtml(c)} <span class="tiny muted">Lucro previsto ${C.brl(c.lucro)}</span></div>` : ''}${dica}`;
       },
       onSave: (x, form) => {
@@ -4160,7 +4183,7 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
     const media = (arr) => arr.reduce((s, x) => s + x, 0) / arr.length;
     const mvMed = media(rows.map((r) => r.mv)), minhaMed = media(rows.map((r) => r.minha));
     const inv = rows.filter((r) => r.mv < 0).length, aperto = rows.filter((r) => r.mv >= 0 && r.mv < r.minha).length, folga = rows.length - inv - aperto;
-    const lista = rows.slice().sort((a, b) => (b.it.updatedAt || 0) - (a.it.updatedAt || 0)).slice(0, 5).map((r) => `<div class="vrow hide-m"><div class="grow"><b class="ell">${esc(r.it.descricao)}</b><span class="tiny muted">meu mínimo ${C.brl(r.c.minimo)} · venceu ${C.brl(r.it.vencedor)}</span></div><span class="badge ${r.mv < 0 ? 'bad' : r.mv < r.minha ? 'warn' : 'ok'}">${C.pct(r.mv, 0)}</span></div>`).join('');
+    const lista = rows.slice().sort((a, b) => (b.it.updatedAt || 0) - (a.it.updatedAt || 0)).slice(0, 5).map((r) => `<div class="vrow hide-m"><div class="grow"><b class="ell">${esc(r.it.descricao)}</b><span class="tiny muted">meu mínimo ${minSegTxt(r.c)} · venceu ${C.brl(r.it.vencedor)}</span></div><span class="badge ${r.mv < 0 ? 'bad' : r.mv < r.minha ? 'warn' : 'ok'}">${C.pct(r.mv, 0)}</span></div>`).join('');
     return `<div class="card m-hide"><h3>${icon('itens', 'sm')}<span class="grow">Preço de quem ganhou</span><span class="tiny muted" style="text-transform:none;letter-spacing:0">${rows.length} ${rows.length === 1 ? 'item' : 'itens'}</span></h3>
       <p class="small" style="margin-bottom:12px">Igualando o preço do vencedor, sua margem média seria <b>${C.pct(mvMed, 1)}</b> (você pratica ${C.pct(minhaMed, 1)}).</p>
       <div class="vstats"><div class="bad"><b>${inv}</b><span>abaixo do meu custo</span></div><div class="warn"><b>${aperto}</b><span>igualaria com margem menor</span></div><div class="ok"><b>${folga}</b><span>igualaria com minha margem</span></div></div>
@@ -4513,6 +4536,45 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
     else { sub = `meta ${C.pct(c.margem, 0)} · custo final ${C.brl(c.custoUnit)}`; cls = min == null || c.teto == null ? '' : min > c.teto ? 'warn' : 'ok'; }
     return { com: false, cls, titulo: 'Valor mínimo p/ proposta (unit.)', curto, valor: min != null ? C.brl(min) : '—', sub };
   }
+  // bloco único de decisão do item: conclusão (seguro / abaixo da meta / risco), lance mínimo e o lucro ganhando só este x junto com os outros
+  function decisao(c) {
+    const cabe = (v) => v != null && (c.teto == null || v <= c.teto + 0.004);
+    const s = soloMin(c) != null ? c.solo : null;
+    const comLance = c.lance !== null, ref = comLance ? 'no lance' : 'pelo teto';
+    let tipo, txt, min, minSub;
+    if (!s) {
+      min = c.minimo; minSub = 'meta ' + C.pct(c.margem, 0); tipo = min == null || c.teto == null ? '' : min > c.teto ? 'warn' : 'ok'; txt = tipo === 'warn' ? 'Atenção: a meta de ' + C.pct(c.margem, 0) + ' não cabe no teto' : tipo === 'ok' ? 'Seguro: cobre a meta' : '';
+      if (tipo === 'warn') { const emp = c.custoUnit != null ? Math.ceil(c.custoUnit * 100 - 1e-6) / 100 : null; if (cabe(emp)) { min = emp; minSub = 'sem prejuízo (a meta não cabe no teto)'; } else { min = null; tipo = 'bad'; txt = 'Risco: dá prejuízo mesmo vendendo pelo teto'; } }
+    }
+    else if (cabe(s.minimo)) { tipo = 'ok'; min = s.minimo; minSub = 'meta ' + C.pct(c.margem, 0) + ', mesmo ganhando só este'; txt = 'Seguro: mesmo ganhando só este item, cobre a viagem e a meta'; }
+    else if (cabe(s.empate)) { tipo = 'warn'; min = s.empate; minSub = 'sem prejuízo ganhando só este'; txt = 'Atenção: ganhando só este, não dá prejuízo, mas fica abaixo da meta de ' + C.pct(c.margem, 0); }
+    else { tipo = 'bad'; min = null; minSub = 'nem o teto cobre se ganhar só este'; txt = 'Risco: se ganhar só este item, dá prejuízo mesmo vendendo pelo teto'; }
+    const q = c.qtd || 0;
+    const solo = s ? (comLance ? s.lucro : s.lucroTeto) : null;
+    const junto = comLance ? c.lucro : (c.teto != null ? c.lucro : null);
+    // com lance, a conclusão é pelo lance (não pelo teto)
+    if (comLance && s) {
+      if (s.lucro <= 0) { tipo = 'bad'; txt = 'Risco: com este lance, se ganhar só este item, dá prejuízo'; }
+      else if (s.margemReal < c.margem - 0.0005) { tipo = 'warn'; txt = 'Atenção: com este lance, ganhando só este, tem lucro, mas abaixo da meta de ' + C.pct(c.margem, 0); }
+      else { tipo = 'ok'; txt = 'Seguro: com este lance, mesmo ganhando só este, cobre a viagem e a meta'; }
+    } else if (comLance) { tipo = c.lucro == null ? '' : c.lucro <= 0 ? 'bad' : c.margemReal < c.margem - 0.0005 ? 'warn' : 'ok'; txt = tipo === 'bad' ? 'Risco: este lance dá prejuízo' : tipo === 'warn' ? 'Atenção: este lance fica abaixo da meta de ' + C.pct(c.margem, 0) : tipo === 'ok' ? 'Seguro: este lance cobre a meta' : ''; }
+    return { tipo, txt, min, minSub, minTot: min != null ? Math.round(min * q * 100) / 100 : null, ref, comLance, solo, junto, s };
+  }
+  // lance mínimo seguro (nunca acima do teto) para tabelas e listas
+  const minSegTxt = (c) => { if (!c) return '—'; const d = decisao(c); return d.min != null ? C.brl(d.min) : '<span class="neg-tx">Não compensa</span>'; };
+  function decisaoHtml(c) {
+    const d = decisao(c);
+    const ic = d.tipo === 'ok' ? 'check' : 'alert';
+    const val = (v) => v == null ? '—' : v <= 0 ? '<span class="neg">prejuízo ' + C.brl(-v) + '</span>' : C.brl(v);
+    const tip = d.s ? `Ganhando só este, a entrega de carro fica toda nele: ${C.brl(d.s.entrega)} (no rateio: ${C.brl(d.s.entrega - d.s.extra)}).` : '';
+    return `<div class="dec ${d.tipo}${d.comLance ? ' com-lance' : ''}" title="${esc(tip)}">
+      ${d.txt ? `<div class="dec-hd">${icon(ic, 'sm')}<span>${d.txt}</span></div>` : ''}
+      <div class="dec-cols">
+        <div class="dec-min"><small>Lance mínimo (unit.)</small><b>${d.min != null ? C.brl(d.min) : '<span class="neg">Não compensa</span>'}</b><em>${esc(d.minSub)}</em></div>
+        ${d.s ? `<div class="dec-l dec-solo"><small>Lucro ${d.ref}, ganhando só este</small><b>${val(d.solo)}</b><em>viagem toda neste item</em></div>` : ''}
+        <div class="dec-l"><small>Lucro ${d.ref}${d.s ? ', junto com os outros' : ''}</small><b>${val(d.junto)}</b><em>${d.comLance ? C.pct(c.margemReal, 0) + ' sobre a venda' : c.margemReal != null ? C.pct(c.margemReal, 0) + ' sobre a venda' : ''}${c.impostoTotal > 0 ? ' · impostos ' + C.brl(c.impostoTotal) : ''}</em></div>
+      </div></div>`;
+  }
   function destaqueHtml(c) {
     const d = destaqueInfo(c);
     return `<div class="minbox i-min ${d.cls}${d.com ? ' mb-lucro' : ''}"><div><div class="t">${d.titulo}</div><div class="tiny muted">${d.sub}</div></div><div class="v">${d.valor}</div></div>`;
@@ -4567,9 +4629,9 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
     // celular: valor do meu lance (lance final; vazio = teto do edital) e mínimo pela margem
     const meuLance = C.unitProposta(c, 'auto').unit;   // mesma regra do PDF: lance final prevalece; sem lance, o teto do edital
     const baixo = abaixoSolo(c, meuLance) ? ' solo-baixo' : '', baixoTip = baixo ? ` title="${esc('Abaixo do mínimo se ganhar só este item: ' + C.brl(soloMin(c)))}"` : '';
-    const dq = destaqueInfo(c);
-    const mVals = `<div class="i-mvals"><div class="v-lance${baixo}"${baixoTip}><span>${c.lance !== null ? 'Meu lance' : 'Meu lance (teto)'}</span><b>${meuLance != null ? C.brl(meuLance) : '—'}</b></div><div class="v-min ${dq.cls}"><span>${dq.curto}</span><b>${dq.valor}</b></div></div>`;
-    const vals = mVals + `<div class="i-vals"><div class="v-lance-pc ${viabCls(c)}${baixo}"${baixoTip}><span>${c.lance !== null ? 'Meu lance (unit.)' : 'Meu lance (teto)'}</span><b>${meuLance != null ? C.brl(meuLance) : '—'}</b></div><div><span>Custo total</span><b>${it.custo > 0 && it.qtd > 0 ? C.brl(c.produtos) : '—'}</b></div><div class="v-mintot"><span>Mín. total</span><b>${C.brl(c.minTotal)}</b></div><div><span>Edital total</span><b>${c.tetoTotal != null ? C.brl(c.tetoTotal) : '—'}</b></div></div>`;
+    const dc = decisao(c);
+    const mVals = `<div class="i-mvals"><div class="v-lance${baixo}"${baixoTip}><span>${c.lance !== null ? 'Meu lance' : 'Meu lance (teto)'}</span><b>${meuLance != null ? C.brl(meuLance) : '—'}</b></div><div class="v-min ${dc.tipo}"><span>Lance mínimo</span><b>${dc.min != null ? C.brl(dc.min) : 'Não compensa'}</b></div></div>`;
+    const vals = mVals + `<div class="i-vals"><div class="v-lance-pc ${viabCls(c)}${baixo}"${baixoTip}><span>${c.lance !== null ? 'Meu lance (unit.)' : 'Meu lance (teto)'}</span><b>${meuLance != null ? C.brl(meuLance) : '—'}</b></div><div><span>Custo total</span><b>${it.custo > 0 && it.qtd > 0 ? C.brl(c.produtos) : '—'}</b></div><div class="v-mintot"><span>Mín. total</span><b>${dc.minTot != null ? C.brl(dc.minTot) : '—'}</b></div><div><span>Edital total</span><b>${c.tetoTotal != null ? C.brl(c.tetoTotal) : '—'}</b></div></div>`;
     // resultado do item: seletor (toque de novo no mesmo volta para "aguardando")
     const RES = [['venci', 'Venci', 'acomp'], ['perdi', 'Não ganhei', 'x'], ['desc', 'Desclassif.', 'alert']];
     const acao = `<div class="res-sel" role="group" aria-label="Resultado do item">${RES.map(([v, l, ic]) => `<button type="button" class="btn sm res-${v}${c.resultado === v ? ' on' : ''}" data-act="item-res" data-v="${v}" data-id="${it.id}" title="${c.resultado === v ? 'Desmarcar ' + l : l}" aria-label="${l}">${icon(ic, 'sm')}${c.resultado === v ? '<span>' + l + '</span>' : ''}</button>`).join('')}</div>`
@@ -4585,9 +4647,7 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
       ${obs}
       ${descLinha}
       ${venc}
-      ${destaqueHtml(c)}
-      ${soloHtml(c)}
-      <div class="row between wrap small muted i-fin" style="gap:4px 10px"><span>Posso baixar do teto: <b style="color:var(--ink)">${c.folgaRs != null ? C.brl(c.folgaRs) + ' (' + C.pct(c.folgaPct, 0) + ')' : '—'}</b></span><span>${c.impostoTotal > 0 ? 'Impostos ' + C.brl(c.impostoTotal) + ' · ' : ''}Lucro: <b style="color:var(--ink)">${C.brl(c.lucro)}</b></span></div>
+      ${decisaoHtml(c)}
       ${p && !c.fora && (p.status === 'Em disputa' || it.possivelGanhar || it.colocacao) ? `<div class="coloc-row">${colocacaoInput(it)}${it.colocacao ? `<span class="coloc-badge ${it.colocacao === 1 ? 'c1' : it.colocacao <= 3 ? 'c3' : ''}">${colocTxt(it.colocacao)} lugar</span>` : ''}</div>` : ''}
       ${p && ['Em disputa', 'Proposta enviada'].includes(p.status) && !['perdi', 'desc'].includes(c.resultado) ? simLanceHtml(it, c, meuLance) : ''}
       <div class="icard-actions">${compra}${acao}</div></article>`;
@@ -4603,7 +4663,8 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
     if (!c) return '<span class="tiny muted">Digite um valor unitário para ver lucro, margem e viabilidade. Nada é salvo.</span>';
     const nota = c.nota != null ? String(c.nota.toFixed(1)).replace('.', ',') : '—';
     const fill = c.nota != null ? Math.max(0, Math.min(100, c.nota / 5 * 100)).toFixed(0) : 0;
-    const vsMin = c.minimo != null ? (v >= c.minimo ? `acima do mínimo (${C.brl(c.minimo)})` : `<b>${C.brl(c.minimo - v)} abaixo</b> do mínimo (${C.brl(c.minimo)})`) : '';
+    const dm = decisao(c).min;
+    const vsMin = dm != null ? (v >= dm - 0.004 ? `acima do lance mínimo (${C.brl(dm)})` : `<b>${C.brl(dm - v)} abaixo</b> do lance mínimo (${C.brl(dm)})`) : '<b>não compensa ganhar só este item</b>';
     const vsTeto = c.teto != null && v > c.teto ? ` · <b class="sim-acima">acima do teto (${C.brl(c.teto)})</b>` : '';
     return `<div class="sim-kpis ${c.viabTipo || ''}">
         <div><span>Total</span><b>${C.brl(c.totalVenda)}</b></div>
@@ -4797,7 +4858,7 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
         <td class="it-desc"><b>${esc(it.descricao)}</b>${it.marca ? `<small>${esc(it.marca)}</small>` : ''}${String(it.obs || '').trim() ? `<small class="it-obs">${icon('alert', 'sm')} ${esc(it.obs)}</small>` : ''}</td>
         <td class="r">${C.qtdBR(it.qtd)}</td>
         <td class="r">${c.divisao ? `${C.brl(c.custoCompra)}<small>média</small>` : C.brl(it.custo)}</td>
-        <td class="r"><b>${C.brl(c.minimo)}</b></td>
+        <td class="r"><b>${minSegTxt(c)}</b></td>
         <td class="r">${C.brl(c.teto)}</td>
         <td class="r">${c.lance != null ? C.brl(c.lance) : '—'}</td>
         <td class="r">${it.custo > 0 && it.qtd > 0 ? C.brl(c.produtos) : '—'}</td>
@@ -4926,7 +4987,7 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
           <td class="acp-desc"><div class="acp-tit">${l.venci ? '<span class="acp-tag venci">Venci</span>' : '<span class="acp-tag posso">Posso ganhar</span>'}<b>${ie ? 'Item ' + esc(ie) + ' · ' : ''}${esc(it.descricao)}</b></div>${it.marca ? `<small>${esc(it.marca)}</small>` : ''}${it.obs ? `<small class="acp-obs">${icon('alert', 'sm')} ${esc(it.obs)}</small>` : ''}</td>
           <td class="r m-off" data-l="Qtd">${C.qtdBR(it.qtd)}</td>
           <td class="r m-off" data-l="Custo un.">${C.brl(c.custoUnit)}</td>
-          <td class="r m-off" data-l="Mínimo">${C.brl(c.minimo)}</td>
+          <td class="r m-off" data-l="Mínimo">${minSegTxt(c)}</td>
           <td class="r m-off" data-l="Teto">${C.brl(c.teto)}</td>
           <td class="r a-col" data-l="Colocação">${colocacaoInput(it)}</td>
           <td class="r a-val" data-l="Valor"><input class="input${l.venci && it.lanceFinal == null ? ' vazio' : ''}" inputmode="decimal" data-acomp-lance="${it.id}" value="${it.lanceFinal == null ? '' : Number(it.lanceFinal).toFixed(2).replace('.', ',')}" placeholder="${l.unit == null ? '' : Number(l.unit).toFixed(2).replace('.', ',')}" title="Valor final unitário (lance). Vazio = valor do edital (teto)"></td>
@@ -5324,6 +5385,7 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
     const st = store.get();
     const L = C.linhasProposta(st, pid, UI.pdf.fonte, 0, 'final');
     if (!L.linhas.length) { toast('Nenhum item para a proposta final'); return Promise.resolve(false); }
+    const RR = C.computeAll(st);
     const v2 = (n) => (n === null || n === undefined ? '' : Number(n).toFixed(2).replace('.', ','));
     return new Promise((resolve) => {
       const w = document.createElement('div');
@@ -5333,7 +5395,7 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
         <div class="tbl-scroll"><table class="tbl"><thead><tr><th class="c">Lote</th><th class="c">Item</th><th>Descrição</th><th class="r">Qtd</th><th class="r">Frete</th><th class="c">Comprar</th><th class="r">Inicial</th><th class="r">Mínimo</th><th class="r">Teto</th><th class="r">Valor unit.</th><th class="r">Total</th></tr></thead><tbody>
         ${L.linhas.map((x) => { const it = st.itens.find((i) => i.id === x.id) || {}; const cps = comprasDoItem(it).filter((k) => k.href); return `<tr><td class="c">${esc(C.padLE(it.loteEdital) || '—')}</td><td class="c"><b>${esc(C.padLE(it.itemEdital) || x.numeroItem)}</b></td><td class="pf-desc" title="${esc(x.descricao)}"><div>${esc(x.descricao)}</div></td><td class="r">${C.qtdBR(x.qtd)}</td><td class="r">${C.brl(it.frete || 0)}</td>
           <td class="c">${cps.length ? cps.map((k) => `<a class="buy" href="${esc(k.href)}" target="_blank" rel="noopener noreferrer" title="Conferir preço e estoque: ${esc(k.label || 'link')}">$</a>`).join('') : '<span class="muted">—</span>'}</td>
-          <td class="r">${C.brl(x.precoInicial)}</td><td class="r">${C.brl(x.minimo)}</td><td class="r">${C.brl(x.teto)}</td>
+          <td class="r">${C.brl(x.precoInicial)}</td><td class="r">${minSegTxt(RR.iMap.get(x.id))}</td><td class="r">${C.brl(x.teto)}</td>
           <td class="r"><input class="input" inputmode="decimal" style="width:110px;text-align:right" data-pf="${x.id}" value="${esc(v2(x.unit))}"></td><td class="r pf-lt" data-pf-tot="${x.id}">${x.total != null ? C.brl(x.total) : '—'}</td></tr>`; }).join('')}
         </tbody><tfoot><tr><td colspan="10" class="r">Total da proposta</td><td class="r" id="pfTot">${C.brl(L.total)}</td></tr></tfoot></table></div>
         <div class="pf-check"><b>${icon('alert', 'sm')} Antes de gerar, confira (só lembrete):</b>
