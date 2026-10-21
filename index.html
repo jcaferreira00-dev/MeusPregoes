@@ -483,7 +483,7 @@ input.input[type=datetime-local]::-webkit-date-and-time-value, input.input[type=
   html .pcard .m-acts { display: inline-flex; gap: 4px; }
   html .pcard h4 { font-size: 14.5px; }
   html .pcard .p-prop, html .pcard .lkrow, html .pcard .p-itens, html .pcard .obsline { display: none !important; }
-  html .pcard .m-meta { display: inline-flex; align-items: center; }
+  html .pcard .m-meta { display: inline-flex; align-items: center; } html .pcard .p-nit { display: none !important; }
   html .pcard .m-obs { color: var(--amber); }
   html .pcard > .small.row { font-size: 11.5px; gap: 2px 10px !important; }
   html .pcard .prazo { font-size: 11px; padding: 2px 7px; }
@@ -802,8 +802,8 @@ html body .pgc-st { border-radius: 6px; font-size: 10.5px; letter-spacing: .02em
 
 /* ---------- guia Pregões: blocos quadrados e simétricos (v1.55) ---------- */
 /* grade com colunas iguais; cada linha tem a altura do maior bloco; nada encolhe nem é cortado */
-.pq-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); grid-auto-rows: 1fr; gap: 16px; align-items: stretch; }
-.pq-grid > .pcard { min-height: 300px; min-width: 0; overflow: visible; gap: 8px; padding: 16px; border-radius: 14px; }
+.pq-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); grid-auto-rows: 1fr; gap: 16px; align-items: stretch; }
+.pq-grid > .pcard { min-height: 0; min-width: 0; overflow: visible; gap: 8px; padding: 16px; border-radius: 14px; }
 .pq-grid .pcard > * { flex-shrink: 0; min-width: 0; }
 /* a borda do 'Incompleto' é 1px mais grossa: tira 1px do respiro para o conteúdo ficar na mesma posição dos outros */
 html .pq-grid > .pcard.falta-dados { padding: 15px; }
@@ -967,6 +967,32 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
 
 /* resultado do item (v1.77): seletor Venci / Não ganhei / Desclassif. e cor do valor */
 .res-sel { display: inline-flex; gap: 0; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.res-sel .btn { min-width: 38px; justify-content: center; gap: 5px; }
+.res-sel .btn.pode-on { color: var(--green); background: var(--green-soft); }
+.icard-actions { gap: 8px; align-items: center; }
+.icard-actions > .comprar { margin-right: auto; }
+.comprar-btn.so-ic { min-width: 40px; justify-content: center; }
+.icard .badge .s-lg { display: none; } .icard .badge .s-sm { display: inline; }
+.solo { display: flex; align-items: center; gap: 6px 10px; flex-wrap: wrap; font-size: 12px; border-radius: 10px; padding: 6px 10px; border: 1px dashed var(--line); color: var(--muted); }
+.solo .s-sm { display: none; } @media (max-width: 600px) { .solo .s-sm { display: inline; } }
+.solo .solo-t { font-weight: 800; text-transform: uppercase; font-size: 10.5px; letter-spacing: .04em; }
+.solo .solo-v { display: flex; flex-wrap: wrap; gap: 2px 14px; }
+.solo b { color: var(--ink); font-variant-numeric: tabular-nums; }
+.solo.warn { border-color: var(--amber); background: var(--amber-soft); color: var(--amber); }
+.solo.bad { border-color: var(--red); background: var(--red-soft); color: var(--red); }
+.solo.bad b { color: var(--red); }
+@media (max-width: 600px) {
+  .solo { padding: 5px 8px; font-size: 11.5px; gap: 4px 8px; flex-wrap: nowrap; }
+  .solo .solo-t { font-size: 9.5px; white-space: nowrap; }
+  .solo .solo-v { gap: 0 8px; flex-wrap: nowrap; min-width: 0; overflow: hidden; white-space: nowrap; }
+  .solo .solo-mg, .solo .solo-lc, .solo .s-lg { display: none; }
+  .icard-actions { flex-wrap: nowrap; gap: 6px; }
+  .icard-actions .res-sel { width: auto; flex: 1 1 auto; }
+  .icard-actions .res-sel + .res-sel { flex: 0 0 auto; }
+  .icard-actions .res-sel .btn { min-width: 0; padding-left: 6px; padding-right: 6px; }
+  .icard-actions .res-sel .btn span { display: none; }
+  .pcard .p-obsit { display: none !important; }
+}
 .res-sel .btn { border: 0; border-radius: 0; background: transparent; color: var(--muted); }
 .res-sel .btn + .btn { border-left: 1px solid var(--line); }
 .res-sel .btn.res-venci.on { background: var(--green-soft); color: var(--green); }
@@ -993,7 +1019,7 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.77.0';
+  const APP_VERSION = '1.78.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Em disputa', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -1203,6 +1229,33 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
     return { nota, viab, viabTipo, sitCurta, margemReal, estrelas, minTotal, tetoTotal, compra, entrega, custoTotal, custoUnit, margem, minimo, teto, lance, folgaRs, folgaPct, totalVenda, lucro, situacao, sitTipo, produtos: qtd * custo, frete, divisao: divisaoCompra(it), custoCompra: custo, impostoCompra, imposto, impostoTotal: impostoCompra + imposto };
   }
 
+  // "se eu ganhar só este item": ele paga sozinho a viagem inteira da rota dele (frete do fornecedor já é do item).
+  // empate = lance unitário sem prejuízo; minimo = lance com a margem do item; lucro = no lance (sem lance, no teto)
+  function calcSozinho(it, c, pst, cfg) {
+    const qtd = n0(it.qtd);
+    if (!(qtd > 0) || !(n0(it.custo) > 0 || c.divisao)) return null;
+    const p = pst.p;
+    const lp = normLocal(it.localEntrega);
+    let entrega;
+    if (lp && lp !== normLocal(p.cidadeUf)) {
+      const g = pst.grupoOf && pst.grupoOf(it);
+      entrega = g ? g.custo : custoViagem({ km: n0(it.kmEntrega) || n0(p.km), viagens: it.viagensEntrega == null || it.viagensEntrega === '' ? n0(p.viagens) : n0(it.viagensEntrega), pedagio: n0(it.pedagioEntrega) || n0(p.pedagio) }, cfg);
+    } else if (pst.ents) { const x = pst.entOf(it); entrega = x ? x.custo : 0; }
+    else entrega = custoViagem(p, cfg);
+    const extra = entrega - c.entrega;
+    const custoTotal = c.compra + entrega;
+    const unit = custoTotal / qtd;
+    const impPct = Math.max(0, n0(cfg.impostoPct));
+    const empate = impPct < 1 ? ceil2(unit / (1 - impPct)) : null;
+    const den = 1 - c.margem - impPct;
+    const minimo = den > 0 ? ceil2(unit / den) : null;
+    const ref = c.lance !== null ? c.lance : c.teto;
+    const lucro = ref !== null ? qtd * ref * (1 - impPct) - custoTotal : null;
+    const margemReal = ref ? lucro / (qtd * ref) : null;
+    const risco = lucro === null ? '' : lucro <= 0 ? 'bad' : (minimo !== null && ref < minimo) ? 'warn' : 'ok';
+    return { entrega, extra, custoTotal, empate, minimo, lucro, margemReal, risco, relevante: extra > 0.5 };
+  }
+
   function limiteMEI(cfg) {
     const ab = Number(cfg.anoAbertura), mes = Number(cfg.mesAbertura);
     if (ab && mes >= 1 && mes <= 12 && ab === Number(cfg.anoRef)) return round2(n0(cfg.limiteCheio) / 12 * (13 - mes));
@@ -1289,7 +1342,7 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
         pool = ents.filter((x) => x.base === 0).reduce((a, x) => a + x.custo, 0);   // viagem sem itens: o custo é dividido entre todos
       }
       const nDesc = list.filter((i) => i.desclassPedida).length, nPerd = list.filter((i) => !i.desclassPedida && perdeuIt(i)).length;
-      pMap.set(p.id, { ganhouIt, conta, nDesc, nPerd, nAguard: nGanhos > 0 ? list.filter((i) => !ganhouIt(i) && !perdeuIt(i)).length : 0, ganho: nGanhos > 0, p, viagemPadrao: padrao.length ? custoViagem(p, cfg) : 0, viagem: (padrao.length ? (ents ? ents.reduce((a, x) => a + x.custo, 0) : custoViagem(p, cfg)) : 0) + custoGrupos, ents, entOf, pool, base, grupos: [...grupos.values()], grupoOf, itens: list, todosItens: listAll, nItens: list.length, nGanhos, nPode: list.filter((i) => i.possivelGanhar && !ganhouIt(i)).length, venda: 0, custo: 0, lucro: 0, imposto: 0, margem: null });
+      pMap.set(p.id, { ganhouIt, conta, nDesc, nPerd, nAguard: nGanhos > 0 ? list.filter((i) => !ganhouIt(i) && !perdeuIt(i)).length : 0, ganho: nGanhos > 0, p, viagemPadrao: padrao.length ? custoViagem(p, cfg) : 0, viagem: (padrao.length ? (ents ? ents.reduce((a, x) => a + x.custo, 0) : custoViagem(p, cfg)) : 0) + custoGrupos, ents, entOf, pool, base, grupos: [...grupos.values()], grupoOf, itens: list, todosItens: listAll, nItens: list.length, nGanhos, nPode: list.filter((i) => i.possivelGanhar && !ganhouIt(i)).length, nSoloPreju: 0, venda: 0, custo: 0, lucro: 0, imposto: 0, margem: null });
     }
     const iMap = new Map();
     for (const it of itens) {
@@ -1298,6 +1351,7 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
       let pc = pst;
       if (pst && !it.semLance && !pst.conta(it) && !pst.ents && !(pst.grupoOf && pst.grupoOf(it))) pc = Object.assign({}, pst, { base: pst.base + compraBase(it), viagemPadrao: custoViagem(pst.p, cfg) });
       const c = calcItem(it, pc, cfg);
+      c.solo = pst && !it.semLance ? calcSozinho(it, c, pst, cfg) : null;
       c.fora = !!it.semLance;
       // pregão com itens ganhos: os itens não ganhos ficam fora das contas e das estatísticas
       c.ganhou = !!(pst && pst.ganhouIt(it));
@@ -1306,6 +1360,7 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
       c.aguardando = !!(pst && pst.ganho && !c.ganhou && !c.desclass && it.ganhou !== false && !it.semLance);
       c.resultado = c.ganhou ? 'venci' : c.desclass ? 'desc' : (it.ganhou === false && !it.semLance) ? 'perdi' : c.aguardando ? 'aguard' : '';
       iMap.set(it.id, c);
+      if (pst && !pst.ganho && c.solo && c.solo.relevante && c.solo.risco === 'bad' && !c.fora && c.resultado !== 'perdi' && !c.desclass) pst.nSoloPreju += 1;
       if (pst && !it.semLance && !c.naoGanhou) { pst.custo += c.custoTotal; pst.venda += c.totalVenda || 0; pst.lucro += c.lucro || 0; pst.imposto += c.impostoTotal; }
     }
     for (const pst of pMap.values()) {
@@ -2957,6 +3012,9 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
     web: '<rect x="2" y="4" width="20" height="13" rx="2"/><path d="M8 21h8M12 17v4"/>',
     alert: '<path d="M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/>',
     x: '<path d="M18 6L6 18M6 6l12 12"/>',
+    fora: '<circle cx="12" cy="12" r="9"/><path d="M5.6 5.6l12.8 12.8"/>',
+    star: '<path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"/>',
+    truck: '<path d="M1 6h13v10H1zM14 10h4l3 3v3h-7"/><circle cx="5.5" cy="18" r="1.8"/><circle cx="17.5" cy="18" r="1.8"/>',
     back: '<path d="M15 18l-6-6 6-6"/>',
     refresh: '<path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.5 9a9 9 0 0 1 14.9-3.4L23 10M1 14l4.6 4.4A9 9 0 0 0 20.5 15"/>',
     cloud: '<path d="M18 10h-1.3A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/>',
@@ -3717,6 +3775,7 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
           <div class="kv"><span>Custo unit. final <b>${C.brl(c.custoUnit)}</b></span><span>Entrega rateada <b>${C.brl(c.entrega)}</b></span>
           <span>Posso baixar do teto <b>${c.folgaRs != null ? C.brl(c.folgaRs) + ' (' + C.pct(c.folgaPct, 0) + ')' : '—'}</b></span>
           ${c.impostoTotal > 0 ? `<span>Impostos <b>${C.brl(c.impostoTotal)}</b></span>` : ''}</div>
+          ${soloHtml(c)}
           ${c.situacao ? `<div><span class="badge ${c.sitTipo}">${esc(c.situacao)}</span> ${estrelasHtml(c)} <span class="tiny muted">Lucro previsto ${C.brl(c.lucro)}</span></div>` : ''}${dica}`;
       },
       onSave: (x, form) => {
@@ -4320,7 +4379,7 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
   function pregaoCard(pst) {
     const p = pst.p;
     if (C.INATIVOS.includes(p.status)) return miniPregao(p, pst.nPode > 0);
-    const chips = porItemEdital(pst.itens).slice(0, 3).map((i) => `<span class="chip">${esc(i.descricao)}</span>`).join('') + (pst.itens.length > 3 ? `<span class="chip">+${pst.itens.length - 3}</span>` : '');
+    const nObsIt = pst.itens.filter((i) => String(i.obs || '').trim()).length;
     const pz = prazoInfo(p), po = posInfo(p);
     const enviada = p.status === 'Proposta enviada';
     const pzCls = (!enviada && pz && (pz.nivel === 'warn' || pz.nivel === 'bad') ? ' prz-' + pz.nivel : '') + (p.status === 'Falta dados' ? ' falta-dados' : '') + (enviada ? ' enviada' : '');
@@ -4330,7 +4389,7 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
     return `<article class="pcard${pzCls}" style="--gc:${corDe(p.id)};--sc:${COR_STATUS[p.status] || '#2e75b6'}" data-act="abrir-pregao" data-id="${p.id}" tabindex="0" role="button">
       <div class="row between p-hd"><span class="num" style="color:var(--gc)" title="Pregão nº ${esc(p.numero)}">${/^preg/i.test(String(p.numero).trim()) ? esc(p.numero) : 'PREGÃO Nº ' + esc(p.numero)}</span><span class="m-acts">${url(p.link) ? `<a class="ic-btn" href="${esc(url(p.link))}" target="_blank" rel="noopener noreferrer" data-act="link-externo" title="Abrir edital" aria-label="Abrir edital">${icon('pdf', 'sm')}</a>` : '<span class="ic-btn ic-vazio" aria-hidden="true"></span>'}${url(p.linkProposta) ? `<a class="ic-btn" href="${esc(url(p.linkProposta))}" target="_blank" rel="noopener noreferrer" data-act="link-externo" title="Enviar proposta" aria-label="Enviar proposta">${icon('link', 'sm')}</a>` : '<span class="ic-btn ic-vazio" aria-hidden="true"></span>'}</span>${badgeStatus(p.status)}</div>
       <h4>${esc(p.orgao)}</h4>
-      <div class="small muted row wrap" style="gap:4px 14px;align-items:center">${url(p.linkProposta) ? `<a class="btn sm lk p-prop" href="${esc(url(p.linkProposta))}" target="_blank" rel="noopener noreferrer" data-act="link-externo">${icon('link', 'sm')} Proposta</a>` : ''}${p.cidadeUf ? `<span class="row" style="gap:4px">${icon('pin', 'sm')}${esc(cidadeFmt(p.cidadeUf))}</span>` : ''}${p.sessao ? `<span class="row" style="gap:4px">${icon('calendar', 'sm')}${esc(C.fmtSessao(p.sessao))}</span>` : ''}<span class="m-meta">${pst.itens.length ? pst.itens.length + (pst.itens.length === 1 ? ' item' : ' itens') : 'sem itens'}</span>${(p.obs || pst.itens.some((i) => String(i.obs || '').trim())) ? `<span class="m-meta m-obs" title="Tem observação">${icon('alert', 'sm')}</span>` : ''}</div>
+      <div class="small muted row wrap" style="gap:4px 14px;align-items:center">${url(p.linkProposta) ? `<a class="btn sm lk p-prop" href="${esc(url(p.linkProposta))}" target="_blank" rel="noopener noreferrer" data-act="link-externo">${icon('link', 'sm')} Proposta</a>` : ''}${p.cidadeUf ? `<span class="row" style="gap:4px">${icon('pin', 'sm')}${esc(cidadeFmt(p.cidadeUf))}</span>` : ''}${p.sessao && (!pz || String(p.sessao) !== String(p.prazoPropostas || '')) ? `<span class="row" style="gap:4px">${icon('calendar', 'sm')}${esc(C.fmtSessao(p.sessao))}</span>` : ''}<span class="row p-nit" style="gap:4px">${icon('itens', 'sm')}${pst.itens.length ? pst.itens.length + (pst.itens.length === 1 ? ' item' : ' itens') : 'sem itens'}</span><span class="m-meta">${pst.itens.length ? pst.itens.length + (pst.itens.length === 1 ? ' item' : ' itens') : 'sem itens'}</span>${(p.obs || pst.itens.some((i) => String(i.obs || '').trim())) ? `<span class="m-meta m-obs" title="Tem observação">${icon('alert', 'sm')}</span>` : ''}</div>
       ${(() => {
         const tags = [
           pz ? `<span class="prazo ${pz.nivel}">${icon(pz.nivel === 'ok' ? 'calendar' : 'alert', 'sm')}${esc(pz.texto)}</span>` : '',
@@ -4341,12 +4400,12 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
           po ? `<span class="prazo ${nivelCls(po.nivel)}">${icon(po.nivel === 'bad' || po.nivel === 'warn' ? 'alert' : 'calendar', 'sm')}${esc(po.texto)}</span>` : '',
           p.modeloProprio ? `<span class="prazo warn">${icon('alert', 'sm')}Modelo próprio de proposta</span>` : '',
           p.entregaParcelada ? `<span class="prazo warn">${icon('pin', 'sm')}Entrega parcelada</span>` : '',
+          pst.nSoloPreju ? `<span class="prazo bad" title="Se você ganhar só ${pst.nSoloPreju === 1 ? 'esse item' : 'um desses itens'}, a viagem de entrega fica toda nele e dá prejuízo no ${pst.nSoloPreju === 1 ? 'lance' : 'lance'} atual. Veja o mínimo em cada item.">${icon('truck', 'sm')}${pst.nSoloPreju} ${pst.nSoloPreju === 1 ? 'item dá' : 'itens dão'} prejuízo se ganhar só ${pst.nSoloPreju === 1 ? 'ele' : 'eles'}</span>` : '',
+          nObsIt ? `<span class="prazo info p-obsit" title="Observações nos itens: abra o pregão para ver">${icon('info', 'sm')}${nObsIt} ${nObsIt === 1 ? 'item com observação' : 'itens com observação'}</span>` : '',
         ].filter(Boolean).join('');
         return tags ? `<div class="p-tags">${tags}</div>` : '';
       })()}
       ${p.obs ? `<div class="obsline"><span class="obs-ic">${icon('alert', 'sm')}</span><span class="obs-tx">${esc(p.obs)}</span></div>` : ''}
-      ${porItemEdital(pst.itens).filter((i) => String(i.obs || '').trim()).map((i) => `<div class="obsline item"><span class="obs-ic">${icon('alert', 'sm')}</span><span class="obs-tx"><b>${esc(String(i.itemEdital || '').trim() ? 'Item ' + String(i.itemEdital).trim() : i.descricao)}:</b> ${esc(i.obs)}</span></div>`).join('')}
-      <div class="chips">${chips || '<span class="chip">Sem itens ainda</span>'}</div>
       <div class="p-itens">${pst.itens.length ? pst.itens.length + (pst.itens.length === 1 ? ' item' : ' itens') : 'Sem itens ainda'}</div>
       <div class="nums"><div>Venda<b>${C.brl0(pst.venda)}</b></div><div>Lucro<b>${C.brl0(pst.lucro)}</b></div><div>Margem<b>${C.pct(pst.margem, 0)}</b></div></div>
       ${botoes ? `<div class="row lkrow${url(p.link) ? ' has-ed' : ''}" style="gap:8px">${botoes}</div>` : ''}</article>`;
@@ -4397,6 +4456,16 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
   // itens que ficaram de fora da disputa vão para o fim da lista
   const foraNoFim = (list, R) => list.slice().sort((a, b) => ((R.iMap.get(a.id) || {}).fora ? 1 : 0) - ((R.iMap.get(b.id) || {}).fora ? 1 : 0));
 
+  // se ganhar só este item, ele paga a viagem inteira: lance mínimo sem prejuízo e com a margem
+  function soloHtml(c) {
+    const s = c && c.solo;
+    if (!s || !s.relevante || c.ganhou || c.resultado === 'perdi' || c.desclass) return '';
+    const ref = c.lance !== null ? 'no lance' : 'no teto';
+    const tip = `Se este for o único item ganho, ele paga sozinho a entrega de carro (${C.brl(s.entrega)}, ${C.brl(s.extra)} a mais que no rateio). Custo total ${C.brl(s.custoTotal)}.`;
+    return `<div class="solo ${s.risco}" title="${esc(tip)}">${icon('truck', 'sm')}<span class="solo-t"><span class="s-lg">Se ganhar só este</span><span class="s-sm">Só este</span></span>
+      <span class="solo-v"><span>sem prejuízo <b>${C.brl(s.empate)}</b></span><span class="solo-mg">margem ${C.pct(c.margem, 0)} <b>${C.brl(s.minimo)}</b></span><span class="solo-lc">${ref}: <b>${s.lucro <= 0 ? 'prejuízo ' + C.brl(-s.lucro) : C.brl(s.lucro) + ' (' + C.pct(s.margemReal, 0) + ')'}</b></span></span></div>`;
+  }
+
   function itemCard(it, c, opt) {
     const p = opt.pst && opt.pst.p;
     const _lt = C.padLE(it.loteEdital), _it = C.padLE(it.itemEdital);
@@ -4415,7 +4484,7 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
     const compra = cps.length ? `<div class="comprar">${cps.map((cp) => {
       const custo = !cp.principal && cp.custo != null ? ' · ' + C.brl(cp.custo) : '';
       return cp.href
-        ? `<a class="btn sm lk comprar-btn${cp.barato ? ' barato' : ''}" href="${esc(cp.href)}" target="_blank" rel="noopener noreferrer" data-act="link-externo" title="${esc((cp.principal ? 'Comprar' : cp.label) + custo)}">${icon('link', 'sm')}<span class="ell">${cp.principal ? 'Comprar' : esc(cp.label)}${custo}</span><b class="cifrao" aria-hidden="true">$</b></a>`
+        ? `<a class="btn sm lk comprar-btn${cp.barato ? ' barato' : ''}${cp.principal ? ' so-ic' : ''}" href="${esc(cp.href)}" target="_blank" rel="noopener noreferrer" data-act="link-externo" title="${esc((cp.principal ? 'Comprar' + (it.onde ? ' em ' + it.onde : '') : cp.label) + custo)}" aria-label="${esc(cp.principal ? 'Comprar' : cp.label)}">${icon('cart', 'sm')}${cp.principal ? '' : `<span class="ell">${esc(cp.label)}${custo}</span>`}<b class="cifrao" aria-hidden="true">$</b></a>`
         : `<span class="chip">${icon('pin', 'sm')}${esc(cp.nome)}${custo}</span>`;
     }).join('')}</div>` : '';
     const venc = Number(it.vencedor) > 0 ? `<div><span class="chip venc">${icon('alert', 'sm')}Venceu por ${C.brl(it.vencedor)}</span></div>` : '';
@@ -4426,8 +4495,8 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
     const vals = mVals + `<div class="i-vals"><div class="v-lance-pc ${viabCls(c)}"><span>${c.lance !== null ? 'Meu lance (unit.)' : 'Meu lance (teto)'}</span><b>${meuLance != null ? C.brl(meuLance) : '—'}</b></div><div><span>Custo total</span><b>${it.custo > 0 && it.qtd > 0 ? C.brl(c.produtos) : '—'}</b></div><div class="v-mintot"><span>Mín. total</span><b>${C.brl(c.minTotal)}</b></div><div><span>Edital total</span><b>${c.tetoTotal != null ? C.brl(c.tetoTotal) : '—'}</b></div></div>`;
     // resultado do item: seletor (toque de novo no mesmo volta para "aguardando")
     const RES = [['venci', 'Venci', 'acomp'], ['perdi', 'Não ganhei', 'x'], ['desc', 'Desclassif.', 'alert']];
-    const acao = `<div class="res-sel" role="group" aria-label="Resultado do item">${RES.map(([v, l, ic]) => `<button type="button" class="btn sm res-${v}${c.resultado === v ? ' on' : ''}" data-act="item-res" data-v="${v}" data-id="${it.id}" title="${c.resultado === v ? 'Desmarcar' : l}">${icon(ic, 'sm')} ${l}</button>`).join('')}</div>`
-      + (c.ganhou || c.resultado === 'perdi' || c.desclass ? '' : `<button type="button" class="btn sm ${it.possivelGanhar ? 'pode-on' : 'ghost'}" data-act="item-pode" data-id="${it.id}">${icon('check', 'sm')} Posso ganhar</button><button type="button" class="btn sm ghost" data-act="item-fora" data-id="${it.id}">Deixar de fora</button>`);
+    const acao = `<div class="res-sel" role="group" aria-label="Resultado do item">${RES.map(([v, l, ic]) => `<button type="button" class="btn sm res-${v}${c.resultado === v ? ' on' : ''}" data-act="item-res" data-v="${v}" data-id="${it.id}" title="${c.resultado === v ? 'Desmarcar ' + l : l}" aria-label="${l}">${icon(ic, 'sm')}${c.resultado === v ? '<span>' + l + '</span>' : ''}</button>`).join('')}</div>`
+      + (c.ganhou || c.resultado === 'perdi' || c.desclass ? '' : `<div class="res-sel"><button type="button" class="btn sm${it.possivelGanhar ? ' pode-on' : ''}" data-act="item-pode" data-id="${it.id}" title="${it.possivelGanhar ? 'Desmarcar Posso ganhar' : 'Posso ganhar'}" aria-label="Posso ganhar">${icon('star', 'sm')}${it.possivelGanhar ? '<span>Posso ganhar</span>' : ''}</button><button type="button" class="btn sm" data-act="item-fora" data-id="${it.id}" title="Deixar de fora da disputa" aria-label="Deixar de fora">${icon('fora', 'sm')}</button></div>`);
     const resBadge = c.resultado === 'venci' ? '<span class="badge ok">Venci</span>' : c.resultado === 'desc' ? `<span class="badge bad" title="${esc('Pedido em ' + C.fmtSessao(it.desclassEm || '') + (it.desclassMotivo ? ' · ' + it.desclassMotivo : ''))}">Desclassif.</span>` : c.resultado === 'perdi' ? '<span class="badge off">Não ganhei</span>' : c.resultado === 'aguard' ? '<span class="badge warn" title="Fora das contas até você marcar Venci">Aguardando</span>' : '';
     const descLinha = c.desclass ? `<div class="obsline desc-line">${icon('alert', 'sm')}<span>Desclassificação pedida em ${esc(C.fmtSessao(it.desclassEm || ''))}${it.desclassMotivo ? ' · ' + esc(it.desclassMotivo) : ''}</span></div>` : '';
     return `<article class="icard${c.naoGanhou && !it.possivelGanhar && !c.aguardando && !c.desclass ? ' nao-ganho' : ''}${c.ganhou ? ' venci' : ''}${c.resultado ? ' res-' + c.resultado : ''}" data-id="${it.id}">
@@ -4436,15 +4505,15 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
       ${opt.showOrg && p ? `<div class="chips"><span class="chip org">#${esc(p.numero)} · ${esc(p.orgao)}</span></div>` : ''}
       <div class="small muted i-meta"><span class="i-meta-tx">${C.qtdBR(it.qtd)} ${esc(it.unidade || 'Un')} · custo ${c.divisao ? C.brl(c.custoCompra) + ' (média de ' + c.divisao.partes.length + ' fornecedores)' : C.brl(it.custo)}<span class="i-teto"> · teto ${C.brl(c.teto)}</span>${it.marca ? ' · ' + esc(it.marca) : ''}</span>${(() => { const nf = Number(it.fotosN) || 0; return `<button type="button" class="foto-tag hide-m ${nf ? 'tem' : 'sem'}" data-act="cat-ir" data-id="${it.id}" title="${nf ? 'Tem foto no catálogo. Clique para ver.' : 'Sem foto no catálogo. Clique para incluir.'}">${icon('image', 'sm')}${nf ? nf + (nf === 1 ? ' foto' : ' fotos') : 'Sem foto'}</button>`; })()}</div>
       ${vals}
-      ${compra}
       ${obs}
       ${descLinha}
       ${venc}
-      <div class="minbox i-min ${viabCls(c)}"><div><div class="t">Valor mínimo p/ proposta (unit.)</div><div class="tiny muted">margem ${C.pct(c.margem, 0)} · custo final ${C.brl(c.custoUnit)}</div>${viabLinha(c)}</div><div class="v">${C.brl(c.minimo)}</div></div>
+      <div class="minbox i-min ${viabCls(c)}"><div><div class="t">Valor mínimo p/ proposta (unit.)</div><div class="tiny muted">margem ${C.pct(c.margem, 0)} · custo final ${C.brl(c.custoUnit)}</div></div><div class="v">${C.brl(c.minimo)}</div></div>
+      ${soloHtml(c)}
       <div class="row between wrap small muted i-fin" style="gap:4px 10px"><span>Posso baixar do teto: <b style="color:var(--ink)">${c.folgaRs != null ? C.brl(c.folgaRs) + ' (' + C.pct(c.folgaPct, 0) + ')' : '—'}</b></span><span>${c.impostoTotal > 0 ? 'Impostos ' + C.brl(c.impostoTotal) + ' · ' : ''}Lucro: <b style="color:var(--ink)">${C.brl(c.lucro)}</b></span></div>
       ${p && !c.fora && (p.status === 'Em disputa' || it.possivelGanhar || it.colocacao) ? `<div class="coloc-row">${colocacaoInput(it)}${it.colocacao ? `<span class="coloc-badge ${it.colocacao === 1 ? 'c1' : it.colocacao <= 3 ? 'c3' : ''}">${colocTxt(it.colocacao)} lugar</span>` : ''}</div>` : ''}
       ${p && ['Em disputa', 'Proposta enviada'].includes(p.status) && !['perdi', 'desc'].includes(c.resultado) ? simLanceHtml(it, c, meuLance) : ''}
-      <div class="icard-actions">${acao}</div></article>`;
+      <div class="icard-actions">${compra}${acao}</div></article>`;
   }
 
   /* ---------- simulador de lance (na disputa): calcula na hora, só grava com 2 confirmações ---------- */
@@ -5517,7 +5586,7 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
     const y = window.scrollY;
     if ((UI.tab === 'itens' || UI.tab === 'certidoes') && window.matchMedia && window.matchMedia('(max-width: 600px)').matches) { UI.tab = 'pregoes'; saveUI(); }
     const fn = { painel: renderPainel, pregoes: renderPregoes, itens: renderItens, acomp: renderAcomp, pdf: renderPDF, certidoes: renderCertidoes, config: renderConfig }[UI.tab];
-    main.classList.toggle('wide', UI.tab === 'acomp' || (UI.tab === 'itens' && UI.itensModo === 'tabela'));
+    main.classList.toggle('wide', UI.tab === 'acomp' || (UI.tab === 'pregoes' && !UI.detailId) || (UI.tab === 'itens' && UI.itensModo === 'tabela'));
     main.innerHTML = fn();
     $$('.nav button').forEach((b) => b.classList.toggle('on', b.dataset.v === UI.tab));
     const t = TABS.find((x) => x.id === UI.tab);
