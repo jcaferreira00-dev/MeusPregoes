@@ -981,6 +981,11 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
 .solo.warn { border-color: var(--amber); background: var(--amber-soft); color: var(--amber); }
 .solo.bad { border-color: var(--red); background: var(--red-soft); color: var(--red); }
 .solo.bad b { color: var(--red); }
+.solo-alerta { display: flex; align-items: center; gap: 6px; width: 100%; font-weight: 800; color: var(--red); font-size: 12px; }
+.sim-res .solo-alerta { margin-top: 6px; }
+.i-vals .v-lance-pc.solo-baixo, .i-mvals .v-lance.solo-baixo { background: var(--red-soft) !important; box-shadow: inset 0 0 0 1.5px var(--red); }
+.i-vals .v-lance-pc.solo-baixo b, .i-mvals .v-lance.solo-baixo b, .icard.res-venci .solo-baixo b { color: var(--red) !important; }
+.input.solo-baixo { border-color: var(--red) !important; color: var(--red); font-weight: 800; background: var(--red-soft); }
 @media (max-width: 600px) {
   .solo { padding: 5px 8px; font-size: 11.5px; gap: 4px 8px; flex-wrap: nowrap; }
   .solo .solo-t { font-size: 9.5px; white-space: nowrap; }
@@ -1019,7 +1024,7 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.78.0';
+  const APP_VERSION = '1.79.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Em disputa', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -3758,6 +3763,8 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
         const bx = $('#boxEntrega', form);
         if (bx && bx.dataset.pid !== x.pregaoId) { bx.dataset.pid = x.pregaoId; bx.innerHTML = entregaSelectHtml(x.pregaoId, ''); x = readForm(form); }
         const c = C.previewItem(store.get(), itemFromForm(x, id));
+        { const lf = $('[name=lanceFinal]', form), lv = C.parseBR(x.lanceFinal), b = abaixoSolo(c, lv);
+          if (lf) { lf.classList.toggle('solo-baixo', b); lf.title = b ? 'Abaixo do mínimo se ganhar só este item: ' + C.brl(soloMin(c)) : ''; } }
         const el = $('#prev', form);
         const cm = C.parseBR(x.custo);
         const qx = C.parseBR(x.qtd) || 0, fm = C.parseBR(x.frete) || 0;
@@ -3790,6 +3797,14 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
         for (const n of [0, 1]) { if (String(x['alt' + n + 'Link'] || '').trim() && !urlSeg(x['alt' + n + 'Link'])) { $('[name=alt' + n + 'Link]', form).classList.add('err'); const ap = $('#altPop', form); if (ap) ap.hidden = false; return 'Link da opção ' + (n + 2) + ' inválido. Cole o endereço completo, sem espaços.'; } }
         if ((x.ondeLink || '').trim() && !it.ondeLink) { $('[name=ondeLink]', form).classList.add('err'); return 'Link de compra inválido. Cole o endereço completo, sem espaços.'; }
         if (it.margem != null && it.margem >= 1) { $('[name=margem]', form).classList.add('err'); return 'A margem precisa ser menor que 100%.'; }
+        if (it.lanceFinal != null && form.dataset.okSolo !== String(it.lanceFinal)) {
+          const cs = C.previewItem(store.get(), it);
+          if (abaixoSolo(cs, it.lanceFinal)) {
+            confirmar('Lance abaixo do mínimo', avisoSoloTxt(cs, it.lanceFinal) + '\nSalvar mesmo assim?', 'Salvar mesmo assim', true)
+              .then((ok) => { if (ok) { form.dataset.okSolo = String(it.lanceFinal); form.requestSubmit(); } else { const f = $('[name=lanceFinal]', form); if (f) { f.focus(); f.select(); } } });
+            return false;
+          }
+        }
         const data = Object.assign({}, it); delete data.id;
         if (id) data.id = id;
         const salvoId = store.upsertItem(data);
@@ -4456,6 +4471,11 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
   // itens que ficaram de fora da disputa vão para o fim da lista
   const foraNoFim = (list, R) => list.slice().sort((a, b) => ((R.iMap.get(a.id) || {}).fora ? 1 : 0) - ((R.iMap.get(b.id) || {}).fora ? 1 : 0));
 
+  // lance abaixo do mínimo "se ganhar só este" (sem prejuízo): pede confirmação e fica vermelho
+  const soloMin = (c) => (c && c.solo && c.solo.relevante && c.solo.empate != null && !c.ganhou && !c.desclass && c.resultado !== 'perdi') ? c.solo.empate : null;
+  const abaixoSolo = (c, v) => { const m = soloMin(c); return m != null && v != null && v > 0 && v < m - 0.004; };
+  const avisoSoloTxt = (c, v) => `O lance de ${C.brl(v)} está abaixo do mínimo para ganhar só este item (${C.brl(soloMin(c))}). Se for o único item ganho, a entrega de carro fica toda nele e dá prejuízo, e você pode ter que pedir desclassificação.`;
+
   // se ganhar só este item, ele paga a viagem inteira: lance mínimo sem prejuízo e com a margem
   function soloHtml(c) {
     const s = c && c.solo;
@@ -4463,7 +4483,7 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
     const ref = c.lance !== null ? 'no lance' : 'no teto';
     const tip = `Se este for o único item ganho, ele paga sozinho a entrega de carro (${C.brl(s.entrega)}, ${C.brl(s.extra)} a mais que no rateio). Custo total ${C.brl(s.custoTotal)}.`;
     return `<div class="solo ${s.risco}" title="${esc(tip)}">${icon('truck', 'sm')}<span class="solo-t"><span class="s-lg">Se ganhar só este</span><span class="s-sm">Só este</span></span>
-      <span class="solo-v"><span>sem prejuízo <b>${C.brl(s.empate)}</b></span><span class="solo-mg">margem ${C.pct(c.margem, 0)} <b>${C.brl(s.minimo)}</b></span><span class="solo-lc">${ref}: <b>${s.lucro <= 0 ? 'prejuízo ' + C.brl(-s.lucro) : C.brl(s.lucro) + ' (' + C.pct(s.margemReal, 0) + ')'}</b></span></span></div>`;
+      <span class="solo-v"><span>sem prejuízo <b>${C.brl(s.empate)}</b></span><span class="solo-mg">margem ${C.pct(c.margem, 0)} <b>${C.brl(s.minimo)}</b></span><span class="solo-lc">${ref}: <b>${s.lucro <= 0 ? 'prejuízo ' + C.brl(-s.lucro) : C.brl(s.lucro) + ' (' + C.pct(s.margemReal, 0) + ')'}</b></span></span>${c.lance !== null && abaixoSolo(c, c.lance) ? `<span class="solo-alerta">${icon('alert', 'sm')}Seu lance (${C.brl(c.lance)}) está abaixo do mínimo sem prejuízo</span>` : ''}</div>`;
   }
 
   function itemCard(it, c, opt) {
@@ -4491,8 +4511,9 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
     const obs = String(it.obs || '').trim() ? `<div class="obsline item">${esc(it.obs)}</div>` : '';
     // celular: valor do meu lance (lance final; vazio = teto do edital) e mínimo pela margem
     const meuLance = C.unitProposta(c, 'auto').unit;   // mesma regra do PDF: lance final prevalece; sem lance, o teto do edital
-    const mVals = `<div class="i-mvals"><div class="v-lance"><span>${c.lance !== null ? 'Meu lance' : 'Meu lance (teto)'}</span><b>${meuLance != null ? C.brl(meuLance) : '—'}</b></div><div class="v-min ${viabCls(c)}"><span>Mínimo ${C.pct(c.margem, 0)}</span><b>${c.minimo != null ? C.brl(c.minimo) : '—'}</b></div></div>`;
-    const vals = mVals + `<div class="i-vals"><div class="v-lance-pc ${viabCls(c)}"><span>${c.lance !== null ? 'Meu lance (unit.)' : 'Meu lance (teto)'}</span><b>${meuLance != null ? C.brl(meuLance) : '—'}</b></div><div><span>Custo total</span><b>${it.custo > 0 && it.qtd > 0 ? C.brl(c.produtos) : '—'}</b></div><div class="v-mintot"><span>Mín. total</span><b>${C.brl(c.minTotal)}</b></div><div><span>Edital total</span><b>${c.tetoTotal != null ? C.brl(c.tetoTotal) : '—'}</b></div></div>`;
+    const baixo = abaixoSolo(c, meuLance) ? ' solo-baixo' : '', baixoTip = baixo ? ` title="${esc('Abaixo do mínimo se ganhar só este item: ' + C.brl(soloMin(c)))}"` : '';
+    const mVals = `<div class="i-mvals"><div class="v-lance${baixo}"${baixoTip}><span>${c.lance !== null ? 'Meu lance' : 'Meu lance (teto)'}</span><b>${meuLance != null ? C.brl(meuLance) : '—'}</b></div><div class="v-min ${viabCls(c)}"><span>Mínimo ${C.pct(c.margem, 0)}</span><b>${c.minimo != null ? C.brl(c.minimo) : '—'}</b></div></div>`;
+    const vals = mVals + `<div class="i-vals"><div class="v-lance-pc ${viabCls(c)}${baixo}"${baixoTip}><span>${c.lance !== null ? 'Meu lance (unit.)' : 'Meu lance (teto)'}</span><b>${meuLance != null ? C.brl(meuLance) : '—'}</b></div><div><span>Custo total</span><b>${it.custo > 0 && it.qtd > 0 ? C.brl(c.produtos) : '—'}</b></div><div class="v-mintot"><span>Mín. total</span><b>${C.brl(c.minTotal)}</b></div><div><span>Edital total</span><b>${c.tetoTotal != null ? C.brl(c.tetoTotal) : '—'}</b></div></div>`;
     // resultado do item: seletor (toque de novo no mesmo volta para "aguardando")
     const RES = [['venci', 'Venci', 'acomp'], ['perdi', 'Não ganhei', 'x'], ['desc', 'Desclassif.', 'alert']];
     const acao = `<div class="res-sel" role="group" aria-label="Resultado do item">${RES.map(([v, l, ic]) => `<button type="button" class="btn sm res-${v}${c.resultado === v ? ' on' : ''}" data-act="item-res" data-v="${v}" data-id="${it.id}" title="${c.resultado === v ? 'Desmarcar ' + l : l}" aria-label="${l}">${icon(ic, 'sm')}${c.resultado === v ? '<span>' + l + '</span>' : ''}</button>`).join('')}</div>`
@@ -4533,14 +4554,14 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
         <div><span>Lucro</span><b>${C.brl(c.lucro)}</b></div>
         <div><span>Margem</span><b>${C.pct(c.margemReal, 1)}</b></div>
         <div class="sim-nota"><span>Avaliação</span><b><i style="--f:${fill}%">★</i> ${nota} · ${esc(c.viab || '')}</b></div></div>
-      <div class="tiny muted sim-ref">${vsMin}${vsTeto}</div>`;
+      <div class="tiny muted sim-ref">${vsMin}${vsTeto}</div>${abaixoSolo(c, v) ? `<div class="solo-alerta">${icon('alert', 'sm')}Abaixo do mínimo se ganhar só este item (${C.brl(soloMin(c))}): sozinho dá prejuízo</div>` : ''}`;
   }
   function simLanceHtml(it, c, meuLance) {
     const v = UI.sim[it.id] || '';
     const atual = c.lance !== null ? 'lance gravado ' + C.brl(c.lance) : 'sem lance gravado (vale o teto ' + C.brl(meuLance) + ')';
     return `<div class="sim" data-act="noop">
       <div class="sim-hd"><b>${icon('acomp', 'sm')} Simular lance</b><span class="tiny muted">${atual} · simulação não altera a proposta</span></div>
-      <div class="sim-row"><span class="sim-rs">R$</span><input class="input" inputmode="decimal" autocomplete="off" data-sim="${it.id}" value="${esc(v)}" placeholder="valor unitário">
+      <div class="sim-row"><span class="sim-rs">R$</span><input class="input${v && abaixoSolo(simCalc(it, C.parseBR(v)), C.parseBR(v)) ? ' solo-baixo' : ''}" inputmode="decimal" autocomplete="off" data-sim="${it.id}" value="${esc(v)}" placeholder="valor unitário">
         <button type="button" class="btn sm ghost" data-act="sim-limpar" data-id="${it.id}" title="Limpar simulação">${icon('x', 'sm')}</button>
         <button type="button" class="btn sm primary" data-act="sim-gravar" data-id="${it.id}" ${C.parseBR(v) > 0 ? '' : 'disabled'}>Gravar lance</button></div>
       <div class="sim-res" data-sim-res="${it.id}">${simResHtml(it, C.parseBR(v))}</div></div>`;
@@ -4550,6 +4571,7 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
     const v = C.parseBR(UI.sim[id]); if (!(v > 0)) { toast('Digite o valor do lance'); return; }
     const c = simCalc(it, v), antes = it.lanceFinal != null ? C.brl(it.lanceFinal) : 'nenhum (vale o teto)';
     const nome = (C.padLE(it.itemEdital) ? 'Item ' + C.padLE(it.itemEdital) + ' · ' : '') + it.descricao;
+    if (abaixoSolo(c, v) && !(await confirmar('Lance abaixo do mínimo', nome + '\n' + avisoSoloTxt(c, v) + '\nContinuar mesmo assim?', 'Continuar mesmo assim', true))) return;
     const ok1 = await confirmar('Gravar este lance?', `${nome}\nNovo lance: ${C.brl(v)} (total ${C.brl(c && c.totalVenda)})\nLucro ${C.brl(c && c.lucro)} · margem ${C.pct(c && c.margemReal, 1)} · ${c && c.viab ? c.viab : ''}\nLance atual: ${antes}`, 'Sim, continuar', false);
     if (!ok1) return;
     const ok2 = await dialog({ title: 'Confirmação final', text: `O lance de ${C.brl(v)} vai substituir o valor do item e entra na proposta (PDF). Confirma?`, buttons: [{ label: 'Cancelar', value: false, cls: 'ghost' }, { label: 'Confirmo, gravar ' + C.brl(v), value: true, cls: 'primary' }] });
@@ -5823,6 +5845,7 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
       const id = t.dataset.sim; UI.sim[id] = t.value;
       const it = store.get().itens.find((i) => i.id === id); const box = document.querySelector('[data-sim-res="' + id + '"]');
       if (it && box) box.innerHTML = simResHtml(it, C.parseBR(t.value));
+      if (it) t.classList.toggle('solo-baixo', abaixoSolo(simCalc(it, C.parseBR(t.value)), C.parseBR(t.value)));
       const bt = document.querySelector('[data-act="sim-gravar"][data-id="' + id + '"]'); if (bt) bt.disabled = !(C.parseBR(t.value) > 0);
       return;
     }
