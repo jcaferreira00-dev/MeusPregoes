@@ -991,7 +991,7 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
 .solo.warn { border-color: var(--amber); background: var(--amber-soft); color: var(--amber); }
 .solo.bad { border-color: var(--red); background: var(--red-soft); color: var(--red); }
 .solo.bad b { color: var(--red); }
-.pq-sec { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin: 2px 2px 0; }
+.pq-sec { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin: 4px 2px 14px; line-height: 20px; }
 .pq-sec b { background: color-mix(in srgb, var(--muted) 14%, transparent); color: var(--ink); border-radius: 999px; padding: 1px 8px; font-size: 11px; }
 .pq-sec.venci { color: var(--green); } .pq-sec.venci b { background: var(--green); color: #fff; }
 .pq-grid + .pq-sec { margin-top: 12px; }
@@ -1041,7 +1041,7 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.82.0';
+  const APP_VERSION = '1.82.1';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Em disputa', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
