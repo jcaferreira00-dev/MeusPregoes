@@ -159,7 +159,8 @@ filtro, raio, ramos ou o que já foi analisado. Se precisar mudar uma regra, mud
 
 ### Tarefa agendada "Busca de pregões" (todo domingo)
 1. Ler este arquivo (já está fazendo isso).
-2. Gmail: e-mails dos últimos 8 dias de `avisos@bllcompras.com` com assunto "Divulgador de editais" e
+2. Ler o "Log das buscas" (fim deste arquivo): a data da última verificação diz de onde começar.
+   Gmail: e-mails a partir da data da última verificação (com 1 dia de folga) de `avisos@bllcompras.com` com assunto "Divulgador de editais" e
    os de "edital publicado na plataforma BLL" (marketing@irjlic…). O corpo útil está no HTML
    (o texto puro vem vazio): cidade, órgão, modalidade, nº, tipo, início/fim das propostas, link, objeto.
 3. Descartar: prazo de proposta já vencido, fora do raio, fora dos CNAEs, itens grandes/pesados,
@@ -167,7 +168,9 @@ filtro, raio, ramos ou o que já foi analisado. Se precisar mudar uma regra, mud
 4. Entregar só a LISTA de oportunidades (tabela curta, mais perto primeiro): cidade e distância aprox.,
    órgão, nº do pregão, fim das propostas, objeto resumido, por que vale, link BLL.
    Depois, uma linha com os principais descartados.
-5. Salvar a lista em `buscas/AAAA-MM-DD.md` neste repositório (commit direto na main).
+5. Salvar a lista em `buscas/AAAA-MM-DD.md` neste repositório e REGISTRAR NO LOG (fim deste arquivo):
+   uma linha nova na tabela e os pregões trazidos acrescentados na lista "Já no app ou já descartados".
+   Commit direto na main. Busca sem registro no log = busca não feita.
 6. Se algo falhar (Gmail, GitHub, página que precise do navegador), avisar o João NA HORA
    (mensagem + notificação) pedindo para ligar o Chrome no PC; às vezes no celular não funciona.
 
@@ -186,3 +189,14 @@ Tibagi 60 e 61; Telêmaco 83; Castro 143 e 461; Piraí 99; Cândido de Abreu 72 
 
 ### Orientações adicionais do João
 <!-- acrescentar aqui as novas orientações de busca -->
+
+---
+
+## 5. Log das buscas (OBRIGATÓRIO a cada busca)
+Antes de buscar: ler a última linha para saber a data da última verificação.
+Depois de buscar: acrescentar uma linha. Nunca trazer de novo um pregão que já aparece neste log
+ou na lista "Já no app ou já descartados" — comparar por órgão + nº do pregão.
+
+| Data da busca | E-mails lidos (período) | Novos trazidos | Arquivo |
+|---|---|---|---|
+| 22/10/2026 | divulgador BLL de 21/10/2026 (últimos 14 dias) | Japira 38 e 39; Castro 150; Conselheiro Mairinck 62; Ipiranga 77 e 78; Grandes Rios 41; Faxinal 49; Assaí 103; Manoel Ribas Disp. 27; São João do Ivaí 77 | buscas/2026-10-22.md |
