@@ -105,16 +105,41 @@ Formato de backup do app (Config › Importar › Mesclar). IDs únicos e novos;
   edital não fala. O app mostra o aviso na guia Proposta e trava a geração se a chavinha estiver diferente.
 - `pdfOpts.anonima` deve bater com `regrasEdital.semIdentificacao`.
 
-### Entrega dos arquivos
-Zip com uma pasta por cidade e, dentro, uma por pregão: `Cidade/PREGÃO ELETRÔNICO EDITAL nº 91-2026/`
-com o JSON, observações, LEIA-ME e as declarações do edital preenchidas em .docx.
+### Entrega dos arquivos (padrão fixo desde 22/10/2026 — substitui qualquer padrão anterior)
+Um zip organizado assim, SEM acentos nem caracteres especiais nos nomes das pastas
+(a barra do número vira hífen, porque "/" não pode em nome de pasta):
+
+```
+Municipio de Imbau/                 <- pasta com o nome do promotor (órgão)
+  EDITAL N 091-2026/                <- uma pasta por pregão
+    pregao.json                     <- JSON de importação deste pregão (só ele)
+    LEIA-ME                         <- resumo, regras do edital, prazos, riscos
+    Observacoes                     <- pontos de atenção item a item
+    Declaracoes (.docx)             <- declarações do edital já preenchidas
+    Proposta modelo proprio (.docx) <- quando o edital tiver modelo próprio
+```
+
+- Cotação de cada item em pelo menos 2 fornecedores (lojas diferentes, link direto do produto).
+- Observações importantes de cada item no campo `obs` do JSON e no arquivo de observações.
 
 ---
 
 ## 4. Busca de editais
 
+### Fluxo de trabalho (sempre nesta ordem)
+1. **Varredura → só a lista de oportunidades.** Primeiro só listar os pregões que passam no filtro
+   abaixo (tabela curta). Não gerar JSON nem arquivos nessa etapa.
+2. **João escolhe e manda os PDFs** dos editais que quer.
+3. **Análise precisa, item por item**, com todas as regras do edital (seção 2 e checklist).
+4. **Entrega:** JSON com cotações em pelo menos 2 fornecedores, observações e o zip no padrão da seção 3.
+
+### Filtro da varredura
 - Fonte atual: divulgador de editais da BLL que chega no Gmail do João.
-- Raio: até ~180 km de Telêmaco Borba/PR. Nada difícil de transportar.
+- Raio: até ~180 km de Telêmaco Borba/PR, ou menos (quanto mais perto, melhor): está começando e
+  sem caixa para frete grande.
+- Entrega de carro de passeio, no máximo Strada com carretinha. Itens pesados ou grandes não compensam.
+- Itens em quantidade muito grande são difíceis de comprar (falta de fornecedor e de experiência):
+  evitar ou sinalizar.
 - Ramos dos CNAEs do MEI: ferragens/ferramentas (principal), informática, telefonia, equip. de escritório,
   material elétrico, hidráulicos, iluminação, lubrificantes, saneantes (só sinalizar: exige licença/AFE),
   brinquedos, esportivos, bicicletas, instrumentos musicais, motopeças, tapeçaria/cortinas, festas/decoração.
