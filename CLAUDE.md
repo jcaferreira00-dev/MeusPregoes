@@ -1,5 +1,8 @@
 # Meus Pregões — regras do João (LEIA ANTES DE QUALQUER COISA)
 
+> No app, a guia **Procedimento** (só no PC) tem o passo a passo do dia da busca e os comandos prontos
+> que o João cola na conversa. Se mudar o fluxo aqui, atualizar também `PROC_CMDS`/`renderProc` no index.html.
+
 Este arquivo é a base de regras fixas. Toda vez que for mexer no app, analisar edital,
 criar JSON de importação ou buscar editais, leia este arquivo primeiro e siga o que está aqui.
 O João não deve precisar repetir estas regras. Quando ele passar uma regra nova que valha
@@ -167,10 +170,14 @@ filtro, raio, ramos ou o que já foi analisado. Se precisar mudar uma regra, mud
 4. Entregar só a LISTA de oportunidades (tabela curta, mais perto primeiro): cidade e distância aprox.,
    órgão, nº do pregão, fim das propostas, objeto resumido, por que vale, link BLL.
    Depois, uma linha com os principais descartados.
-5. Salvar a lista em `buscas/AAAA-MM-DD.md` neste repositório e REGISTRAR NO LOG (fim deste arquivo):
+5. Montar o ZIP da busca: `Pregoes AAAA-MM-DD/` com `LISTA DA BUSCA AAAA-MM-DD.txt` e, para cada
+   pregão, `<Promotor sem acento>/EDITAL N 000-AAAA/` com `pregao.json` (cadastro básico, status
+   "Falta dados", id fixo que a análise depois reaproveita) e `LEIA-ME.txt` (objeto, prazo, plataforma,
+   por que entrou, link do PNCP para baixar os PDFs).
+6. Salvar a lista em `buscas/AAAA-MM-DD.md` neste repositório e REGISTRAR NO LOG (fim deste arquivo):
    uma linha nova na tabela e os pregões trazidos acrescentados na lista "Já no app ou já descartados".
    Commit direto na main. Busca sem registro no log = busca não feita.
-6. Se algo falhar (PNCP fora do ar ou bloqueando, GitHub, página que precise do navegador), avisar o João NA HORA
+7. Se algo falhar (PNCP fora do ar ou bloqueando, GitHub, página que precise do navegador), avisar o João NA HORA
    (mensagem + notificação) pedindo para ligar o Chrome no PC; às vezes no celular não funciona.
 
 ### Busca no PNCP (testado em 22/10/2026: responde por município; o PR inteiro de uma vez é grande demais)
@@ -180,6 +187,8 @@ filtro, raio, ramos ou o que já foi analisado. Se precisar mudar uma regra, mud
 - Itens e tetos (só dos candidatos): `https://pncp.gov.br/api/pncp/v1/orgaos/<cnpj>/compras/<ano>/<sequencial>/itens?pagina=1&tamanhoPagina=50`
   (cnpj, ano e sequencial vêm do `numeroControlePNCP` = "cnpj-1-sequencial/ano").
 - Link para o João baixar o edital: `https://pncp.gov.br/app/editais/<cnpj>/<ano>/<sequencial>`; plataforma em `usuarioNome` e `linkSistemaOrigem`.
+- Pregões (modalidade 6) em todas as faixas. Dispensas (8) só na faixa 1, porque o prazo delas é curto.
+- Para economizar: na faixa 2 pedir ao WebFetch só as compras dos ramos do MEI (lista de áreas no prompt).
 - Limite: até ~5 chamadas por vez. Se vier HTTP 429, esperar 2 min e seguir; listar no fim o que falhou.
 - Órgãos estaduais/federais nesses municípios (UTFPR, UEPG, UEL etc.) aparecem na mesma consulta.
 - Distância = linha reta × 1,3 (estimativa de estrada a partir de Telêmaco Borba).
@@ -198,6 +207,13 @@ Em andamento: Mauá da Serra 60 (itens ganhos); Ortigueira 91; Carambeí 54 e 55
 Imbaú 91.
 Aguardando PDFs: Assaí 103; Castro 150; Conselheiro Mairinck 62; Faxinal 49; Grandes Rios 41;
 Guamiranga 32; Ipiranga 77 e 78; Japira 38 e 39.
+Trazidos na busca PNCP de 22/10 (aguardando escolha): Ortigueira 102; São Jerônimo da Serra 47;
+Rio Branco do Ivaí 36; Prudentópolis 124; Califórnia 69; Jardim Alegre 51 e 52; Turvo 65; Jataizinho 35;
+Ibiporã 72; UEL 137 (Londrina); Câmara de Londrina 5; Embrapa Soja 1; Sto. Antônio da Platina 101;
+UTFPR Cornélio Procópio 189; Câmara de São João do Ivaí 9; Arapongas 37; Santa Mariana 53; Bandeirantes 39.
+Vistos e descartados na busca PNCP de 22/10: Ortigueira 103 (mochilas) e 104; Pinhalão 18; Apucarana 42
+(180 kits de computador); UEL 140 (louças); Londrina Iluminação 11; Rolândia 107 e 111 (prazo 23/10);
+Sto. Antônio da Platina 96; Prudentópolis 132 e 140; Imbituva 35; Arapongas 35 e 40; Tibagi 61.
 Descartados: Manoel Ribas Disp. 27; Ivaiporã 132; Japira 37; Nova Santa Bárbara 29; Piraí do Sul 43;
 São João do Ivaí 77.
 Antigos (já analisados antes): Imbaú 89 e 92, Dispensa 15; Ortigueira 90 e 99; Mauá da Serra 61;
@@ -217,3 +233,4 @@ ou na lista "Já no app ou já descartados" — comparar por órgão + nº do pr
 | Data da busca | Fonte e período | Novos trazidos | Arquivo |
 |---|---|---|---|
 | 22/10/2026 | divulgador BLL de 21/10/2026 (últimos 14 dias) | Japira 38 e 39; Castro 150; Conselheiro Mairinck 62; Ipiranga 77 e 78; Grandes Rios 41; Faxinal 49; Assaí 103; Manoel Ribas Disp. 27; São João do Ivaí 77 | buscas/2026-10-22.md |
+| 22/10/2026 | PNCP, pregões abertos até 21/12, faixas 1 e 2 (dispensas não) | 19 novos (ver buscas/2026-10-22-pncp.md) | buscas/2026-10-22-pncp.md |
