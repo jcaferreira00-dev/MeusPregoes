@@ -152,5 +152,27 @@ Municipio de Imbau/                 <- pasta com o nome do promotor (órgão)
   calhas/rufos e ferragens de portão, Arduino/ESP32 (Eletrogate), percussão, testes psicológicos.
 - Comparar sempre pelo nº do pregão no edital e pelo processo (não pelo sequencial do PNCP).
 
+### Tarefa agendada "Busca de pregões" (todo domingo)
+1. Ler este arquivo (já está fazendo isso).
+2. Gmail: e-mails dos últimos 8 dias de `avisos@bllcompras.com` com assunto "Divulgador de editais" e
+   os de "edital publicado na plataforma BLL" (marketing@irjlic…). O corpo útil está no HTML
+   (o texto puro vem vazio): cidade, órgão, modalidade, nº, tipo, início/fim das propostas, link, objeto.
+3. Descartar: prazo de proposta já vencido, fora do raio, fora dos CNAEs, itens grandes/pesados,
+   serviços/locação/instalação, e os pregões da lista "Já analisados" abaixo.
+4. Entregar só a LISTA de oportunidades (tabela curta, mais perto primeiro): cidade e distância aprox.,
+   órgão, nº do pregão, fim das propostas, objeto resumido, por que vale, link BLL.
+   Depois, uma linha com os principais descartados.
+5. Salvar a lista em `buscas/AAAA-MM-DD.md` neste repositório (commit direto na main).
+6. Se algo falhar (Gmail, GitHub, página que precise do navegador), avisar o João NA HORA
+   (mensagem + notificação) pedindo para ligar o Chrome no PC; às vezes no celular não funciona.
+
+### Já analisados ou em andamento (não trazer como novos)
+- Imbaú PE 84, 85, 89, 91 e 92; Dispensa 15.
+- Ortigueira PE 87, 90, 91, 95 e 99.
+- Carambeí PE 54 e 55. Faxinal PE 52. Mauá da Serra PE 60 e 61. Tibagi PE 60 e 61.
+- UTFPR Ponta Grossa PE 15 e 17. Telêmaco PE 83. Castro 143 e 461. Piraí 43 e 99.
+- Cândido de Abreu 72 e 98. EPR-UEL 146.
+(Quando o João mandar os PDFs de um pregão, acrescentar aqui.)
+
 ### Orientações adicionais do João
 <!-- acrescentar aqui as novas orientações de busca -->
