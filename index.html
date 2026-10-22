@@ -1065,7 +1065,7 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.84.1';
+  const APP_VERSION = '1.85.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Em disputa', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -5039,6 +5039,11 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
 
   /* ---------- Proposta: modelo e "chavinhas" do que aparece (valem para o pregão escolhido) ---------- */
   const optGet = (o, path) => path.split('.').reduce((a, k) => (a === undefined || a === null ? a : a[k]), o);
+  // regras do edital (vêm no JSON de importação, em pregao.regrasEdital): a proposta inicial precisa bater com elas
+  // semIdentificacao: true = edital proíbe identificar o licitante na inicial · false = exige identificação · ausente = sem regra
+  const regraIdent = (p) => { const r = p && p.regrasEdital; return r && typeof r.semIdentificacao === 'boolean' ? r : null; };
+  const confereIdent = (p, op) => { const r = regraIdent(p); return r ? { r, ok: !!op.anonima === r.semIdentificacao } : null; };
+  const regraIdentTxt = (r) => (r.semIdentificacao ? 'proposta inicial <b>SEM identificação</b> da empresa' : 'proposta inicial <b>COM identificação</b> da empresa') + (r.referencia ? ' (' + esc(r.referencia) + ')' : '');
   const swp = (o, path, label, hint) => `<label class="switch"><span>${label}${hint ? `<small class="hint" style="display:block;font-weight:500">${hint}</small>` : ''}</span><input type="checkbox" data-pdf="${path}" data-type="check" ${optGet(o, path) ? 'checked' : ''}></label>`;
   const fp = (o, path, label, x) => {
     x = x || {}; const v = optGet(o, path);
@@ -5079,6 +5084,8 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
     const cab = `
       <div class="card"><h3>2 · Documento da proposta <span class="grow"></span><span class="saved-ind" id="savedInd">Salvo</span></h3>
         <p class="tiny muted" style="margin:0 0 8px">Um único modelo, com tudo ligado por padrão. Desligue na chavinha o que não quiser na proposta. O que você mudar aqui (chavinhas e textos) vira o padrão dos próximos pregões; prazo e local de entrega, observações e ICMS valem só para o pregão.</p>
+        ${(() => { if (UI.pdf.tipo === 'final') return ''; const pz = store.get().pregoes.find((x) => x.id === UI.pdf.pregaoId), k = confereIdent(pz, o); if (!k) return '';
+          return `<div class="alert ${k.ok ? 'ok' : 'bad'}" style="margin:0 0 10px">${icon(k.ok ? 'check' : 'alert', 'sm')}<div class="grow">Edital: ${regraIdentTxt(k.r)}. ${k.ok ? 'A proposta está configurada assim.' : '<b>A chavinha abaixo está diferente do edital.</b> O app não gera assim sem você confirmar.'}${k.r.observacoes ? '<br><span class="tiny">' + esc(k.r.observacoes) + '</span>' : ''}</div>${k.ok ? '' : '<button type="button" class="btn sm" data-act="pdf-ident-edital">Ajustar</button>'}</div>`; })()}
         ${UI.pdf.tipo === 'final' ? '' : swp(o, 'anonima', 'Proposta inicial sem identificação da empresa', 'Para o edital que proíbe identificar o licitante. Sai sem nome, CNPJ, cabeçalho, dados bancários, local, assinatura, declarações e cláusulas com dados da empresa. Vale só para este pregão; a proposta final sai identificada.')}
         ${o.anonima ? `<div class="alert warn" style="margin:4px 0 10px">${icon('alert', 'sm')}<div class="grow">Sem identificação: ao gerar, o app confere se o nome, CNPJ, CPF, e-mail ou telefone aparecem no PDF. Confira também as fotos do catálogo (logo ou etiqueta da empresa).</div></div>` : ''}
         ${swp(o, 'cabecalho', 'Cabeçalho (nome e imagem)', 'Aparece em todas as páginas')}
@@ -5132,7 +5139,7 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
     const tipoHtml = `<div class="seg-ctl pdf-tipo" style="margin-bottom:10px">${[['inicial', 'Proposta inicial'], ['final', 'Proposta final (readequada)']].map(([v, l]) => `<button type="button" data-act="pdf-tipo" data-v="${v}" class="${UI.pdf.tipo === v ? 'on' : ''}">${l}</button>`).join('')}</div>
         <p class="tiny muted" style="margin:-2px 0 12px">${FINAL
           ? 'Só os itens que você marcou como <b>Venci</b>, com o valor ajustado. Antes de gerar, o app pede para confirmar o preço de cada item. Os ajustes de texto feitos aqui valem só para a proposta final deste pregão.'
-          : 'Todos os itens da disputa, com o preço da cotação. Na 1ª vez que você gerar, os preços ficam guardados: depois ela sai sempre igual, mesmo que você mude custos ou preencha o lance.'}</p>
+          : 'Todos os itens da disputa, com o preço da cotação. Na 1ª vez que você gerar, os preços ficam guardados: depois ela sai sempre igual, mesmo que você mude custos. Com lance final preenchido, sai o lance.'}</p>
         ${!FINAL && L.congelados ? `<div class="alert info" style="margin-bottom:12px">${icon('info', 'sm')}<div class="grow">${L.congelados === L.linhas.length ? 'Preços' : L.congelados + ' preço(s)'} da proposta inicial guardados${pz0.precoInicialEm ? ' em ' + esc(fmtDM(pz0.precoInicialEm)) : ''}. A proposta inicial sai com esses valores.</div><button class="btn sm" data-act="pdf-recalcular" data-id="${pz0.id}">Recalcular</button></div>` : ''}
         ${FINAL && !L.ganho ? `<div class="alert warn" style="margin-bottom:12px">${icon('alert', 'sm')}<span>Nenhum item marcado como <b>Venci</b> neste pregão: a proposta final sairia com todos os itens. Marque os itens vencidos na guia Itens ou Acompanhar.</span></div>` : ''}`;
     const pz = L.pregao || {};
@@ -5539,11 +5546,24 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
     $$('[data-cfg]').forEach((el) => { if (Guard.pending.has(el.dataset.cfg)) commitCfg(el); });
     $$('[data-pdf],[data-bloco]').forEach((el) => { if (Guard.pending.has(pendKey(el))) commitPdf(el); });
   }
+  function identConformeEdital(id) {
+    const pz = store.get().pregoes.find((x) => x.id === id), r = regraIdent(pz); if (!r) return;
+    store.patchPregao(id, (p) => { p.pdfOpts = p.pdfOpts || {}; p.pdfOpts.anonima = r.semIdentificacao; }, true);
+  }
   async function gerarPDF() {
     commitAllPending();
     const id = UI.pdf.pregaoId;
     if (!id) { toast('Escolha um pregão'); return; }
     if (UI.pdf.tipo === 'final' && !(await confirmarPrecosFinal(id))) return;
+    if (UI.pdf.tipo !== 'final') {
+      const pz = store.get().pregoes.find((x) => x.id === id), k = confereIdent(pz, C.resolverPdfOpts(pz, store.get().config, 'inicial'));
+      if (k && !k.ok) {
+        const v = await dialog({ title: 'Proposta diferente do edital', text: `O edital pede ${k.r.semIdentificacao ? 'a proposta inicial SEM identificação da empresa' : 'a proposta inicial COM identificação da empresa'}${k.r.referencia ? ' (' + k.r.referencia + ')' : ''}, mas a chavinha "sem identificação" está ${k.r.semIdentificacao ? 'desligada' : 'ligada'}.\nMandar diferente pode desclassificar.`,
+          buttons: [{ label: 'Ajustar conforme o edital e gerar', value: 'ajustar', cls: 'primary' }, { label: 'Cancelar', value: null, cls: 'ghost' }, { label: 'Gerar assim mesmo', value: 'assim', cls: 'ghost' }] });
+        if (!v) return;
+        if (v === 'ajustar') identConformeEdital(id);
+      }
+    }
     const pend = C.pendenciasModelo(store.get(), id, UI.pdf.tipo, UI.pdf.fonte);
     if (pend.length) {
       const v = await dialog({ title: 'Confira antes de gerar', text: pend.map((x) => '• ' + x).join('\n'), buttons: [{ label: 'Corrigir', value: false, cls: 'primary' }, { label: 'Gerar mesmo assim', value: true, cls: 'ghost' }] });
@@ -5919,6 +5939,7 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
       case 'demo': store.mergeDemo(); toast('Dados de exemplo carregados'); break;
       case 'pdf-pregao': UI.pdf.pregaoId = id; UI.pdf.fonte = 'auto'; UI.pdf.result = null; saveUI(); setTab('pdf'); break;
       case 'pdf-gerar': gerarPDF(); break;
+      case 'pdf-ident-edital': commitAllPending(); identConformeEdital(UI.pdf.pregaoId); UI.pdf.result = null; UI.keepScroll = true; render(); toast('Ajustado conforme o edital'); break;
       case 'cat-gerar': gerarCatalogo(); break;
       case 'itens-modo': UI.itensModo = t.dataset.v; saveUI(); UI.keepScroll = true; render(); break;
       case 'acomp-filtro': UI.acomp.filtro = t.dataset.v; UI.keepScroll = true; render(); break;
@@ -5934,7 +5955,7 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
       case 'pdf-modelo': commitAllPending(); store.patchPregao(UI.pdf.pregaoId, (p) => { p.pdfOpts = p.pdfOpts || {}; p.pdfOpts.modelo = t.dataset.v; }, true); UI.pdf.result = null; UI.keepScroll = true; render(); break;
       case 'pdf-datamodo': { const k = OPK(); store.patchPregao(UI.pdf.pregaoId, (p) => { p[k] = p[k] || {}; setPathObj(p[k], 'desc.localDataModo', t.dataset.v); }, true); } lembrarPadraoPdf('desc.localDataModo', t.dataset.v); UI.keepScroll = true; render(); break;
       case 'pdf-padrao': { if (UI.pdf.tipo === 'final') { toast('Ajustes da proposta final não viram padrão'); break; } commitAllPending(); const p = store.get().pregoes.find((x) => x.id === UI.pdf.pregaoId); { const pad = JSON.parse(JSON.stringify((p && p.pdfOpts) || {})); delete pad.documentos; if (pad.desc) delete pad.desc.tabela; delete pad.anonima; store.setConfigPath('pdfPadrao', pad, { silent: true }); } toast('Estas opções agora são o padrão dos novos pregões'); break; }
-      case 'pdf-reset': { const fin = UI.pdf.tipo === 'final'; confirmar('Voltar ao padrão?', fin ? 'Os ajustes da proposta final deste pregão são apagados: ela volta a ficar igual à proposta inicial.' : 'As chavinhas e textos deste pregão voltam ao padrão do app (ou ao padrão que você salvou).', 'Voltar ao padrão', false).then((ok) => { if (ok) { store.patchPregao(UI.pdf.pregaoId, (p) => { if (fin) p.pdfOptsFinal = null; else p.pdfOpts = null; }, true); UI.keepScroll = true; render(); } }); break; }
+      case 'pdf-reset': { const fin = UI.pdf.tipo === 'final'; confirmar('Voltar ao padrão?', fin ? 'Os ajustes da proposta final deste pregão são apagados: ela volta a ficar igual à proposta inicial.' : 'As chavinhas e textos deste pregão voltam ao padrão do app (ou ao padrão que você salvou).', 'Voltar ao padrão', false).then((ok) => { if (ok) { store.patchPregao(UI.pdf.pregaoId, (p) => { if (fin) p.pdfOptsFinal = null; else { const r = regraIdent(p); p.pdfOpts = r ? { anonima: r.semIdentificacao } : null; } }, true); UI.keepScroll = true; render(); } }); break; }
       case 'pdf-tipo': commitAllPending(); UI.pdf.tipo = t.dataset.v; UI.pdf.result = null; saveUI(); UI.keepScroll = true; render(); break;
       case 'pdf-recalcular': confirmar('Recalcular a proposta inicial?', 'Os preços guardados da proposta inicial deste pregão são apagados. Na próxima vez que você gerar, ela usa os valores atuais (e guarda de novo).', 'Recalcular', false).then((ok) => { if (!ok) return; store.get().itens.filter((i) => i.pregaoId === id && !i.deleted).forEach((i) => store.patchItem(i.id, (x) => { delete x.precoInicial; })); store.patchPregao(id, (p) => { delete p.precoInicialEm; }); UI.keepScroll = true; toast('Preços da proposta inicial liberados'); }); break;
       case 'bloco-add': { commitAllPending(); const k = OPK(); store.patchPregao(UI.pdf.pregaoId, (p) => { const arr = blocosAtuais(p).concat([{ titulo: '', texto: '' }]); p[k] = p[k] || {}; p[k].desc = p[k].desc || {}; p[k].desc.blocos = arr; }, true); } lembrarBlocos(); UI.acc.add('acc-bl'); UI.keepScroll = true; render(); break;
