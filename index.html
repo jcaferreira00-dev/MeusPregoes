@@ -1065,7 +1065,7 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.84.0';
+  const APP_VERSION = '1.84.1';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Em disputa', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -1628,7 +1628,7 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
 
   /* ---------- linhas da proposta (PDF) ---------- */
   // fonte: 'auto' (lance final, senão teto do edital) | 'minimo' | 'teto' | 'lance'
-  // tipo: 'inicial' = todos os itens da disputa, preço da cotação (congelado na 1ª geração; o lance não entra)
+  // tipo: 'inicial' = todos os itens da disputa: lance final, se preenchido (antes de ter itens ganhos); senão o preço da cotação (congelado na 1ª geração)
   //       'final'   = só os itens vencidos, valor ajustado (lance final; sem lance, o teto do edital)
   //       vazio     = regra antiga (usada por quem não informa o tipo)
   // rótulo no PDF: "LOTE 1 - ITEM 1"; só lote → "LOTE 1"; só item → "ITEM 1" (sem nenhum, o nº sequencial)
@@ -1657,9 +1657,13 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
       if (tipo !== 'inicial' && c && c.naoGanhou) { omitidos += 1; continue; }   // proposta final: só os itens ganhos
       let up;
       // preço guardado pela regra antiga (= valor mínimo, abaixo do teto): não vale mais, refaz pela regra atual (teto)
-      const velho = temIni(it) && c && c.minimo !== null && c.teto !== null && c.minimo < c.teto - 0.005 && Math.abs(it.precoInicial - c.minimo) < 0.006;
+      let velho = temIni(it) && c && c.minimo !== null && c.teto !== null && c.minimo < c.teto - 0.005 && Math.abs(it.precoInicial - c.minimo) < 0.006;
+      // lance final preenchido prevalece também na inicial (enquanto o pregão não tem itens ganhos: depois disso o lance é ajuste da final e não mexe na inicial)
+      const lanceIni = tipo === 'inicial' && !pst.ganho && c && c.lance !== null && fonte !== 'minimo' && fonte !== 'teto';
+      if (lanceIni && temIni(it) && Math.abs(it.precoInicial - c.lance) >= 0.005) velho = true;   // preço guardado diferente do lance: regrava com o lance
       if (tipo === 'inicial') {
-        if (temIni(it) && !velho) { up = fixo(it.precoInicial); congelados += 1; }
+        if (lanceIni) up = unitProposta(c, fonte);
+        else if (temIni(it) && !velho) { up = fixo(it.precoInicial); congelados += 1; }
         else up = unitProposta(Object.assign({}, c, { lance: null }), fonte);
       } else if (tipo === 'final') {
         up = unitProposta(c, fonte);   // lance final; sem lance, o teto do edital
