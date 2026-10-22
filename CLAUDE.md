@@ -152,6 +152,11 @@ Municipio de Imbau/                 <- pasta com o nome do promotor (órgão)
   calhas/rufos e ferragens de portão, Arduino/ESP32 (Eletrogate), percussão, testes psicológicos.
 - Comparar sempre pelo nº do pregão no edital e pelo processo (não pelo sequencial do PNCP).
 
+### REGRA: a busca segue SÓ este arquivo
+Toda busca de editais (agendada ou pedida na conversa) usa somente as definições deste CLAUDE.md
+e as buscas salvas em `buscas/`. Não usar contexto de conversas antigas nem memória para decidir
+filtro, raio, ramos ou o que já foi analisado. Se precisar mudar uma regra, mudar AQUI primeiro.
+
 ### Tarefa agendada "Busca de pregões" (todo domingo)
 1. Ler este arquivo (já está fazendo isso).
 2. Gmail: e-mails dos últimos 8 dias de `avisos@bllcompras.com` com assunto "Divulgador de editais" e
@@ -166,13 +171,18 @@ Municipio de Imbau/                 <- pasta com o nome do promotor (órgão)
 6. Se algo falhar (Gmail, GitHub, página que precise do navegador), avisar o João NA HORA
    (mensagem + notificação) pedindo para ligar o Chrome no PC; às vezes no celular não funciona.
 
-### Já analisados ou em andamento (não trazer como novos)
-- Imbaú PE 84, 85, 89, 91 e 92; Dispensa 15.
-- Ortigueira PE 87, 90, 91, 95 e 99.
-- Carambeí PE 54 e 55. Faxinal PE 52. Mauá da Serra PE 60 e 61. Tibagi PE 60 e 61.
-- UTFPR Ponta Grossa PE 15 e 17. Telêmaco PE 83. Castro 143 e 461. Piraí 43 e 99.
-- Cândido de Abreu 72 e 98. EPR-UEL 146.
-(Quando o João mandar os PDFs de um pregão, acrescentar aqui.)
+### Já no app ou já descartados (não trazer como novos) — atualizado 22/10/2026
+Concluídos/encerrados: EPR-UEL 146; Imbaú 84 e 85; UFPR 2922; Ortigueira 87 (desclassificado);
+UEL 162; Faxinal 52; Ortigueira 95 (desistiu).
+Em andamento: Mauá da Serra 60 (itens ganhos); Ortigueira 91; Carambeí 54 e 55; UTFPR Ponta Grossa 15 e 17;
+Imbaú 91.
+Aguardando PDFs: Assaí 103; Castro 150; Conselheiro Mairinck 62; Faxinal 49; Grandes Rios 41;
+Guamiranga 32; Ipiranga 77 e 78; Japira 38 e 39.
+Descartados: Manoel Ribas Disp. 27; Ivaiporã 132; Japira 37; Nova Santa Bárbara 29; Piraí do Sul 43;
+São João do Ivaí 77.
+Antigos (já analisados antes): Imbaú 89 e 92, Dispensa 15; Ortigueira 90 e 99; Mauá da Serra 61;
+Tibagi 60 e 61; Telêmaco 83; Castro 143 e 461; Piraí 99; Cândido de Abreu 72 e 98.
+(Quando o João mandar um backup do app ou os PDFs de um pregão, atualizar esta lista.)
 
 ### Orientações adicionais do João
 <!-- acrescentar aqui as novas orientações de busca -->
