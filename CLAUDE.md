@@ -1,0 +1,131 @@
+# Meus Pregões — regras do João (LEIA ANTES DE QUALQUER COISA)
+
+Este arquivo é a base de regras fixas. Toda vez que for mexer no app, analisar edital,
+criar JSON de importação ou buscar editais, leia este arquivo primeiro e siga o que está aqui.
+O João não deve precisar repetir estas regras. Quando ele passar uma regra nova que valha
+sempre, acrescente aqui (seção certa) no mesmo commit da tarefa.
+
+> Repositório PÚBLICO: não escreva aqui CPF, RG, dados bancários, senhas, limite de crédito
+> nem nada pessoal. Esses dados ficam só na Config do app.
+
+---
+
+## 1. O app
+
+- Tudo em `index.html` (arquivo único). Publicação: GitHub Pages, direto na `main`
+  (https://jcaferreira00-dev.github.io/MeusPregoes/). Faça o commit e o push direto, sem PR.
+- A cada publicação, suba a versão em DOIS lugares: `VERSION` no `sw.js` e `APP_VERSION` no `index.html`.
+- Antes de publicar: extraia os `<script>` e rode `node --check`; teste no navegador (Playwright) o que mudou.
+- Ao mudar algo, inclua só o que foi pedido: não tire nem esconda cálculos e informações que já existiam.
+- Visual: mesmo alinhamento, blocos simétricos, status com uma palavra só, órgão em CAIXA ALTA,
+  cidade padronizada ("Ortigueira/PR"). Se houver dúvida num ajuste visual, mostre uma prévia antes de publicar.
+- Celular (iPhone 13) = só o básico; PC = completo. Não criar guias novas no celular.
+
+### Regras de valor da proposta (não mudar sem o João pedir)
+- Lance final preenchido prevalece sobre tudo, na proposta inicial e na final.
+- Sem lance final: sai o teto do edital. Margem acima do teto é limitada ao teto.
+- Proposta inicial: preço guardado na 1ª geração (sem lance). Depois que o pregão tem item ganho,
+  os ajustes da proposta final não mexem na inicial.
+- Proposta final: só itens vencidos, com confirmação de preço; ajustes dela não viram padrão.
+
+---
+
+## 2. Análise de edital (quando o João mandar o PDF)
+
+- Focar só nos itens/lotes que valem a pena.
+- Cruzar as tabelas do edital (ETP, TR, quadro de preços, modelo de proposta, ata): quantidade,
+  unidade e soma por secretaria. Havendo divergência, avisar e já mandar o texto do pedido de esclarecimento.
+- Margem = (teto − custo) ÷ teto. Alvo 40%; a partir de 15% ainda vale se o lucro em R$ compensar.
+- Considerar o caso de ganhar só um item (frete, carro e combustível todos nele): informar o lance
+  mínimo sem prejuízo.
+- Custo pela embalagem de compra (ex.: isopor em pacote de 25 placas → para 20 compra 1 pacote).
+- Sempre mais de uma opção de compra, de lojas diferentes, com link DIRETO do produto (nunca link de busca).
+- Entrega parcelada: deixar claro e mostrar o capital de giro necessário.
+- Valor e capital de giro NÃO são motivo de descarte (nem o limite anual do MEI).
+- Entrega de carro: Strada com carretinha, até 3 viagens. Fora: itens grandes, pesados, frágeis
+  ou que exigem instalação (geladeira, móveis grandes, barras de 6 m, telhas, toneladas…).
+- Certificação: procurar "Inmetro" no edital inteiro (inclusive execução/entrega). Ex.: balança do
+  PE 87 de Ortigueira; capacete de skate exige EN1078; bola de tênis de mesa "oficial" pode exigir ITTF.
+- Habilitação: ainda não tem atestado de capacidade técnica; MEI não tem balanço (descartar se exigido).
+  Tem SICAF.
+- Pregão inviável: só avisar, sem criar JSON nem arquivos.
+
+### Checklist de regras do edital que mudam a proposta (conferir SEMPRE e colocar no JSON)
+| O que procurar no edital | Onde vai no JSON |
+|---|---|
+| Proposta inicial pode ou não identificar o licitante ("desclassificada a proposta que identifique") | `regrasEdital.semIdentificacao` + `referencia` |
+| Validade mínima da proposta (ex.: "não inferior a 90 dias") | `pdfOpts.validade` |
+| Condição/prazo de pagamento | `pdfOpts.pagamento` e `pagamentoDias` |
+| Prazo de entrega | `prazoEntregaDias` e `pdfOpts.prazoEntrega` |
+| Local de entrega | `pdfOpts.localEntrega` |
+| Modelo de proposta próprio do edital (anexo) e título dele | `modeloProprio`, `pdfOpts.desc.tituloTexto` |
+| Exigências (marca, catálogo, amostra, Inmetro, declarações) | `exigencias` |
+| Entrega parcelada | `entregaParcelada`, `entregaParceladaObs` |
+
+A tabela de especificações técnicas da proposta fica sempre DESLIGADA (o detalhamento vai no catálogo).
+
+Exemplo real: Imbaú PE 91/2026 — item 10.2.1 desclassifica proposta que identifique o licitante
+(inicial SEM identificação); item 9.5 exige validade ≥ 90 dias; a proposta final (Anexo III) é identificada.
+
+---
+
+## 3. JSON de importação (um arquivo por pregão, nunca juntar dois)
+
+Formato de backup do app (Config › Importar › Mesclar). IDs únicos e novos; `createdAt`/`updatedAt` em ms.
+
+```json
+{
+  "pregoes": [{
+    "id": "pz_imbau_91_2026", "numero": "91/2026", "orgao": "Prefeitura Municipal de Imbaú",
+    "plataforma": "BLL", "cidadeUf": "Imbaú/PR",
+    "prazoPropostas": "2026-11-03T13:00", "sessao": "2026-11-03T13:30",
+    "status": "Analisando", "prazoEntregaDias": 10, "pagamentoDias": 30,
+    "exigencias": "", "obs": "", "link": "", "linkProposta": "", "linkLicitacao": "",
+    "modeloProprio": false, "linkModelo": "", "entregaParcelada": false, "entregaParceladaObs": "",
+    "regrasEdital": {
+      "semIdentificacao": true,
+      "referencia": "item 10.2.1 do edital",
+      "observacoes": "Proposta final (Anexo III) identificada. Validade mínima 90 dias (item 9.5)."
+    },
+    "pdfOpts": { "anonima": true, "validade": 90, "pagamento": "Conforme edital", "prazoEntrega": "", "localEntrega": "" },
+    "createdAt": 0, "updatedAt": 0, "deleted": false
+  }],
+  "itens": [{
+    "id": "it_imbau_91_01", "pregaoId": "pz_imbau_91_2026", "loteEdital": "", "itemEdital": "01",
+    "descricao": "nome curto", "descEdital": "descrição completa do edital", "marca": "", "unidade": "Un",
+    "qtd": 10, "custo": 2.0, "teto": 5.0, "frete": 0, "margem": null, "lanceFinal": null,
+    "onde": "Loja", "ondeLink": "https://link-direto-do-produto",
+    "alternativas": [{ "loja": "Outra loja", "link": "https://...", "custo": 2.1, "frete": 0, "qtd": 0 }],
+    "obs": "", "createdAt": 0, "updatedAt": 0, "deleted": false
+  }]
+}
+```
+
+- `regrasEdital.semIdentificacao`: `true` = edital proíbe identificar na inicial; `false` = exige; omitir se o
+  edital não fala. O app mostra o aviso na guia Proposta e trava a geração se a chavinha estiver diferente.
+- `pdfOpts.anonima` deve bater com `regrasEdital.semIdentificacao`.
+
+### Entrega dos arquivos
+Zip com uma pasta por cidade e, dentro, uma por pregão: `Cidade/PREGÃO ELETRÔNICO EDITAL nº 91-2026/`
+com o JSON, observações, LEIA-ME e as declarações do edital preenchidas em .docx.
+
+---
+
+## 4. Busca de editais
+
+- Fonte atual: divulgador de editais da BLL que chega no Gmail do João.
+- Raio: até ~180 km de Telêmaco Borba/PR. Nada difícil de transportar.
+- Ramos dos CNAEs do MEI: ferragens/ferramentas (principal), informática, telefonia, equip. de escritório,
+  material elétrico, hidráulicos, iluminação, lubrificantes, saneantes (só sinalizar: exige licença/AFE),
+  brinquedos, esportivos, bicicletas, instrumentos musicais, motopeças, tapeçaria/cortinas, festas/decoração.
+- Sem CNAE (descartar, mas citar se o valor for alto): papelaria/expediente, tintas, tecidos/armarinho.
+  Pregão de expediente com itens elétricos/ferragem no meio: citar só esses itens (julgamento por item).
+- Sempre fora: alimentos, medicamentos/saúde, hospitalar, serviços, veículos/combustível,
+  personalizados com amostra em prazo curto.
+- Itens com fornecedor já conhecido (priorizar): pilhas/baterias Elgin, pistolas de cola quente,
+  headset C3Tech PH-380BK, skate Lyons, raquete Vollo, caixas organizadoras, dispensers, EPIs com CA,
+  calhas/rufos e ferragens de portão, Arduino/ESP32 (Eletrogate), percussão, testes psicológicos.
+- Comparar sempre pelo nº do pregão no edital e pelo processo (não pelo sequencial do PNCP).
+
+### Orientações adicionais do João
+<!-- acrescentar aqui as novas orientações de busca -->
