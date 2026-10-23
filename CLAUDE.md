@@ -72,7 +72,9 @@ Exemplo real: Imbaú PE 91/2026 — item 10.2.1 desclassifica proposta que ident
 
 ---
 
-## 3. JSON de importação (um arquivo por pregão, nunca juntar dois)
+## 3. JSON de importação da ANÁLISE (um arquivo por pregão, nunca juntar dois)
+
+(Na BUSCA é o contrário: um JSON único com todos os pregões novos — ver seção 4.)
 
 Formato de backup do app (Config › Importar › Mesclar). IDs únicos e novos; `createdAt`/`updatedAt` em ms.
 
@@ -130,16 +132,17 @@ Municipio de Imbau/                 <- pasta com o nome do promotor (órgão)
 ## 4. Busca de editais
 
 ### Fluxo de trabalho (sempre nesta ordem)
-1. **Varredura → só a lista de oportunidades.** Primeiro só listar os pregões que passam no filtro
-   abaixo (tabela curta). Não gerar JSON nem arquivos nessa etapa.
+1. **Varredura → lista de oportunidades + UM JSON único** com todos os pregões novos (cadastro básico,
+   para importar com "Mesclar"). Sem pastas, sem zip, sem análise de itens nessa etapa.
 2. **João escolhe e manda os PDFs** dos editais que quer.
 3. **Análise precisa, item por item**, com todas as regras do edital (seção 2 e checklist).
-4. **Entrega:** JSON com cotações em pelo menos 2 fornecedores, observações e o zip no padrão da seção 3.
+4. **Entrega da análise:** JSON com cotações em pelo menos 2 fornecedores, observações e o zip com as pastas da seção 3.
 
 ### Filtro da varredura
 - Fonte: **PNCP** (não usar o e-mail do João). Ver "Busca no PNCP" abaixo.
-- Raio: até ~180 km de Telêmaco Borba/PR, ou menos (quanto mais perto, melhor): está começando e
-  sem caixa para frete grande.
+- Raio: até ~120 km de estrada de Telêmaco Borba/PR, MAIS Ponta Grossa (~126 km) — decisão de 22/10/2026
+  (180 km ficou longe demais). Quanto mais perto, melhor: está começando e sem caixa para frete grande.
+  A lista de municípios com código IBGE está em "Busca no PNCP".
 - Entrega de carro de passeio, no máximo Strada com carretinha. Itens pesados ou grandes não compensam.
 - Itens em quantidade muito grande são difíceis de comprar (falta de fornecedor e de experiência):
   evitar ou sinalizar.
@@ -163,17 +166,19 @@ filtro, raio, ramos ou o que já foi analisado. Se precisar mudar uma regra, mud
 ### Tarefa agendada "Busca de pregões" (todo domingo)
 1. Ler este arquivo (já está fazendo isso).
 2. Ler o "Log das buscas" (fim deste arquivo) para saber a última verificação.
-   Buscar no PNCP (seção "Busca no PNCP"), município por município, faixa 1 e depois faixa 2.
+   Buscar no PNCP (seção "Busca no PNCP"), município por município, pregões e dispensas.
    NÃO usar o Gmail.
 3. Descartar: prazo de proposta já vencido, fora do raio, fora dos CNAEs, itens grandes/pesados,
    serviços/locação/instalação, e os pregões da lista "Já analisados" abaixo.
 4. Entregar só a LISTA de oportunidades (tabela curta, mais perto primeiro): cidade e distância aprox.,
    órgão, nº do pregão, fim das propostas, objeto resumido, por que vale, link BLL.
    Depois, uma linha com os principais descartados.
-5. Montar o ZIP da busca: `Pregoes AAAA-MM-DD/` com `LISTA DA BUSCA AAAA-MM-DD.txt` e, para cada
-   pregão, `<Promotor sem acento>/EDITAL N 000-AAAA/` com `pregao.json` (cadastro básico, status
-   "Falta dados", id fixo que a análise depois reaproveita) e `LEIA-ME.txt` (objeto, prazo, plataforma,
-   por que entrou, link do PNCP para baixar os PDFs).
+5. Entregar UM JSON SÓ com todos os pregões novos da busca (cadastro básico, status "Falta dados",
+   link do PNCP em `link`/`linkLicitacao`, objeto e triagem em `obs`, id fixo que a análise depois
+   reaproveita) — o João importa com "Mesclar". Na mesma lista, marcar `deleted: true` nos pregões do app
+   que deixaram de valer (prazo vencido sem proposta, fora do raio), nunca nos que têm proposta enviada,
+   item ganho, empenho, entrega ou pagamento. NÃO criar pastas nem zip na busca: as pastas da seção 3
+   só existem depois da análise dos PDFs.
 6. Salvar a lista em `buscas/AAAA-MM-DD.md` neste repositório e REGISTRAR NO LOG (fim deste arquivo):
    uma linha nova na tabela e os pregões trazidos acrescentados na lista "Já no app ou já descartados".
    Commit direto na main. Busca sem registro no log = busca não feita.
@@ -187,30 +192,28 @@ filtro, raio, ramos ou o que já foi analisado. Se precisar mudar uma regra, mud
 - Itens e tetos (só dos candidatos): `https://pncp.gov.br/api/pncp/v1/orgaos/<cnpj>/compras/<ano>/<sequencial>/itens?pagina=1&tamanhoPagina=50`
   (cnpj, ano e sequencial vêm do `numeroControlePNCP` = "cnpj-1-sequencial/ano").
 - Link para o João baixar o edital: `https://pncp.gov.br/app/editais/<cnpj>/<ano>/<sequencial>`; plataforma em `usuarioNome` e `linkSistemaOrigem`.
-- Pregões (modalidade 6) em todas as faixas. Dispensas (8) só na faixa 1, porque o prazo delas é curto.
-- Para economizar: na faixa 2 pedir ao WebFetch só as compras dos ramos do MEI (lista de áreas no prompt).
+- Pregões (modalidade 6) e dispensas (8) em todos os municípios da lista.
+- Para economizar: pedir ao WebFetch só as compras dos ramos do MEI (lista de áreas no prompt), uma linha por compra.
 - Limite: até ~5 chamadas por vez. Se vier HTTP 429, esperar 2 min e seguir; listar no fim o que falhou.
 - Órgãos estaduais/federais nesses municípios (UTFPR, UEPG, UEL etc.) aparecem na mesma consulta.
 - Distância = linha reta × 1,3 (estimativa de estrada a partir de Telêmaco Borba).
 
-**Faixa 1 — até ~125 km (36 municípios), buscar SEMPRE:**
-Telêmaco Borba 4127106 (~0); Imbaú 4110078 (~25); Tibagi 4127502 (~38); Ortigueira 4117305 (~43); Curiúva 4107009 (~47); Ventania 4128534 (~51); Reserva 4121703 (~56); Sapopema 4126207 (~60); Figueira 4107751 (~75); Rosário do Ivaí 4122651 (~87); São Jerônimo da Serra 4124707 (~89); Ibaiti 4109708 (~89); Rio Branco do Ivaí 4122172 (~92); Piraí do Sul 4119400 (~94); Japira 4112306 (~97); Cândido de Abreu 4104402 (~101); Ipiranga 4110508 (~101); Mauá da Serra 4115754 (~101); Ivaí 4111407 (~104); Faxinal 4107603 (~104); Castro 4104907 (~104); Pinhalão 4119202 (~106); Arapoti 4101606 (~107); Tamarana 4126678 (~108); Nova Santa Bárbara 4117214 (~108); Carambeí 4104659 (~109); Jaboti 4111704 (~111); Congonhinhas 4106001 (~112); Conselheiro Mairinck 4106100 (~117); Tomazina 4127809 (~118); Santa Cecília do Pavão 4123204 (~118); Cruzmaltina 4106852 (~119); Santo Antônio do Paraíso 4124301 (~120); Grandes Rios 4108700 (~120); Jaguariaíva 4112009 (~121); Marilândia do Sul 4114906 (~125)
-
-**Faixa 2 — ~125 a 180 km (63 municípios), buscar depois da faixa 1:**
-São Sebastião da Amoreira 4126009 (~126); Wenceslau Braz 4128500 (~126); Ponta Grossa 4119905 (~126); Ariranha do Ivaí 4101853 (~128); Guamiranga 4108957 (~128); Nova Fátima 4117008 (~129); Imbituva 4110102 (~131); Rio Bom 4122107 (~133); Prudentópolis 4120606 (~136); Ribeirão do Pinhal 4121901 (~137); Califórnia 4103503 (~137); Jundiaí do Sul 4112900 (~137); Siqueira Campos 4126603 (~139); Guapirama 4109005 (~139); Lidianópolis 4113429 (~140); Borrazópolis 4103305 (~140); Ivaiporã 4111506 (~140); São José da Boa Vista 4125407 (~140); Manoel Ribas 4114500 (~141); Assaí 4101903 (~141); Novo Itacolomi 4117297 (~143); Jardim Alegre 4112504 (~143); Quatiguá 4120705 (~143); Nova América da Colina 4116604 (~144); Lunardelli 4113759 (~152); Joaquim Távora 4112801 (~152); Teixeira Soares 4127007 (~153); Abatiá 4100103 (~153); Arapuã 4101655 (~154); Santana do Itararé 4124004 (~154); Boa Ventura de São Roque 4103040 (~154); Santa Amélia 4123105 (~155); Sengés 4126306 (~155); Kaloré 4113106 (~157); Fernandes Pinheiro 4107736 (~157); Apucarana 4101408 (~158); Turvo 4127965 (~158); Doutor Ulysses 4128633 (~161); Jataizinho 4112702 (~161); Marumbi 4115507 (~162); Pitanga 4119608 (~163); Ibiporã 4109807 (~163); Uraí 4128401 (~164); Londrina 4113700 (~165); Santo Antônio da Platina 4124103 (~165); Cornélio Procópio 4106407 (~165); Irati 4110706 (~166); Cambira 4103800 (~166); Salto do Itararé 4122909 (~166); São João do Ivaí 4125001 (~166); Arapongas 4101507 (~169); Santa Mariana 4123907 (~171); Jandaia do Sul 4112108 (~171); Godoy Moreira 4108551 (~174); Cambé 4103701 (~175); Carlópolis 4104709 (~176); Nova Tebas 4117271 (~176); Bom Sucesso 4103206 (~176); São Pedro do Ivaí 4125803 (~177); Rolândia 4122404 (~177); Palmeira 4117701 (~178); Bandeirantes 4102406 (~179); Mandaguari 4114203 (~179)
-
+**Municípios da busca — até ~120 km + Ponta Grossa (35):**
+Telêmaco Borba 4127106 (~0); Imbaú 4110078 (~25); Tibagi 4127502 (~38); Ortigueira 4117305 (~43); Curiúva 4107009 (~47); Ventania 4128534 (~51); Reserva 4121703 (~56); Sapopema 4126207 (~60); Figueira 4107751 (~75); Rosário do Ivaí 4122651 (~87); São Jerônimo da Serra 4124707 (~89); Ibaiti 4109708 (~89); Rio Branco do Ivaí 4122172 (~92); Piraí do Sul 4119400 (~94); Japira 4112306 (~97); Cândido de Abreu 4104402 (~101); Ipiranga 4110508 (~101); Mauá da Serra 4115754 (~101); Ivaí 4111407 (~104); Faxinal 4107603 (~104); Castro 4104907 (~104); Pinhalão 4119202 (~106); Arapoti 4101606 (~107); Tamarana 4126678 (~108); Nova Santa Bárbara 4117214 (~108); Carambeí 4104659 (~109); Jaboti 4111704 (~111); Congonhinhas 4106001 (~112); Conselheiro Mairinck 4106100 (~117); Tomazina 4127809 (~118); Santa Cecília do Pavão 4123204 (~118); Cruzmaltina 4106852 (~119); Santo Antônio do Paraíso 4124301 (~120); Grandes Rios 4108700 (~120); Ponta Grossa 4119905 (~126)
 
 ### Já no app ou já descartados (não trazer como novos) — atualizado 22/10/2026
 Concluídos/encerrados: EPR-UEL 146; Imbaú 84 e 85; UFPR 2922; Ortigueira 87 (desclassificado);
 UEL 162; Faxinal 52; Ortigueira 95 (desistiu).
 Em andamento: Mauá da Serra 60 (itens ganhos); Ortigueira 91; Carambeí 54 e 55; UTFPR Ponta Grossa 15 e 17;
 Imbaú 91.
-Aguardando PDFs: Assaí 103; Castro 150; Conselheiro Mairinck 62; Faxinal 49; Grandes Rios 41;
-Guamiranga 32; Ipiranga 77 e 78; Japira 38 e 39.
+Aguardando PDFs: Castro 150; Conselheiro Mairinck 62; Faxinal 49; Grandes Rios 41;
+Ipiranga 77 e 78; Japira 38 e 39.
 Trazidos na busca PNCP de 22/10 (aguardando escolha): Ortigueira 102; São Jerônimo da Serra 47;
-Rio Branco do Ivaí 36; Prudentópolis 124; Califórnia 69; Jardim Alegre 51 e 52; Turvo 65; Jataizinho 35;
-Ibiporã 72; UEL 137 (Londrina); Câmara de Londrina 5; Embrapa Soja 1; Sto. Antônio da Platina 101;
-UTFPR Cornélio Procópio 189; Câmara de São João do Ivaí 9; Arapongas 37; Santa Mariana 53; Bandeirantes 39.
+Rio Branco do Ivaí 36.
+Excluídos em 22/10 por ficarem acima de 120 km: Prudentópolis 124; Califórnia 69; Jardim Alegre 51 e 52;
+Turvo 65; Jataizinho 35; Ibiporã 72; UEL 137; Câmara de Londrina 5; Embrapa Soja 1; Sto. Antônio da
+Platina 101; UTFPR Cornélio Procópio 189; Câmara de São João do Ivaí 9; Arapongas 37; Santa Mariana 53;
+Bandeirantes 39; Assaí 103; Guamiranga 32.
 Vistos e descartados na busca PNCP de 22/10: Ortigueira 103 (mochilas) e 104; Pinhalão 18; Apucarana 42
 (180 kits de computador); UEL 140 (louças); Londrina Iluminação 11; Rolândia 107 e 111 (prazo 23/10);
 Sto. Antônio da Platina 96; Prudentópolis 132 e 140; Imbituva 35; Arapongas 35 e 40; Tibagi 61.
@@ -234,3 +237,4 @@ ou na lista "Já no app ou já descartados" — comparar por órgão + nº do pr
 |---|---|---|---|
 | 22/10/2026 | divulgador BLL de 21/10/2026 (últimos 14 dias) | Japira 38 e 39; Castro 150; Conselheiro Mairinck 62; Ipiranga 77 e 78; Grandes Rios 41; Faxinal 49; Assaí 103; Manoel Ribas Disp. 27; São João do Ivaí 77 | buscas/2026-10-22.md |
 | 22/10/2026 | PNCP, pregões abertos até 21/12, faixas 1 e 2 (dispensas não) | 19 novos (ver buscas/2026-10-22-pncp.md) | buscas/2026-10-22-pncp.md |
+| 22/10/2026 | Ajuste: raio reduzido para ~120 km + Ponta Grossa; 17 pregões acima disso excluídos do app | — | (JSON pregoes-mei-120km-2026-10-22) |

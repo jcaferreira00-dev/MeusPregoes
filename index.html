@@ -1072,7 +1072,7 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.86.0';
+  const APP_VERSION = '1.86.1';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Em disputa', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -5705,7 +5705,7 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
   const REPO_MD = 'https://github.com/jcaferreira00-dev/MeusPregoes/blob/main/CLAUDE.md';
   const REPO_BUSCAS = 'https://github.com/jcaferreira00-dev/MeusPregoes/tree/main/buscas';
   const PROC_CMDS = [
-    ['busca', 'Busca de pregões (manual)', 'Leia o CLAUDE.md do repositório jcaferreira00-dev/MeusPregoes e faça a busca de pregões conforme a seção 4 (PNCP, filtro, log das buscas). Use só o CLAUDE.md, não o contexto de conversas. Me devolva a lista e o zip no padrão da seção 3, e registre a busca no log.'],
+    ['busca', 'Busca de pregões (manual)', 'Leia o CLAUDE.md do repositório jcaferreira00-dev/MeusPregoes e faça a busca de pregões conforme a seção 4 (PNCP, filtro, log das buscas). Use só o CLAUDE.md, não o contexto de conversas. Me devolva a lista e UM JSON só com todos os pregões novos (sem pastas nem zip), e registre a busca no log.'],
     ['analise', 'Análise dos editais (anexe os PDFs)', 'Leia o CLAUDE.md do repositório jcaferreira00-dev/MeusPregoes. Analise item por item os PDFs anexos conforme a seção 2 e o checklist de regras do edital. Gere o zip no padrão da seção 3: JSON de importação (mesmo id do cadastro básico, cotação em pelo menos 2 fornecedores, regrasEdital), LEIA-ME, observações e declarações em .docx. Atualize a lista "Já no app" do CLAUDE.md.'],
     ['revisao', 'Revisão do app (anexe o backup exportado)', 'Leia o CLAUDE.md do repositório jcaferreira00-dev/MeusPregoes. Segue meu backup exportado do app: mescle o que compensa, marque como excluído o que não compensa (nunca os que têm item ganho, empenho, entrega ou pagamento), atualize a lista "Já no app" do CLAUDE.md e me devolva o JSON para importar com "Substituir tudo".'],
     ['regra', 'Gravar uma regra nova', 'Acrescente esta regra no CLAUDE.md do repositório jcaferreira00-dev/MeusPregoes, na seção certa, e passe a seguir sempre: '],
@@ -5717,8 +5717,8 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
       <div class="card"><h3>${icon('proc', 'sm')}<span class="grow">Dia da busca — passo a passo</span></h3>
         <p class="tiny muted" style="margin:0 0 10px">As regras ficam no CLAUDE.md do app (no GitHub). O Claude lê ele antes de tudo, então não precisa repetir nada na conversa.</p>
         <div class="proc-steps">
-          ${passo(1, 'Domingo 8h43: a busca roda sozinha', 'Chega a notificação com a lista de pregões novos (PNCP, até ~180 km). Se ela avisar que falhou, ligue o Chrome no PC e peça a busca manual (comando abaixo).')}
-          ${passo(2, 'Escolha os pregões', 'Leia a lista. Cada pregão tem um LEIA-ME com o link do PNCP para baixar os PDFs (edital, TR e anexos).')}
+          ${passo(1, 'Domingo 8h43: a busca roda sozinha', 'Chega a notificação com a lista de pregões novos (PNCP, até ~120 km + Ponta Grossa). Se ela avisar que falhou, ligue o Chrome no PC e peça a busca manual (comando abaixo).')}
+          ${passo(2, 'Importe a busca e escolha os pregões', 'Importe o JSON da busca (Config › Importar › Mesclar). Cada pregão entra como Falta dados, com o link do PNCP para baixar os PDFs (edital, TR e anexos).')}
           ${passo(3, 'Mande os PDFs para análise', 'Anexe os PDFs numa conversa nova e cole o comando “Análise dos editais”. Um pregão por vez fica mais preciso.')}
           ${passo(4, 'Importe o JSON e confira no PC', 'Config › Importar › Mesclar. Confira itens, cotações e a guia Proposta (o aviso das regras do edital tem que estar verde).')}
           ${passo(5, 'Envie a proposta e atualize o status', 'Depois de enviar na plataforma, mude o status para Enviada. Acompanhe a disputa pela guia Pregões.')}
