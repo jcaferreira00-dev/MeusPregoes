@@ -69,6 +69,11 @@ svg.i.sm { width: 16px; height: 16px; }
 .pill { display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px; padding: 5px 10px; border-radius: 99px; background: rgba(255,255,255,.14); color: #fff; white-space: nowrap; }
 .pill .dot { width: 7px; height: 7px; border-radius: 50%; background: #62d26f; }
 .pill.off .dot { background: #f0b429; } .pill.err .dot { background: #ff7b72; }
+button.pill { border: 0; font: inherit; cursor: pointer; }
+.pill.warn { background: #f0b429; color: #3b2a00; } .pill.warn .dot { background: #3b2a00; }
+.vsync { display: grid; grid-template-columns: 1fr auto auto; gap: 4px 14px; font-size: 13px; margin: 8px 0; }
+.vsync b { text-align: right; font-variant-numeric: tabular-nums; } .vsync .h { font-size: 11px; font-weight: 800; text-transform: uppercase; color: var(--muted); }
+.vsync-dif { margin-top: 8px; font-size: 12.5px; max-height: 220px; overflow: auto; } .vsync-dif li { margin: 2px 0 2px 16px; }
 .main { padding: 14px 14px calc(var(--nav-h) + var(--safe-b) + 90px); max-width: 980px; width: 100%; min-width: 0; margin: 0 auto; align-self: start; }
 .nav { position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; display: flex; background: var(--card); border-top: 1px solid var(--line); padding: 6px 6px calc(var(--safe-b) + 6px); box-shadow: 0 -6px 20px rgba(20,33,61,.07); }
 .nav button { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; background: none; border: 0; padding: 6px 2px; color: var(--muted); font-size: 11px; font-weight: 600; border-radius: 12px; cursor: pointer; }
@@ -1072,7 +1077,7 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.86.1';
+  const APP_VERSION = '1.87.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Em disputa', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -1698,6 +1703,26 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
     return { linhas, total: round2(total), totalS: round2(totalS), semValor, limitados, abaixoMin, lanceAcima, omitidos, reducao: round2(reducao), pregao: pst.p, tipo: tipo || '', congelados, ganho: !!pst.ganho };
   }
 
+  /* ---------- relógio: a data de cada alteração decide qual versão vale entre aparelhos.
+     Se o relógio de um PC estiver adiantado/atrasado, a versão errada pode vencer. O app mede a
+     diferença para a hora da internet e corrige (setClockOffset). ---------- */
+  let clockOffset = 0;
+  const agora = () => Date.now() + clockOffset;
+  const setClockOffset = (ms) => { clockOffset = Number(ms) || 0; };
+  const getClockOffset = () => clockOffset;
+
+  // registros deste aparelho que a nuvem ainda não tem (ou tem numa versão mais velha)
+  function pendenciasNuvem(local, server) {
+    const L = migrate(local), S = migrate(server || {});
+    const out = { config: (L.config.updatedAt || 0) > (S.config.updatedAt || 0), pregoes: [], itens: [] };
+    for (const k of ['pregoes', 'itens']) {
+      const ms = new Map(S[k].map((r) => [r.id, r]));
+      for (const r of L[k]) { const x = ms.get(r.id); if (!x ? !r.deleted : (r.updatedAt || 0) > (x.updatedAt || 0)) out[k].push(r); }
+    }
+    out.n = (out.config ? 1 : 0) + out.pregoes.length + out.itens.length;
+    return out;
+  }
+
   /* ---------- merge (sincronização: sempre puxa antes de empurrar) ---------- */
   function mergeById(a, b) {
     const m = new Map();
@@ -1763,7 +1788,7 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
       emit(kind === true ? 'silent' : (kind || 'change'));
       return true;
     }
-    const now = () => Date.now();
+    const now = () => agora();
 
     return {
       get: () => state,
@@ -1900,7 +1925,7 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
   const api = {
     APP_VERSION, STATUS, INATIVOS, DECL_PADRAO, uid, n0, round2, ceil2, parseBR, brl, brl0, pct, numBR, qtdBR,
     fmtSessao, dataExtensa, hojeISO, defaultConfig, emptyState, migrate, custoViagem, localEntregaPadrao, calcItem, limiteMEI,
-    computeAll, divisaoCompra, ordemLoteItem, padLE, dasMensal, mesesAtivos, previewItem, linhasProposta, unitProposta, resolverPdfOpts, camposModelo, pendenciasModelo, CAMPOS_MODELO, identificaEmpresa, COLUNAS_DESC, CAMPOS_FORNECEDOR, CAMPOS_BANCO, mergeState, diffState, paraNuvem, createStore, demoState,
+    agora, setClockOffset, getClockOffset, pendenciasNuvem, computeAll, divisaoCompra, ordemLoteItem, padLE, dasMensal, mesesAtivos, previewItem, linhasProposta, unitProposta, resolverPdfOpts, camposModelo, pendenciasModelo, CAMPOS_MODELO, identificaEmpresa, COLUNAS_DESC, CAMPOS_FORNECEDOR, CAMPOS_BANCO, mergeState, diffState, paraNuvem, createStore, demoState,
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   root.Core = api;
@@ -1961,9 +1986,16 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
       this._t = setTimeout(() => this.run(reason), delay == null ? 2500 : delay);
     },
 
+    server: null,        // cópia do que a nuvem tem (última leitura confirmada)
+    confirmado: false,   // já houve uma sincronização completa com a nuvem nesta sessão
+    pendentes() {
+      if (!this.enabled || !this.store || !root.Core) return { n: 0, pregoes: [], itens: [], config: false };
+      return root.Core.pendenciasNuvem(this.store.get(), this.server || {});
+    },
     async run(reason) {
       if (!this.enabled || !this.store) return { skipped: 'desligado' };
-      if (this.running) return { skipped: 'ocupado' };
+      // já está sincronizando: marca para rodar de novo assim que terminar (antes a alteração ficava sem enviar)
+      if (this.running) { this.again = true; return { skipped: 'ocupado' }; }
       if (root.navigator && root.navigator.onLine === false) { this._set('offline', 'Sem internet: sincroniza quando voltar'); return { skipped: 'offline' }; }
       this.running = true;
       this._set('sync', 'Sincronizando…');
@@ -1972,7 +2004,7 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
         if (this.adapter.sync) {
           // adaptador atômico (transação): lê o servidor, mescla e grava numa tacada só
           const merged = await this.adapter.sync(this.store.get());
-          if (merged) this.store.mergeFrom(merged);
+          if (merged) { this.store.mergeFrom(merged); this.server = merged; }
         } else {
           // 1) PRIMEIRO traz o servidor e mescla
           const remote = await this.adapter.pull();
@@ -1982,6 +2014,7 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
           if (changed.config || changed.pregoes.length || changed.itens.length) await this.adapter.push(changed);
         }
         this.fails = 0;
+        this.confirmado = true;
         this.lastSync = t0;
         try { root.localStorage.setItem(LS, String(t0)); } catch (e) { /* ignora */ }
         this._set('idle', 'Sincronizado às ' + new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }));
@@ -1995,6 +2028,8 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
         return { ok: false, error: e };
       } finally {
         this.running = false;
+        if (this.again) { this.again = false; this.schedule('alteração durante o envio', 400); }
+        if (this.afterRun) { try { this.afterRun(); } catch (e) { /* ignora */ } }
       }
     },
   };
@@ -2078,6 +2113,11 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
           const snap = await mFs.getDoc(referenciaDoUsuario(uid));
           return snap.exists() ? snap.data() : null;
         },
+        // lê direto do servidor (sem cópia local do navegador): usado em "Verificar sincronização"
+        async buscarDoServidor(uid) {
+          const snap = await mFs.getDocFromServer(referenciaDoUsuario(uid));
+          return snap.exists() ? snap.data() : null;
+        },
 
         // lê o servidor, deixa o app mesclar e grava só se mudou — tudo numa transação
         // mesclar(remoto|null) -> { gravar:boolean, dados:object, resultado:any }
@@ -2113,9 +2153,9 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
 
         ouvirMudancas(uid, callback) {
           if (pararDeOuvirSnapshot) pararDeOuvirSnapshot();
-          pararDeOuvirSnapshot = mFs.onSnapshot(referenciaDoUsuario(uid), (snap) => {
-            if (snap.exists()) callback(snap.data());
-          }, (err) => console.warn('[cloud] escuta interrompida:', err && err.code));
+          pararDeOuvirSnapshot = mFs.onSnapshot(referenciaDoUsuario(uid), { includeMetadataChanges: true }, (snap) => {
+            callback(snap.exists() ? snap.data() : null, snap.metadata.fromCache);
+          }, (err) => { console.warn('[cloud] escuta interrompida:', err && err.code); if (root.onCloudEscutaErro) root.onCloudEscutaErro(err); });
         },
         pararDeOuvir() {
           if (pararDeOuvirSnapshot) { pararDeOuvirSnapshot(); pararDeOuvirSnapshot = null; }
@@ -5235,10 +5275,11 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
     catch (e) { console.warn('[fotos] envio', e); if (!enviarFotos.avisou) { enviarFotos.avisou = true; toast(/permission/i.test(String(e && (e.code || e.message))) ? 'A nuvem recusou as fotos (regras do Firebase). Elas continuam salvas neste aparelho.' : 'Fotos salvas neste aparelho; envio para a nuvem fica para depois.'); } return false; }
   }
   async function gravarFotos(id, arr) {
-    const rec = { fotos: arr, em: Date.now(), pend: true };
+    const rec = { fotos: arr, em: C.agora(), pend: true };
     await CatImg.setRec(id, rec);
     store.patchItem(id, (x) => { x.fotosEm = rec.em; x.fotosN = arr.length; });   // vai para a nuvem junto com os dados
-    enviarFotos(id, rec);
+    contarFotosPendentes();
+    enviarFotos(id, rec).then(contarFotosPendentes);
   }
   // fotos de um item: se outro aparelho mudou (fotosEm mais novo), baixa da nuvem; se aqui tem foto ainda não enviada, envia
   async function fotosDoItem(id) {
@@ -5252,7 +5293,7 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
       } catch (e) { console.warn('[fotos] download', e); }
     }
     if (loc.pend && nuvemFotosOk()) {
-      const rec = loc.em ? loc : Object.assign({}, loc, { em: Date.now() });
+      const rec = loc.em ? loc : Object.assign({}, loc, { em: C.agora() });
       if (!loc.em && it) store.patchItem(id, (x) => { x.fotosEm = rec.em; x.fotosN = rec.fotos.length; });
       enviarFotos(id, rec);
     }
@@ -5811,11 +5852,30 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
     UI.tab = v; if (v !== 'pregoes') UI.detailId = null;
     saveUI(); render(); window.scrollTo(0, 0);
   }
+  // textos do cartão da conta (atualizados junto com a pílula, sem redesenhar a tela)
+  function syncInfo() {
+    const n = S.pendentes().n, f = Cloud.fotosPend || 0;
+    return {
+      pend: n || f ? `<span style="color:var(--amber)">${n} alteraç${n === 1 ? 'ão' : 'ões'} · ${f} foto${f === 1 ? '' : 's'}</span>` : 'nada',
+      vivo: Cloud.aoVivo ? 'ligada' : '<span style="color:var(--amber)">sem conexão direta (confere a cada 2 min)</span>',
+      rel: Cloud.relogio ? (Math.abs(Cloud.relogio.off) <= 60000 ? 'certo' : `<span style="color:var(--red)">${fmtDif(Cloud.relogio.off)} (corrigido)</span>`) : '—',
+    };
+  }
   function updateStatusPill() {
+    if ($('#syncPend')) { const x = syncInfo(); $('#syncPend').innerHTML = x.pend; $('#syncVivo').innerHTML = x.vivo; $('#syncRel').innerHTML = x.rel; }
     const el = $('#pill'); if (!el) return;
     let cls = '', txt = 'Salvo no aparelho';
     if (!navigator.onLine) { cls = 'off'; txt = 'Offline · salvo no aparelho'; }
-    if (S.enabled) { txt = S.state === 'sync' ? 'Sincronizando…' : (S.state === 'erro' ? 'Falha no sync' : (navigator.onLine ? 'Sincronizado' : txt)); if (S.state === 'erro') cls = 'err'; }
+    if (S.enabled) {
+      // "Sincronizado" só quando a nuvem confirmou e não sobrou nada deste aparelho para enviar (dados e fotos)
+      const pend = S.pendentes().n, fp = Cloud.fotosPend || 0;
+      if (S.state === 'sync') txt = 'Sincronizando…';
+      else if (S.state === 'erro') { txt = 'Falha no sync'; cls = 'err'; }
+      else if (!navigator.onLine) { cls = 'off'; txt = pend + fp ? 'Offline · ' + (pend + fp) + ' não enviada' + (pend + fp > 1 ? 's' : '') : txt; }
+      else if (pend || fp) { cls = 'warn'; txt = (pend ? pend + ' alteraç' + (pend > 1 ? 'ões' : 'ão') : '') + (pend && fp ? ' + ' : '') + (fp ? fp + ' foto' + (fp > 1 ? 's' : '') : '') + ' sem enviar'; }
+      else if (!S.confirmado) txt = 'Conectando à nuvem…';
+      else txt = 'Sincronizado' + (S.lastSync ? ' ' + new Date(S.lastSync).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '');
+    }
     else if (navigator.onLine) txt = 'Salvo no aparelho';
     el.className = 'pill ' + cls; el.innerHTML = `<span class="dot"></span>${esc(txt)}`;
   }
@@ -5911,7 +5971,7 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
     Cloud.imgBusy = true;
     try {
       // imagens de antes desta função (sem data) valem "agora" na primeira vez: não são sobrescritas pela nuvem
-      for (const [, path] of IMG_CHAVES) { const c = store.get().config[path]; if (c.imagem && !c.imagemEm) store.setImagem(path, c.imagem, Date.now()); }
+      for (const [, path] of IMG_CHAVES) { const c = store.get().config[path]; if (c.imagem && !c.imagemEm) store.setImagem(path, c.imagem, C.agora()); }
       const aplicar = await cs.mesclarImagens(u.uid, (remoto) => {
         const L = imgLocal(), R = imgRemoto(remoto);
         const dados = { cab: R.cab.img, cabEm: R.cab.em, marca: R.marca.img, marcaEm: R.marca.em };
@@ -5926,7 +5986,7 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
   }
   // chamado quando você troca ou remove uma imagem: carimba a data e envia
   function imagemMudou(path) {
-    store.setConfigPath(path + '.imagemEm', Date.now(), { silent: true });
+    store.setConfigPath(path + '.imagemEm', C.agora(), { silent: true });
     sincronizarImagens();
   }
 
@@ -6023,7 +6083,8 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
       case 'nuvem-criar': nuvemEntrar(true); break;
       case 'nuvem-sair': confirmar('Sair da conta?', 'Os dados continuam neste aparelho, mas deixam de sincronizar até você entrar de novo.', 'Sair', false).then((ok) => { if (ok && window.CloudSync) window.CloudSync.logout(); }); break;
       case 'nuvem-tentar': iniciarNuvem(true); break;
-      case 'sync-agora': sincronizarImagens(); S.run('manual').then((r) => { if (r && r.ok) toast('Sincronizado'); updateStatusPill(); }); break;
+      case 'sync-agora': sincronizarImagens(); S.run('manual').then((r) => { if (r && r.ok) toast(S.pendentes().n ? 'Ainda há alterações sem enviar' : 'Sincronizado'); updateStatusPill(); }); break;
+      case 'sync-pill': case 'sync-verificar': if (S.enabled) verificarNuvem(); else setTab('config'); break;
       case 'instalar': if (UI.deferredPrompt) { UI.deferredPrompt.prompt(); UI.deferredPrompt.userChoice.finally(() => { UI.deferredPrompt = null; render(); }); } break;
       case 'banner-atualizar': location.reload(); break;
       case 'noop': break;
@@ -6173,8 +6234,12 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
     let corpo;
     if (Cloud.estado === 'carregando' || Cloud.estado === 'inicial') corpo = `<p class="small muted">Conectando ao Firebase…</p>`;
     else if (Cloud.estado === 'erro') corpo = `<div class="alert warn">${icon('alert', 'sm')}<span>${esc(Cloud.erro)}</span></div><button class="btn block" style="margin-top:10px" data-act="nuvem-tentar">Tentar de novo</button><p class="tiny muted" style="margin-top:8px">O app funciona normalmente sem a nuvem; seus dados ficam salvos no aparelho.</p>`;
-    else if (u) corpo = `<div class="kv-list"><div><span>Conta</span><b>${esc(u.email || '')}</b></div><div><span>Situação</span><b id="syncMsg">${esc(S.message)}</b></div></div>
-      <div class="grid2" style="margin-top:12px"><button class="btn" data-act="sync-agora">${icon('cloud', 'sm')} Sincronizar</button><button class="btn danger" data-act="nuvem-sair">Sair</button></div>
+    else if (u) corpo = `<div class="kv-list"><div><span>Conta</span><b>${esc(u.email || '')}</b></div><div><span>Situação</span><b id="syncMsg">${esc(S.message)}</b></div>
+        <div><span>Sem enviar para a nuvem</span><b id="syncPend">${syncInfo().pend}</b></div>
+        <div><span>Escuta ao vivo</span><b id="syncVivo">${syncInfo().vivo}</b></div>
+        <div><span>Relógio deste aparelho</span><b id="syncRel">${syncInfo().rel}</b></div></div>
+      <div class="grid2" style="margin-top:12px"><button class="btn" data-act="sync-agora">${icon('cloud', 'sm')} Sincronizar</button><button class="btn" data-act="sync-verificar">${icon('check', 'sm')} Verificar com a nuvem</button></div>
+      <button class="btn danger block" style="margin-top:8px" data-act="nuvem-sair">Sair da conta</button>
       <p class="tiny muted" style="margin-top:10px">Papel timbrado e marca d’água também sincronizam (a imagem mais recente vale; cada uma é reduzida para ~450 KB).</p>`;
     else corpo = `<p class="small muted" style="margin-bottom:12px">Entre com a mesma conta em todos os aparelhos para manter os dados iguais.</p>
       <div class="field"><label for="cEmail">E-mail</label><input class="input" id="cEmail" type="email" inputmode="email" autocomplete="username" autocapitalize="none"></div>
@@ -6200,7 +6265,7 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
         const tam = JSON.stringify(dados).length;
         if (tam > 950000) throw new Error('Dados passaram do limite de 1 MB do documento da nuvem. Exporte um backup e apague pregões antigos.');
         const gravar = !remoto || C.diffState(remoto, dados);
-        dados.atualizadoEm = Date.now();
+        dados.atualizadoEm = C.agora();
         return { gravar, dados, resultado: merged };
       }),
     };
@@ -6227,16 +6292,105 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
     // atualização ao vivo: mudanças feitas em outro aparelho chegam aqui (não reenvia: kind 'remote')
     sincronizarImagens();
     cs.ouvirImagens(user.uid, (dados) => { if (aplicarImagensRemotas(imgRemoto(dados))) { UI.keepScroll = true; if (UI.tab === 'pdf') render(); } });
-    cs.ouvirMudancas(user.uid, (dados) => {
+    cs.ouvirMudancas(user.uid, (dados, doCache) => {
+      Cloud.aoVivo = !doCache;
+      if (!dados) { if (!doCache) { S.server = {}; S.schedule('nuvem vazia', 800); } updateStatusPill(); return; }
       store.mergeFrom(dados);
+      if (!doCache) S.server = dados;   // só confia no que veio do servidor (a cópia do navegador pode estar velha)
       // se a nuvem está sem algo que este aparelho tem (gravação perdida ou atrasada), reconcilia sozinho
       if (C.diffState(dados, C.paraNuvem(store.get()))) S.schedule('reconciliar', 1200);
+      updateStatusPill();
     });
+    window.onCloudEscutaErro = () => { Cloud.aoVivo = false; updateStatusPill(); };
   }
   function aoSair() {
     if (window.CloudSync) window.CloudSync.pararDeOuvir();
-    S.configure(null);
+    S.configure(null); S.server = null; S.confirmado = false;
   }
+
+  /* ---------- verificar: compara este aparelho com o que está NO SERVIDOR (sem cópia do navegador) ---------- */
+  async function verificarNuvem() {
+    const cs = window.CloudSync, u = Cloud.user;
+    if (!cs || !u) { toast('Entre na conta para verificar'); return; }
+    if (!navigator.onLine) { toast('Sem internet: não dá para conferir agora'); return; }
+    if (Guard.pending.size) commitAllPending();
+    toast('Conferindo com a nuvem…');
+    await S.run('verificar');   // envia o que estiver pendente antes de comparar
+    let rem;
+    try { rem = await cs.buscarDoServidor(u.uid); }
+    catch (e) { dialog({ title: 'Não consegui falar com a nuvem', text: 'O servidor não respondeu (' + (e && (e.code || e.message) || 'erro') + '). Se este PC está numa rede de empresa, ela pode estar bloqueando o Firebase. Seus dados continuam salvos neste aparelho.', buttons: [{ label: 'OK', value: true, cls: 'primary' }] }); return; }
+    S.server = rem || {};
+    const fotos = await contarFotosPendentes();
+    const loc = store.get(), R = C.migrate(rem || {});
+    const ativos = (a) => a.filter((x) => !x.deleted).length;
+    const pend = C.pendenciasNuvem(loc, rem || {}), novos = C.pendenciasNuvem(rem || {}, loc);
+    const nome = (r) => r.numero ? 'Pregão ' + r.numero + ' · ' + (r.orgao || '') : 'Item ' + (r.itemEdital || '') + ' · ' + (r.descricao || '');
+    const lista = (arr) => arr.slice(0, 12).map((r) => '<li>' + esc(nome(r)) + (r.deleted ? ' (excluído)' : '') + '</li>').join('') + (arr.length > 12 ? '<li>… e mais ' + (arr.length - 12) + '</li>' : '');
+    const tam = JSON.stringify(C.paraNuvem(loc)).length;
+    const ok = !pend.n && !novos.n && !fotos;
+    const w = document.createElement('div'); w.className = 'dlg-wrap';
+    w.innerHTML = `<div class="dlg" role="dialog" aria-modal="true"><h3>${ok ? '✅ Tudo igual à nuvem' : '⚠️ Há diferenças'}</h3>
+      <div class="vsync"><span class="h"></span><span class="h">Aqui</span><span class="h">Nuvem</span>
+        <span>Pregões</span><b>${ativos(loc.pregoes)}</b><b>${ativos(R.pregoes)}</b>
+        <span>Itens</span><b>${ativos(loc.itens)}</b><b>${ativos(R.itens)}</b>
+        <span>Última gravação na nuvem</span><b></b><b>${rem && rem.atualizadoEm ? new Date(rem.atualizadoEm).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : '—'}</b></div>
+      ${pend.n ? `<div class="vsync-dif"><b>Só neste aparelho (a nuvem não recebeu):</b><ul>${lista(pend.pregoes.concat(pend.itens))}${pend.config ? '<li>Configurações</li>' : ''}</ul></div>` : ''}
+      ${novos.n ? `<div class="vsync-dif"><b>Na nuvem e ainda não aqui:</b><ul>${lista(novos.pregoes.concat(novos.itens))}</ul></div>` : ''}
+      ${fotos ? `<div class="vsync-dif"><b>${fotos} item(ns) com fotos ainda só neste aparelho.</b></div>` : ''}
+      <p class="tiny muted" style="margin-top:8px">Espaço usado na nuvem: ${Math.round(tam / 10000)}% do limite de 1 MB.${Cloud.relogio && Math.abs(Cloud.relogio.off) > 60000 ? ' Relógio deste PC ' + fmtDif(Cloud.relogio.off) + ': acerte a hora do Windows.' : ''}</p>
+      <div class="btns">${ok ? '' : '<button type="button" class="btn primary" data-v="enviar">Enviar / trazer agora</button>'}<button type="button" class="btn ghost" data-v="ok">Fechar</button></div></div>`;
+    document.body.appendChild(w);
+    w.addEventListener('click', async (e) => {
+      const b = e.target.closest('[data-v]'); if (!b && e.target !== w) return;
+      w.remove();
+      if (b && b.dataset.v === 'enviar') { store.mergeFrom(rem || {}); await enviarFotosPendentes(); await S.run('forçar'); verificarNuvem(); }
+    });
+  }
+
+  /* ---------- relógio deste aparelho x hora da internet ---------- */
+  // a data de cada alteração decide qual versão vale; relógio errado = versão errada vencendo
+  async function conferirRelogio() {
+    try {
+      const t0 = Date.now();
+      const r = await fetch('./manifest.webmanifest?relogio=' + t0, { method: 'HEAD', cache: 'no-store' });
+      const t1 = Date.now(), d = Date.parse(r.headers.get('date') || '');
+      if (!isFinite(d)) return;
+      const off = d + 500 - (t0 + t1) / 2;   // o cabeçalho tem precisão de segundos
+      Cloud.relogio = { off, em: t1 }; updateStatusPill();
+      C.setClockOffset(Math.abs(off) > 60000 ? off : 0);   // só corrige diferença acima de 1 min
+      if (Math.abs(off) > 120000 && !conferirRelogio.avisou) { conferirRelogio.avisou = true; toast('O relógio deste computador está ' + fmtDif(off) + '. O app já corrige, mas acerte a hora do Windows.'); }
+    } catch (e) { /* sem internet: tenta depois */ }
+  }
+  const fmtDif = (off) => { const m = Math.round(Math.abs(off) / 60000); return (m >= 60 ? Math.floor(m / 60) + ' h ' + (m % 60) + ' min' : m + ' min') + (off > 0 ? ' atrasado' : ' adiantado'); };
+
+  // fotos do catálogo que ainda estão só neste aparelho
+  async function contarFotosPendentes() {
+    let n = 0;
+    try { for (const id of await CatImg.keys()) { const r = await CatImg.getRec(id); if (r.pend) n += 1; } } catch (e) { /* ignora */ }
+    if (Cloud.fotosPend !== n) { Cloud.fotosPend = n; updateStatusPill(); }
+    return n;
+  }
+  // depois de cada sincronização: tenta mandar as fotos pendentes e reconta
+  S.afterRun = () => { if (S.confirmado) enviarFotosPendentes().then(contarFotosPendentes); updateStatusPill(); };
+
+  // ao sair da janela / fechar: grava o campo em edição e envia na hora (antes esperava 2,5 s e podia ficar para trás)
+  function enviarAoSair() {
+    try { if (Guard.pending.size) commitAllPending(); } catch (e) { /* ignora */ }
+    if (S.enabled && S.pendentes().n > 0) S.run('saindo da janela');
+  }
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) enviarAoSair();
+    else if (S.enabled) { S.run('voltou para a janela'); sincronizarImagens(); }
+  });
+  window.addEventListener('pagehide', enviarAoSair);
+  window.addEventListener('beforeunload', (e) => {
+    if (S.enabled && (S.pendentes().n > 0 || S.running)) { enviarAoSair(); e.preventDefault(); e.returnValue = ''; return ''; }
+    return undefined;
+  });
+  // conferência periódica com a nuvem (a escuta ao vivo às vezes cai sem avisar, ex.: rede da empresa)
+  setInterval(() => { if (S.enabled && !document.hidden) { S.run('conferência'); contarFotosPendentes(); } }, 120000);
+  setInterval(conferirRelogio, 30 * 60000);
+  conferirRelogio();
 
   async function iniciarNuvem(manual) {
     if (Cloud.ligado) return;
@@ -6260,12 +6414,13 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
   /* ---------- inicialização ---------- */
   function buildShell() {
     $('#app').innerHTML = `<div class="shell">
-      <header class="topbar"><img class="logo" src="icons/icon-96.png" alt="" width="34" height="34"><div class="grow"><h1>Meus Pregões</h1><div class="sub" id="subt"></div></div><span class="pill" id="pill"></span></header>
+      <header class="topbar"><img class="logo" src="icons/icon-96.png" alt="" width="34" height="34"><div class="grow"><h1>Meus Pregões</h1><div class="sub" id="subt"></div></div><button type="button" class="pill" id="pill" data-act="sync-pill" title="Sincronização: toque para conferir com a nuvem"></button></header>
       <nav class="nav" aria-label="Seções">${TABS.map((t) => `<button data-v="${t.id}" aria-label="${t.t}">${icon(t.id)}<span>${t.t}</span></button>`).join('')}</nav>
       <main class="main" id="main" tabindex="-1"></main></div>`;
     $('.nav').addEventListener('click', (e) => { const b = e.target.closest('button[data-v]'); if (b) setTab(b.dataset.v); });
     const main = $('#main');
     main.addEventListener('click', onClick);
+    $('#pill').addEventListener('click', () => { if (S.enabled) verificarNuvem(); else setTab('config'); });
     // dica flutuante dos gráficos do dashboard (PC)
     let tipEl = null;
     const esconderTip = () => { if (tipEl) tipEl.style.display = 'none'; };
