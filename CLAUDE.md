@@ -52,6 +52,13 @@ sempre, acrescente aqui (seção certa) no mesmo commit da tarefa.
 - Habilitação: ainda não tem atestado de capacidade técnica; MEI não tem balanço (descartar se exigido).
   Tem SICAF.
 - Pregão inviável: só avisar, sem criar JSON nem arquivos.
+- Julgamento por LOTE/GRUPO (ter que comprar o grupo inteiro): descartar. Julgamento por item, ou edital em que
+  cada "lote" é um item só, vale.
+- Entrega que precisa ser distribuída em vários lugares (cada escola, várias secretarias/endereços): descartar.
+  Entrega num endereço só por pedido (ex.: departamento indicado no empenho, mesma cidade) vale, com aviso.
+- Atestado de capacidade técnica exigido = descartar enquanto não tiver atestado (citar no aviso).
+- Livros (ISBN de editora) não estão no CCMEI (CNAE 4761-0/01): citar o valor e não colocar no JSON.
+- Na análise, entregar primeiro só os JSONs (um por pregão, separados) e depois o zip das pastas SEM os JSON dentro.
 
 ### Checklist de regras do edital que mudam a proposta (conferir SEMPRE e colocar no JSON)
 | O que procurar no edital | Onde vai no JSON |
@@ -206,10 +213,11 @@ Concluídos/encerrados: EPR-UEL 146; Imbaú 84 e 85; UFPR 2922; Ortigueira 87 (d
 UEL 162; Faxinal 52; Ortigueira 95 (desistiu).
 Em andamento: Mauá da Serra 60 (itens ganhos); Ortigueira 91; Carambeí 54 e 55; UTFPR Ponta Grossa 15 e 17;
 Imbaú 91.
-Aguardando PDFs: Castro 150; Conselheiro Mairinck 62; Faxinal 49; Grandes Rios 41;
-Ipiranga 77 e 78; Japira 38 e 39.
-Trazidos na busca PNCP de 22/10 (aguardando escolha): Ortigueira 102; São Jerônimo da Serra 47;
-Rio Branco do Ivaí 36.
+Analisados em 24/10 (JSON entregue): Faxinal 49; São Jerônimo da Serra 47 (PE 40/2026); Ortigueira 102.
+Descartados na análise de 24/10: Castro 150 (por lote); Japira 38 e 39 (por lote); Ipiranga 77 (expediente e
+entrega em ~15 endereços); Grandes Rios 41 e Conselheiro Mairinck 62 (exigem atestado de capacidade técnica).
+Aguardando PDFs: Ipiranga 78.
+Trazidos na busca PNCP de 22/10 (aguardando escolha): Rio Branco do Ivaí 36.
 Excluídos em 22/10 por ficarem acima de 120 km: Prudentópolis 124; Califórnia 69; Jardim Alegre 51 e 52;
 Turvo 65; Jataizinho 35; Ibiporã 72; UEL 137; Câmara de Londrina 5; Embrapa Soja 1; Sto. Antônio da
 Platina 101; UTFPR Cornélio Procópio 189; Câmara de São João do Ivaí 9; Arapongas 37; Santa Mariana 53;
