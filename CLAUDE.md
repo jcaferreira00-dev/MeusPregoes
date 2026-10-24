@@ -58,7 +58,8 @@ sempre, acrescente aqui (seção certa) no mesmo commit da tarefa.
   Entrega num endereço só por pedido (ex.: departamento indicado no empenho, mesma cidade) vale, com aviso.
 - Atestado de capacidade técnica exigido = descartar enquanto não tiver atestado (citar no aviso).
 - Livros (ISBN de editora) não estão no CCMEI (CNAE 4761-0/01): citar o valor e não colocar no JSON.
-- Na análise, entregar primeiro só os JSONs (um por pregão, separados) e depois o zip das pastas SEM os JSON dentro.
+- Na análise, entregar primeiro UM JSON só (todos os pregões; os que não compensam com status Desisti) e depois o
+  zip das pastas SEM o JSON dentro.
 
 ### Checklist de regras do edital que mudam a proposta (conferir SEMPRE e colocar no JSON)
 | O que procurar no edital | Onde vai no JSON |
@@ -79,9 +80,12 @@ Exemplo real: Imbaú PE 91/2026 — item 10.2.1 desclassifica proposta que ident
 
 ---
 
-## 3. JSON de importação da ANÁLISE (um arquivo por pregão, nunca juntar dois)
+## 3. JSON de importação da ANÁLISE (UM JSON só com todos os pregões analisados — decisão de 24/10/2026)
 
-(Na BUSCA é o contrário: um JSON único com todos os pregões novos — ver seção 4.)
+(Na BUSCA também é um JSON único com todos os pregões novos — ver seção 4.)
+Os pregões analisados que não compensam (lote/grupo, atestado, entrega espalhada, sem margem) entram no
+mesmo JSON com `status: "Desisti"` e o motivo em `obs` (não ficam de fora nem são excluídos). Se o pregão já
+veio da busca, reaproveitar o mesmo `id` para não duplicar no app.
 
 Formato de backup do app (Config › Importar › Mesclar). IDs únicos e novos; `createdAt`/`updatedAt` em ms.
 
@@ -124,7 +128,6 @@ Um zip organizado assim, SEM acentos nem caracteres especiais nos nomes das past
 ```
 Municipio de Imbau/                 <- pasta com o nome do promotor (órgão)
   EDITAL N 091-2026/                <- uma pasta por pregão
-    pregao.json                     <- JSON de importação deste pregão (só ele)
     LEIA-ME                         <- resumo, regras do edital, prazos, riscos
     Observacoes                     <- pontos de atenção item a item
     Declaracoes (.docx)             <- declarações do edital já preenchidas
@@ -170,7 +173,12 @@ Toda busca de editais (agendada ou pedida na conversa) usa somente as definiçõ
 e as buscas salvas em `buscas/`. Não usar contexto de conversas antigas nem memória para decidir
 filtro, raio, ramos ou o que já foi analisado. Se precisar mudar uma regra, mudar AQUI primeiro.
 
-### Tarefa agendada "Busca de pregões" (todo domingo)
+### Ciclo semanal (decisão de 24/10/2026)
+- Sábado 18h43 (depois que os tokens da semana reiniciam): busca no PNCP, lista + JSON da busca.
+- Até domingo ou segunda: o João manda os PDFs dos escolhidos; análise e cotação de todos juntos (um JSON só).
+- Durante a semana: o João revisa e envia as propostas.
+
+### Tarefa agendada "Busca de pregões" (todo sábado 18h43)
 1. Ler este arquivo (já está fazendo isso).
 2. Ler o "Log das buscas" (fim deste arquivo) para saber a última verificação.
    Buscar no PNCP (seção "Busca no PNCP"), município por município, pregões e dispensas.
