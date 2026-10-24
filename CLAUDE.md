@@ -62,7 +62,9 @@ sempre, acrescente aqui (seção certa) no mesmo commit da tarefa.
 - Entrega que precisa ser distribuída em vários lugares (cada escola, várias secretarias/endereços): descartar.
   Entrega num endereço só por pedido (ex.: departamento indicado no empenho, mesma cidade) vale, com aviso.
 - Atestado de capacidade técnica exigido = descartar enquanto não tiver atestado (citar no aviso).
-- Livros (ISBN de editora) não estão no CCMEI (CNAE 4761-0/01): citar o valor e não colocar no JSON.
+- CNAE NÃO desclassifica (decisão de 24/10/2026): é fácil incluir/trocar CNAE no MEI. Item ou pregão fora dos
+  CNAEs atuais entra normalmente na análise e no JSON, com observação no `obs` dizendo qual CNAE falta
+  (ex.: livros = 4761-0/01; papelaria = 4761-0/03; tintas = 4741-5/00; tecidos/armarinho = 4755-5/01/02).
 - Na análise, entregar primeiro UM JSON só (todos os pregões; os que não compensam com status Desisti) e depois o
   zip das pastas SEM o JSON dentro.
 
@@ -161,11 +163,11 @@ Municipio de Imbau/                 <- pasta com o nome do promotor (órgão)
 - Entrega de carro de passeio, no máximo Strada com carretinha. Itens pesados ou grandes não compensam.
 - Itens em quantidade muito grande são difíceis de comprar (falta de fornecedor e de experiência):
   evitar ou sinalizar.
-- Ramos dos CNAEs do MEI: ferragens/ferramentas (principal), informática, telefonia, equip. de escritório,
+- Ramos dos CNAEs atuais do MEI (prioridade, não limite): ferragens/ferramentas (principal), informática, telefonia, equip. de escritório,
   material elétrico, hidráulicos, iluminação, lubrificantes, saneantes (só sinalizar: exige licença/AFE),
   brinquedos, esportivos, bicicletas, instrumentos musicais, motopeças, tapeçaria/cortinas, festas/decoração.
-- Sem CNAE (descartar, mas citar se o valor for alto): papelaria/expediente, tintas, tecidos/armarinho.
-  Pregão de expediente com itens elétricos/ferragem no meio: citar só esses itens (julgamento por item).
+- Fora dos CNAEs atuais (papelaria/expediente, tintas, tecidos/armarinho, livros): NÃO descartar por isso —
+  trazer normalmente e anotar em `obs` qual CNAE precisaria ser incluído (o João ajusta o MEI).
 - Sempre fora: alimentos, medicamentos/saúde, hospitalar, serviços, veículos/combustível,
   personalizados com amostra em prazo curto.
 - Itens com fornecedor já conhecido (priorizar): pilhas/baterias Elgin, pistolas de cola quente,
@@ -188,7 +190,7 @@ filtro, raio, ramos ou o que já foi analisado. Se precisar mudar uma regra, mud
 2. Ler o "Log das buscas" (fim deste arquivo) para saber a última verificação.
    Buscar no PNCP (seção "Busca no PNCP"), município por município, pregões e dispensas.
    NÃO usar o Gmail.
-3. Descartar: prazo de proposta já vencido, fora do raio, fora dos CNAEs, itens grandes/pesados,
+3. Descartar: prazo de proposta já vencido, fora do raio, itens grandes/pesados,
    serviços/locação/instalação, e os pregões da lista "Já analisados" abaixo.
 4. Entregar só a LISTA de oportunidades (tabela curta, mais perto primeiro): cidade e distância aprox.,
    órgão, nº do pregão, fim das propostas, objeto resumido, por que vale, link BLL.
