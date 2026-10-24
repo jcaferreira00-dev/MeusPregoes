@@ -240,6 +240,8 @@ Tibagi 60 e 61; Telêmaco 83; Castro 143 e 461; Piraí 99; Cândido de Abreu 72 
 (Quando o João mandar um backup do app ou os PDFs de um pregão, atualizar esta lista.)
 
 ### Orientações adicionais do João
+- Próxima busca (31/10/2026): trazer de novo na lista Ipiranga 78 e Rio Branco do Ivaí 36, se o prazo de proposta
+  ainda estiver aberto (o João não mandou os PDFs na rodada de 24/10 e quer analisá-los). Depois de trazer, apagar esta linha.
 <!-- acrescentar aqui as novas orientações de busca -->
 
 ---
