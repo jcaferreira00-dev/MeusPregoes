@@ -47,6 +47,11 @@ sempre, acrescente aqui (seção certa) no mesmo commit da tarefa.
 - Valor e capital de giro NÃO são motivo de descarte (nem o limite anual do MEI).
 - Entrega de carro: Strada com carretinha, até 3 viagens. Fora: itens grandes, pesados, frágeis
   ou que exigem instalação (geladeira, móveis grandes, barras de 6 m, telhas, toneladas…).
+- Registros e selos (conferir em TODO item, mesmo que o edital não fale — decisão de 24/10/2026):
+  ANVISA (produto para saúde: MEI não tem AFE nem licença sanitária → item fora/sem lance);
+  CA (todo EPI); Inmetro (brinquedos e jogos para criança, entre outros → comprar só com selo);
+  ANATEL (rádio, Bluetooth, Wi-Fi); Marinha (coletes e boias); IBAMA (motosserra). Marcar no `obs` do item
+  e, quando o item não puder ser vendido, `semLance: true`.
 - Certificação: procurar "Inmetro" no edital inteiro (inclusive execução/entrega). Ex.: balança do
   PE 87 de Ortigueira; capacete de skate exige EN1078; bola de tênis de mesa "oficial" pode exigir ITTF.
 - Habilitação: ainda não tem atestado de capacidade técnica; MEI não tem balanço (descartar se exigido).
