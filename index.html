@@ -1072,6 +1072,14 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
 .pcard .lkrow-ic .ib svg { width: 18px; height: 18px; }
 .pcard .lkrow-ic a.ib:hover { background: var(--blue-soft); border-color: var(--blue); }
 .pcard .lkrow-ic .ib.off { color: var(--muted); opacity: .35; border-style: dashed; cursor: default; }
+
+/* celular: título do órgão sem o prefixo "Prefeitura Municipal de" (o nome da cidade é o que diferencia); filtros mostram que rolam */
+@media (max-width: 600px) {
+  .pcard .org-pre { display: none; }
+  .filters { padding-right: 28px; -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 36px), transparent); mask-image: linear-gradient(to right, #000 calc(100% - 36px), transparent); }
+}
+/* etiqueta informativa (ex.: "Informe o empenho…") não parece botão */
+.pcard .p-tags .prazo:not(.good):not(.warn):not(.bad):not(.off) { background: transparent; padding-left: 0; padding-right: 0; font-weight: 600; }
 </style>
 </head>
 <body>
@@ -1084,7 +1092,7 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.88.0';
+  const APP_VERSION = '1.89.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Em disputa', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -4510,8 +4518,8 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
     const botoes = ib(url(p.link), 'pdf', 'Abrir o edital') + (p.linkModelo ? ib(url(p.linkModelo), 'copy', 'Modelo de proposta do órgão') : '') + ib(url(p.linkProposta), 'send', 'Enviar proposta e dar lances') + ib(url(p.linkLicitacao), 'globo', 'Ver a licitação no site');
     return `<article class="pcard${pzCls}" style="--gc:${corDe(p.id)};--sc:${COR_STATUS[p.status] || '#2e75b6'}" data-act="abrir-pregao" data-id="${p.id}" tabindex="0" role="button">
       <div class="row between p-hd"><span class="num" style="color:var(--gc)" title="Pregão nº ${esc(p.numero)}">${/^preg/i.test(String(p.numero).trim()) ? esc(p.numero) : 'PREGÃO Nº ' + esc(p.numero)}</span><span class="m-acts">${url(p.link) ? `<a class="ic-btn" href="${esc(url(p.link))}" target="_blank" rel="noopener noreferrer" data-act="link-externo" title="Abrir edital" aria-label="Abrir edital">${icon('pdf', 'sm')}</a>` : '<span class="ic-btn ic-vazio" aria-hidden="true"></span>'}${url(p.linkProposta) ? `<a class="ic-btn" href="${esc(url(p.linkProposta))}" target="_blank" rel="noopener noreferrer" data-act="link-externo" title="Enviar proposta" aria-label="Enviar proposta">${icon('link', 'sm')}</a>` : '<span class="ic-btn ic-vazio" aria-hidden="true"></span>'}</span>${badgeStatus(p.status)}</div>
-      <h4>${esc(p.orgao)}</h4>
-      <div class="small muted row wrap" style="gap:4px 14px;align-items:center">${url(p.linkProposta) ? `<a class="btn sm lk p-prop" href="${esc(url(p.linkProposta))}" target="_blank" rel="noopener noreferrer" data-act="link-externo">${icon('link', 'sm')} Proposta</a>` : ''}${p.cidadeUf ? `<span class="row" style="gap:4px">${icon('pin', 'sm')}${esc(cidadeFmt(p.cidadeUf))}</span>` : ''}${p.sessao && (!pz || String(p.sessao) !== String(p.prazoPropostas || '')) ? `<span class="row" style="gap:4px">${icon('calendar', 'sm')}${esc(C.fmtSessao(p.sessao))}</span>` : ''}<span class="row p-nit" style="gap:4px">${icon('itens', 'sm')}${pst.itens.length ? pst.itens.length + (pst.itens.length === 1 ? ' item' : ' itens') : 'sem itens'}</span><span class="m-meta">${pst.itens.length ? pst.itens.length + (pst.itens.length === 1 ? ' item' : ' itens') : 'sem itens'}</span>${(p.obs || pst.itens.some((i) => String(i.obs || '').trim())) ? `<span class="m-meta m-obs" title="Tem observação">${icon('alert', 'sm')}</span>` : ''}</div>
+      <h4>${esc(p.orgao).replace(/^(Prefeitura Municipal de|Prefeitura de|Município de)\s+/i, '<span class="org-pre">$1 </span>')}</h4>
+      <div class="small muted row wrap" style="gap:4px 14px;align-items:center">${url(p.linkProposta) ? `<a class="btn sm lk p-prop" href="${esc(url(p.linkProposta))}" target="_blank" rel="noopener noreferrer" data-act="link-externo">${icon('link', 'sm')} Proposta</a>` : ''}${p.cidadeUf ? `<span class="row" style="gap:4px">${icon('pin', 'sm')}${esc(cidadeFmt(p.cidadeUf))}</span>` : ''}${p.sessao && (!pz || String(p.sessao) !== String(p.prazoPropostas || '')) ? `<span class="row" style="gap:4px">${icon('calendar', 'sm')}${esc(C.fmtSessao(p.sessao))}</span>` : ''}<span class="row p-nit" style="gap:4px">${icon('itens', 'sm')}${pst.itens.length ? pst.itens.length + (pst.itens.length === 1 ? ' item' : ' itens') : 'sem itens'}</span><span class="m-meta">${pst.itens.length ? pst.itens.length + (pst.itens.length === 1 ? ' item' : ' itens') : 'sem itens'}</span>${(p.obs || pst.itens.some((i) => String(i.obs || '').trim())) ? `<span class="m-meta m-obs" title="Tem observação">${icon('info', 'sm')}</span>` : ''}</div>
       ${(() => {
         const tags = [
           pz ? `<span class="prazo ${pz.nivel}">${icon(pz.nivel === 'ok' ? 'calendar' : 'alert', 'sm')}${esc(pz.texto)}</span>` : '',

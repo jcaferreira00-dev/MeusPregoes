@@ -22,6 +22,7 @@ sempre, acrescente aqui (seção certa) no mesmo commit da tarefa.
 - Ao mudar algo, inclua só o que foi pedido: não tire nem esconda cálculos e informações que já existiam.
 - Visual: mesmo alinhamento, blocos simétricos, status com uma palavra só, órgão em CAIXA ALTA,
   cidade padronizada ("Ortigueira/PR"). Se houver dúvida num ajuste visual, mostre uma prévia antes de publicar.
+- Botões de link dos cartões de pregão (guia Pregões, PC): só ícone, sempre nas mesmas posições (edital, modelo, enviar proposta, licitação); o que não tem link fica apagado. No celular, título do órgão sem o prefixo "Prefeitura Municipal de".
 - Celular (iPhone 13) = só o básico; PC = completo. Não criar guias novas no celular.
 
 ### Regras de valor da proposta (não mudar sem o João pedir)
