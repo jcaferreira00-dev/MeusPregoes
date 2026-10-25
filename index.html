@@ -1080,6 +1080,13 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
 }
 /* etiqueta informativa (ex.: "Informe o empenho…") não parece botão */
 .pcard .p-tags .prazo:not(.good):not(.warn):not(.bad):not(.off) { background: transparent; padding-left: 0; padding-right: 0; font-weight: 600; }
+
+.altslot { display: contents; }
+.altslot[hidden] { display: none; }
+
+.linkrow #f_ondeLink { flex: 1 1 180px; }
+.princpar { display: inline-flex; gap: 8px; }
+.princpar:not(:has(:not([style*="display: none"]))) { display: none; }
 </style>
 </head>
 <body>
@@ -1092,7 +1099,7 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.89.0';
+  const APP_VERSION = '1.90.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Em disputa', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -3664,7 +3671,8 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
     return { href, label, nome };
   }
 
-  // opção principal + até 2 alternativas (loja, link, custo) para comparar fornecedores
+  // opção principal + até ALT_N alternativas (loja, link, frete, custo) para comparar fornecedores
+  const ALT_N = 8, ALTS = Array.from({ length: ALT_N }, (_, i) => i);
   function comprasDoItem(it) {
     const out = [], main = compraInfo(it);
     if (main) out.push(Object.assign({ principal: true, custo: null, barato: false }, main));
@@ -3684,7 +3692,7 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
     return {
       pregaoId: it.pregaoId || '', loteEdital: it.loteEdital || '', itemEdital: it.itemEdital || '', descricao: it.descricao || '', descEdital: it.descEdital || '', marca: it.marca || '', especificacoes: it.especificacoes || '', unidade: it.unidade || 'Un',
       qtd: it.qtd == null ? '' : C.numBR(it.qtd, 3), onde: pareceUrl(it.onde) ? '' : (it.onde || ''), ondeLink: it.ondeLink || (pareceUrl(it.onde) ? urlSeg(it.onde) : ''), obs: it.obs || '', possivelGanhar: !!it.possivelGanhar, vencedor: it.vencedor == null ? '' : C.numBR(it.vencedor),
-      ...(() => { const o = {}; [0, 1].forEach((n) => { const a = (it.alternativas || [])[n] || {}; o['alt' + n + 'Loja'] = a.loja || ''; o['alt' + n + 'Link'] = a.link || ''; o['alt' + n + 'Custo'] = a.custo == null ? '' : C.numBR(a.custo); o['alt' + n + 'Frete'] = a.frete ? C.numBR(a.frete) : ''; o['alt' + n + 'Qtd'] = a.qtd ? C.numBR(a.qtd, 3) : ''; }); return o; })(),
+      ...(() => { const o = {}; ALTS.forEach((n) => { const a = (it.alternativas || [])[n] || {}; o['alt' + n + 'Loja'] = a.loja || ''; o['alt' + n + 'Link'] = a.link || ''; o['alt' + n + 'Custo'] = a.custo == null ? '' : C.numBR(a.custo); o['alt' + n + 'Frete'] = a.frete ? C.numBR(a.frete) : ''; o['alt' + n + 'Qtd'] = a.qtd ? C.numBR(a.qtd, 3) : ''; }); return o; })(),
       custo: it.custo == null ? '' : C.numBR(it.custo), teto: it.teto == null ? '' : C.numBR(it.teto), frete: it.frete ? C.numBR(it.frete) : '',
       margem: it.margem == null ? '' : C.numBR(it.margem * 100, 2), lanceFinal: it.lanceFinal == null ? '' : C.numBR(it.lanceFinal), colocacao: it.colocacao == null ? '' : String(it.colocacao),
       entregaId: it.entregaId || '',
@@ -3698,7 +3706,7 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
     return {
       id: id || 'new', pregaoId: x.pregaoId, loteEdital: C.padLE(x.loteEdital), itemEdital: C.padLE(x.itemEdital), descricao: x.descricao.trim(), descEdital: x.descEdital.trim(), marca: x.marca.trim(), especificacoes: old && old.especificacoes ? old.especificacoes : '', unidade: x.unidade.trim() || 'Un',
       qtd: C.parseBR(x.qtd), onde: x.onde.trim(), ondeLink: urlSeg(x.ondeLink), obs: String(x.obs || '').trim(), possivelGanhar: !!x.possivelGanhar, vencedor: C.parseBR(x.vencedor),
-      alternativas: [0, 1].map((n) => ({ loja: String(x['alt' + n + 'Loja'] || '').trim(), link: urlSeg(x['alt' + n + 'Link']), custo: C.parseBR(x['alt' + n + 'Custo']), frete: C.parseBR(x['alt' + n + 'Frete']) || 0, qtd: C.parseBR(x['alt' + n + 'Qtd']) || 0 })).filter((a) => a.loja || a.link || a.custo != null || a.frete || a.qtd),
+      alternativas: ALTS.map((n) => ({ loja: String(x['alt' + n + 'Loja'] || '').trim(), link: urlSeg(x['alt' + n + 'Link']), custo: C.parseBR(x['alt' + n + 'Custo']), frete: C.parseBR(x['alt' + n + 'Frete']) || 0, qtd: C.parseBR(x['alt' + n + 'Qtd']) || 0 })).filter((a) => a.loja || a.link || a.custo != null || a.frete || a.qtd),
       custo: C.parseBR(x.custo), teto: C.parseBR(x.teto), frete: C.parseBR(x.frete) || 0,
       margem: m == null ? null : m / 100, lanceFinal: C.parseBR(x.lanceFinal), colocacao: colocacaoDe(x.colocacao),
       // campos retirados do formulário: o que já estava salvo no item continua valendo
@@ -3754,13 +3762,14 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
     const cur = id ? store.get().itens.find((i) => i.id === id && !i.deleted) : null;
     const v = itemValues(cur || { pregaoId: pregaoId || (UI.detailId || list[0].id), unidade: 'Un' });
     const cfg = store.get().config;
-    const altFields = (n) => `<div class="full"><div class="lbl" style="margin:2px 0 8px">Opção ${n + 2}</div></div>
+    const altFields = (n) => `<div class="altslot" data-slot="${n}" hidden><div class="full"><div class="lbl" style="margin:2px 0 8px">Opção ${n + 2}</div></div>
+          ${field({ label: 'Link da compra', name: 'alt' + n + 'Link', type: 'url', value: v['alt' + n + 'Link'], full: true, ph: 'https://…', inputmode: 'url' })}
           ${field({ label: 'Loja ou site', name: 'alt' + n + 'Loja', value: v['alt' + n + 'Loja'] })}
-          ${field({ label: 'Custo unit. (R$)', name: 'alt' + n + 'Custo', value: v['alt' + n + 'Custo'], inputmode: 'decimal' })}
           ${field({ label: 'Frete (R$, total)', name: 'alt' + n + 'Frete', value: v['alt' + n + 'Frete'], inputmode: 'decimal' })}
+          ${field({ label: 'Custo unit. (R$)', name: 'alt' + n + 'Custo', value: v['alt' + n + 'Custo'], inputmode: 'decimal' })}
           ${field({ label: 'Comprar aqui (qtd)', name: 'alt' + n + 'Qtd', value: v['alt' + n + 'Qtd'], inputmode: 'decimal', ph: 'opcional' })}
-          ${field({ label: 'Link', name: 'alt' + n + 'Link', type: 'url', value: v['alt' + n + 'Link'], full: true, ph: 'https://…', inputmode: 'url' })}`;
-    const altQtd = [0, 1].filter((n) => v['alt' + n + 'Loja'] || v['alt' + n + 'Link'] || v['alt' + n + 'Custo'] || v['alt' + n + 'Frete'] || v['alt' + n + 'Qtd']).length;
+          <div class="full"><button type="button" class="btn ghost sm" data-alt="limpar" data-alt-n="${n}">${icon('trash', 'sm')} Remover esta opção</button></div></div>`;
+    const altQtd = ALTS.filter((n) => v['alt' + n + 'Loja'] || v['alt' + n + 'Link'] || v['alt' + n + 'Custo'] || v['alt' + n + 'Frete'] || v['alt' + n + 'Qtd']).length;
     const body = `
       <div class="preview" id="prev"></div>
       ${field({ label: 'Pregão / órgão *', name: 'pregaoId', type: 'select', value: v.pregaoId, options: list.map((p) => ({ v: p.id, l: pregaoLabel(p) })) })}
@@ -3789,16 +3798,15 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
           <input type="hidden" name="onde" value="${esc(v.onde)}">
           <div class="linkrow">
           <input class="input" id="f_ondeLink" name="ondeLink" type="url" value="${esc(v.ondeLink)}" placeholder="Cole o link do produto ou da loja" inputmode="url" autocomplete="off" autocapitalize="none">
-          <a class="btn ibtn" id="goOnde" href="#" target="_blank" rel="noopener noreferrer" aria-label="Comprar" title="Comprar" style="display:none">${icon('cart')}</a>
+          <span class="princpar"><a class="btn ibtn" id="goOnde" href="#" target="_blank" rel="noopener noreferrer" aria-label="Comprar" title="Comprar" style="display:none">${icon('cart')}</a>          <button type="button" class="btn ghost ibtn" id="editLink" aria-label="Editar link" title="Editar link" style="display:none">${icon('edit', 'sm')}</button></span>
+          ${ALTS.map((n) => `<span class="altpar" data-altpar="${n}" hidden><a class="btn ibtn altc" data-alt-go="${n}" href="#" target="_blank" rel="noopener noreferrer" aria-label="Comprar na opção ${n + 2}" title="Comprar na opção ${n + 2}">${icon('cart')}<span class="altc-n">${n + 2}</span></a><button type="button" class="btn ghost ibtn altc" data-alt="abrir" data-alt-n="${n}" aria-label="Editar opção ${n + 2}" title="Editar opção ${n + 2}">${icon('edit', 'sm')}</button></span>`).join('')}
           <button type="button" class="btn ibtn altplus" data-alt="abrir" aria-label="Outras opções de compra" title="Outras opções de compra">${icon('plus')}<span class="altplus-n"${altQtd ? '' : ' hidden'}>${altQtd}</span></button>
-          <button type="button" class="btn ghost ibtn" id="editLink" aria-label="Editar link" title="Editar link" style="display:none">${icon('edit', 'sm')}</button>
-          ${[0, 1].map((n) => `<span class="altpar" data-altpar="${n}" hidden><a class="btn ibtn altc" data-alt-go="${n}" href="#" target="_blank" rel="noopener noreferrer" aria-label="Comprar na opção ${n + 2}" title="Comprar na opção ${n + 2}">${icon('cart')}<span class="altc-n">${n + 2}</span></a><button type="button" class="btn ghost ibtn altc" data-alt="abrir" data-alt-n="${n}" aria-label="Editar opção ${n + 2}" title="Editar opção ${n + 2}">${icon('edit', 'sm')}</button></span>`).join('')}
           </div>
           </div>
         <div class="altpop" id="altPop" hidden role="dialog" aria-modal="true" aria-label="Outras opções de compra"><div class="altpop-box">
           <div class="altpop-hd"><b>Outras opções de compra</b><button type="button" class="btn ghost sm" data-alt="fechar" aria-label="Fechar">✕</button></div>
-          <div class="formgrid">${altFields(0)}${altFields(1)}</div>
-          <div class="hint" style="margin-bottom:12px">Compare 2 ou 3 fornecedores. Se uma opção sair mais barata (com o frete), o app avisa e você troca com um toque.<br>Para dividir a compra, preencha “Comprar aqui”: essa quantidade sai desta opção e o resto da opção principal; o app recalcula o custo médio e soma o frete de cada fornecedor. Vazio = vale o custo e o frete do item.</div>
+          <div class="formgrid">${ALTS.map(altFields).join('')}</div>
+          <div class="hint" style="margin-bottom:12px">Compare quantos fornecedores quiser (toque no + para incluir outra opção). Se uma opção sair mais barata (com o frete), o app avisa e você troca com um toque.<br>Para dividir a compra, preencha “Comprar aqui”: essa quantidade sai desta opção e o resto da opção principal; o app recalcula o custo médio e soma o frete de cada fornecedor. Vazio = vale o custo e o frete do item.</div>
           <button type="button" class="btn primary block" data-alt="fechar">OK</button></div></div>
         ${field({ label: 'Observações do item', name: 'obs', type: 'textarea', value: v.obs, full: true, ph: 'Ex.: cotar o frete amanhã; não consegui cotar com o fornecedor Y', hint: 'Aparece no cartão do pregão (guia Pregões) e no cartão do item.' })}
         <div class="full"><label class="switch"><span>Posso ganhar<small class="hint" style="display:block;font-weight:500">Marque se ficou perto do 1º colocado neste item e ainda é possível ganhar. Dá para filtrar no Dashboard.</small></span><input type="checkbox" name="possivelGanhar"${v.possivelGanhar ? ' checked' : ''}></label></div>
@@ -3835,14 +3843,25 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
         // janela "+" das outras opções de compra
         const altPop = $('#altPop', form);
         const altConta = () => {
-          const k = [0, 1].filter((n) => ['Loja', 'Link', 'Custo'].some((f) => $('[name=alt' + n + f + ']', form).value.trim())).length; const s = $('.altplus-n', form); s.textContent = k; s.hidden = !k;
+          const k = ALTS.filter((n) => ['Loja', 'Link', 'Custo'].some((f) => $('[name=alt' + n + f + ']', form).value.trim())).length; const s = $('.altplus-n', form); s.textContent = k; s.hidden = !k; $('.altplus', form).hidden = k >= ALT_N;
           // cada outra opção com link vira um carrinho avermelhado + lápis, ao lado do principal
-          [0, 1].forEach((n) => { const h = urlSeg($('[name=alt' + n + 'Link]', form).value), par = $('[data-altpar="' + n + '"]', form), loja = $('[name=alt' + n + 'Loja]', form).value.trim();
+          ALTS.forEach((n) => { const h = urlSeg($('[name=alt' + n + 'Link]', form).value), par = $('[data-altpar="' + n + '"]', form), loja = $('[name=alt' + n + 'Loja]', form).value.trim();
             par.hidden = !h; if (h) { const a = $('[data-alt-go]', par); a.href = h; a.title = 'Comprar' + (loja ? ' em ' + loja : ' na opção ' + (n + 2)); } });
         };
         form.addEventListener('click', (e) => {
           const b = e.target.closest('[data-alt]'); if (!b) return;
-          if (b.dataset.alt === 'abrir') { altPop.hidden = false; const f = $('[name=alt' + (b.dataset.altN || '0') + 'Loja]', form); if (f) f.focus(); }
+          if (b.dataset.alt === 'abrir' || b.dataset.alt === 'limpar') {
+            const vazio = (n) => ['Loja', 'Link', 'Custo', 'Frete', 'Qtd'].every((f) => !$('[name=alt' + n + f + ']', form).value.trim());
+            if (b.dataset.alt === 'limpar') {
+              const n0_ = b.dataset.altN; ['Loja', 'Link', 'Custo', 'Frete', 'Qtd'].forEach((f) => { const i = $('[name=alt' + n0_ + f + ']', form); i.value = ''; i.dispatchEvent(new Event('input', { bubbles: true })); });
+              altPop.hidden = true; altConta(); return;
+            }
+            // "+" abre a primeira opção vazia; o lápis abre a opção clicada
+            let n = b.dataset.altN != null ? Number(b.dataset.altN) : ALTS.find(vazio);
+            if (n == null || n < 0) n = ALT_N - 1;
+            $$('.altslot', form).forEach((el) => { el.hidden = Number(el.dataset.slot) !== n; });
+            altPop.hidden = false; const f = $('[name=alt' + n + 'Link]', form); if (f) f.focus();
+          }
           else { altPop.hidden = true; altConta(); }
         });
         altPop.addEventListener('click', (e) => { if (e.target === altPop) { altPop.hidden = true; altConta(); } });
@@ -3881,7 +3900,7 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
         const cm = C.parseBR(x.custo);
         const qx = C.parseBR(x.qtd) || 0, fm = C.parseBR(x.frete) || 0;
         const itDraft = itemFromForm(x, id), dv = C.divisaoCompra(itDraft);
-        let dica = dv ? '' : [0, 1].map((n) => ({ n, custo: C.parseBR(x['alt' + n + 'Custo']), frete: C.parseBR(x['alt' + n + 'Frete']) || 0, loja: String(x['alt' + n + 'Loja'] || '').trim() }))
+        let dica = dv ? '' : ALTS.map((n) => ({ n, custo: C.parseBR(x['alt' + n + 'Custo']), frete: C.parseBR(x['alt' + n + 'Frete']) || 0, loja: String(x['alt' + n + 'Loja'] || '').trim() }))
           .filter((a) => a.custo != null && cm != null && (qx > 0 ? (a.custo * qx + a.frete) < (cm * qx + fm) - 0.005 : a.custo < cm))
           .map((a) => `<div class="altdica">${icon('info', 'sm')}<span>${esc(a.loja || 'A opção ' + (a.n + 2))} ${qx > 0 ? 'sai ' + C.brl((cm * qx + fm) - (a.custo * qx + a.frete)) + ' mais barato no total, com o frete' : 'custa ' + C.brl(cm - a.custo) + ' a menos por unidade'}.</span><button type="button" class="btn sm" data-usar-alt="${a.n}">Usar esta</button></div>`).join('');
         if (dv) {
@@ -3905,7 +3924,7 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
         if (!(it.qtd > 0)) miss.push('qtd');
         if (it.custo == null || it.custo < 0) miss.push('custo');
         if (miss.length) { miss.forEach((n) => $('[name=' + n + ']', form).classList.add('err')); return 'Preencha pregão, item, quantidade e custo.'; }
-        for (const n of [0, 1]) { if (String(x['alt' + n + 'Link'] || '').trim() && !urlSeg(x['alt' + n + 'Link'])) { $('[name=alt' + n + 'Link]', form).classList.add('err'); const ap = $('#altPop', form); if (ap) ap.hidden = false; return 'Link da opção ' + (n + 2) + ' inválido. Cole o endereço completo, sem espaços.'; } }
+        for (const n of ALTS) { if (String(x['alt' + n + 'Link'] || '').trim() && !urlSeg(x['alt' + n + 'Link'])) { $('[name=alt' + n + 'Link]', form).classList.add('err'); const ap = $('#altPop', form); if (ap) ap.hidden = false; return 'Link da opção ' + (n + 2) + ' inválido. Cole o endereço completo, sem espaços.'; } }
         if ((x.ondeLink || '').trim() && !it.ondeLink) { $('[name=ondeLink]', form).classList.add('err'); return 'Link de compra inválido. Cole o endereço completo, sem espaços.'; }
         if (it.margem != null && it.margem >= 1) { $('[name=margem]', form).classList.add('err'); return 'A margem precisa ser menor que 100%.'; }
         if (it.lanceFinal != null && form.dataset.okSolo !== String(it.lanceFinal)) {

@@ -23,6 +23,7 @@ sempre, acrescente aqui (seção certa) no mesmo commit da tarefa.
 - Visual: mesmo alinhamento, blocos simétricos, status com uma palavra só, órgão em CAIXA ALTA,
   cidade padronizada ("Ortigueira/PR"). Se houver dúvida num ajuste visual, mostre uma prévia antes de publicar.
 - Botões de link dos cartões de pregão (guia Pregões, PC): só ícone, sempre nas mesmas posições (edital, modelo, enviar proposta, licitação); o que não tem link fica apagado. No celular, título do órgão sem o prefixo "Prefeitura Municipal de".
+- Formulário do item, "onde comprar": link principal + botão "+" (por último na linha) que abre uma janela com link, loja e frete (e custo/qtd) da próxima opção vazia; cada opção preenchida vira cesta + lápis; sem limite de 2 (até 8 opções). Mantém o campo de custo e "comprar aqui" de cada opção.
 - Celular (iPhone 13) = só o básico; PC = completo. Não criar guias novas no celular.
 
 ### Regras de valor da proposta (não mudar sem o João pedir)
