@@ -1065,6 +1065,13 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
 .proc-cmd { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; margin-bottom: 10px; }
 .proc-lk { text-decoration: none; }
 .proc-txt { margin-top: 6px; white-space: pre-wrap; line-height: 1.45; user-select: all; -webkit-user-select: all; }
+
+/* botões de link do card (PC): só ícone, mesma posição em todos os cards */
+.pcard .lkrow-ic { display: flex; gap: 8px; justify-content: flex-start; }
+.pcard .lkrow-ic .ib { display: inline-grid; place-items: center; width: 38px; height: 38px; border-radius: 10px; border: 1px solid var(--line); background: var(--card); color: var(--blue); text-decoration: none; flex: none; }
+.pcard .lkrow-ic .ib svg { width: 18px; height: 18px; }
+.pcard .lkrow-ic a.ib:hover { background: var(--blue-soft); border-color: var(--blue); }
+.pcard .lkrow-ic .ib.off { color: var(--muted); opacity: .35; border-style: dashed; cursor: default; }
 </style>
 </head>
 <body>
@@ -3122,6 +3129,8 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
     image: '<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/>',
     info: '<circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/>',
     certidoes: '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/>',
+    send: '<path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4z"/>',
+    globo: '<circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20M12 2a15 15 0 0 0 0 20"/>',
     link: '<path d="M10 13a5 5 0 0 0 7.1 0l3-3a5 5 0 0 0-7.1-7.1l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.1 0l-3 3A5 5 0 0 0 11 21.1l1.7-1.7"/>',
   };
   const icon = (n, cls) => `<svg class="i ${cls || ''}" viewBox="0 0 24 24" aria-hidden="true">${ICONS[n] || ''}</svg>`;
@@ -4496,8 +4505,9 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
     const enviada = p.status === 'Proposta enviada';
     const pzCls = (pst.ganho ? ' p-venci' : '') + (!pst.ganho && !enviada && pz && (pz.nivel === 'warn' || pz.nivel === 'bad') ? ' prz-' + pz.nivel : '') + (p.status === 'Falta dados' ? ' falta-dados' : '') + (enviada ? ' enviada' : '');
     const url = (u) => { u = String(u || '').trim(); return u ? (/^https?:\/\//i.test(u) ? u : 'https://' + u) : ''; };
-    const btn = (u, txt) => u ? `<a class="btn sm grow lk" href="${esc(u)}" target="_blank" rel="noopener noreferrer" data-act="link-externo">${icon('link', 'sm')} ${txt}</a>` : '';
-    const botoes = btn(url(p.link), 'Edital').replace('class="btn sm grow lk"', 'class="btn sm grow lk btn-edital"') + btn(url(p.linkModelo), 'Modelo') + btn(url(p.linkProposta), 'Enviar proposta') + btn(url(p.linkLicitacao), 'Licitações');
+    // PC: só ícones, sempre nas mesmas posições (edital · modelo · proposta · licitação); o que não tem link fica apagado
+    const ib = (u, ic, tip) => u ? `<a class="ib" href="${esc(u)}" target="_blank" rel="noopener noreferrer" data-act="link-externo" title="${tip}" aria-label="${tip}">${icon(ic)}</a>` : `<span class="ib off" title="${tip}: não cadastrado" aria-label="${tip}: não cadastrado">${icon(ic)}</span>`;
+    const botoes = ib(url(p.link), 'pdf', 'Abrir o edital') + (p.linkModelo ? ib(url(p.linkModelo), 'copy', 'Modelo de proposta do órgão') : '') + ib(url(p.linkProposta), 'send', 'Enviar proposta e dar lances') + ib(url(p.linkLicitacao), 'globo', 'Ver a licitação no site');
     return `<article class="pcard${pzCls}" style="--gc:${corDe(p.id)};--sc:${COR_STATUS[p.status] || '#2e75b6'}" data-act="abrir-pregao" data-id="${p.id}" tabindex="0" role="button">
       <div class="row between p-hd"><span class="num" style="color:var(--gc)" title="Pregão nº ${esc(p.numero)}">${/^preg/i.test(String(p.numero).trim()) ? esc(p.numero) : 'PREGÃO Nº ' + esc(p.numero)}</span><span class="m-acts">${url(p.link) ? `<a class="ic-btn" href="${esc(url(p.link))}" target="_blank" rel="noopener noreferrer" data-act="link-externo" title="Abrir edital" aria-label="Abrir edital">${icon('pdf', 'sm')}</a>` : '<span class="ic-btn ic-vazio" aria-hidden="true"></span>'}${url(p.linkProposta) ? `<a class="ic-btn" href="${esc(url(p.linkProposta))}" target="_blank" rel="noopener noreferrer" data-act="link-externo" title="Enviar proposta" aria-label="Enviar proposta">${icon('link', 'sm')}</a>` : '<span class="ic-btn ic-vazio" aria-hidden="true"></span>'}</span>${badgeStatus(p.status)}</div>
       <h4>${esc(p.orgao)}</h4>
@@ -4520,7 +4530,7 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
       ${p.obs ? `<div class="obsline"><span class="obs-ic">${icon('alert', 'sm')}</span><span class="obs-tx">${esc(p.obs)}</span></div>` : ''}
       <div class="p-itens">${pst.itens.length ? pst.itens.length + (pst.itens.length === 1 ? ' item' : ' itens') : 'Sem itens ainda'}</div>
       <div class="nums"><div>Venda<b>${C.brl0(pst.venda)}</b></div><div>Lucro<b>${C.brl0(pst.lucro)}</b></div><div>Margem<b>${C.pct(pst.margem, 0)}</b></div></div>
-      ${botoes ? `<div class="row lkrow${url(p.link) ? ' has-ed' : ''}" style="gap:8px">${botoes}</div>` : ''}</article>`;
+      <div class="row lkrow lkrow-ic${url(p.link) ? ' has-ed' : ''}">${botoes}</div></article>`;
   }
 
   function pregoesListHtml() {
