@@ -1084,9 +1084,21 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
 .altslot { display: contents; }
 .altslot[hidden] { display: none; }
 
-.linkrow #f_ondeLink { flex: 1 1 180px; }
 .princpar { display: inline-flex; gap: 8px; }
 .princpar:not(:has(:not([style*="display: none"]))) { display: none; }
+
+/* opções de compra: tique + cesta + lápis */
+.altusar { position: relative; cursor: pointer; color: var(--muted); }
+.altusar input { position: absolute; inset: 0; opacity: 0; cursor: pointer; margin: 0; }
+.altusar svg { opacity: .3; }
+.altusar:has(input:checked) { background: var(--green); border-color: var(--green); color: #fff; }
+.altusar:has(input:checked) svg { opacity: 1; }
+.altpar { gap: 6px; }
+.input.calc, .input[readonly].calc { background: var(--blue-soft); }
+.altcomp { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+.altrow { display: flex; align-items: center; gap: 8px; border: 1px solid var(--line); border-radius: 10px; padding: 6px 8px; background: var(--card); }
+.altrow.on { border-color: var(--green); background: var(--green-soft); }
+.altrow small { display: block; color: var(--muted); font-size: 11.5px; }
 </style>
 </head>
 <body>
@@ -1099,7 +1111,7 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.90.0';
+  const APP_VERSION = '1.91.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Em disputa', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -1236,8 +1248,26 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
   // compra dividida entre fornecedores: opções de compra com quantidade preenchida levam essa parte;
   // o resto sai da opção principal. Custo = média ponderada; frete = soma do frete de cada fornecedor usado.
   // Sem quantidade nas opções, vale o custo e o frete digitados no item (como sempre foi).
+  // Modo "opções marcadas": quando as opções de compra têm o campo usar (true/false), só as marcadas valem.
+  // Uma marcada = custo e frete dela. Várias = cada uma leva a sua quantidade ("comprar aqui"); a que ficar sem
+  // quantidade leva o que sobrar. Sem nenhuma marcada, valem o custo e o frete digitados no item.
+  function opcoesUsadas(it) {
+    const all = Array.isArray(it.alternativas) ? it.alternativas : [];
+    if (!all.some((a) => a && typeof a.usar === 'boolean')) return null;
+    return all.filter((a) => a && a.usar === true && a.custo !== null && a.custo !== undefined && a.custo !== '');
+  }
   function divisaoCompra(it) {
     const qtd = n0(it.qtd);
+    const sel = opcoesUsadas(it);
+    if (sel) {
+      if (sel.length < 2 || qtd <= 0) return null;
+      let resto = Math.max(0, qtd - sel.reduce((t, a) => t + Math.max(0, n0(a.qtd)), 0));
+      const ps = sel.map((a) => { let q = Math.max(0, n0(a.qtd)); if (!(q > 0) && resto > 0) { q = resto; resto = 0; } return { principal: false, loja: a.loja || '', qtd: q, custo: n0(a.custo), frete: q > 0 ? n0(a.frete) : 0 }; });
+      const qCob = ps.reduce((t, x) => t + x.qtd, 0);
+      if (qCob <= 0) return null;
+      const produtos = ps.reduce((t, x) => t + x.qtd * x.custo, 0);
+      return { custo: produtos / (qCob < qtd ? qCob : qtd), frete: ps.reduce((t, x) => t + x.frete, 0), produtos, qMain: 0, qAlt: qCob, excesso: Math.max(0, qCob - qtd), falta: Math.max(0, qtd - qCob), partes: ps.filter((x) => x.qtd > 0) };
+    }
     const alts = (Array.isArray(it.alternativas) ? it.alternativas : []).filter((a) => a && n0(a.qtd) > 0 && a.custo !== null && a.custo !== undefined && a.custo !== '');
     if (!alts.length || qtd <= 0) return null;
     const qAlt = alts.reduce((t, a) => t + n0(a.qtd), 0);
@@ -1248,8 +1278,8 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
     const frete = partes.reduce((t, x) => t + x.frete, 0);
     return { custo: produtos / qtd, frete, produtos, qMain, qAlt, excesso: Math.max(0, qAlt - qtd), partes: partes.filter((x) => x.qtd > 0) };
   }
-  const custoCompra = (it) => { const d = divisaoCompra(it); return d ? d.custo : n0(it.custo); };
-  const freteCompra = (it) => { const d = divisaoCompra(it); return d ? d.frete : n0(it.frete); };
+  const custoCompra = (it) => { const d = divisaoCompra(it); if (d) return d.custo; const u = opcoesUsadas(it); return u && u.length === 1 ? n0(u[0].custo) : n0(it.custo); };
+  const freteCompra = (it) => { const d = divisaoCompra(it); if (d) return d.frete; const u = opcoesUsadas(it); return u && u.length === 1 ? n0(u[0].frete) : n0(it.frete); };
   const compraBase = (it) => n0(it.qtd) * custoCompra(it) * (1 + n0(it.impostoCompraPct)) + freteCompra(it);
 
   function calcItem(it, pst, cfg) {
@@ -1947,7 +1977,7 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
   const api = {
     APP_VERSION, STATUS, INATIVOS, DECL_PADRAO, uid, n0, round2, ceil2, parseBR, brl, brl0, pct, numBR, qtdBR,
     fmtSessao, dataExtensa, hojeISO, defaultConfig, emptyState, migrate, custoViagem, localEntregaPadrao, calcItem, limiteMEI,
-    agora, setClockOffset, getClockOffset, pendenciasNuvem, computeAll, divisaoCompra, ordemLoteItem, padLE, dasMensal, mesesAtivos, previewItem, linhasProposta, unitProposta, resolverPdfOpts, camposModelo, pendenciasModelo, CAMPOS_MODELO, identificaEmpresa, COLUNAS_DESC, CAMPOS_FORNECEDOR, CAMPOS_BANCO, mergeState, diffState, paraNuvem, createStore, demoState,
+    agora, setClockOffset, getClockOffset, pendenciasNuvem, computeAll, divisaoCompra, custoCompra, freteCompra, ordemLoteItem, padLE, dasMensal, mesesAtivos, previewItem, linhasProposta, unitProposta, resolverPdfOpts, camposModelo, pendenciasModelo, CAMPOS_MODELO, identificaEmpresa, COLUNAS_DESC, CAMPOS_FORNECEDOR, CAMPOS_BANCO, mergeState, diffState, paraNuvem, createStore, demoState,
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   root.Core = api;
@@ -3674,7 +3704,8 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
   // opção principal + até ALT_N alternativas (loja, link, frete, custo) para comparar fornecedores
   const ALT_N = 8, ALTS = Array.from({ length: ALT_N }, (_, i) => i);
   function comprasDoItem(it) {
-    const out = [], main = compraInfo(it);
+    const novo = (Array.isArray(it.alternativas) ? it.alternativas : []).some((a) => a && typeof a.usar === 'boolean');
+    const out = [], main = novo ? null : compraInfo(it);
     if (main) out.push(Object.assign({ principal: true, custo: null, barato: false }, main));
     (Array.isArray(it.alternativas) ? it.alternativas : []).forEach((a) => {
       const nome = String(a.loja || '').trim();
@@ -3683,16 +3714,26 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
       let label = nome && !pareceUrl(nome) ? nome : '';
       if (!label && href) { try { label = new URL(href).hostname.replace(/^www\./, ''); } catch (_) { label = 'link'; } }
       const custo = a.custo == null ? null : Number(a.custo);
-      out.push({ principal: false, href, label, nome, custo, barato: custo != null && it.custo != null && custo < it.custo });
+      out.push({ principal: novo && a.usar === true && !out.some((o) => o.principal), usada: novo && a.usar === true, href, label, nome, custo, barato: custo != null && it.custo != null && custo < it.custo });
     });
     return out;
   }
 
+  // item salvo no modelo antigo (principal + alternativas): o principal vira a opção 1, marcada
+  function opcoesParaForm(it) {
+    const alts = Array.isArray(it.alternativas) ? it.alternativas : [];
+    if (alts.some((a) => a && typeof a.usar === 'boolean')) return alts;
+    const dv = C.divisaoCompra(it), out = [];
+    const nome = pareceUrl(it.onde) ? '' : (it.onde || ''), link = it.ondeLink || (pareceUrl(it.onde) ? urlSeg(it.onde) : '');
+    if (nome || link || dv) out.push({ loja: nome, link, custo: it.custo, frete: it.frete, qtd: dv ? dv.qMain : 0, usar: true });
+    alts.forEach((a) => out.push(Object.assign({}, a, { usar: Number(a.qtd) > 0 && a.custo != null && a.custo !== '' })));
+    return out;
+  }
   function itemValues(it) {
     return {
       pregaoId: it.pregaoId || '', loteEdital: it.loteEdital || '', itemEdital: it.itemEdital || '', descricao: it.descricao || '', descEdital: it.descEdital || '', marca: it.marca || '', especificacoes: it.especificacoes || '', unidade: it.unidade || 'Un',
-      qtd: it.qtd == null ? '' : C.numBR(it.qtd, 3), onde: pareceUrl(it.onde) ? '' : (it.onde || ''), ondeLink: it.ondeLink || (pareceUrl(it.onde) ? urlSeg(it.onde) : ''), obs: it.obs || '', possivelGanhar: !!it.possivelGanhar, vencedor: it.vencedor == null ? '' : C.numBR(it.vencedor),
-      ...(() => { const o = {}; ALTS.forEach((n) => { const a = (it.alternativas || [])[n] || {}; o['alt' + n + 'Loja'] = a.loja || ''; o['alt' + n + 'Link'] = a.link || ''; o['alt' + n + 'Custo'] = a.custo == null ? '' : C.numBR(a.custo); o['alt' + n + 'Frete'] = a.frete ? C.numBR(a.frete) : ''; o['alt' + n + 'Qtd'] = a.qtd ? C.numBR(a.qtd, 3) : ''; }); return o; })(),
+      qtd: it.qtd == null ? '' : C.numBR(it.qtd, 3), obs: it.obs || '', possivelGanhar: !!it.possivelGanhar, vencedor: it.vencedor == null ? '' : C.numBR(it.vencedor),
+      ...(() => { const o = {}; const L = opcoesParaForm(it); ALTS.forEach((n) => { const a = L[n] || {}; o['alt' + n + 'Usar'] = !!a.usar; o['alt' + n + 'Loja'] = a.loja || ''; o['alt' + n + 'Link'] = a.link || ''; o['alt' + n + 'Custo'] = a.custo == null ? '' : C.numBR(a.custo); o['alt' + n + 'Frete'] = a.frete ? C.numBR(a.frete) : ''; o['alt' + n + 'Qtd'] = a.qtd ? C.numBR(a.qtd, 3) : ''; }); return o; })(),
       custo: it.custo == null ? '' : C.numBR(it.custo), teto: it.teto == null ? '' : C.numBR(it.teto), frete: it.frete ? C.numBR(it.frete) : '',
       margem: it.margem == null ? '' : C.numBR(it.margem * 100, 2), lanceFinal: it.lanceFinal == null ? '' : C.numBR(it.lanceFinal), colocacao: it.colocacao == null ? '' : String(it.colocacao),
       entregaId: it.entregaId || '',
@@ -3703,11 +3744,17 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
   function itemFromForm(x, id) {
     const m = C.parseBR(x.margem);
     const old = id && id !== 'new' ? store.get().itens.find((i) => i.id === id) : null;
+    const opts = ALTS.map((n) => ({ loja: String(x['alt' + n + 'Loja'] || '').trim(), link: urlSeg(x['alt' + n + 'Link']), custo: C.parseBR(x['alt' + n + 'Custo']), frete: C.parseBR(x['alt' + n + 'Frete']) || 0, qtd: C.parseBR(x['alt' + n + 'Qtd']) || 0, usar: !!x['alt' + n + 'Usar'] }))
+      .filter((a) => a.loja || a.link || a.custo != null || a.frete || a.qtd);
+    // opções marcadas mandam no custo e no frete do item; sem marcação, valem os campos digitados
+    const marc = opts.filter((a) => a.usar && a.custo != null), eff = marc.length ? { qtd: C.parseBR(x.qtd), alternativas: opts } : null;
+    const custoItem = eff ? C.custoCompra(eff) : C.parseBR(x.custo), freteItem = eff ? C.freteCompra(eff) : (C.parseBR(x.frete) || 0);
+    const prim = opts.find((a) => a.usar) || null;
     return {
       id: id || 'new', pregaoId: x.pregaoId, loteEdital: C.padLE(x.loteEdital), itemEdital: C.padLE(x.itemEdital), descricao: x.descricao.trim(), descEdital: x.descEdital.trim(), marca: x.marca.trim(), especificacoes: old && old.especificacoes ? old.especificacoes : '', unidade: x.unidade.trim() || 'Un',
-      qtd: C.parseBR(x.qtd), onde: x.onde.trim(), ondeLink: urlSeg(x.ondeLink), obs: String(x.obs || '').trim(), possivelGanhar: !!x.possivelGanhar, vencedor: C.parseBR(x.vencedor),
-      alternativas: ALTS.map((n) => ({ loja: String(x['alt' + n + 'Loja'] || '').trim(), link: urlSeg(x['alt' + n + 'Link']), custo: C.parseBR(x['alt' + n + 'Custo']), frete: C.parseBR(x['alt' + n + 'Frete']) || 0, qtd: C.parseBR(x['alt' + n + 'Qtd']) || 0 })).filter((a) => a.loja || a.link || a.custo != null || a.frete || a.qtd),
-      custo: C.parseBR(x.custo), teto: C.parseBR(x.teto), frete: C.parseBR(x.frete) || 0,
+      qtd: C.parseBR(x.qtd), onde: prim ? prim.loja : '', ondeLink: prim ? prim.link : '', obs: String(x.obs || '').trim(), possivelGanhar: !!x.possivelGanhar, vencedor: C.parseBR(x.vencedor),
+      alternativas: opts,
+      custo: custoItem, teto: C.parseBR(x.teto), frete: freteItem,
       margem: m == null ? null : m / 100, lanceFinal: C.parseBR(x.lanceFinal), colocacao: colocacaoDe(x.colocacao),
       // campos retirados do formulário: o que já estava salvo no item continua valendo
       impostoCompraPct: old && old.impostoCompraPct != null ? old.impostoCompraPct : null,
@@ -3762,7 +3809,7 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
     const cur = id ? store.get().itens.find((i) => i.id === id && !i.deleted) : null;
     const v = itemValues(cur || { pregaoId: pregaoId || (UI.detailId || list[0].id), unidade: 'Un' });
     const cfg = store.get().config;
-    const altFields = (n) => `<div class="altslot" data-slot="${n}" hidden><div class="full"><div class="lbl" style="margin:2px 0 8px">Opção ${n + 2}</div></div>
+    const altFields = (n) => `<div class="altslot" data-slot="${n}" hidden><div class="full"><div class="lbl" style="margin:2px 0 8px">Opção ${n + 1}</div></div>
           ${field({ label: 'Link da compra', name: 'alt' + n + 'Link', type: 'url', value: v['alt' + n + 'Link'], full: true, ph: 'https://…', inputmode: 'url' })}
           ${field({ label: 'Loja ou site', name: 'alt' + n + 'Loja', value: v['alt' + n + 'Loja'] })}
           ${field({ label: 'Frete (R$, total)', name: 'alt' + n + 'Frete', value: v['alt' + n + 'Frete'], inputmode: 'decimal' })}
@@ -3794,19 +3841,17 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
         ${field({ label: 'Lance final (R$ unit., opcional)', name: 'lanceFinal', value: v.lanceFinal, inputmode: 'decimal', full: true, cls: 'destaque', hint: 'Preenchido, é este o valor que sai na proposta em PDF. Vazio = sai o teto do edital.' })}
         ${field({ label: 'Descrição completa do edital (vai no PDF)', name: 'descEdital', type: 'textarea', value: v.descEdital, full: true, ph: 'Cole aqui a descrição do item como está no edital', hint: 'Se ficar vazia, o PDF usa o nome do item.' })}
         <div class="full cat-atalho"><button type="button" class="btn block" data-ir-catalogo="1">${icon('image', 'sm')} Fotos e descrição para o catálogo</button><div class="hint">Salva o item e abre o catálogo da guia Proposta já neste pregão, no lugar deste item.</div></div>
-        <div class="field full" id="linkBox"><label for="f_ondeLink">Onde comprar (link)</label>
-          <input type="hidden" name="onde" value="${esc(v.onde)}">
+        <div class="field full" id="linkBox"><label>Opções de compra</label>
           <div class="linkrow">
-          <input class="input" id="f_ondeLink" name="ondeLink" type="url" value="${esc(v.ondeLink)}" placeholder="Cole o link do produto ou da loja" inputmode="url" autocomplete="off" autocapitalize="none">
-          <span class="princpar"><a class="btn ibtn" id="goOnde" href="#" target="_blank" rel="noopener noreferrer" aria-label="Comprar" title="Comprar" style="display:none">${icon('cart')}</a>          <button type="button" class="btn ghost ibtn" id="editLink" aria-label="Editar link" title="Editar link" style="display:none">${icon('edit', 'sm')}</button></span>
-          ${ALTS.map((n) => `<span class="altpar" data-altpar="${n}" hidden><a class="btn ibtn altc" data-alt-go="${n}" href="#" target="_blank" rel="noopener noreferrer" aria-label="Comprar na opção ${n + 2}" title="Comprar na opção ${n + 2}">${icon('cart')}<span class="altc-n">${n + 2}</span></a><button type="button" class="btn ghost ibtn altc" data-alt="abrir" data-alt-n="${n}" aria-label="Editar opção ${n + 2}" title="Editar opção ${n + 2}">${icon('edit', 'sm')}</button></span>`).join('')}
-          <button type="button" class="btn ibtn altplus" data-alt="abrir" aria-label="Outras opções de compra" title="Outras opções de compra">${icon('plus')}<span class="altplus-n"${altQtd ? '' : ' hidden'}>${altQtd}</span></button>
+          ${ALTS.map((n) => `<span class="altpar" data-altpar="${n}" hidden><label class="btn ibtn altusar" title="Vou comprar nesta opção (marque para entrar no custo)"><input type="checkbox" name="alt${n}Usar"${v['alt' + n + 'Usar'] ? ' checked' : ''} aria-label="Vou comprar na opção ${n + 1}">${icon('check', 'sm')}</label><a class="btn ibtn altc" data-alt-go="${n}" href="#" target="_blank" rel="noopener noreferrer" aria-label="Abrir a loja da opção ${n + 1}" title="Abrir a loja da opção ${n + 1}">${icon('cart')}<span class="altc-n">${n + 1}</span></a><button type="button" class="btn ghost ibtn altc" data-alt="abrir" data-alt-n="${n}" aria-label="Editar opção ${n + 1}" title="Editar opção ${n + 1}">${icon('edit', 'sm')}</button></span>`).join('')}
+          <button type="button" class="btn ibtn altplus" data-alt="abrir" aria-label="Incluir opção de compra" title="Incluir opção de compra">${icon('plus')}<span class="altplus-n"${altQtd ? '' : ' hidden'}>${altQtd}</span></button>
           </div>
+          <div class="hint">Toque no + para incluir uma opção (link, loja e frete). Marque ✓ as que vai usar: o custo e o frete do item vêm delas.</div>
           </div>
-        <div class="altpop" id="altPop" hidden role="dialog" aria-modal="true" aria-label="Outras opções de compra"><div class="altpop-box">
-          <div class="altpop-hd"><b>Outras opções de compra</b><button type="button" class="btn ghost sm" data-alt="fechar" aria-label="Fechar">✕</button></div>
+        <div class="altpop" id="altPop" hidden role="dialog" aria-modal="true" aria-label="Opção de compra"><div class="altpop-box">
+          <div class="altpop-hd"><b>Opção de compra</b><button type="button" class="btn ghost sm" data-alt="fechar" aria-label="Fechar">✕</button></div>
           <div class="formgrid">${ALTS.map(altFields).join('')}</div>
-          <div class="hint" style="margin-bottom:12px">Compare quantos fornecedores quiser (toque no + para incluir outra opção). Se uma opção sair mais barata (com o frete), o app avisa e você troca com um toque.<br>Para dividir a compra, preencha “Comprar aqui”: essa quantidade sai desta opção e o resto da opção principal; o app recalcula o custo médio e soma o frete de cada fornecedor. Vazio = vale o custo e o frete do item.</div>
+          <div class="hint" style="margin-bottom:12px">Compare quantos fornecedores quiser. Marque ✓ as opções que vai usar para comprar.<br>Se marcar mais de uma, preencha “Comprar aqui” em cada uma (a que ficar em branco leva o resto): o app calcula o custo médio e soma o frete de cada fornecedor.</div>
           <button type="button" class="btn primary block" data-alt="fechar">OK</button></div></div>
         ${field({ label: 'Observações do item', name: 'obs', type: 'textarea', value: v.obs, full: true, ph: 'Ex.: cotar o frete amanhã; não consegui cotar com o fornecedor Y', hint: 'Aparece no cartão do pregão (guia Pregões) e no cartão do item.' })}
         <div class="full"><label class="switch"><span>Posso ganhar<small class="hint" style="display:block;font-weight:500">Marque se ficou perto do 1º colocado neste item e ainda é possível ganhar. Dá para filtrar no Dashboard.</small></span><input type="checkbox" name="possivelGanhar"${v.possivelGanhar ? ' checked' : ''}></label></div>
@@ -3842,11 +3887,16 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
         form.addEventListener('click', (e) => { if (e.target.closest('[data-rota-item="calc"]')) calc(true); });
         // janela "+" das outras opções de compra
         const altPop = $('#altPop', form);
+        const fechaAlt = () => {
+          altPop.hidden = true;
+          if (form._autoTick != null) { const n = form._autoTick; form._autoTick = null; const cb = $('[name=alt' + n + 'Usar]', form), tem = ['Loja', 'Link', 'Custo', 'Frete'].some((f) => $('[name=alt' + n + f + ']', form).value.trim()); if (tem && !ALTS.some((m) => $('[name=alt' + m + 'Usar]', form).checked)) { cb.checked = true; cb.dispatchEvent(new Event('input', { bubbles: true })); } }
+          altConta();
+        };
         const altConta = () => {
           const k = ALTS.filter((n) => ['Loja', 'Link', 'Custo'].some((f) => $('[name=alt' + n + f + ']', form).value.trim())).length; const s = $('.altplus-n', form); s.textContent = k; s.hidden = !k; $('.altplus', form).hidden = k >= ALT_N;
-          // cada outra opção com link vira um carrinho avermelhado + lápis, ao lado do principal
-          ALTS.forEach((n) => { const h = urlSeg($('[name=alt' + n + 'Link]', form).value), par = $('[data-altpar="' + n + '"]', form), loja = $('[name=alt' + n + 'Loja]', form).value.trim();
-            par.hidden = !h; if (h) { const a = $('[data-alt-go]', par); a.href = h; a.title = 'Comprar' + (loja ? ' em ' + loja : ' na opção ' + (n + 2)); } });
+          // cada opção preenchida vira: tique + cesta (se tiver link) + lápis
+          ALTS.forEach((n) => { const g = (f) => $('[name=alt' + n + f + ']', form).value.trim(), h = urlSeg(g('Link')), par = $('[data-altpar="' + n + '"]', form), loja = g('Loja'), a = $('[data-alt-go]', par);
+            par.hidden = !(h || loja || g('Custo') || g('Frete') || g('Qtd')); a.hidden = !h; if (h) { a.href = h; a.title = 'Abrir' + (loja ? ' ' + loja : ' a opção ' + (n + 1)); } });
         };
         form.addEventListener('click', (e) => {
           const b = e.target.closest('[data-alt]'); if (!b) return;
@@ -3860,34 +3910,24 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
             let n = b.dataset.altN != null ? Number(b.dataset.altN) : ALTS.find(vazio);
             if (n == null || n < 0) n = ALT_N - 1;
             $$('.altslot', form).forEach((el) => { el.hidden = Number(el.dataset.slot) !== n; });
+            if (!ALTS.some((m) => !vazio(m))) form._autoTick = n;   // primeira opção do item: já vem marcada
             altPop.hidden = false; const f = $('[name=alt' + n + 'Link]', form); if (f) f.focus();
           }
-          else { altPop.hidden = true; altConta(); }
+          else { fechaAlt(); }
         });
-        altPop.addEventListener('click', (e) => { if (e.target === altPop) { altPop.hidden = true; altConta(); } });
+        altPop.addEventListener('click', (e) => { if (e.target === altPop) fechaAlt(); });
         altPop.addEventListener('input', altConta); altConta();
         form.addEventListener('click', (e) => {
           const b = e.target.closest('[data-usar-alt]'); if (!b) return;
-          const n = b.dataset.usarAlt, g = (k) => $('[name=' + k + ']', form);
-          [['onde', 'alt' + n + 'Loja'], ['ondeLink', 'alt' + n + 'Link'], ['custo', 'alt' + n + 'Custo'], ['frete', 'alt' + n + 'Frete']].forEach(([a, c]) => { const A = g(a), B = g(c), tmp = A.value; A.value = B.value; B.value = tmp; });
-          g('custo').dispatchEvent(new Event('input', { bubbles: true }));
+          const cb = $('[name=alt' + b.dataset.usarAlt + 'Usar]', form); cb.checked = !cb.checked; cb.dispatchEvent(new Event('input', { bubbles: true }));
         });
-        // link de compra: depois de colar vira um botão clicável (lápis para editar)
-        const linkInp = $('#f_ondeLink', form), go = $('#goOnde', form), edt = $('#editLink', form);
-        form._syncLink = () => {
-          const h = urlSeg(linkInp.value);
-          if (h) { go.href = h; linkInp.style.display = 'none'; go.style.display = ''; edt.style.display = ''; }
-          else { linkInp.style.display = ''; go.style.display = 'none'; edt.style.display = 'none'; }
-        };
-        linkInp.addEventListener('change', form._syncLink);
-        linkInp.addEventListener('paste', () => setTimeout(() => { linkInp.dispatchEvent(new Event('input', { bubbles: true })); form._syncLink(); }, 0));
-        edt.addEventListener('click', () => { linkInp.style.display = ''; go.style.display = 'none'; edt.style.display = 'none'; linkInp.focus(); linkInp.select(); });
-        form._syncLink();
         if (loc.value.trim() && !km.value) calc(false);
       },
       onInput: (form) => {
         let x = readForm(form);
-        { const li = $('#f_ondeLink', form); if (li && form._syncLink && document.activeElement !== li) form._syncLink(); }
+        { const tem = ALTS.some((n) => x['alt' + n + 'Usar'] && C.parseBR(x['alt' + n + 'Custo']) != null), ci = $('[name=custo]', form), fi = $('[name=frete]', form);
+          [ci, fi].forEach((el) => { if (el) { el.readOnly = tem; el.classList.toggle('calc', tem); el.title = tem ? 'Calculado das opções de compra marcadas' : ''; } });
+          if (tem && ci && fi) { const ft = itemFromForm(x, id); ci.value = ft.custo == null ? '' : C.numBR(ft.custo, 4); fi.value = ft.frete ? C.numBR(ft.frete) : ''; x = readForm(form); } }
         const bl = $('#boxLocalItem', form); if (bl) bl.classList.toggle('hidden', !String(x.localEntrega || '').trim());
         const ph = store.get().pregoes.find((q) => q.id === x.pregaoId);
         const le = $('[name=localEntrega]', form); if (le && ph) le.placeholder = 'vazio = ' + (ph.cidadeUf || 'local do pregão');
@@ -3900,12 +3940,13 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
         const cm = C.parseBR(x.custo);
         const qx = C.parseBR(x.qtd) || 0, fm = C.parseBR(x.frete) || 0;
         const itDraft = itemFromForm(x, id), dv = C.divisaoCompra(itDraft);
-        let dica = dv ? '' : ALTS.map((n) => ({ n, custo: C.parseBR(x['alt' + n + 'Custo']), frete: C.parseBR(x['alt' + n + 'Frete']) || 0, loja: String(x['alt' + n + 'Loja'] || '').trim() }))
-          .filter((a) => a.custo != null && cm != null && (qx > 0 ? (a.custo * qx + a.frete) < (cm * qx + fm) - 0.005 : a.custo < cm))
-          .map((a) => `<div class="altdica">${icon('info', 'sm')}<span>${esc(a.loja || 'A opção ' + (a.n + 2))} ${qx > 0 ? 'sai ' + C.brl((cm * qx + fm) - (a.custo * qx + a.frete)) + ' mais barato no total, com o frete' : 'custa ' + C.brl(cm - a.custo) + ' a menos por unidade'}.</span><button type="button" class="btn sm" data-usar-alt="${a.n}">Usar esta</button></div>`).join('');
+        const ops = ALTS.map((n) => ({ n, custo: C.parseBR(x['alt' + n + 'Custo']), frete: C.parseBR(x['alt' + n + 'Frete']) || 0, loja: String(x['alt' + n + 'Loja'] || '').trim(), usar: !!x['alt' + n + 'Usar'] })).filter((o) => o.custo != null);
+        const tot = (o) => (qx > 0 ? o.custo * qx + o.frete : o.custo);
+        const menor = ops.length > 1 ? Math.min(...ops.map(tot)) : null;
+        let dica = ops.length ? `<div class="altcomp"><div class="tiny muted">Opções de compra${qx > 0 ? ' (' + C.qtdBR(qx) + ' un., com frete)' : ''}: escolha as que vai usar</div>${ops.map((o) => `<div class="altrow${o.usar ? ' on' : ''}"><span class="grow">${esc(o.loja || 'Opção ' + (o.n + 1))}<small>${C.brl(o.custo)}${qx > 0 ? ' × ' + C.qtdBR(qx) : ''}${o.frete ? ' + frete ' + C.brl(o.frete) : ''} = <b>${C.brl(tot(o))}</b></small></span>${menor != null && Math.abs(tot(o) - menor) < 0.005 ? '<span class="prazo good">Mais barata</span>' : ''}<button type="button" class="btn sm${o.usar ? ' primary' : ''}" data-usar-alt="${o.n}">${o.usar ? '✓ Vou usar' : 'Usar'}</button></div>`).join('')}</div>` : '';
         if (dv) {
-          const nomeP = (k) => k.principal ? (String(x.onde || '').trim() || 'Opção principal') : (k.loja || 'Outra opção');
-          dica = `<div class="altdica" style="display:block">${icon('cart', 'sm')} <b>Compra dividida:</b> ${dv.partes.map((k) => `${esc(nomeP(k))} ${C.qtdBR(k.qtd)} × ${C.brl(k.custo)}${k.frete ? ' + frete ' + C.brl(k.frete) : ''}`).join(' · ')}<br>Custo médio <b>${C.brl(dv.custo)}</b> por unidade · frete total <b>${C.brl(dv.frete)}</b>${dv.excesso ? `<br><b>Atenção:</b> as opções somam ${C.qtdBR(dv.qAlt)}, mais que a quantidade do item (${C.qtdBR(qx)}).` : ''}</div>`;
+          const nomeP = (k) => k.loja || 'Outra opção';
+          dica += `<div class="altdica" style="display:block">${icon('cart', 'sm')} <b>Compra dividida:</b> ${dv.partes.map((k) => `${esc(nomeP(k))} ${C.qtdBR(k.qtd)} × ${C.brl(k.custo)}${k.frete ? ' + frete ' + C.brl(k.frete) : ''}`).join(' · ')}<br>Custo médio <b>${C.brl(dv.custo)}</b> por unidade · frete total <b>${C.brl(dv.frete)}</b>${dv.excesso ? `<br><b>Atenção:</b> as opções somam ${C.qtdBR(dv.qAlt)}, mais que a quantidade do item (${C.qtdBR(qx)}).` : ''}${dv.falta ? `<br><b>Atenção:</b> faltam ${C.qtdBR(dv.falta)} unidades: preencha “Comprar aqui” em cada opção marcada.` : ''}</div>`;
         }
         if (!c || c.minimo == null) { el.innerHTML = `<div class="small muted">Informe quantidade e custo para ver o valor mínimo da proposta.</div>${dica}`; return; }
         const bad = c.sitTipo === 'bad';
@@ -3918,6 +3959,8 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
       onSave: (x, form) => {
         $$('.input.err', form).forEach((e) => e.classList.remove('err'));
         const it = itemFromForm(x, id);
+        { const sem = ALTS.find((n) => x['alt' + n + 'Usar'] && C.parseBR(x['alt' + n + 'Custo']) == null);
+          if (sem != null) { $$('.altslot', form).forEach((el) => { el.hidden = Number(el.dataset.slot) !== sem; }); const ap = $('#altPop', form); if (ap) ap.hidden = false; $('[name=alt' + sem + 'Custo]', form).classList.add('err'); return 'Informe o custo da opção ' + (sem + 1) + ', que está marcada para comprar.'; } }
         const miss = [];
         if (!it.pregaoId) miss.push('pregaoId');
         if (!it.descricao) miss.push('descricao');
@@ -3925,7 +3968,6 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
         if (it.custo == null || it.custo < 0) miss.push('custo');
         if (miss.length) { miss.forEach((n) => $('[name=' + n + ']', form).classList.add('err')); return 'Preencha pregão, item, quantidade e custo.'; }
         for (const n of ALTS) { if (String(x['alt' + n + 'Link'] || '').trim() && !urlSeg(x['alt' + n + 'Link'])) { $('[name=alt' + n + 'Link]', form).classList.add('err'); const ap = $('#altPop', form); if (ap) ap.hidden = false; return 'Link da opção ' + (n + 2) + ' inválido. Cole o endereço completo, sem espaços.'; } }
-        if ((x.ondeLink || '').trim() && !it.ondeLink) { $('[name=ondeLink]', form).classList.add('err'); return 'Link de compra inválido. Cole o endereço completo, sem espaços.'; }
         if (it.margem != null && it.margem >= 1) { $('[name=margem]', form).classList.add('err'); return 'A margem precisa ser menor que 100%.'; }
         if (it.lanceFinal != null && form.dataset.okSolo !== String(it.lanceFinal)) {
           const cs = C.previewItem(store.get(), it);
