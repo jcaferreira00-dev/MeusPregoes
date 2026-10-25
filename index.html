@@ -460,9 +460,8 @@ input.input[type=datetime-local]::-webkit-date-and-time-value, input.input[type=
   .icard .i-vals > div { padding: 0; background: none; border-radius: 0; display: flex; align-items: baseline; gap: 4px; }
   .icard .i-vals span { display: inline; font-size: 9px; letter-spacing: .02em; }
   .icard .i-vals b { display: inline; font-size: 11px; font-weight: 700; color: var(--muted); }
-  .icard .comprar-btn { min-height: 34px !important; min-width: 40px; width: auto; padding: 4px 12px; justify-content: center; }
-  .icard .comprar-btn svg, .icard .comprar-btn .ell { display: none; }
-  .icard .comprar-btn .cifrao { display: inline; font-size: 17px; font-weight: 900; line-height: 1; }
+  .icard .comprar-btn { min-height: 34px !important; width: auto; max-width: 100%; padding: 4px 12px; }
+  .icard .comprar-btn .ell { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .pcard .p-itens { display: block; }
   .pcard .p-prop { display: inline-flex; min-height: 28px; padding: 2px 10px; font-size: 12px; gap: 5px; }
   .pcard, .icard { padding: 12px; gap: 6px; }
@@ -986,7 +985,6 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
 .res-sel .btn.pode-on { color: var(--green); background: var(--green-soft); }
 .icard-actions { gap: 8px; align-items: center; }
 .icard-actions > .comprar { margin-right: auto; }
-.comprar-btn.so-ic { min-width: 40px; justify-content: center; }
 .icard .badge .s-lg { display: none; } .icard .badge .s-sm { display: inline; }
 .solo { display: flex; align-items: center; gap: 6px 10px; flex-wrap: wrap; font-size: 12px; border-radius: 10px; padding: 6px 10px; border: 1px dashed var(--line); color: var(--muted); }
 .solo .s-sm { display: none; } .solo .solo-un { font-size: 11px; opacity: .8; } @media (max-width: 600px) { .solo .solo-un { display: none; } } @media (max-width: 600px) { .solo .s-sm { display: inline; } }
@@ -1099,6 +1097,15 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
 .altrow { display: flex; align-items: center; gap: 8px; border: 1px solid var(--line); border-radius: 10px; padding: 6px 8px; background: var(--card); }
 .altrow.on { border-color: var(--green); background: var(--green-soft); }
 .altrow small { display: block; color: var(--muted); font-size: 11.5px; }
+
+/* carrinho de compra sempre com o nome do site; o que vou usar fica com borda verde */
+.comprar-btn .ell { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.comprar-btn.usada, .chip.usada { border: 2px solid var(--green); color: var(--green); background: var(--green-soft); font-weight: 700; }
+.comprar-btn.barato:not(.usada) { border-color: var(--line); color: var(--amber); }   /* mais barata que o custo atual, mas não é a que vou usar */
+/* formulário: a cesta mostra o nome da loja */
+.btn.ibtn.altc[data-alt-go] { width: auto; max-width: 138px; min-width: 40px; padding: 0 10px; gap: 6px; }
+.altc .altc-t { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12.5px; font-weight: 700; position: static; }
+.altc[data-alt-go] .altc-n { position: static; }
 </style>
 </head>
 <body>
@@ -1111,7 +1118,7 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.91.0';
+  const APP_VERSION = '1.92.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Em disputa', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -3706,7 +3713,7 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
   function comprasDoItem(it) {
     const novo = (Array.isArray(it.alternativas) ? it.alternativas : []).some((a) => a && typeof a.usar === 'boolean');
     const out = [], main = novo ? null : compraInfo(it);
-    if (main) out.push(Object.assign({ principal: true, custo: null, barato: false }, main));
+    if (main) out.push(Object.assign({ principal: true, usada: true, custo: null, barato: false }, main));
     (Array.isArray(it.alternativas) ? it.alternativas : []).forEach((a) => {
       const nome = String(a.loja || '').trim();
       const href = urlSeg(a.link) || (pareceUrl(nome) ? urlSeg(nome) : '');
@@ -3714,9 +3721,10 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
       let label = nome && !pareceUrl(nome) ? nome : '';
       if (!label && href) { try { label = new URL(href).hostname.replace(/^www\./, ''); } catch (_) { label = 'link'; } }
       const custo = a.custo == null ? null : Number(a.custo);
-      out.push({ principal: novo && a.usar === true && !out.some((o) => o.principal), usada: novo && a.usar === true, href, label, nome, custo, barato: custo != null && it.custo != null && custo < it.custo });
+      out.push({ principal: novo && a.usar === true && !out.some((o) => o.principal), usada: novo ? a.usar === true : Number(a.qtd) > 0, href, label, nome, custo, barato: custo != null && it.custo != null && custo < it.custo });
     });
-    return out;
+    // o que vou usar para comprar vem primeiro (ordem do cadastro dentro de cada grupo)
+    return out.map((o, i) => [o, i]).sort((a, b) => (b[0].usada ? 1 : 0) - (a[0].usada ? 1 : 0) || a[1] - b[1]).map((x) => x[0]);
   }
 
   // item salvo no modelo antigo (principal + alternativas): o principal vira a opção 1, marcada
@@ -3843,7 +3851,7 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
         <div class="full cat-atalho"><button type="button" class="btn block" data-ir-catalogo="1">${icon('image', 'sm')} Fotos e descrição para o catálogo</button><div class="hint">Salva o item e abre o catálogo da guia Proposta já neste pregão, no lugar deste item.</div></div>
         <div class="field full" id="linkBox"><label>Opções de compra</label>
           <div class="linkrow">
-          ${ALTS.map((n) => `<span class="altpar" data-altpar="${n}" hidden><label class="btn ibtn altusar" title="Vou comprar nesta opção (marque para entrar no custo)"><input type="checkbox" name="alt${n}Usar"${v['alt' + n + 'Usar'] ? ' checked' : ''} aria-label="Vou comprar na opção ${n + 1}">${icon('check', 'sm')}</label><a class="btn ibtn altc" data-alt-go="${n}" href="#" target="_blank" rel="noopener noreferrer" aria-label="Abrir a loja da opção ${n + 1}" title="Abrir a loja da opção ${n + 1}">${icon('cart')}<span class="altc-n">${n + 1}</span></a><button type="button" class="btn ghost ibtn altc" data-alt="abrir" data-alt-n="${n}" aria-label="Editar opção ${n + 1}" title="Editar opção ${n + 1}">${icon('edit', 'sm')}</button></span>`).join('')}
+          ${ALTS.map((n) => `<span class="altpar" data-altpar="${n}" hidden><label class="btn ibtn altusar" title="Vou comprar nesta opção (marque para entrar no custo)"><input type="checkbox" name="alt${n}Usar"${v['alt' + n + 'Usar'] ? ' checked' : ''} aria-label="Vou comprar na opção ${n + 1}">${icon('check', 'sm')}</label><a class="btn ibtn altc" data-alt-go="${n}" href="#" target="_blank" rel="noopener noreferrer" aria-label="Abrir a loja da opção ${n + 1}" title="Abrir a loja da opção ${n + 1}">${icon('cart')}<span class="altc-t"></span></a><button type="button" class="btn ghost ibtn altc" data-alt="abrir" data-alt-n="${n}" aria-label="Editar opção ${n + 1}" title="Editar opção ${n + 1}">${icon('edit', 'sm')}</button></span>`).join('')}
           <button type="button" class="btn ibtn altplus" data-alt="abrir" aria-label="Incluir opção de compra" title="Incluir opção de compra">${icon('plus')}<span class="altplus-n"${altQtd ? '' : ' hidden'}>${altQtd}</span></button>
           </div>
           <div class="hint">Toque no + para incluir uma opção (link, loja e frete). Marque ✓ as que vai usar: o custo e o frete do item vêm delas.</div>
@@ -3896,7 +3904,7 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
           const k = ALTS.filter((n) => ['Loja', 'Link', 'Custo'].some((f) => $('[name=alt' + n + f + ']', form).value.trim())).length; const s = $('.altplus-n', form); s.textContent = k; s.hidden = !k; $('.altplus', form).hidden = k >= ALT_N;
           // cada opção preenchida vira: tique + cesta (se tiver link) + lápis
           ALTS.forEach((n) => { const g = (f) => $('[name=alt' + n + f + ']', form).value.trim(), h = urlSeg(g('Link')), par = $('[data-altpar="' + n + '"]', form), loja = g('Loja'), a = $('[data-alt-go]', par);
-            par.hidden = !(h || loja || g('Custo') || g('Frete') || g('Qtd')); a.hidden = !h; if (h) { a.href = h; a.title = 'Abrir' + (loja ? ' ' + loja : ' a opção ' + (n + 1)); } });
+            par.hidden = !(h || loja || g('Custo') || g('Frete') || g('Qtd')); a.hidden = !h; if (h) { a.href = h; a.title = 'Abrir' + (loja ? ' ' + loja : ' a opção ' + (n + 1)); let host = 'Opção ' + (n + 1); try { host = new URL(h).hostname.replace(/^www\./, ''); } catch (_) { /* usa o padrão */ } $('.altc-t', a).textContent = loja || host; } });
         };
         form.addEventListener('click', (e) => {
           const b = e.target.closest('[data-alt]'); if (!b) return;
@@ -3940,7 +3948,7 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
         const cm = C.parseBR(x.custo);
         const qx = C.parseBR(x.qtd) || 0, fm = C.parseBR(x.frete) || 0;
         const itDraft = itemFromForm(x, id), dv = C.divisaoCompra(itDraft);
-        const ops = ALTS.map((n) => ({ n, custo: C.parseBR(x['alt' + n + 'Custo']), frete: C.parseBR(x['alt' + n + 'Frete']) || 0, loja: String(x['alt' + n + 'Loja'] || '').trim(), usar: !!x['alt' + n + 'Usar'] })).filter((o) => o.custo != null);
+        const ops = ALTS.map((n) => ({ n, custo: C.parseBR(x['alt' + n + 'Custo']), frete: C.parseBR(x['alt' + n + 'Frete']) || 0, loja: String(x['alt' + n + 'Loja'] || '').trim() || (() => { const h = urlSeg(x['alt' + n + 'Link']); try { return h ? new URL(h).hostname.replace(/^www\./, '') : ''; } catch (_) { return ''; } })(), usar: !!x['alt' + n + 'Usar'] })).filter((o) => o.custo != null);
         const tot = (o) => (qx > 0 ? o.custo * qx + o.frete : o.custo);
         const menor = ops.length > 1 ? Math.min(...ops.map(tot)) : null;
         let dica = ops.length ? `<div class="altcomp"><div class="tiny muted">Opções de compra${qx > 0 ? ' (' + C.qtdBR(qx) + ' un., com frete)' : ''}: escolha as que vai usar</div>${ops.map((o) => `<div class="altrow${o.usar ? ' on' : ''}"><span class="grow">${esc(o.loja || 'Opção ' + (o.n + 1))}<small>${C.brl(o.custo)}${qx > 0 ? ' × ' + C.qtdBR(qx) : ''}${o.frete ? ' + frete ' + C.brl(o.frete) : ''} = <b>${C.brl(tot(o))}</b></small></span>${menor != null && Math.abs(tot(o) - menor) < 0.005 ? '<span class="prazo good">Mais barata</span>' : ''}<button type="button" class="btn sm${o.usar ? ' primary' : ''}" data-usar-alt="${o.n}">${o.usar ? '✓ Vou usar' : 'Usar'}</button></div>`).join('')}</div>` : '';
@@ -4751,10 +4759,11 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
     const ganhoMode = false;
     const cps = comprasDoItem(it);
     const compra = cps.length ? `<div class="comprar">${cps.map((cp) => {
-      const custo = !cp.principal && cp.custo != null ? ' · ' + C.brl(cp.custo) : '';
+      const custo = cp.custo != null ? ' · ' + C.brl(cp.custo) : '';
+      const nm = cp.label || cp.nome || 'Comprar';
       return cp.href
-        ? `<a class="btn sm lk comprar-btn${cp.barato ? ' barato' : ''}${cp.principal ? ' so-ic' : ''}" href="${esc(cp.href)}" target="_blank" rel="noopener noreferrer" data-act="link-externo" title="${esc((cp.principal ? 'Comprar' + (it.onde ? ' em ' + it.onde : '') : cp.label) + custo)}" aria-label="${esc(cp.principal ? 'Comprar' : cp.label)}">${icon('cart', 'sm')}${cp.principal ? '' : `<span class="ell">${esc(cp.label)}${custo}</span>`}<b class="cifrao" aria-hidden="true">$</b></a>`
-        : `<span class="chip">${icon('pin', 'sm')}${esc(cp.nome)}${custo}</span>`;
+        ? `<a class="btn sm lk comprar-btn${cp.usada ? ' usada' : ''}${cp.barato ? ' barato' : ''}" href="${esc(cp.href)}" target="_blank" rel="noopener noreferrer" data-act="link-externo" title="${esc((cp.usada ? 'Vou comprar em ' : 'Opção: ') + nm + custo)}" aria-label="${esc('Comprar em ' + nm)}">${icon('cart', 'sm')}<span class="ell">${esc(nm)}${custo}</span></a>`
+        : `<span class="chip${cp.usada ? ' usada' : ''}">${icon('pin', 'sm')}${esc(cp.nome)}${custo}</span>`;
     }).join('')}</div>` : '';
     const venc = Number(it.vencedor) > 0 ? `<div><span class="chip venc">${icon('alert', 'sm')}Venceu por ${C.brl(it.vencedor)}</span></div>` : '';
     const obs = String(it.obs || '').trim() ? `<div class="obsline item">${esc(it.obs)}</div>` : '';
@@ -5392,7 +5401,7 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
           // link(s) de compra do item: abre o site da loja para pegar as fotos sem sair procurando
           const it = st.itens.find((i) => i.id === ln.id);
           const cps = it ? comprasDoItem(it).filter((cp) => cp.href) : [];
-          return cps.map((cp) => `<a class="btn sm cat-buy" href="${esc(cp.href)}" target="_blank" rel="noopener noreferrer" data-act="link-externo" title="Abrir o site da compra deste item">${icon('cart', 'sm')}<span class="ell">${cp.principal ? 'Ver na loja' : esc(cp.label)}</span></a>`).join('') || `<span class="btn sm cat-buy off" title="Coloque o link de compra no item para abrir a loja daqui">${icon('cart', 'sm')}<span class="ell">Sem link</span></span>`;
+          return cps.map((cp) => `<a class="btn sm cat-buy" href="${esc(cp.href)}" target="_blank" rel="noopener noreferrer" data-act="link-externo" title="Abrir o site da compra deste item">${icon('cart', 'sm')}<span class="ell">${esc(cp.label || 'Ver na loja')}</span></a>`).join('') || `<span class="btn sm cat-buy off" title="Coloque o link de compra no item para abrir a loja daqui">${icon('cart', 'sm')}<span class="ell">Sem link</span></span>`;
         })()}</div>
         <div class="cat-edital"><b>Exigido no edital</b>${ln.descEdital ? esc(ln.descEdital) : '<span class="muted">Sem descrição do edital no item. Preencha “Descrição completa (vai para o edital)” no item.</span>'}</div>
         <div class="cat-tits"><div class="cat-tit-add"><input class="input" list="catTitList" data-cat-tit-in="${esc(ln.id)}" placeholder="Título (ex.: Marca, Modelo, Voltagem)" autocapitalize="characters" enterkeyhint="done"><button type="button" class="btn sm primary" data-act="cat-tit-add" data-id="${esc(ln.id)}" title="Incluir título na descrição" aria-label="Incluir título">${icon('plus', 'sm')}</button></div>

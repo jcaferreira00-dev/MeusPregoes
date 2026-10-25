@@ -24,6 +24,7 @@ sempre, acrescente aqui (seção certa) no mesmo commit da tarefa.
   cidade padronizada ("Ortigueira/PR"). Se houver dúvida num ajuste visual, mostre uma prévia antes de publicar.
 - Botões de link dos cartões de pregão (guia Pregões, PC): só ícone, sempre nas mesmas posições (edital, modelo, enviar proposta, licitação); o que não tem link fica apagado. No celular, título do órgão sem o prefixo "Prefeitura Municipal de".
 - Formulário do item: NÃO existe campo "onde comprar". Só o botão "+" (opções de compra: link, loja, frete, custo e "comprar aqui"; até 8). Cada opção vira tique ✓ + cesta + lápis; o João marca as que vai usar. Marcada uma: custo e frete do item vêm dela; várias: cada uma com a sua quantidade (a que ficar em branco leva o resto), custo médio e soma dos fretes. Sem nenhuma marcada, valem o custo e o frete digitados. No JSON, cada opção de `alternativas` pode ter `usar: true/false`; sem `usar` o item é lido no modelo antigo (principal `onde`/`ondeLink` + alternativas com `qtd`) e o app converte ao abrir.
+- Botão de compra (cartão do item, catálogo e formulário): SEMPRE com o nome do site/loja (sem nome, o domínio do link), também no celular. As opções marcadas para usar vêm primeiro, com borda verde.
 - Opções de compra aparecem na prévia do item comparando o total (custo × qtd + frete) e marcando a mais barata; o botão "Usar" marca/desmarca.
 - Celular (iPhone 13) = só o básico; PC = completo. Não criar guias novas no celular.
 
