@@ -71,6 +71,12 @@ sempre, acrescente aqui (seção certa) no mesmo commit da tarefa.
   (ex.: livros = 4761-0/01; papelaria = 4761-0/03; tintas = 4741-5/00; tecidos/armarinho = 4755-5/01/02).
 - Na análise, entregar primeiro UM JSON só (todos os pregões; os que não compensam com status Desisti) e depois o
   zip das pastas SEM o JSON dentro.
+- TODOS os itens do pregão entram no JSON (decisão de 25/10/2026), nenhum fica de fora sem registro. O item que
+  não vale a pena (sem margem, sem preço confiável, produto não encontrado, hospitalar/ANVISA, fora do CNAE sem
+  interesse, grande/pesado etc.) entra como descartado: `semLance: true` e o motivo no `obs`, com o número do
+  edital (o da plataforma, já retificado) e o número antigo do TR quando mudou. Quando o motivo for "não achei
+  preço", dizer isso (não é o mesmo que "não compensa"), para o João poder reavaliar. Assim o João vê todos os
+  itens na ordem do edital e não há dúvida sobre o que foi incluído ou excluído.
 
 ### Checklist de regras do edital que mudam a proposta (conferir SEMPRE e colocar no JSON)
 | O que procurar no edital | Onde vai no JSON |
