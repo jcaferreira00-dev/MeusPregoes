@@ -152,11 +152,13 @@ Municipio de Imbau/                 <- pasta com o nome do promotor (órgão)
 ```
 
 - Cotação de cada item em pelo menos 2 fornecedores (lojas diferentes, link direto do produto).
-- Qualidade da cotação (decisão de 26/10/2026): cotar só produto que cumpre TODAS as especificações mínimas do
-  TR/edital (potência, dimensões, capacidade, material, garantia etc.), em loja especializada ou fabricante do ramo,
-  não modelo residencial/marketplace genérico. Margem muito alta (acima de ~50-60%) costuma indicar produto
-  inferior à especificação: marcar no `obs` "conferir ficha técnica" e revisar a cotação antes de entregar.
-  Equipamento com montagem/instalação/frete de fábrica exigido no edital: incluir esses custos no custo do item.
+- Qualidade da cotação (decisão de 26/10/2026): a opção marcada para USAR (`usar: true`) deve cumprir TODAS as
+  especificações mínimas do TR/edital (potência, dimensões, capacidade, material, garantia etc.), em loja
+  especializada ou fabricante do ramo, para não arriscar desclassificação por produto errado. Margem muito alta
+  (acima de ~50-60%) costuma indicar produto inferior à especificação: marcar no `obs` "conferir ficha técnica".
+  Cotações mais baratas/inferiores PODEM entrar como opção extra de comparação (`usar: false`), sem serem a base do lance.
+- Edital que exige montagem, instalação ou nivelamento do equipamento (aparelhos de academia etc.): item fora
+  (`semLance: true`, motivo no `obs`), conforme a regra de itens que exigem instalação (decisão de 26/10/2026).
 - Observações importantes de cada item no campo `obs` do JSON e no arquivo de observações.
 
 ---
