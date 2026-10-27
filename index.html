@@ -1118,7 +1118,7 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.92.0';
+  const APP_VERSION = '1.92.1';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Em disputa', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -2294,6 +2294,9 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
 
   /* ---------- auxiliares ---------- */
   const safe = (s) => String(s == null ? '' : s).replace(/\r/g, '').replace(/\t/g, ' ')
+    .replace(/[\u200B-\u200F\u202A-\u202E\u2060-\u2064\uFEFF\u00AD]/g, '')   // caracteres invisíveis (vêm ao copiar de sites) somem, em vez de virar "?"
+    .replace(/[\u2000-\u200A\u202F\u205F\u3000]/g, ' ')
+    .replace(/[\u2010-\u2012\u2212]/g, '-').replace(/\u2265/g, '>=').replace(/\u2264/g, '<=').replace(/\u2248/g, '~').replace(/\u2192/g, '->')
     .replace(/[^\n\u0020-\u007E\u00A0-\u00FF\u2013\u2014\u2018\u2019\u201C\u201D\u2022\u2026\u20AC]/g, '?');
 
   function wrap(text, f, size, maxW) {
