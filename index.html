@@ -604,8 +604,8 @@ input.input[type=datetime-local]::-webkit-date-and-time-value, input.input[type=
 .acp-tbl .acp-acts .btn { min-height: 34px; padding: 4px 10px; }
 .main.wide { max-width: 1280px; }
 .falta-lista { display: grid; gap: 6px; margin-top: 8px; }
-.falta-it { justify-content: flex-start; text-align: left; height: auto; min-height: 34px; padding: 6px 10px; font-weight: 600; }
-.falta-it em { font-style: normal; font-weight: 500; opacity: .85; }
+.falta-it { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 6px 10px; border-radius: 10px; background: color-mix(in srgb, var(--card) 70%, transparent); font-weight: 600; }
+.falta-it .btn { font-weight: 700; }
 .ib-wrap { display: grid; grid-template-columns: repeat(auto-fill, minmax(236px, 1fr)); gap: 10px; }
 .ibox { display: grid; grid-template-rows: 30px 2.6em auto 38px; align-content: start; gap: 8px; min-width: 0; padding: 10px 12px; border-radius: 14px; background: var(--card); border: 1px solid var(--line); border-top: 4px solid color-mix(in srgb, var(--gc) 70%, transparent); box-shadow: var(--shadow); }
 .ibox.apagado { opacity: .5; }
@@ -1128,7 +1128,7 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.95.1';
+  const APP_VERSION = '1.96.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Julgamento', 'Aguardando empenho', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -1686,13 +1686,22 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
   const CAMPOS_IDENTIFICAM = ['razao', 'cnpj', 'ie', 'endereco', 'bairro', 'cep', 'cidade', 'uf', 'enderecoCompleto', 'telefone', 'email', 'responsavel', 'cpf', 'rg', 'rgOrgao',
     'estadoCivil', 'nacionalidade', 'profissao', 'enderecoResidencial', 'banco', 'agencia', 'conta', 'pix', 'favorecido'];
   const identificaEmpresa = (txt) => (String(txt || '').match(/\{([a-zA-Z]+)\}/g) || []).some((m) => CAMPOS_IDENTIFICAM.includes(m.slice(1, -1)));
+  // texto em linha corrida: junta as linhas empilhadas (ex.: "MARCA: x" / "MODELO: y") num parágrafo só, para o PDF quebrar por largura
+  // depois de "TÍTULO EM CAIXA ALTA:" a primeira letra do texto fica maiúscula
+  function capitalizarTitulos(txt) {
+    return String(txt || '').replace(/([A-ZÀ-ÖØ-Þ][A-ZÀ-ÖØ-Þ0-9 \/.\-]*[A-ZÀ-ÖØ-Þ0-9]):([ \t]*)(\p{Ll})/gu, (m, t, sp, c) => t + ':' + (sp || ' ') + c.toLocaleUpperCase('pt-BR'));
+  }
+  function horizontal(txt) {
+    const ls = capitalizarTitulos(txt).split(/\n+/).map((l) => l.trim()).filter(Boolean);
+    return ls.map((l, i) => (i < ls.length - 1 && !/[.;:!?,]$/.test(l) ? l + ';' : l)).join(' ');
+  }
   // proteção: não emite a proposta sem a marca e o descritivo do item ofertado (digitados pelo João) em cada item
   function faltasOferta(state, pregaoId, tipo, fonte) {
     const p = state.pregoes.find((x) => x.id === pregaoId && !x.deleted);
     if (!p) return [];
     const op = resolverPdfOpts(p, state.config, tipo);
     const L = linhasProposta(state, pregaoId, fonte || 'auto', op.icmsAliq, tipo);
-    return L.linhas.map((l) => ({ id: l.id, rotulo: l.rotulo, descricao: l.descricao, falta: [!l.marcaSo && 'marca', !l.descOferta && 'descritivo do item ofertado'].filter(Boolean) })).filter((x) => x.falta.length);
+    return L.linhas.map((l) => ({ id: l.id, rotulo: l.rotulo, descricao: l.descricao, falta: [!l.marcaSo && 'marca', !l.catalogoH && 'descritivo do item ofertado'].filter(Boolean) })).filter((x) => x.falta.length);
   }
   function pendenciasModelo(state, pregaoId, tipo, fonte) {
     const p = state.pregoes.find((x) => x.id === pregaoId && !x.deleted);
@@ -1775,7 +1784,7 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
         descricao: it.descricao || '', descEdital: (it.descEdital && it.descEdital.trim()) || it.descricao || '',
         marca: [String(it.marca || '').trim(), String(it.modelo || '').trim()].filter(Boolean).join(' / '), marcaSo: String(it.marca || '').trim(), modeloSo: String(it.modelo || '').trim(),
         marcaTxt: String(it.modelo || '').trim() ? 'MARCA: ' + (String(it.marca || '').trim() || '—') + '     MODELO: ' + String(it.modelo || '').trim() : 'MARCA/MODELO: ' + (String(it.marca || '').trim() || '—'),
-        descOferta: String(it.descOferta || '').replace(/\s*\n+\s*/g, ' ').trim(), codigo: String(it.codigo || '').trim(), especificacoes: String(it.especificacoes || '').trim(), un: it.unidade || 'Un', qtd,
+        catalogoH: horizontal(it.catalogoDesc), codigo: String(it.codigo || '').trim(), especificacoes: String(it.especificacoes || '').trim(), un: it.unidade || 'Un', qtd,
         recongelar: tipo === 'inicial' && velho, unit, total: tot, aliq, unitS, totalS: totS, teto: c.teto, minimo: c.minimo, lance: c.lance, precoInicial: temIni(it) ? it.precoInicial : null, acimaTeto: (unit !== null && c.teto !== null && unit > c.teto + 1e-9), limitadoTeto, unitOriginal, abaixoMinimo,
       });
     }
@@ -2004,7 +2013,7 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
   const api = {
     APP_VERSION, STATUS, INATIVOS, DECL_PADRAO, uid, n0, round2, ceil2, parseBR, brl, brl0, pct, numBR, qtdBR,
     fmtSessao, dataExtensa, hojeISO, defaultConfig, emptyState, migrate, custoViagem, localEntregaPadrao, calcItem, limiteMEI,
-    agora, setClockOffset, getClockOffset, pendenciasNuvem, computeAll, divisaoCompra, custoCompra, freteCompra, ordemLoteItem, padLE, dasMensal, mesesAtivos, previewItem, linhasProposta, faltasOferta, unitProposta, resolverPdfOpts, camposModelo, pendenciasModelo, CAMPOS_MODELO, identificaEmpresa, COLUNAS_DESC, CAMPOS_FORNECEDOR, CAMPOS_BANCO, mergeState, diffState, paraNuvem, createStore, demoState,
+    agora, setClockOffset, getClockOffset, pendenciasNuvem, computeAll, divisaoCompra, custoCompra, freteCompra, ordemLoteItem, padLE, dasMensal, mesesAtivos, previewItem, linhasProposta, faltasOferta, horizontal, capitalizarTitulos, unitProposta, resolverPdfOpts, camposModelo, pendenciasModelo, CAMPOS_MODELO, identificaEmpresa, COLUNAS_DESC, CAMPOS_FORNECEDOR, CAMPOS_BANCO, mergeState, diffState, paraNuvem, createStore, demoState,
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   root.Core = api;
@@ -2600,13 +2609,12 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
           }
           return out;
         };
-        const LL = montar([{ t: ln.descEdital || '—', size: 9 }]);
-        const RR = montar((ln.descOferta ? [{ rot: 'DESCRITIVO DO ITEM OFERTADO' }, { t: ln.descOferta, size: 9.5 }] : []).concat([
+        const LL = montar([{ t: C.horizontal(ln.descEdital) || '—', size: 9 }]);
+        const RR = montar([
           { segs: [{ t: ln.modeloSo ? 'Marca: ' : 'Marca/modelo: ', f: bold }, { t: ln.modeloSo ? (ln.marcaSo || '—') + '     ' : (ln.marca || '—'), f: font }].concat(ln.modeloSo ? [{ t: 'Modelo: ', f: bold }, { t: ln.modeloSo, f: font }] : []), size: 9.5 },
           { segs: [{ t: 'Unidade: ', f: bold }, { t: ln.un + '     ', f: font }, { t: 'Quantidade: ', f: bold }, { t: new Intl.NumberFormat('pt-BR').format(ln.qtd), f: font }], size: 9.5 },
-        ])
-         .concat(ln.especificacoes ? [{ rot: 'ESPECIFICAÇÕES' }, { t: ln.especificacoes, size: 9.5 }] : [])
-         .concat(ln.catalogo ? [{ rot: 'DESCRIÇÃO DETALHADA DO PRODUTO' }, { t: ln.catalogo, size: 9.5 }] : []));
+        ].concat(ln.especificacoes ? [{ rot: 'ESPECIFICAÇÕES' }, { t: ln.especificacoes, size: 9.5 }] : [])
+         .concat(ln.catalogo ? [{ rot: 'DESCRIÇÃO DETALHADA DO PRODUTO' }, { t: ln.catalogoH, size: 9.5 }] : []));
         const soma = (arr) => arr.reduce((a, x) => a + x.h, 0);
         const fH = fotos.length ? Math.min((CW - 12 - 10 * (fotos.length - 1)) / fotos.length, fotos.length === 1 ? 230 : fotos.length === 2 ? 210 : 160) + 12 : 0;
         const est = hT + 8 + 18 + Math.max(soma(LL), soma(RR)) + 10 + fH;
@@ -2780,9 +2788,9 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
 
     if (!L.linhas.length) { garantir(24); T('Nenhum item cadastrado neste pregão.', M + 8, y - 12, 10, ital, GRAY); y -= 24; }
     for (const ln of L.linhas) {
-      const descL = wrap('EXIGIDO NO EDITAL: ' + String(ln.descEdital || '').replace(/\s*\n+\s*/g, ' '), font, 10, CW - 14);
+      const descL = wrap('EXIGIDO NO EDITAL: ' + C.horizontal(ln.descEdital), font, 10, CW - 14);
       const marcaL = wrap(ln.marcaTxt, font, 9.5, CW - 14);
-      const ofL = wrap('DESCRITIVO DO ITEM OFERTADO: ' + (ln.descOferta || '—'), font, 9.5, CW - 14);
+      const ofL = wrap('DESCRITIVO DO ITEM OFERTADO: ' + (ln.catalogoH || '—'), font, 9.5, CW - 14);
       const espL = ln.especificacoes ? wrap('ESPECIFICAÇÕES: ' + ln.especificacoes, font, 9.5, CW - 14) : [];
       const hHead = 19, hRow = 24, hDesc = descL.length * 12.5 + 10, hMarca = marcaL.length * 12 + 8, hOf = ofL.length * 12 + 8, hEsp = espL.length ? espL.length * 12 + 8 : 0;
       const total = hHead + hRow + hDesc + hMarca + hOf + hEsp;
@@ -3095,10 +3103,10 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
         // duas colunas: o que o edital exige x o que você (fornecedor) oferece
         const parsC = (txt, r) => String(txt || '').split(/\n+/).filter((q) => q.trim()).map((q) => p(run(q.trim(), r), jc('both') + esp(0, 60))).join('');
         const rotC = (t) => p(run(t, { b: true, cor: COR, sz: 16 }), esp(80, 20));
-        const esq = parsC(ln.descEdital || '—', { sz: 18 });
-        const dir = (ln.descOferta ? rotC('DESCRITIVO DO ITEM OFERTADO') + parsC(ln.descOferta, { sz: 18 }) : '') + p(ln.modeloSo ? kv('Marca: ', ln.marcaSo || '—') + kv('Modelo: ', ln.modeloSo) : kv('Marca/modelo: ', ln.marca || '—')) + p(kv('Unidade: ', ln.un) + kv('Quantidade: ', new Intl.NumberFormat('pt-BR').format(ln.qtd)))
+        const esq = parsC(C.horizontal(ln.descEdital) || '—', { sz: 18 });
+        const dir = p(ln.modeloSo ? kv('Marca: ', ln.marcaSo || '—') + kv('Modelo: ', ln.modeloSo) : kv('Marca/modelo: ', ln.marca || '—')) + p(kv('Unidade: ', ln.un) + kv('Quantidade: ', new Intl.NumberFormat('pt-BR').format(ln.qtd)))
           + (ln.especificacoes ? rotC('ESPECIFICAÇÕES') + parsC(ln.especificacoes, { sz: 18 }) : '')
-          + (ln.catalogo ? rotC('DESCRIÇÃO DETALHADA DO PRODUTO') + parsC(ln.catalogo, { sz: 18 }) : '');
+          + (ln.catalogoH ? rotC('DESCRIÇÃO DETALHADA DO PRODUTO') + parsC(ln.catalogoH, { sz: 18 }) : '');
         body += `<w:tbl><w:tblPr><w:tblW w:w="9638" w:type="dxa"/>${bordas(COR, 6)}<w:tblLayout w:type="fixed"/></w:tblPr><w:tblGrid><w:gridCol w:w="4819"/><w:gridCol w:w="4819"/></w:tblGrid>
           <w:tr><w:trPr><w:tblHeader/><w:cantSplit/></w:trPr>${cel(p(run('EXIGIDO NO EDITAL', { b: true, cor: COR, sz: 16 })), 4819, 'F3F3F3')}${cel(p(run('PRODUTO COTADO', { b: true, cor: COR, sz: 16 })), 4819, 'F3F3F3')}</w:tr>
           <w:tr>${cel(esq, 4819)}${cel(dir, 4819)}</w:tr></w:tbl>`;
@@ -3764,7 +3772,7 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
   }
   function itemValues(it) {
     return {
-      pregaoId: it.pregaoId || '', loteEdital: it.loteEdital || '', itemEdital: it.itemEdital || '', descricao: it.descricao || '', descEdital: it.descEdital || '', marca: it.marca || '', modelo: it.modelo || '', descOferta: it.descOferta || '', especificacoes: it.especificacoes || '', unidade: it.unidade || 'Un',
+      pregaoId: it.pregaoId || '', loteEdital: it.loteEdital || '', itemEdital: it.itemEdital || '', descricao: it.descricao || '', descEdital: it.descEdital || '', marca: it.marca || '', modelo: it.modelo || '', especificacoes: it.especificacoes || '', unidade: it.unidade || 'Un',
       qtd: it.qtd == null ? '' : C.numBR(it.qtd, 3), obs: it.obs || '', possivelGanhar: !!it.possivelGanhar, vencedor: it.vencedor == null ? '' : C.numBR(it.vencedor),
       ...(() => { const o = {}; const L = opcoesParaForm(it); ALTS.forEach((n) => { const a = L[n] || {}; o['alt' + n + 'Usar'] = !!a.usar; o['alt' + n + 'Loja'] = a.loja || ''; o['alt' + n + 'Link'] = a.link || ''; o['alt' + n + 'Custo'] = a.custo == null ? '' : C.numBR(a.custo); o['alt' + n + 'Frete'] = a.frete ? C.numBR(a.frete) : ''; o['alt' + n + 'Qtd'] = a.qtd ? C.numBR(a.qtd, 3) : ''; }); return o; })(),
       custo: it.custo == null ? '' : C.numBR(it.custo), teto: it.teto == null ? '' : C.numBR(it.teto), frete: it.frete ? C.numBR(it.frete) : '',
@@ -3784,7 +3792,7 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
     const custoItem = eff ? C.custoCompra(eff) : C.parseBR(x.custo), freteItem = eff ? C.freteCompra(eff) : (C.parseBR(x.frete) || 0);
     const prim = opts.find((a) => a.usar) || null;
     return {
-      id: id || 'new', pregaoId: x.pregaoId, loteEdital: C.padLE(x.loteEdital), itemEdital: C.padLE(x.itemEdital), descricao: x.descricao.trim(), descEdital: x.descEdital.trim(), marca: x.marca.trim(), modelo: String(x.modelo || '').trim(), descOferta: String(x.descOferta || '').trim(), especificacoes: old && old.especificacoes ? old.especificacoes : '', unidade: x.unidade.trim() || 'Un',
+      id: id || 'new', pregaoId: x.pregaoId, loteEdital: C.padLE(x.loteEdital), itemEdital: C.padLE(x.itemEdital), descricao: x.descricao.trim(), descEdital: x.descEdital.trim(), marca: x.marca.trim(), modelo: String(x.modelo || '').trim(), especificacoes: old && old.especificacoes ? old.especificacoes : '', unidade: x.unidade.trim() || 'Un',
       qtd: C.parseBR(x.qtd), onde: prim ? prim.loja : '', ondeLink: prim ? prim.link : '', obs: String(x.obs || '').trim(), possivelGanhar: !!x.possivelGanhar, vencedor: C.parseBR(x.vencedor),
       alternativas: opts,
       custo: custoItem, teto: C.parseBR(x.teto), frete: freteItem,
@@ -3867,7 +3875,6 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
         ${field({ label: 'Nº do item', name: 'itemEdital', value: v.itemEdital, ph: 'ex.: 04', hint: 'Sai “LOTE 01 - ITEM 04” no PDF (1 vira 01 sozinho)' })}
         ${field({ label: 'Marca *', name: 'marca', value: v.marca, ph: 'ex.: Elgin', hint: 'Obrigatória para gerar a proposta' })}
         ${field({ label: 'Modelo', name: 'modelo', value: v.modelo, ph: 'ex.: AA-100' })}
-        ${field({ label: 'Descritivo do item ofertado *', name: 'descOferta', type: 'textarea', value: v.descOferta, full: true, ph: 'Digite aqui a descrição do produto que eu vou entregar', hint: 'Obrigatório para gerar a proposta. Sai no PDF como “Descritivo do item ofertado” (o do edital sai separado).' })}
         ${field({ label: 'Unidade', name: 'unidade', value: v.unidade, ph: 'Un, Cx, Resma…' })}
         ${field({ label: 'Quantidade *', name: 'qtd', value: v.qtd, inputmode: 'decimal' })}
         ${field({ label: 'Custo unit. (R$) *', name: 'custo', value: v.custo, inputmode: 'decimal', hint: 'O que eu vou pagar' })}
@@ -5427,7 +5434,7 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
   function gerarCardHtml(st, L) {
     const falt = C.faltasOferta(st, UI.pdf.pregaoId, UI.pdf.tipo, UI.pdf.fonte);
     const pend = C.pendenciasModelo(st, UI.pdf.pregaoId, UI.pdf.tipo, UI.pdf.fonte).filter((x) => !(falt.length && /^Item sem marca/.test(x)));
-    const bloq = falt.length ? `<div class="alert bad" style="margin-bottom:10px">${icon('alert', 'sm')}<div class="grow"><b>Não dá para gerar a proposta ainda.</b> Falta preencher, em cada item, a marca e o descritivo do item ofertado:<div class="falta-lista">${falt.map((x) => `<button type="button" class="btn sm falta-it" data-act="editar-item" data-id="${esc(x.id)}">${icon('edit', 'sm')}<span><b>${esc(x.rotulo)}</b> · ${esc(x.descricao)} <em>— falta ${esc(x.falta.join(' e '))}</em></span></button>`).join('')}</div></div></div>` : '';
+    const bloq = falt.length ? `<div class="alert bad" style="margin-bottom:10px">${icon('alert', 'sm')}<div class="grow"><b>Não dá para gerar a proposta ainda.</b> Em cada item precisa ter a marca (no item) e o descritivo do item ofertado (no catálogo, logo acima):<div class="falta-lista">${falt.map((x) => `<div class="falta-it"><span class="grow"><b>${esc(x.rotulo)}</b> · ${esc(x.descricao)}</span>${x.falta.includes('marca') ? `<button type="button" class="btn sm" data-act="editar-item" data-id="${esc(x.id)}">${icon('edit', 'sm')} Marca</button>` : ''}${x.falta.some((f) => f !== 'marca') ? `<button type="button" class="btn sm" data-act="cat-foco" data-id="${esc(x.id)}">${icon('image', 'sm')} Descritivo</button>` : ''}</div>`).join('')}</div></div></div>` : '';
     const aviso = pend.length ? `<div class="alert warn" style="margin-bottom:10px">${icon('alert', 'sm')}<div class="grow"><b>Confira antes de gerar:</b><br>${pend.map((x) => esc(x)).join('<br>')}</div></div>` : (falt.length ? '' : `<div class="alert ok" style="margin-bottom:10px">${icon('check', 'sm')}<span>Dados conferidos: nenhum campo em branco, todos os itens com marca, descritivo e valor.</span></div>`);
     const off = UI.pdf.busy || falt.length ? 'disabled' : '';
     return `<div class="card" id="gerarCard" style="scroll-margin-top:80px"><h3>${icon('pdf', 'sm')} Gerar</h3>
@@ -5453,7 +5460,8 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
         <div class="cat-edital"><b>Exigido no edital</b>${ln.descEdital ? esc(ln.descEdital) : '<span class="muted">Sem descrição do edital no item. Preencha “Descrição completa (vai para o edital)” no item.</span>'}</div>
         <div class="cat-tits"><div class="cat-tit-add"><input class="input" list="catTitList" data-cat-tit-in="${esc(ln.id)}" placeholder="Título (ex.: Marca, Modelo, Voltagem)" autocapitalize="characters" enterkeyhint="done"><button type="button" class="btn sm primary" data-act="cat-tit-add" data-id="${esc(ln.id)}" title="Incluir título na descrição" aria-label="Incluir título">${icon('plus', 'sm')}</button></div>
           ${catTitSug(ln.catalogo, ln.id)}</div>
-        <textarea class="input" rows="5" data-cat-desc="${esc(ln.id)}" placeholder="Descrição pormenorizada do produto (características técnicas, medidas, material, composição, normas, garantia…)" style="margin-top:8px">${esc(ln.catalogo)}</textarea>
+        <div class="tiny" style="margin-top:8px;font-weight:800;color:var(--muted)">DESCRITIVO DO ITEM OFERTADO * <span style="font-weight:600">· sai na proposta e no catálogo, em texto corrido</span></div>
+        <textarea class="input" rows="5" data-cat-desc="${esc(ln.id)}" spellcheck="true" lang="pt-BR" autocorrect="on" placeholder="Descritivo do item ofertado: descrição pormenorizada do produto (características técnicas, medidas, material, composição, normas, garantia…)" style="margin-top:4px">${esc(ln.catalogo)}</textarea>
       </div>`; }).join('');
     setTimeout(preencherFotosCatalogo, 0);
     const dl = `<datalist id="catTitList">${catTitulosOrdem().map((t) => `<option value="${esc(t)}">`).join('')}</datalist>`;
@@ -5624,6 +5632,12 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
     const sug = catTitulosOrdem().filter((t) => !ja.has(t)).slice(0, 8);
     return sug.length ? `<div class="cat-tit-sug" data-cat-sug="${esc(id)}">${sug.map((t) => `<button type="button" class="chip" data-act="cat-tit-add" data-id="${esc(id)}" data-v="${esc(t)}">+ ${esc(t)}</button>`).join('')}</div>` : `<div class="cat-tit-sug" data-cat-sug="${esc(id)}"></div>`;
   }
+  // leva ao campo do descritivo do item, no catálogo da guia Proposta
+  function irCatalogoItem(id) {
+    const ta = document.querySelector('[data-cat-desc="' + id + '"]'); if (!ta) return;
+    const box = document.getElementById('cat-' + id); if (box) box.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    setTimeout(() => ta.focus({ preventScroll: true }), 350);
+  }
   function incluirTituloCatalogo(id, titulo) {
     const t = titNorm(titulo);
     const ta = document.querySelector('[data-cat-desc="' + id + '"]');
@@ -5637,9 +5651,17 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
     const box = document.querySelector('[data-cat-sug="' + id + '"]'); if (box) box.outerHTML = catTitSug(ta.value, id);
   }
   function salvarDescCatalogo(el) {
-    const id = el.dataset.catDesc, v = el.value;
+    const id = el.dataset.catDesc, v = C.capitalizarTitulos(el.value);
+    if (v !== el.value) el.value = v;   // primeira letra depois de "TÍTULO:" sempre maiúscula
     const it = store.get().itens.find((x) => x.id === id);
-    if (it && (it.catalogoDesc || '') !== v) { store.patchItem(id, (x) => { x.catalogoDesc = v; }); flashSaved(); }
+    if (it && (it.catalogoDesc || '') !== v) { store.patchItem(id, (x) => { x.catalogoDesc = v; }); flashSaved(); refreshGerarCard(); }
+  }
+  // atualiza o bloco "Gerar" (lista do que falta) sem redesenhar a guia inteira
+  function refreshGerarCard() {
+    const gc = $('#gerarCard'); if (!gc || UI.tab !== 'pdf') return;
+    const st = store.get(), op = C.resolverPdfOpts(st.pregoes.find((x) => x.id === UI.pdf.pregaoId) || {}, st.config, UI.pdf.tipo);
+    const L = C.linhasProposta(st, UI.pdf.pregaoId, UI.pdf.fonte, op.icmsAliq, UI.pdf.tipo);
+    gc.outerHTML = gerarCardHtml(st, L);
   }
 
   let pdfLibPromise = null;
@@ -5731,8 +5753,8 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
     if (!id) { toast('Escolha um pregão'); return; }
     const falt = C.faltasOferta(store.get(), id, UI.pdf.tipo, UI.pdf.fonte);
     if (falt.length) {
-      const v = await dialog({ title: 'Falta marca ou descritivo', text: 'Preencha, em cada item, a marca e o descritivo do item ofertado antes de gerar a proposta:\n' + falt.map((x) => '• ' + x.rotulo + ' · ' + x.descricao + ' — falta ' + x.falta.join(' e ')).join('\n'), buttons: [{ label: 'Preencher o primeiro', value: true, cls: 'primary' }, { label: 'Fechar', value: false, cls: 'ghost' }] });
-      if (v) openItemForm(falt[0].id);
+      const v = await dialog({ title: 'Falta marca ou descritivo', text: 'Preencha, em cada item, a marca (no item) e o descritivo do item ofertado (no catálogo da guia Proposta) antes de gerar a proposta:\n' + falt.map((x) => '• ' + x.rotulo + ' · ' + x.descricao + ' — falta ' + x.falta.join(' e ')).join('\n'), buttons: [{ label: 'Preencher o primeiro', value: true, cls: 'primary' }, { label: 'Fechar', value: false, cls: 'ghost' }] });
+      if (v) { if (falt[0].falta.includes('marca')) openItemForm(falt[0].id); else irCatalogoItem(falt[0].id); }
       return;
     }
     if (UI.pdf.tipo === 'final' && !(await confirmarPrecosFinal(id))) return;
@@ -6134,6 +6156,7 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
       case 'novo-item': openItemForm(null, t.dataset.pid); break;
       case 'editar-item': openItemForm(id); break;
       case 'cat-ir': { e.stopPropagation(); const it = store.get().itens.find((i) => i.id === id && !i.deleted); if (!it) break; UI.irCatalogo = { pregaoId: it.pregaoId, itemId: id }; irParaCatalogo(); break; }
+      case 'cat-foco': irCatalogoItem(id); break;
       case 'cat-tit-add': { const v = t.dataset.v || ((document.querySelector('[data-cat-tit-in="' + id + '"]') || {}).value || ''); if (!String(v).trim()) { const inp = document.querySelector('[data-cat-tit-in="' + id + '"]'); if (inp) inp.focus(); toast('Digite o título (ex.: Marca)'); break; } incluirTituloCatalogo(id, v); break; }
       case 'cat-editar': {   // do catálogo: volta ao item dentro do pregão e já abre a edição
         const it = store.get().itens.find((i) => i.id === id && !i.deleted); if (!it) break;
