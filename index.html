@@ -603,6 +603,21 @@ input.input[type=datetime-local]::-webkit-date-and-time-value, input.input[type=
 .acp-tbl .acp-obs { color: var(--amber) !important; font-weight: 600; }
 .acp-tbl .acp-acts .btn { min-height: 34px; padding: 4px 10px; }
 .main.wide { max-width: 1280px; }
+.main.pn { max-width: 1760px; }
+.pn-main, .pn-low { display: grid; gap: 14px; grid-template-columns: minmax(0, 1fr); align-items: start; min-width: 0; }
+.pn-col { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.pn-col > .card, .pn-low > .card { border-radius: 14px; }
+@media (min-width: 1000px) { .pn-main { grid-template-columns: minmax(0, 1.5fr) minmax(360px, 1fr); } }
+@media (min-width: 760px) { .pn-low { grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); } }
+.enc-box { margin-top: 12px; padding-top: 10px; border-top: 1px dashed var(--line); }
+.enc-btn { gap: 6px; } .enc-btn .enc-seta { opacity: .7; }
+.enc-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.enc-chip { display: inline-flex; align-items: center; gap: 6px; max-width: 100%; padding: 4px 10px; border-radius: 99px; border: 1px solid var(--line); background: var(--bg); color: var(--muted); font: inherit; font-size: 12px; cursor: pointer; }
+.enc-chip b { color: var(--ink); font-weight: 700; } .enc-chip span { max-width: 180px; text-transform: uppercase; } .enc-chip i { font-style: normal; font-weight: 700; font-size: 10.5px; opacity: .85; }
+.enc-chip:hover { background: var(--blue-soft); }
+.enc-chip.conc { background: color-mix(in srgb, #607d8b 10%, var(--card)); }
+.fp-row { display: flex; gap: 8px; align-items: stretch; } .fp-row .search { flex: 1; min-width: 0; }
+.fp-sel { flex: 0 0 auto; width: min(320px, 46%); min-width: 0; text-overflow: ellipsis; }
 .falta-lista { display: grid; gap: 6px; margin-top: 8px; }
 .falta-it { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 6px 10px; border-radius: 10px; background: color-mix(in srgb, var(--card) 70%, transparent); font-weight: 600; }
 .falta-it .btn { font-weight: 700; }
@@ -1128,7 +1143,7 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.96.0';
+  const APP_VERSION = '1.97.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Julgamento', 'Aguardando empenho', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -3187,6 +3202,7 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
   const ICONS = {
     acomp: '<path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4z"/><path d="M17 6h3v2a3 3 0 0 1-3 3M7 6H4v2a3 3 0 0 0 3 3"/>',
     plus: '<path d="M12 5v14M5 12h14"/>',
+    archive: '<rect x="3" y="4" width="18" height="4" rx="1"/><path d="M5 8v11a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8M10 12h4"/>',
     cart: '<circle cx="9" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/><path d="M2.5 3.5h3l2.4 11.2a1.5 1.5 0 0 0 1.5 1.2h8.4a1.5 1.5 0 0 0 1.5-1.1L21 8H6.6"/>',
     search: '<circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/>',
     painel: '<rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/>',
@@ -3224,7 +3240,7 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
   /* ---------- estado da interface ---------- */
   const UI = {
     sim: {},   // lances simulados (só na memória; não entram na proposta)
-    tab: 'painel', detailId: null, filtro: 'todos', busca: '', buscaI: '', mostrarOcultos: false, mostrarEnc: false, mostrarConcl: false, dash: { periodo: 'tudo', etapa: null, orgao: null, mes: null, pode: null, todos: false },
+    tab: 'painel', detailId: null, filtro: 'todos', busca: '', buscaI: '', fPregaoI: '', mostrarOcultos: false, mostrarEnc: false, mostrarConcl: false, dash: { periodo: 'tudo', etapa: null, orgao: null, mes: null, pode: null, todos: false },
     acomp: { filtro: 'todos' }, pdf: { pregaoId: null, tipo: 'inicial', fonte: 'auto', data: C.hojeISO(), busy: false, result: null }, acc: new Set(['acc-forn']),
     ignorePop: 0, deferredPrompt: null, reloadPending: false, updateBanner: false,
   };
@@ -4245,8 +4261,11 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
     const ativosV = vis.filter((x) => !C.INATIVOS.includes(x.p.status));
     const concl = vis.filter((x) => x.p.status === 'Concluído');
     const enc = vis.filter((x) => C.INATIVOS.includes(x.p.status) && x.p.status !== 'Concluído').sort(descPrimeiro);
-    const conclHtml = concl.length ? `<div class="mini-hd conc">Concluídos (${concl.length})</div><div class="mini-list">${(UI.mostrarConcl ? concl : concl.slice(0, 5)).map((x) => miniPregao(x.p, false)).join('')}</div>${concl.length > 5 ? `<button class="btn sm ghost" style="margin-top:8px" data-act="painel-concluidos">${UI.mostrarConcl ? 'Mostrar menos' : 'Ver todos (' + concl.length + ')'}</button>` : ''}` : '';
-    const encHtml = enc.length ? `<div class="mini-hd">Encerrados (${enc.length})</div><div class="mini-list">${(UI.mostrarEnc ? enc : enc.slice(0, 5)).map((x) => miniPregao(x.p, x.nPode > 0)).join('')}</div>${enc.length > 5 ? `<button class="btn sm ghost" style="margin-top:8px" data-act="painel-encerrados">${UI.mostrarEnc ? 'Mostrar menos' : 'Ver todos (' + enc.length + ')'}</button>` : ''}` : '';
+    // encerrados e concluídos: um botão só; ao abrir, ficam como etiquetas pequenas (clicar abre o pregão)
+    const fim = concl.concat(enc);
+    const chip = (x) => `<button type="button" class="enc-chip${x.p.status === 'Concluído' ? ' conc' : ''}" data-act="abrir-pregao" data-id="${x.p.id}" title="${esc(x.p.orgao)} · ${esc(stTxt(x.p.status))}"><b>Nº ${esc(x.p.numero)}</b><span class="ell">${esc(x.p.orgao)}</span><i>${esc(stTxt(x.p.status))}</i></button>`;
+    const encHtml = fim.length ? `<div class="enc-box"><button type="button" class="btn sm ghost enc-btn${UI.mostrarEnc ? ' on' : ''}" data-act="painel-encerrados" aria-expanded="${UI.mostrarEnc ? 'true' : 'false'}">${icon('archive', 'sm')} Encerrados e concluídos (${fim.length}) <span class="enc-seta">${UI.mostrarEnc ? '▴' : '▾'}</span></button>${UI.mostrarEnc ? `<div class="enc-chips">${fim.map(chip).join('')}</div>` : ''}</div>` : '';
+    const conclHtml = '';
     const lista = oc.map((x) => {
       const manual = painelOculto(x.p) === 'manual';
       return `<div class="strow"><div><b class="org-up">${esc(x.p.orgao)}</b><div class="tiny muted">Nº ${esc(x.p.numero)} · ${manual ? 'tirado do painel por você' : 'prazo já passou'}</div></div>${manual ? `<button class="btn sm" data-act="mostrar-painel" data-id="${x.p.id}">Voltar ao painel</button>` : `<button class="btn sm" data-act="abrir-pregao" data-id="${x.p.id}">Abrir</button>`}</div>`;
@@ -4573,10 +4592,13 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
         <div class="kpi" style="--c:${m.saldoAgora < 0 ? '#c0392b' : '#2f7d3a'}"><div class="l">Saldo disponível</div><div class="v">${C.brl0(m.saldoAgora)}</div><div class="s">se ganhar tudo: ${C.brl0(m.saldoSeGanhar)}</div></div>
         <div class="kpi" style="--c:#b7791f"><div class="l">Lucro previsto</div><div class="v">${C.brl0(R.lucroPrevisto)}</div><div class="s">${(() => { let g = 0, d = 0; for (const x of R.pMap.values()) { if (C.INATIVOS.includes(x.p.status)) continue; if (x.ganho) g += x.lucro; else d += x.lucro; } return 'ganho ' + C.brl0(g) + ' · em disputa ' + C.brl0(d); })()}</div></div>
       </div>
-      ${painelPregoesHtml(R)}
-      <div class="two-col">${painelPendenciasHtml(R)}${painelEntregasHtml(R) || `<div class="card m-hide"><h3>${icon('calendar', 'sm')}<span class="grow">Entregas e recebimentos</span></h3><p class="muted small">Nenhuma entrega ou recebimento pendente.</p></div>`}</div>
+      <div class="pn-main">
+        <div class="pn-col pn-l">${painelPregoesHtml(R)}</div>
+        <div class="pn-col pn-r">${painelPendenciasHtml(R)}${painelEntregasHtml(R) || `<div class="card m-hide"><h3>${icon('calendar', 'sm')}<span class="grow">Entregas e recebimentos</span></h3><p class="muted small">Nenhuma entrega ou recebimento pendente.</p></div>`}${painelCertidoesHtml(R)}</div>
+      </div>
       ${painelDashboardHtml(R)}
-      <div class="two-col">${painelCertidoesHtml(R)}${painelResultadosHtml(R)}</div>
+      <div class="pn-low">
+      ${painelResultadosHtml(R)}
       ${painelVencedorHtml(R, st)}
       <div class="card m-hide"><h3>Uso do limite do MEI</h3>
         <div class="stack" role="img" aria-label="Uso do limite">
@@ -4598,7 +4620,6 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
         <div><span>Imposto na compra</span><b>${C.brl(R.tributos.impostoCompra)}</b></div>
         <div><span>Lucro depois do DAS</span><b style="color:${R.tributos.lucroLiquido < 0 ? 'var(--red)' : 'var(--green)'}">${C.brl(R.tributos.lucroLiquido)}</b></div></div>
         <p class="tiny muted" style="margin-top:10px">Lucro previsto dos pregões ativos menos o DAS do ano. MEI não paga percentual sobre a venda (dentro do limite). Optante do Simples/MEI em geral não sofre retenção de IR, PIS, Cofins e CSLL do órgão público: se o órgão pedir, apresente a declaração do Anexo IV da IN RFB 1.234/2012. Ajuste em Config › Tributos.</p></div>
-      <div class="two-col">
         <div class="card m-hide"><h3>Pregões por status</h3>${R.statusRows.map((r) => `<div class="strow${r.count ? '' : ' zero'}"><div class="row">${badgeStatus(r.status)}<span class="small muted">${r.count} pregão(ões)</span></div><b>${C.brl0(r.venda)}</b><div class="bar"><div style="width:${(r.venda / maxV * 100).toFixed(1)}%"></div></div></div>`).join('')}</div>
         <div class="card"><h3>De onde vem o preço de venda</h3><div class="donut-wrap">
           <svg viewBox="0 0 160 160" role="img" aria-label="Composição do preço"><circle cx="80" cy="80" r="54" fill="none" stroke="var(--line)" stroke-width="22"/>${comp.venda > 0 ? arcs : ''}
@@ -4662,6 +4683,13 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
       + (ina.length ? `<div class="list" style="margin-top:${atvAll.length ? 14 : 0}px">${ina.map(pregaoCard).join('')}</div>` : '');
   }
 
+  // seletor "filtrar por pregão" (guias Pregões e Itens)
+  function fpregSel(key) {
+    const R = C.computeAll(store.get());
+    const ps = [...R.pMap.values()].sort((a, b) => (rankStatus(a.p.status) - rankStatus(b.p.status)) || ordemPainel(a, b));
+    if (UI[key] && !ps.some((x) => x.p.id === UI[key])) UI[key] = '';
+    return `<select class="input fp-sel" data-fpreg="${key}" aria-label="Filtrar por pregão"><option value="">Todos os pregões</option>${ps.map((x) => `<option value="${esc(x.p.id)}"${x.p.id === UI[key] ? ' selected' : ''}>${esc(pregaoLabel(x.p))}</option>`).join('')}</select>`;
+  }
   function renderPregoes() {
     if (UI.detailId) return renderDetail();
     const st = store.get();
@@ -5041,6 +5069,7 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
     const groups = [...R.pMap.values()].sort((a, b) => (enc(a) - enc(b)) || (disp(a) - disp(b)) || (b.p.createdAt || 0) - (a.p.createdAt || 0));   // encerrados sempre no fim
     let html = '', n = 0;
     for (const g of groups) {
+      if (UI.fPregaoI && g.p.id !== UI.fPregaoI) continue;
       const its = porItemEdital(g.todosItens).filter((i) => !q || (i.descricao + ' ' + (i.marca || '') + ' ' + (i.onde || '') + ' ' + g.p.orgao + ' ' + g.p.numero).toLowerCase().includes(q));
       if (!its.length) continue;
       n += its.length;
@@ -5054,7 +5083,7 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
   }
   function renderItens() {
     if (!activePregoes().length) return emptyWelcome();
-    return `<div class="page"><div class="search">${icon('search')}<input class="input" id="buscaI" type="search" placeholder="Buscar item, marca ou órgão" value="${esc(UI.buscaI)}"></div>
+    return `<div class="page"><div class="fp-row"><div class="search">${icon('search')}<input class="input" id="buscaI" type="search" placeholder="Buscar item, marca ou órgão" value="${esc(UI.buscaI)}"></div>${fpregSel('fPregaoI')}</div>
       <div id="ilist" class="page">${itensListHtml()}</div></div>
       <button class="fab" data-act="novo-item" aria-label="Novo item">${icon('plus')}</button>`;
   }
@@ -5960,7 +5989,9 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
     const y = window.scrollY;
     if ((UI.tab === 'itens' || UI.tab === 'certidoes') && window.matchMedia && window.matchMedia('(max-width: 600px)').matches) { UI.tab = 'pregoes'; saveUI(); }
     const fn = { painel: renderPainel, pregoes: renderPregoes, itens: renderItens, acomp: renderAcomp, pdf: renderPDF, certidoes: renderCertidoes, config: renderConfig }[UI.tab];
-    main.classList.toggle('wide', UI.tab === 'acomp' || (UI.tab === 'pregoes' && !UI.detailId) || UI.tab === 'itens');
+    main.classList.toggle('wide', UI.tab === 'acomp' || (UI.tab === 'pregoes' && !UI.detailId) || UI.tab === 'itens' || UI.tab === 'painel');
+    main.classList.toggle('pn', UI.tab === 'painel');
+    main.classList.toggle('pn', UI.tab === 'painel');
     main.innerHTML = fn();
     $$('.nav button').forEach((b) => b.classList.toggle('on', b.dataset.v === UI.tab));
     const t = TABS.find((x) => x.id === UI.tab);
@@ -6237,6 +6268,7 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
   }
   function onChange(e) {
     const t = e.target;
+    if (t.dataset.fpreg) { UI[t.dataset.fpreg] = t.value; UI.keepScroll = true; render(); return; }
     if (t.dataset.ui === 'pregaoId') { commitAllPending(); UI.pdf.pregaoId = t.value; UI.pdf.tipo = ganhoDe(t.value) ? 'final' : 'inicial'; UI.pdf.result = null; saveUI(); UI.keepScroll = true; render(); return; }
     if (t.dataset.ui === 'fonte') { UI.pdf.fonte = t.value; UI.pdf.result = null; saveUI(); UI.keepScroll = true; render(); return; }
     if (t.dataset.ui) { UI.pdf[t.dataset.ui] = t.value; return; }
