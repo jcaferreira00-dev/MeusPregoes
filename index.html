@@ -617,7 +617,8 @@ input.input[type=datetime-local]::-webkit-date-and-time-value, input.input[type=
 .enc-chip:hover { background: var(--blue-soft); }
 .enc-chip.conc { background: color-mix(in srgb, #607d8b 10%, var(--card)); }
 .fp-row { display: flex; gap: 8px; align-items: stretch; } .fp-row .search { flex: 1; min-width: 0; }
-.fp-sel { flex: 0 0 auto; width: min(320px, 46%); min-width: 0; text-overflow: ellipsis; }
+.fp-row select.fp-sel { flex: 0 0 auto; width: min(420px, 50%); min-width: 0; text-overflow: ellipsis; appearance: none; -webkit-appearance: none; padding-right: 40px; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='%23667489' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 18px center; background-size: 12px 8px; }
+@media (max-width: 600px) { .fp-row { flex-direction: column; } .fp-row select.fp-sel { width: 100%; } }
 .falta-lista { display: grid; gap: 6px; margin-top: 8px; }
 .falta-it { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 6px 10px; border-radius: 10px; background: color-mix(in srgb, var(--card) 70%, transparent); font-weight: 600; }
 .falta-it .btn { font-weight: 700; }
@@ -1143,7 +1144,7 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.97.0';
+  const APP_VERSION = '1.97.1';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Julgamento', 'Aguardando empenho', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
