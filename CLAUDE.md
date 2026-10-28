@@ -26,6 +26,7 @@ sempre, acrescente aqui (seção certa) no mesmo commit da tarefa.
 - Formulário do item: NÃO existe campo "onde comprar". Só o botão "+" (opções de compra: link, loja, frete, custo e "comprar aqui"; até 8). Cada opção vira tique ✓ + cesta + lápis; o João marca as que vai usar. Marcada uma: custo e frete do item vêm dela; várias: cada uma com a sua quantidade (a que ficar em branco leva o resto), custo médio e soma dos fretes. Sem nenhuma marcada, valem o custo e o frete digitados. No JSON, cada opção de `alternativas` pode ter `usar: true/false`; sem `usar` o item é lido no modelo antigo (principal `onde`/`ondeLink` + alternativas com `qtd`) e o app converte ao abrir.
 - Botão de compra (cartão do item, catálogo e formulário): SEMPRE com o nome do site/loja (sem nome, o domínio do link), também no celular. As opções marcadas para usar vêm primeiro, com borda verde.
 - Opções de compra aparecem na prévia do item comparando o total (custo × qtd + frete) e marcando a mais barata; o botão "Usar" marca/desmarca.
+- Proposta: cada item tem `marca`, `modelo` e `descOferta` (descritivo do item ofertado), TODOS digitados pelo João: nunca preencher na análise nem no JSON (deixar vazios). O PDF mostra "DESCRITIVO DO EDITAL" (do edital) separado de "DESCRITIVO DO ITEM OFERTADO". A proposta NÃO é gerada enquanto algum item tiver marca ou descritivo ofertado em branco (modelo é opcional). Botões de gerar (proposta, só catálogo, Word) ficam juntos no fim da guia Proposta.
 - Celular (iPhone 13) = só o básico; PC = completo. Não criar guias novas no celular.
 
 ### Regras de valor da proposta (não mudar sem o João pedir)
@@ -125,7 +126,7 @@ Formato de backup do app (Config › Importar › Mesclar). IDs únicos e novos;
   }],
   "itens": [{
     "id": "it_imbau_91_01", "pregaoId": "pz_imbau_91_2026", "loteEdital": "", "itemEdital": "01",
-    "descricao": "nome curto", "descEdital": "descrição completa do edital", "marca": "", "unidade": "Un",
+    "descricao": "nome curto", "descEdital": "descrição completa do edital", "marca": "", "modelo": "", "descOferta": "", "unidade": "Un",
     "qtd": 10, "custo": 2.0, "teto": 5.0, "frete": 0, "margem": null, "lanceFinal": null,
     "onde": "Loja", "ondeLink": "https://link-direto-do-produto",
     "alternativas": [{ "loja": "Outra loja", "link": "https://...", "custo": 2.1, "frete": 0, "qtd": 0 }],
