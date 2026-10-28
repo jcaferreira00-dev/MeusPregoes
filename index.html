@@ -1128,7 +1128,7 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.95.0';
+  const APP_VERSION = '1.95.1';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Julgamento', 'Aguardando empenho', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -2601,10 +2601,10 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
           return out;
         };
         const LL = montar([{ t: ln.descEdital || '—', size: 9 }]);
-        const RR = montar([
+        const RR = montar((ln.descOferta ? [{ rot: 'DESCRITIVO DO ITEM OFERTADO' }, { t: ln.descOferta, size: 9.5 }] : []).concat([
           { segs: [{ t: ln.modeloSo ? 'Marca: ' : 'Marca/modelo: ', f: bold }, { t: ln.modeloSo ? (ln.marcaSo || '—') + '     ' : (ln.marca || '—'), f: font }].concat(ln.modeloSo ? [{ t: 'Modelo: ', f: bold }, { t: ln.modeloSo, f: font }] : []), size: 9.5 },
           { segs: [{ t: 'Unidade: ', f: bold }, { t: ln.un + '     ', f: font }, { t: 'Quantidade: ', f: bold }, { t: new Intl.NumberFormat('pt-BR').format(ln.qtd), f: font }], size: 9.5 },
-        ].concat(ln.descOferta ? [{ rot: 'DESCRITIVO DO ITEM OFERTADO' }, { t: ln.descOferta, size: 9.5 }] : [])
+        ])
          .concat(ln.especificacoes ? [{ rot: 'ESPECIFICAÇÕES' }, { t: ln.especificacoes, size: 9.5 }] : [])
          .concat(ln.catalogo ? [{ rot: 'DESCRIÇÃO DETALHADA DO PRODUTO' }, { t: ln.catalogo, size: 9.5 }] : []));
         const soma = (arr) => arr.reduce((a, x) => a + x.h, 0);
@@ -2780,7 +2780,7 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
 
     if (!L.linhas.length) { garantir(24); T('Nenhum item cadastrado neste pregão.', M + 8, y - 12, 10, ital, GRAY); y -= 24; }
     for (const ln of L.linhas) {
-      const descL = wrap('DESCRITIVO DO EDITAL: ' + String(ln.descEdital || '').replace(/\s*\n+\s*/g, ' '), font, 10, CW - 14);
+      const descL = wrap('EXIGIDO NO EDITAL: ' + String(ln.descEdital || '').replace(/\s*\n+\s*/g, ' '), font, 10, CW - 14);
       const marcaL = wrap(ln.marcaTxt, font, 9.5, CW - 14);
       const ofL = wrap('DESCRITIVO DO ITEM OFERTADO: ' + (ln.descOferta || '—'), font, 9.5, CW - 14);
       const espL = ln.especificacoes ? wrap('ESPECIFICAÇÕES: ' + ln.especificacoes, font, 9.5, CW - 14) : [];
@@ -2811,14 +2811,12 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
       box(M, y - hDesc, CW, hDesc);
       descL.forEach((l, j) => T(l, M + 7, y - 15 - j * 12.5, 10, font, ACCT));
       y -= hDesc;
-      // marca / modelo
-      box(M, y - hMarca, CW, hMarca);
-      marcaL.forEach((l, j) => T(l, M + 7, y - 14 - j * 12, 9.5, font, ACCT));
-      y -= hMarca;
-      // descritivo do item ofertado (digitado por mim; o de cima é o do edital)
-      box(M, y - hOf, CW, hOf);
+      // descritivo do item ofertado (digitado por mim) e, abaixo, separada por linha tracejada, a marca/modelo
+      box(M, y - hOf - hMarca, CW, hOf + hMarca);
       ofL.forEach((l, j) => T(l, M + 7, y - 14 - j * 12, 9.5, font, ACCT));
-      y -= hOf;
+      page.drawLine({ start: { x: M + 6, y: y - hOf }, end: { x: M + CW - 6, y: y - hOf }, thickness: 0.7, color: ACC, dashArray: [3, 3] });
+      marcaL.forEach((l, j) => T(l, M + 7, y - hOf - 14 - j * 12, 9.5, font, ACCT));
+      y -= hOf + hMarca;
       if (espL.length) {
         box(M, y - hEsp, CW, hEsp);
         espL.forEach((l, j) => T(l, M + 7, y - 14 - j * 12, 9.5, font, ACCT));
@@ -3098,8 +3096,7 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
         const parsC = (txt, r) => String(txt || '').split(/\n+/).filter((q) => q.trim()).map((q) => p(run(q.trim(), r), jc('both') + esp(0, 60))).join('');
         const rotC = (t) => p(run(t, { b: true, cor: COR, sz: 16 }), esp(80, 20));
         const esq = parsC(ln.descEdital || '—', { sz: 18 });
-        const dir = p(ln.modeloSo ? kv('Marca: ', ln.marcaSo || '—') + kv('Modelo: ', ln.modeloSo) : kv('Marca/modelo: ', ln.marca || '—')) + p(kv('Unidade: ', ln.un) + kv('Quantidade: ', new Intl.NumberFormat('pt-BR').format(ln.qtd)))
-          + (ln.descOferta ? rotC('DESCRITIVO DO ITEM OFERTADO') + parsC(ln.descOferta, { sz: 18 }) : '')
+        const dir = (ln.descOferta ? rotC('DESCRITIVO DO ITEM OFERTADO') + parsC(ln.descOferta, { sz: 18 }) : '') + p(ln.modeloSo ? kv('Marca: ', ln.marcaSo || '—') + kv('Modelo: ', ln.modeloSo) : kv('Marca/modelo: ', ln.marca || '—')) + p(kv('Unidade: ', ln.un) + kv('Quantidade: ', new Intl.NumberFormat('pt-BR').format(ln.qtd)))
           + (ln.especificacoes ? rotC('ESPECIFICAÇÕES') + parsC(ln.especificacoes, { sz: 18 }) : '')
           + (ln.catalogo ? rotC('DESCRIÇÃO DETALHADA DO PRODUTO') + parsC(ln.catalogo, { sz: 18 }) : '');
         body += `<w:tbl><w:tblPr><w:tblW w:w="9638" w:type="dxa"/>${bordas(COR, 6)}<w:tblLayout w:type="fixed"/></w:tblPr><w:tblGrid><w:gridCol w:w="4819"/><w:gridCol w:w="4819"/></w:tblGrid>
@@ -3877,7 +3874,7 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
         ${field({ label: 'Frete do fornecedor (R$, total do item)', name: 'frete', value: v.frete, inputmode: 'decimal' })}
         ${field({ label: 'Valor unit. do edital (teto)', name: 'teto', value: v.teto, inputmode: 'decimal', hint: 'Máximo que o órgão aceita', full: true })}
         ${field({ label: 'Lance final (R$ unit., opcional)', name: 'lanceFinal', value: v.lanceFinal, inputmode: 'decimal', full: true, cls: 'destaque', hint: 'Preenchido, é este o valor que sai na proposta em PDF. Vazio = sai o teto do edital.' })}
-        ${field({ label: 'Descritivo do edital (sai no PDF como “Descritivo do edital”)', name: 'descEdital', type: 'textarea', value: v.descEdital, full: true, ph: 'Cole aqui a descrição do item como está no edital', hint: 'Se ficar vazia, o PDF usa o nome do item.' })}
+        ${field({ label: 'Exigido no edital (sai no PDF como “Exigido no edital”)', name: 'descEdital', type: 'textarea', value: v.descEdital, full: true, ph: 'Cole aqui a descrição do item como está no edital', hint: 'Se ficar vazia, o PDF usa o nome do item.' })}
         <div class="full cat-atalho"><button type="button" class="btn block" data-ir-catalogo="1">${icon('image', 'sm')} Fotos e descrição para o catálogo</button><div class="hint">Salva o item e abre o catálogo da guia Proposta já neste pregão, no lugar deste item.</div></div>
         <div class="field full" id="linkBox"><label>Opções de compra</label>
           <div class="linkrow">
