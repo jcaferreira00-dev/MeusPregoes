@@ -27,6 +27,7 @@ sempre, acrescente aqui (seção certa) no mesmo commit da tarefa.
 - Botão de compra (cartão do item, catálogo e formulário): SEMPRE com o nome do site/loja (sem nome, o domínio do link), também no celular. As opções marcadas para usar vêm primeiro, com borda verde.
 - Opções de compra aparecem na prévia do item comparando o total (custo × qtd + frete) e marcando a mais barata; o botão "Usar" marca/desmarca.
 - Proposta: cada item tem `marca`, `modelo` e `descOferta` (descritivo do item ofertado), TODOS digitados pelo João: nunca preencher na análise nem no JSON (deixar vazios). O PDF mostra "DESCRITIVO DO EDITAL" (do edital) separado de "DESCRITIVO DO ITEM OFERTADO". A proposta NÃO é gerada enquanto algum item tiver marca ou descritivo ofertado em branco (modelo é opcional). Botões de gerar (proposta, só catálogo, Word) ficam juntos no fim da guia Proposta.
+- Status do pregão: Falta dados, Analisando, Proposta enviada, Julgamento (antigo "Em disputa", que o app converte sozinho; os editais ficam dias avaliando a proposta), Aguardando empenho (ata assinada, esperando o empenho), Faturado, Concluído, Perdeu, Desclassificado, Desisti. Julgamento e Aguardando empenho ficam no topo das listas, com cores próprias (âmbar e roxo). Nos JSON usar "Julgamento", nunca "Em disputa".
 - Celular (iPhone 13) = só o básico; PC = completo. Não criar guias novas no celular.
 
 ### Regras de valor da proposta (não mudar sem o João pedir)
