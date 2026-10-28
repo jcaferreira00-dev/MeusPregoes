@@ -54,6 +54,10 @@
 html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; touch-action: manipulation; }
 html, body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font); font-size: 15px; line-height: 1.4; }
 body { min-height: 100vh; overscroll-behavior-y: none; }
+@media (max-width: 600px) {
+  html, body { width: 100%; max-width: 100%; overflow-x: hidden; overscroll-behavior-x: none; touch-action: pan-y; position: relative; }
+  .shell, .main, .page { max-width: 100vw; overflow-x: clip; }
+}
 button, input, select, textarea { font: inherit; color: inherit; }
 h1, h2, h3, h4, p { margin: 0; }
 svg.i { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; flex: none; }
@@ -498,7 +502,7 @@ input.input[type=datetime-local]::-webkit-date-and-time-value, input.input[type=
   html .pcard > .small.row { font-size: 11.5px; gap: 2px 10px !important; }
   html .pcard .prazo { font-size: 11px; padding: 2px 7px; }
   html .pcard .prazo svg { width: 12px; height: 12px; }
-  .nav button[data-v="proc"], .nav button[data-v="certidoes"] { display: none; }
+  .nav button[data-v="itens"], .nav button[data-v="certidoes"] { display: none; }
   /* Acompanhar no celular: blocos pequenos e compactos */
   html .acp-kpis { gap: 8px; }
   html .acp-kpis .kpi { padding: 8px 10px; }
@@ -598,18 +602,22 @@ input.input[type=datetime-local]::-webkit-date-and-time-value, input.input[type=
 .acp-tbl .acp-obs { color: var(--amber) !important; font-weight: 600; }
 .acp-tbl .acp-acts .btn { min-height: 34px; padding: 4px 10px; }
 .main.wide { max-width: 1280px; }
-.it-modo { max-width: 340px; }
-.it-tbl { font-size: 12.5px; min-width: 0; }
-.it-tbl th, .it-tbl td { padding-left: 4px; padding-right: 4px; }
-.it-tbl td.it-desc, .it-tbl th:nth-child(2) { width: 100%; min-width: 170px; }
-.it-tbl th:first-child, .it-tbl td:first-child { width: 1%; }
-.it-tbl .it-desc small { display: block; color: var(--muted); font-size: 11.5px; margin-top: 2px; }
-.it-tbl .it-desc .it-obs { color: var(--amber); font-weight: 600; }
-.it-tbl tr.it-row { cursor: pointer; }
-.it-tbl tr.it-row:hover td { background: color-mix(in srgb, var(--blue) 6%, transparent); }
-.it-tbl tr.apagado td { opacity: .5; }
-.it-tbl .stars { font-size: 11px; white-space: nowrap; }
-.it-tags { display: flex; gap: 4px; justify-content: flex-end; flex-wrap: nowrap; }
+.ib-wrap { display: grid; grid-template-columns: repeat(auto-fill, minmax(236px, 1fr)); gap: 10px; }
+.ibox { display: grid; grid-template-rows: 30px 2.6em auto 38px; align-content: start; gap: 8px; min-width: 0; padding: 10px 12px; border-radius: 14px; background: var(--card); border: 1px solid var(--line); border-top: 4px solid color-mix(in srgb, var(--gc) 70%, transparent); box-shadow: var(--shadow); }
+.ibox.apagado { opacity: .5; }
+.ib-hd { display: flex; align-items: center; gap: 6px; height: 30px; }
+.ib-num { flex: 1; min-width: 0; font-size: 11px; font-weight: 800; letter-spacing: .05em; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ib-nome { margin: 0; font-size: 14px; line-height: 1.3; font-weight: 800; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.ib-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+.ib-kv { min-width: 0; padding: 5px 8px; border-radius: 9px; background: var(--blue-soft); }
+.ib-kv.dest { background: color-mix(in srgb, var(--green) 12%, transparent); }
+.ib-kv > span { display: block; font-size: 9.5px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); }
+.ib-kv b { display: block; font-size: 13.5px; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ib-kv b em { font-style: normal; font-weight: 600; font-size: 11px; color: var(--muted); }
+.ib-ft { display: flex; align-items: center; justify-content: space-between; gap: 8px; height: 38px; padding-top: 6px; box-sizing: border-box; border-top: 1px dashed var(--line); }
+.ib-buy { max-width: 62%; min-height: 30px; padding: 2px 10px; gap: 5px; }
+.ib-buy { text-decoration: none; }
+.ib-buy .ell { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .acp-tbl .acp-desc small { display: block; color: var(--muted); font-size: 11.5px; margin-top: 2px; }
 .acp-tbl input.input { width: 104px; min-height: 34px; padding: 4px 8px; text-align: right; font-variant-numeric: tabular-nums; }
 .acp-tbl input.input.vazio { border-color: #e0a100; background: color-mix(in srgb, #f4b400 10%, var(--card)); }
@@ -1057,12 +1065,6 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
 .icard-actions { flex-wrap: wrap; }
 @media (max-width: 600px) { .res-sel { width: 100%; } .res-sel .btn { flex: 1; justify-content: center; padding-left: 4px; padding-right: 4px; } }
 
-.proc-steps { display: grid; gap: 10px; }
-.proc-step { display: flex; gap: 12px; align-items: flex-start; }
-.proc-n { flex: 0 0 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font-weight: 700; font-size: 13px; background: var(--blue-soft); color: var(--blue); }
-.proc-cmd { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; margin-bottom: 10px; }
-.proc-lk { text-decoration: none; }
-.proc-txt { margin-top: 6px; white-space: pre-wrap; line-height: 1.45; user-select: all; -webkit-user-select: all; }
 
 /* botões de link do card (PC): só ícone, mesma posição em todos os cards */
 .pcard .lkrow-ic { display: flex; gap: 8px; justify-content: flex-start; }
@@ -1118,7 +1120,7 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.92.1';
+  const APP_VERSION = '1.93.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Em disputa', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -3161,7 +3163,6 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
     pregoes: '<rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M9 12h6M9 16h4"/>',
     itens: '<path d="M21 8l-9-5-9 5v8l9 5 9-5V8z"/><path d="M3 8l9 5 9-5M12 13v8"/>',
     copy: '<rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/>',
-    proc: '<path d="M9 6h11M9 12h11M9 18h11"/><path d="M4 6l1 1 2-2M4 12l1 1 2-2M4 18l1 1 2-2"/>',
     pdf: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h6"/>',
     config: '<path d="M4 6h10M18 6h2M4 12h2M10 12h10M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="8" cy="12" r="2"/><circle cx="18" cy="18" r="2"/>',
     calendar: '<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>',
@@ -3194,7 +3195,7 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
   const UI = {
     sim: {},   // lances simulados (só na memória; não entram na proposta)
     tab: 'painel', detailId: null, filtro: 'todos', busca: '', buscaI: '', mostrarOcultos: false, mostrarEnc: false, mostrarConcl: false, dash: { periodo: 'tudo', etapa: null, orgao: null, mes: null, pode: null, todos: false },
-    acomp: { filtro: 'todos' }, itensModo: 'cards', pdf: { pregaoId: null, tipo: 'inicial', fonte: 'auto', data: C.hojeISO(), busy: false, result: null }, acc: new Set(['acc-forn']),
+    acomp: { filtro: 'todos' }, pdf: { pregaoId: null, tipo: 'inicial', fonte: 'auto', data: C.hojeISO(), busy: false, result: null }, acc: new Set(['acc-forn']),
     ignorePop: 0, deferredPrompt: null, reloadPending: false, updateBanner: false,
   };
   try {
@@ -3202,15 +3203,14 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
     if (s.tab) UI.tab = s.tab;
     if (s.pdfPregao) UI.pdf.pregaoId = s.pdfPregao;
     if (s.pdfTipo === 'final' || s.pdfTipo === 'inicial') UI.pdf.tipo = s.pdfTipo;
-    if (s.itensModo) UI.itensModo = s.itensModo;
     if (s.fonte) UI.pdf.fonte = s.fonte;
   } catch (e) { /* ignora */ }
-  const saveUI = () => { try { localStorage.setItem('mp.ui', JSON.stringify({ tab: UI.tab, pdfPregao: UI.pdf.pregaoId, pdfTipo: UI.pdf.tipo, fonte: UI.pdf.fonte, itensModo: UI.itensModo })); } catch (e) { /* ignora */ } };
+  const saveUI = () => { try { localStorage.setItem('mp.ui', JSON.stringify({ tab: UI.tab, pdfPregao: UI.pdf.pregaoId, pdfTipo: UI.pdf.tipo, fonte: UI.pdf.fonte })); } catch (e) { /* ignora */ } };
 
   const TABS = [
     { id: 'painel', t: 'Painel', title: 'Visão geral' },
     { id: 'pregoes', t: 'Pregões', title: 'Pregões e compras' },
-    { id: 'proc', t: 'Procedimento', title: 'Procedimento das buscas' },
+    { id: 'itens', t: 'Itens', title: 'Itens dos pregões' },
     { id: 'acomp', t: 'Acompanhar', title: 'Itens que venci ou posso ganhar' },
     { id: 'pdf', t: 'Proposta', title: 'Proposta em PDF' },
     { id: 'certidoes', t: 'Certidões', title: 'Onde baixar as certidões' },
@@ -4971,12 +4971,42 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
         <button class="btn navy" data-act="pdf-pregao" data-id="${p.id}">${icon('pdf', 'sm')} Proposta PDF</button></div></div>`;
   }
 
+  // nome curto para o bloco: corta no primeiro separador e, se ainda longo, no fim de uma palavra
+  function nomeCurto(txt, max) {
+    let t = String(txt || '').replace(/\s+/g, ' ').trim();
+    t = t.split(/\s[-–—]\s|;|,\s/)[0].trim() || t;
+    if (t.length <= max) return t;
+    const cut = t.slice(0, max - 1), sp = cut.lastIndexOf(' ');
+    return (sp > max * 0.55 ? cut.slice(0, sp) : cut).replace(/[\s,.;:/-]+$/, '') + '…';
+  }
+  // bloco do item (PC): sempre as mesmas linhas, na mesma posição
+  function itemBloco(it, c) {
+    const lt = C.padLE(it.loteEdital), ie = C.padLE(it.itemEdital);
+    const num = (lt || ie) ? (lt ? 'L' + esc(lt) + (ie ? ' · ' : '') : '') + (ie ? 'ITEM ' + esc(ie) : '') : 'S/Nº';
+    const cps = comprasDoItem(it).filter((k) => k.href), k = cps[0];
+    const lanceU = c.lance != null ? c.lance : c.teto;
+    const tag = c.fora ? '<span class="badge off">Fora</span>' : c.ganhou ? '<span class="acp-tag venci">Venci</span>' : c.desclass ? '<span class="badge bad">Desclass.</span>' : (it.possivelGanhar ? '<span class="acp-tag posso">Posso</span>' : '');
+    const lucroCor = c.lucro == null ? '' : c.lucro < 0 ? 'var(--red)' : 'var(--green)';
+    const kv = (l, v, cls) => `<div class="ib-kv${cls ? ' ' + cls : ''}"><span>${l}</span><b>${v}</b></div>`;
+    return `<article class="ibox${c.fora || (c.naoGanhou && !it.possivelGanhar) ? ' apagado' : ''}" data-id="${it.id}">
+      <div class="ib-hd"><span class="ib-num">${num}</span>${tag}<button type="button" class="ic-btn" data-act="editar-item" data-id="${it.id}" title="Editar item" aria-label="Editar item">${icon('edit', 'sm')}</button></div>
+      <h4 class="ib-nome" title="${esc(it.descricao)}">${esc(nomeCurto(it.descricao, 38))}</h4>
+      <div class="ib-grid">
+        ${kv('Qtd', C.qtdBR(it.qtd) + (it.unidade ? ' <em>' + esc(String(it.unidade).toLowerCase()) + '</em>' : ''))}
+        ${kv('Custo un.', c.divisao ? C.brl(c.custoCompra) : C.brl(it.custo))}
+        ${kv(c.lance != null ? 'Meu lance' : 'Lance (teto)', lanceU != null ? C.brl(lanceU) : '—', c.lance != null ? 'dest' : '')}
+        ${kv('Lance total', c.totalVenda != null ? C.brl(c.totalVenda) : '—', 'dest')}
+        ${kv('Teto un.', c.teto != null ? C.brl(c.teto) : '—')}
+        ${kv('Lucro', c.lucro == null ? '—' : `<span style="color:${lucroCor}">${C.brl(c.lucro)}</span>`)}
+      </div>
+      <div class="ib-ft">${c.estrelas != null ? `<span class="stars s${c.estrelas}" title="${c.estrelas} de 5 estrelas · lucro ${C.pct(c.margemReal, 0)}">★${c.estrelas}${c.margemReal != null ? ' <small>' + C.pct(c.margemReal, 0) + '</small>' : ''}</span>` : '<span></span>'}${k ? `<a class="btn sm lk ib-buy" href="${esc(k.href)}" target="_blank" rel="noopener noreferrer" data-act="link-externo" title="Comprar: ${esc(k.label || 'link')}">${icon('cart', 'sm')}<span class="ell">${esc(nomeCurto(k.label || 'Comprar', 16))}</span></a>` : '<span class="muted tiny">sem link</span>'}</div>
+    </article>`;
+  }
   function itensListHtml() {
     const R = C.computeAll(store.get());
     const q = UI.buscaI.trim().toLowerCase();
     const enc = (g) => (C.INATIVOS.includes(g.p.status) ? 1 : 0);
     const disp = (g) => (g.p.status === 'Em disputa' ? 0 : 1);
-    const modoTabela = UI.itensModo === 'tabela' && !(window.matchMedia && window.matchMedia('(max-width: 600px)').matches);
     const groups = [...R.pMap.values()].sort((a, b) => (enc(a) - enc(b)) || (disp(a) - disp(b)) || (b.p.createdAt || 0) - (a.p.createdAt || 0));   // encerrados sempre no fim
     let html = '', n = 0;
     for (const g of groups) {
@@ -4987,38 +5017,13 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
       html += `<section class="gbox" style="--gc:${corDe(g.p.id)};--sc:${COR_STATUS[g.p.status] || '#2e75b6'}">
         <header class="ghead"><div class="grow"><div class="gnum">PREGÃO Nº ${esc(g.p.numero)}</div><h3>${esc(g.p.orgao)}</h3></div>${badgeStatus(g.p.status)}</header>
         <div class="gmeta">${g.itens.length} ${g.itens.length === 1 ? 'item' : 'itens'}${g.todosItens.length !== g.itens.length ? ' (+' + (g.todosItens.length - g.itens.length) + ' fora)' : ''}${its.length !== g.todosItens.length ? ' (' + its.length + ' na busca)' : ''}<span class="g-fin"> · venda <b>${C.brl0(g.venda)}</b> · lucro <b>${C.brl0(g.lucro)}</b></span></div>
-        ${modoTabela ? itensTabelaHtml(its, R) : `<div class="list">${its.map((it) => itemCard(it, R.iMap.get(it.id), { pst: g, showOrg: false })).join('')}</div>`}</section>`;
+        <div class="ib-wrap">${its.map((it) => itemBloco(it, R.iMap.get(it.id))).join('')}</div></section>`;
     }
     return n ? html : `<div class="card empty"><p class="muted">Nenhum item encontrado.</p></div>`;
   }
-  // tabela compacta (PC): uma linha por item; clicar na linha abre o item
-  function itensTabelaHtml(its, R) {
-    const rows = its.map((it) => {
-      const c = R.iMap.get(it.id), ie = String(it.itemEdital || '').trim();
-      const cps = comprasDoItem(it).filter((k) => k.href);
-      const tags = (it.colocacao ? `<span class="coloc-badge ${it.colocacao === 1 ? 'c1' : it.colocacao <= 3 ? 'c3' : ''}">${colocTxt(it.colocacao)}</span>` : '') + (c.fora ? '<span class="badge off">Fora</span>' : '') + (c.ganhou ? '<span class="acp-tag venci">Venci</span>' : '') + (it.possivelGanhar && !c.ganhou ? '<span class="acp-tag posso">Posso</span>' : '') + (c.sitTipo === 'bad' ? `<span class="badge bad" title="${esc(c.situacao)}">!</span>` : '');
-      return `<tr class="it-row${c.fora || (c.naoGanhou && !it.possivelGanhar) ? ' apagado' : ''}" data-act="editar-item" data-id="${it.id}" tabindex="0">
-        <td class="r">${esc(ie || '—')}</td>
-        <td class="it-desc"><b>${esc(it.descricao)}</b>${it.marca ? `<small>${esc(it.marca)}</small>` : ''}${String(it.obs || '').trim() ? `<small class="it-obs">${icon('alert', 'sm')} ${esc(it.obs)}</small>` : ''}</td>
-        <td class="r">${C.qtdBR(it.qtd)}</td>
-        <td class="r">${c.divisao ? `${C.brl(c.custoCompra)}<small>média</small>` : C.brl(it.custo)}</td>
-        <td class="r"><b>${minSegTxt(c)}</b></td>
-        <td class="r">${C.brl(c.teto)}</td>
-        <td class="r">${c.lance != null ? C.brl(c.lance) : '—'}</td>
-        <td class="r">${it.custo > 0 && it.qtd > 0 ? C.brl(c.produtos) : '—'}</td>
-        <td class="r">${C.brl(c.tetoTotal)}</td>
-        <td class="r">${c.lucro == null ? '—' : `<span style="color:${c.lucro < 0 ? 'var(--red)' : 'var(--green)'}">${C.brl(c.lucro)}</span>`}</td>
-        <td class="r">${c.estrelas != null ? `<span class="stars s${c.estrelas}" title="${c.estrelas} de 5 estrelas · lucro ${C.pct(c.margemReal, 0)}">★${c.estrelas}</span>` : ''}</td>
-        <td class="r">${cps.length ? cps.map((k) => `<a class="buy" href="${esc(k.href)}" target="_blank" rel="noopener noreferrer" data-act="link-externo" title="Comprar: ${esc(k.label || 'link')}">$</a>`).join('') : '<span class="muted">—</span>'}</td>
-        <td class="r"><div class="it-tags">${tags}</div></td>
-      </tr>`;
-    }).join('');
-    return `<div class="tbl-scroll"><table class="tbl it-tbl"><thead><tr><th class="r">Item</th><th>Descrição</th><th class="r">Qtd</th><th class="r">Custo un.</th><th class="r">Mínimo</th><th class="r">Teto</th><th class="r">Lance</th><th class="r">Custo total</th><th class="r">Edital total</th><th class="r">Lucro</th><th class="r">★</th><th class="r">$</th><th class="r"></th></tr></thead><tbody>${rows}</tbody></table></div>`;
-  }
   function renderItens() {
     if (!activePregoes().length) return emptyWelcome();
-    const modo = `<div class="seg-ctl m-hide it-modo">${[['cards', 'Cards'], ['tabela', 'Tabela compacta']].map(([v, l]) => `<button type="button" data-act="itens-modo" data-v="${v}" class="${UI.itensModo === v ? 'on' : ''}">${l}</button>`).join('')}</div>`;
-    return `<div class="page">${modo}<div class="search">${icon('search')}<input class="input" id="buscaI" type="search" placeholder="Buscar item, marca, onde compro ou órgão" value="${esc(UI.buscaI)}"></div>
+    return `<div class="page"><div class="search">${icon('search')}<input class="input" id="buscaI" type="search" placeholder="Buscar item, marca ou órgão" value="${esc(UI.buscaI)}"></div>
       <div id="ilist" class="page">${itensListHtml()}</div></div>
       <button class="fab" data-act="novo-item" aria-label="Novo item">${icon('plus')}</button>`;
   }
@@ -5833,36 +5838,6 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
     return /^https?:\/\//i.test(u) ? u : 'https://' + u;
   };
 
-  /* ---------- guia Procedimento: o que fazer no dia da busca + comandos prontos para o Claude ---------- */
-  const REPO_MD = 'https://github.com/jcaferreira00-dev/MeusPregoes/blob/main/CLAUDE.md';
-  const REPO_BUSCAS = 'https://github.com/jcaferreira00-dev/MeusPregoes/tree/main/buscas';
-  const PROC_CMDS = [
-    ['busca', 'Busca de pregões (manual)', 'Leia o CLAUDE.md do repositório jcaferreira00-dev/MeusPregoes e faça a busca de pregões conforme a seção 4 (PNCP, filtro, log das buscas). Use só o CLAUDE.md, não o contexto de conversas. Me devolva a lista e UM JSON só com todos os pregões novos (sem pastas nem zip), e registre a busca no log.'],
-    ['analise', 'Análise dos editais (anexe os PDFs)', 'Leia o CLAUDE.md do repositório jcaferreira00-dev/MeusPregoes. Analise item por item os PDFs anexos conforme a seção 2 e o checklist de regras do edital. Me devolva primeiro UM JSON só com todos os pregões analisados (os que não compensam já com status Desisti) e depois o zip das pastas da seção 3 sem os JSON (LEIA-ME, observações, declarações e proposta em .docx). Atualize a lista "Já no app" do CLAUDE.md.'],
-    ['revisao', 'Revisão do app (anexe o backup exportado)', 'Leia o CLAUDE.md do repositório jcaferreira00-dev/MeusPregoes. Segue meu backup exportado do app: mescle o que compensa, marque como excluído o que não compensa (nunca os que têm item ganho, empenho, entrega ou pagamento), atualize a lista "Já no app" do CLAUDE.md e me devolva o JSON para importar com "Substituir tudo".'],
-    ['regra', 'Gravar uma regra nova', 'Acrescente esta regra no CLAUDE.md do repositório jcaferreira00-dev/MeusPregoes, na seção certa, e passe a seguir sempre: '],
-  ];
-  function renderProc() {
-    const passo = (n, t, d) => `<div class="proc-step"><span class="proc-n">${n}</span><div class="grow"><b>${t}</b><div class="small muted">${d}</div></div></div>`;
-    const cmds = PROC_CMDS.map(([id, t, txt]) => `<div class="proc-cmd"><div class="row" style="align-items:center;gap:8px"><b class="grow">${esc(t)}</b><button type="button" class="btn sm" data-act="proc-copiar" data-id="${id}">${icon('copy', 'sm')} Copiar</button></div><div class="proc-txt small">${esc(txt)}</div></div>`).join('');
-    return `<div class="page">
-      <div class="card"><h3>${icon('proc', 'sm')}<span class="grow">Dia da busca — passo a passo</span></h3>
-        <p class="tiny muted" style="margin:0 0 10px">As regras ficam no CLAUDE.md do app (no GitHub). O Claude lê ele antes de tudo, então não precisa repetir nada na conversa.</p>
-        <div class="proc-steps">
-          ${passo(1, 'Sábado 18h43: a busca roda sozinha', 'Roda depois que os tokens da semana reiniciam. Chega a notificação com a lista de pregões novos (PNCP, até ~120 km + Ponta Grossa) e o JSON da busca. Se avisar que falhou, ligue o Chrome no PC e peça a busca manual (comando abaixo).')}
-          ${passo(2, 'Importe a busca e escolha os pregões', 'Importe o JSON da busca (Config › Importar › Mesclar). Cada pregão entra como Falta dados, com o link do PNCP para baixar os PDFs (edital, TR e anexos).')}
-          ${passo(3, 'Até domingo ou segunda: mande os PDFs', 'Anexe os PDFs de todos os pregões escolhidos numa conversa e cole o comando “Análise dos editais”. Volta UM JSON só (os que não compensam já como Desisti) e depois o zip com as pastas.')}
-          ${passo(4, 'Importe o JSON e confira no PC', 'Config › Importar › Mesclar. Confira itens, cotações e a guia Proposta (o aviso das regras do edital tem que estar verde).')}
-          ${passo(5, 'Durante a semana: revise e envie', 'Revise as propostas, envie na plataforma e mude o status para Enviada. Acompanhe a disputa pela guia Pregões.')}
-          ${passo(6, 'Quando quiser: revisão do app', 'Exporte o backup (Config › Exportar), anexe e cole o comando “Revisão do app”. Ele limpa o que não compensa e atualiza o CLAUDE.md.')}
-        </div>
-        <div class="grid2" style="margin-top:12px"><a class="btn proc-lk" href="${REPO_MD}" target="_blank" rel="noopener noreferrer">${icon('link', 'sm')} Regras (CLAUDE.md)</a><a class="btn proc-lk" href="${REPO_BUSCAS}" target="_blank" rel="noopener noreferrer">${icon('link', 'sm')} Buscas salvas</a></div>
-      </div>
-      <div class="card"><h3>${icon('copy', 'sm')}<span class="grow">Comandos prontos para o Claude</span></h3>
-        <p class="tiny muted" style="margin:0 0 10px">Copie e cole numa conversa nova. São curtos de propósito: as regras completas estão no CLAUDE.md.</p>
-        ${cmds}
-      </div></div>`;
-  }
   async function copiarTexto(txt) {
     try { await navigator.clipboard.writeText(txt); return true; } catch (e) {
       const t = document.createElement('textarea'); t.value = txt; t.style.position = 'fixed'; t.style.opacity = '0'; document.body.appendChild(t); t.select();
@@ -5926,10 +5901,9 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
     const a = document.activeElement;
     if (a && main.contains(a) && /INPUT|TEXTAREA|SELECT/.test(a.tagName) && Guard.pending.size) return;
     const y = window.scrollY;
-    if (UI.tab === 'itens') { UI.tab = 'pregoes'; saveUI(); }
-    if ((UI.tab === 'proc' || UI.tab === 'certidoes') && window.matchMedia && window.matchMedia('(max-width: 600px)').matches) { UI.tab = 'pregoes'; saveUI(); }
-    const fn = { painel: renderPainel, pregoes: renderPregoes, proc: renderProc, acomp: renderAcomp, pdf: renderPDF, certidoes: renderCertidoes, config: renderConfig }[UI.tab];
-    main.classList.toggle('wide', UI.tab === 'acomp' || (UI.tab === 'pregoes' && !UI.detailId) || (UI.tab === 'itens' && UI.itensModo === 'tabela'));
+    if ((UI.tab === 'itens' || UI.tab === 'certidoes') && window.matchMedia && window.matchMedia('(max-width: 600px)').matches) { UI.tab = 'pregoes'; saveUI(); }
+    const fn = { painel: renderPainel, pregoes: renderPregoes, itens: renderItens, acomp: renderAcomp, pdf: renderPDF, certidoes: renderCertidoes, config: renderConfig }[UI.tab];
+    main.classList.toggle('wide', UI.tab === 'acomp' || (UI.tab === 'pregoes' && !UI.detailId) || UI.tab === 'itens');
     main.innerHTML = fn();
     $$('.nav button').forEach((b) => b.classList.toggle('on', b.dataset.v === UI.tab));
     const t = TABS.find((x) => x.id === UI.tab);
@@ -6137,10 +6111,8 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
       case 'demo': store.mergeDemo(); toast('Dados de exemplo carregados'); break;
       case 'pdf-pregao': UI.pdf.pregaoId = id; UI.pdf.fonte = 'auto'; UI.pdf.result = null; saveUI(); setTab('pdf'); break;
       case 'pdf-gerar': gerarPDF(); break;
-      case 'proc-copiar': { const c = PROC_CMDS.find((x) => x[0] === id); if (c) copiarTexto(c[2]).then((ok) => toast(ok ? 'Comando copiado' : 'Não deu para copiar; selecione o texto')); break; }
       case 'pdf-ident-edital': commitAllPending(); identConformeEdital(UI.pdf.pregaoId); UI.pdf.result = null; UI.keepScroll = true; render(); toast('Ajustado conforme o edital'); break;
       case 'cat-gerar': gerarCatalogo(); break;
-      case 'itens-modo': UI.itensModo = t.dataset.v; saveUI(); UI.keepScroll = true; render(); break;
       case 'acomp-filtro': UI.acomp.filtro = t.dataset.v; UI.keepScroll = true; render(); break;
       case 'acomp-venci': UI.keepScroll = true; acompVenci(id); break;
       case 'acomp-desfazer': UI.keepScroll = true; acompDesfazer(id); break;

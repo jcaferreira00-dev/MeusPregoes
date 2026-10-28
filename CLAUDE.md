@@ -1,7 +1,7 @@
 # Meus Pregões — regras do João (LEIA ANTES DE QUALQUER COISA)
 
-> No app, a guia **Procedimento** (só no PC) tem o passo a passo do dia da busca e os comandos prontos
-> que o João cola na conversa. Se mudar o fluxo aqui, atualizar também `PROC_CMDS`/`renderProc` no index.html.
+> A guia **Itens** (só PC) mostra os itens em blocos simétricos por pregão: nº do edital, nome abreviado, qtd, custo, lance, lance total, teto, lucro, estrelas e botão de compra. A guia Procedimento foi removida (o passo a passo fica aqui neste arquivo).
+> No celular o app é fixo (sem rolagem lateral) e só mostra o básico.
 
 Este arquivo é a base de regras fixas. Toda vez que for mexer no app, analisar edital,
 criar JSON de importação ou buscar editais, leia este arquivo primeiro e siga o que está aqui.
