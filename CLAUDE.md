@@ -311,3 +311,9 @@ ou na lista "Já no app ou já descartados" — comparar por órgão + nº do pr
 - Clicar no título de um grupo do quadro (ex.: "Incompletos") abre só aquele grupo na tela toda, em grade de cartões, com o botão "Todos os grupos" para voltar ao quadro.
 - Abrir um pregão e voltar pelo "Pregões" de cima devolve a tela em que estava (grupo em tela cheia ou quadro), já rolada até o cartão clicado, com um destaque rápido nele. Não tirar isso: o João não quer rolar de novo para achar o pregão.
 - Na tela cheia do grupo, os cartões ficam 2 por linha (3 por linha em tela grande, a partir de ~1500 px) e não mais, para não ficarem estreitos (pedido do João, tela grande).
+
+## 8. Pastas no Google Drive (decisão de 29/10/2026)
+
+- As pastas das análises ficam no Google Drive do João, dentro de "01- PREGÕES": uma pasta por órgão ("Municipio de Castro"; sem acento) e, dentro, "PREGÃO ELETRÔNICO - EDITAL nº 157-2026" (dispensa: "DISPENSA ELETRÔNICA - EDITAL nº 48-2026"; quando o PNCP usa outro número, pôr entre parênteses, ex.: "(PCE 53-2026)"). Dentro de cada uma, o LEIA-ME.txt.
+- Só vão para o Drive os pregões que COMPENSAM (status Analisando). Os que ficam Desisti NÃO ganham pasta no Drive: o motivo fica no JSON (obs) e no resumo do projeto.
+- Pasta de órgão que já existe (ex.: "Município de Faxinal") é reaproveitada: procurar antes de criar.
