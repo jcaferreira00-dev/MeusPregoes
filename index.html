@@ -1146,8 +1146,16 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
 .selo-st.sel-jul { --sc-selo: #d99a1c; }
 .selo-st.sel-emp { --sc-selo: #8e44ad; }
 .selo-st.sel-entregar { --sc-selo: #2e75b6; }
+.selo-st.sel-parcial { --sc-selo: #e67e22; }
 .selo-st.sel-receber { --sc-selo: #0f8b78; }
 .selo-st.sel-pago { --sc-selo: #2f8f3a; }
+.ent-itens { display: flex; flex-direction: column; gap: 6px; margin-top: 12px; }
+.ent-it { display: flex; align-items: center; gap: 8px; width: 100%; text-align: left; padding: 8px 10px; border: 1px solid var(--line); border-radius: 10px; background: var(--card); font: inherit; cursor: pointer; }
+.ent-it i { flex: none; width: 20px; height: 20px; border-radius: 50%; border: 2px solid var(--line); display: inline-flex; align-items: center; justify-content: center; }
+.ent-it.ok { border-color: var(--green); background: var(--green-soft); }
+.ent-it.ok i { background: var(--green); border-color: var(--green); color: #fff; }
+.ent-it span { flex: 1; min-width: 0; font-weight: 600; font-size: 13px; }
+.ent-it small { flex: none; color: var(--muted); font-size: 11.5px; }
 .pq-sec.venci { color: var(--green); } .pq-sec.venci b { background: var(--green); color: #fff; }
 .pq-grid + .pq-sec { margin-top: 12px; }
 .pcard.p-venci, .pcard.p-venci.enviada { border: 3px solid var(--green); background: color-mix(in srgb, var(--green) 9%, var(--card)); box-shadow: 0 0 0 3px color-mix(in srgb, var(--green) 22%, transparent), var(--shadow); }
@@ -1275,7 +1283,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.101.5';
+  const APP_VERSION = '1.102.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Julgamento', 'Aguardando empenho', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -4309,6 +4317,13 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
   store.on(() => { cacheR = null; });
   const Rc = () => cacheR || (cacheR = C.computeAll(store.get()));
   const ganhoDe = (pid) => { const g = Rc().pMap.get(pid); return !!(g && g.ganho); };
+  // entrega por item: cada item ganho pode ter a sua data (item.entregueEm); entregueEm no pregão = tudo entregue
+  const entregaDe = (p) => {
+    const R = Rc(), x = R.pMap.get(p.id);
+    if (!x) return { n: 0, ent: 0 };
+    const g = x.itens.filter((i) => (R.iMap.get(i.id) || {}).ganhou);
+    return { n: g.length, ent: p.entregueEm ? g.length : g.filter((i) => i.entregueEm).length };
+  };
   const posPendente = (p) => ganhoDe(p.id) && !p.pagoEm && p.status !== 'Concluído';
   function posInfo(p) {
     if (!p || !ganhoDe(p.id)) return null;
@@ -4321,14 +4336,16 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
       if (d !== null && d <= 3) return { etapa: 'receber', nivel: 'warn', curto: d === 0 ? 'Pagamento previsto hoje' : 'Pagamento em ' + plural(d, 'dia', 'dias'), texto: 'Pagamento previsto ' + (d === 0 ? 'para hoje' : 'em ' + plural(d, 'dia', 'dias') + ' (' + fmtDM(prev) + ')'), prazo, prev };
       return { etapa: 'receber', nivel: 'info', curto: 'Aguardando pagamento', texto: 'Entregue em ' + fmtDM(p.entregueEm) + (prev ? ' · pagamento previsto ' + fmtDM(prev) : ' · aguardando pagamento'), prazo, prev };
     }
+    const ed = entregaDe(p), parc = ed.n > 1 && ed.ent > 0 && ed.ent < ed.n;
+    const dec = (r) => parc ? Object.assign(r, { etapa: 'parcial', curto: 'Faltam ' + (ed.n - ed.ent) + ' de ' + ed.n, texto: 'Entregues ' + ed.ent + ' de ' + ed.n + ' · faltam ' + (ed.n - ed.ent) + (r.nivel === 'info' ? '' : ' · ' + r.texto) }) : r;
     if (prazo) {
       const d = diasAte(prazo);
-      if (d < 0) return { etapa: 'entrega', nivel: 'bad', curto: 'Entrega atrasada ' + plural(-d, 'dia', 'dias'), texto: 'Entrega atrasada há ' + plural(-d, 'dia', 'dias') + ' (prazo ' + fmtDM(prazo) + ')', prazo, prev: '' };
-      if (d === 0) return { etapa: 'entrega', nivel: 'bad', curto: 'Entrega vence hoje', texto: 'Entrega vence hoje', prazo, prev: '' };
-      if (d <= 3) return { etapa: 'entrega', nivel: 'warn', curto: 'Entrega em ' + plural(d, 'dia', 'dias'), texto: 'Entrega vence em ' + plural(d, 'dia', 'dias') + ' (' + fmtDM(prazo) + ')', prazo, prev: '' };
-      return { etapa: 'entrega', nivel: 'ok', curto: 'Entrega até ' + fmtDM(prazo), texto: 'Entrega até ' + fmtDM(prazo) + ' (' + plural(d, 'dia', 'dias') + ')', prazo, prev: '' };
+      if (d < 0) return dec({ etapa: 'entrega', nivel: 'bad', curto: 'Entrega atrasada ' + plural(-d, 'dia', 'dias'), texto: 'Entrega atrasada há ' + plural(-d, 'dia', 'dias') + ' (prazo ' + fmtDM(prazo) + ')', prazo, prev: '' });
+      if (d === 0) return dec({ etapa: 'entrega', nivel: 'bad', curto: 'Entrega vence hoje', texto: 'Entrega vence hoje', prazo, prev: '' });
+      if (d <= 3) return dec({ etapa: 'entrega', nivel: 'warn', curto: 'Entrega em ' + plural(d, 'dia', 'dias'), texto: 'Entrega vence em ' + plural(d, 'dia', 'dias') + ' (' + fmtDM(prazo) + ')', prazo, prev: '' });
+      return dec({ etapa: 'entrega', nivel: 'ok', curto: 'Entrega até ' + fmtDM(prazo), texto: 'Entrega até ' + fmtDM(prazo) + ' (' + plural(d, 'dia', 'dias') + ')', prazo, prev: '' });
     }
-    return { etapa: 'entrega', nivel: 'info', curto: p.empenhoData ? 'Sem prazo de entrega' : 'Falta o empenho', texto: p.empenhoData ? 'Defina o prazo de entrega' : 'Informe o empenho e o prazo de entrega', prazo: '', prev: '' };
+    return dec({ etapa: 'entrega', nivel: 'info', curto: p.empenhoData ? 'Sem prazo de entrega' : 'Falta o empenho', texto: p.empenhoData ? 'Defina o prazo de entrega' : 'Informe o empenho e o prazo de entrega', prazo: '', prev: '' });
   }
 
   /* ---------- validade das certidões ---------- */
@@ -4865,8 +4882,8 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     const botoes = ib(url(p.link), 'pdf', 'Abrir o edital') + (p.linkModelo ? ib(url(p.linkModelo), 'copy', 'Modelo de proposta do órgão') : '') + ib(url(p.linkProposta), 'send', 'Enviar proposta e dar lances') + ib(url(p.linkLicitacao), 'globo', 'Ver a licitação no site');
     const emSelo = pst.ganho || p.status === 'Aguardando empenho';
     // etapa depois de ganhar, numa palavra só: Julgamento → Empenho → Entregar → Receber → Pago
-    const selK = p.pagoEm ? 'pago' : p.entregueEm ? 'receber' : (p.empenhoData || p.entregaPrazo) ? 'entregar' : p.status === 'Julgamento' ? 'jul' : 'emp';
-    const SELO = { jul: ['Julgamento', 'Já tem item ganho, mas o órgão ainda está julgando'], emp: ['Empenho', 'Aguardando o empenho'], entregar: ['Entregar', 'Empenho recebido: falta entregar'], receber: ['Receber', 'Entregue: falta receber o pagamento'], pago: ['Pago', 'Pago'] }[selK];
+    const selK = p.pagoEm ? 'pago' : p.entregueEm ? 'receber' : (po && po.etapa === 'parcial') ? 'parcial' : (p.empenhoData || p.entregaPrazo) ? 'entregar' : p.status === 'Julgamento' ? 'jul' : 'emp';
+    const SELO = { jul: ['Julgamento', 'Já tem item ganho, mas o órgão ainda está julgando'], emp: ['Empenho', 'Aguardando o empenho'], entregar: ['Entregar', 'Empenho recebido: falta entregar'], parcial: ['Parcial', po ? po.texto : 'Entrega parcial'], receber: ['Receber', 'Entregue: falta receber o pagamento'], pago: ['Pago', 'Pago'] }[selK];
     const selo = emSelo ? `<div class="selo-st sel-${selK}" title="${SELO[1]}"><b>${SELO[0]}</b></div>` : '';
     return `<article class="pcard${pzCls}${emSelo ? ' tem-selo' : ''}" style="--gc:${corDe(p.id)};--sc:${COR_STATUS[p.status] || '#2e75b6'}" data-act="abrir-pregao" data-id="${p.id}" tabindex="0" role="button">
       ${selo}
@@ -5074,6 +5091,8 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     const RES = [['venci', 'Venci', 'acomp'], ['perdi', 'Não ganhei', 'x'], ['desc', 'Desclassif.', 'alert']];
     const acao = `<div class="res-sel" role="group" aria-label="Resultado do item">${RES.map(([v, l, ic]) => `<button type="button" class="btn sm res-${v}${c.resultado === v ? ' on' : ''}" data-act="item-res" data-v="${v}" data-id="${it.id}" title="${c.resultado === v ? 'Desmarcar ' + l : l}" aria-label="${l}">${icon(ic, 'sm')}${c.resultado === v ? '<span>' + l + '</span>' : ''}</button>`).join('')}</div>`
       + (c.ganhou || c.resultado === 'perdi' || c.desclass ? '' : `<div class="res-sel"><button type="button" class="btn sm${it.possivelGanhar ? ' pode-on' : ''}" data-act="item-pode" data-id="${it.id}" title="${it.possivelGanhar ? 'Desmarcar Posso ganhar' : 'Posso ganhar'}" aria-label="Posso ganhar">${icon('star', 'sm')}${it.possivelGanhar ? '<span>Posso ganhar</span>' : ''}</button><button type="button" class="btn sm" data-act="item-fora" data-id="${it.id}" title="Deixar de fora da disputa" aria-label="Deixar de fora">${icon('fora', 'sm')}</button></div>`);
+    const dEnt = p && (p.entregueEm || it.entregueEm);
+    const acaoEnt = c.ganhou && p && !p.pagoEm ? `<div class="res-sel"><button type="button" class="btn sm${dEnt ? ' res-venci on' : ''}" data-act="item-entregue" data-id="${it.id}" title="${dEnt ? 'Desmarcar entrega' : 'Marcar este item como entregue'}">${icon('truck', 'sm')}<span>${dEnt ? 'Entregue ' + esc(fmtDM(dEnt)) : 'Marcar entregue'}</span></button></div>` : '';
     const resBadge = c.resultado === 'venci' ? '<span class="badge ok">Venci</span>' : c.resultado === 'desc' ? `<span class="badge bad" title="${esc('Pedido em ' + C.fmtSessao(it.desclassEm || '') + (it.desclassMotivo ? ' · ' + it.desclassMotivo : ''))}">Desclassif.</span>` : c.resultado === 'perdi' ? '<span class="badge off">Não ganhei</span>' : c.resultado === 'aguard' ? '<span class="badge warn" title="Fora das contas até você marcar Venci">Aguardando</span>' : '';
     const descLinha = c.desclass ? `<div class="obsline desc-line">${icon('alert', 'sm')}<span>Desclassificação pedida em ${esc(C.fmtSessao(it.desclassEm || ''))}${it.desclassMotivo ? ' · ' + esc(it.desclassMotivo) : ''}</span></div>` : '';
     return `<article class="icard${c.naoGanhou && !it.possivelGanhar && !c.aguardando && !c.desclass ? ' nao-ganho' : ''}${c.ganhou ? ' venci' : ''}${c.resultado ? ' res-' + c.resultado : ''}" data-id="${it.id}">
@@ -5088,7 +5107,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
       ${decisaoHtml(c)}
       ${p && !c.fora && !c.ganhou && (p.status === 'Julgamento' || it.possivelGanhar || it.colocacao || c.resultado === 'perdi' || c.naoGanhou || ['Perdeu', 'Desclassificado', 'Aguardando empenho', 'Faturado', 'Concluído'].includes(p.status) || (p.sessao && (diasDesde(p.sessao) || 0) >= 0)) ? `<div class="coloc-row">${colocacaoInput(it)}${it.colocacao ? `<span class="coloc-badge ${it.colocacao === 1 ? 'c1' : it.colocacao <= 3 ? 'c3' : ''}">${colocTxt(it.colocacao)} lugar</span>` : ''}</div>` : ''}
       ${p && ['Julgamento', 'Proposta enviada'].includes(p.status) && !['perdi', 'desc'].includes(c.resultado) ? simLanceHtml(it, c, meuLance) : ''}
-      <div class="icard-actions">${compra}${acao}</div></article>`;
+      <div class="icard-actions">${compra}${acao}${acaoEnt}</div></article>`;
   }
 
   /* ---------- simulador de lance (na disputa): calcula na hora, só grava com 2 confirmações ---------- */
@@ -5199,20 +5218,39 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
       <br><b>Capital de giro:</b> se pedirem tudo de uma vez, a compra sai cerca de <b>${C.brl(custo)}</b> (custo dos itens em disputa, com frete e viagem).${volta}${comp}
       <br><span class="small">Comprar tudo antes para garantir o preço deixa o dinheiro parado até a última entrega. Cada pedido também é uma viagem: confira o nº de viagens.</span></div></div>`;
   }
+  // marca/desmarca a entrega de um item ganho; entregando o último, o pregão inteiro vira "entregue"
+  function alternarEntregaItem(itemId) {
+    const st = store.get(), it = st.itens.find((i) => i.id === itemId), p = it && st.pregoes.find((x) => x.id === it.pregaoId);
+    if (!p) return;
+    if (p.pagoEm) { toast('Pagamento já registrado: desfaça o pagamento antes'); return; }
+    const R = Rc(), g = ((R.pMap.get(p.id) || {}).itens || []).filter((i) => (R.iMap.get(i.id) || {}).ganhou), hoje = C.hojeISO();
+    if (p.entregueEm || it.entregueEm) {
+      if (p.entregueEm) { g.forEach((i) => { if (i.id !== itemId && !i.entregueEm) store.upsertItem({ id: i.id, entregueEm: p.entregueEm }); }); store.upsertPregao({ id: p.id, entregueEm: '' }); }
+      store.upsertItem({ id: itemId, entregueEm: '' });
+      toast('Entrega do item desfeita');
+    } else {
+      store.upsertItem({ id: itemId, entregueEm: hoje });
+      const faltam = g.filter((i) => i.id !== itemId && !i.entregueEm).length;
+      if (!faltam) { store.upsertPregao({ id: p.id, entregueEm: hoje }); toast('Todos os itens entregues'); } else toast('Item entregue · faltam ' + faltam);
+    }
+  }
   function posCardHtml(pst) {
     const p = pst.p, po = posInfo(p);
     if (!po) return '';
     const passo = (feito, tit, sub) => `<div class="pstep ${feito ? 'ok' : ''}"><i>${feito ? icon('check', 'sm') : ''}</i><div><b>${tit}</b><span>${sub}</span></div></div>`;
     const empSub = [p.empenhoNum ? 'Nº ' + esc(p.empenhoNum) : '', p.empenhoData ? esc(C.fmtSessao(p.empenhoData)) : ''].filter(Boolean).join(' · ') || 'Ainda não informado';
-    const entSub = p.entregueEm ? 'Entregue em ' + esc(C.fmtSessao(p.entregueEm)) : (po.prazo ? 'Prazo: ' + esc(C.fmtSessao(po.prazo)) : 'Sem prazo definido');
+    const entSub = p.entregueEm ? 'Entregue em ' + esc(C.fmtSessao(p.entregueEm)) : po.etapa === 'parcial' ? esc(po.texto) : (po.prazo ? 'Prazo: ' + esc(C.fmtSessao(po.prazo)) : 'Sem prazo definido');
     const pagSub = p.pagoEm ? 'Pago em ' + esc(C.fmtSessao(p.pagoEm)) + ' · ' + C.brl(pst.venda) : (p.entregueEm ? (po.prev ? 'Previsto: ' + esc(C.fmtSessao(po.prev)) + ' · ' : '') + 'A receber ' + C.brl(pst.venda) : 'Depois da entrega');
     const bts = !p.entregueEm
-      ? `<button class="btn primary block" data-act="pos-entregue" data-id="${p.id}">${icon('check', 'sm')} Marcar como entregue hoje</button>`
+      ? `<button class="btn primary block" data-act="pos-entregue" data-id="${p.id}">${icon('check', 'sm')} ${po.etapa === 'parcial' ? 'Marcar o restante como entregue hoje' : 'Marcar como entregue hoje'}</button>`
       : (!p.pagoEm
         ? `<div class="grid2"><button class="btn primary" data-act="pos-pago" data-id="${p.id}">${icon('check', 'sm')} Recebi hoje</button><button class="btn ghost" data-act="pos-desfaz-entrega" data-id="${p.id}">Desfazer entrega</button></div>`
         : `<button class="btn ghost block" data-act="pos-desfaz-pago" data-id="${p.id}">Desfazer pagamento</button>`);
+    const R0 = Rc(), ganhosP = pst.itens.filter((i) => (R0.iMap.get(i.id) || {}).ganhou);
+    const entLista = ganhosP.length > 1 && !p.pagoEm ? `<div class="ent-itens"><div class="tiny muted">Entrega por item (toque para marcar)</div>${ganhosP.map((i) => { const d = p.entregueEm || i.entregueEm; return `<button type="button" class="ent-it${d ? ' ok' : ''}" data-act="item-entregue" data-id="${i.id}"><i>${d ? icon('check', 'sm') : ''}</i><span class="ell">${esc(i.descricao)}</span><small>${d ? 'Entregue ' + esc(fmtDM(d)) : 'Falta entregar'}</small></button>`; }).join('')}</div>` : '';
     return `<div class="card"><h3>${icon('calendar', 'sm')}<span class="grow">Entrega e pagamento</span><span class="prazo ${nivelCls(po.nivel)}">${esc(po.curto)}</span></h3>
       <div class="psteps">${passo(!!p.empenhoData, 'Empenho', empSub)}${passo(!!p.entregueEm, 'Entrega', entSub)}${passo(!!p.pagoEm, 'Pagamento', pagSub)}</div>
+      ${entLista}
       <div style="margin-top:14px">${bts}</div>
       <button class="btn sm ghost" style="margin-top:10px" data-act="editar-pregao" data-id="${p.id}">${icon('edit', 'sm')} Editar empenho e prazos</button></div>`;
   }
@@ -6415,9 +6453,10 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
       case 'item-ganho': { UI.keepScroll = true; const it = store.get().itens.find((i) => i.id === id); const perdeu = !(it && it.naoGanhou); store.upsertItem({ id, naoGanhou: perdeu }); toast(perdeu ? 'Item marcado como não ganho' : 'Item marcado como ganho'); break; }
       case 'item-pode': { UI.keepScroll = true; const it = store.get().itens.find((i) => i.id === id); const liga = !(it && it.possivelGanhar); store.upsertItem({ id, possivelGanhar: liga }); toast(liga ? 'Item marcado: posso ganhar' : 'Marcação removida'); break; }
       case 'item-fora': { UI.keepScroll = true; const it = store.get().itens.find((i) => i.id === id); const fora = !(it && it.semLance); store.upsertItem({ id, semLance: fora }); toast(fora ? 'Item fora da disputa' : 'Item de volta à disputa'); break; }
+      case 'item-entregue': UI.keepScroll = true; alternarEntregaItem(id); break;
       case 'pos-entregue': UI.keepScroll = true; store.upsertPregao({ id, entregueEm: C.hojeISO() }); toast('Entrega registrada'); break;
       case 'pos-pago': UI.keepScroll = true; store.upsertPregao({ id, pagoEm: C.hojeISO() }); toast('Pagamento registrado'); break;
-      case 'pos-desfaz-entrega': UI.keepScroll = true; store.upsertPregao({ id, entregueEm: '', pagoEm: '' }); toast('Entrega desfeita'); break;
+      case 'pos-desfaz-entrega': UI.keepScroll = true; store.get().itens.filter((i) => i.pregaoId === id && i.entregueEm).forEach((i) => store.upsertItem({ id: i.id, entregueEm: '' })); store.upsertPregao({ id, entregueEm: '', pagoEm: '' }); toast('Entrega desfeita'); break;
       case 'pos-desfaz-pago': UI.keepScroll = true; store.upsertPregao({ id, pagoEm: '' }); toast('Pagamento desfeito'); break;
       case 'cert-hoje': {
         const lista = certidoes().map((o) => Object.assign({}, o)), i = lista.findIndex((o) => o.id === id);
