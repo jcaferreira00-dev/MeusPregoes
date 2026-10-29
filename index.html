@@ -230,6 +230,25 @@ input[type=range] { width: 100%; accent-color: var(--blue); }
 .sheet-body { padding: 14px 16px; overflow-y: auto; flex: 1; -webkit-overflow-scrolling: touch; }
 .sheet-foot { display: flex; gap: 10px; padding: 12px 16px calc(var(--safe-b) + 12px); background: var(--card); border-top: 1px solid var(--line); }
 .sheet-foot .btn { flex: 1; }
+.m-only { display: none; }
+@media (max-width: 600px) { .m-only { display: block; } }
+.agm h3 { margin-bottom: 8px; }
+.agm-r { display: grid; grid-template-columns: 62px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 8px; border: 1px solid var(--line); border-radius: 10px; margin-bottom: 6px; cursor: pointer; background: var(--card); }
+.agm-d { text-align: center; border-radius: 8px; padding: 4px 2px; background: var(--blue-soft); font-size: 10.5px; font-weight: 800; line-height: 1.2; } .agm-d b { display: block; font-size: 14px; }
+.agm-t { min-width: 0; } .agm-t b { display: block; font-size: 13px; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .agm-t small { display: block; font-size: 12px; color: var(--muted); }
+.agm-r.bad { border: 2px solid var(--red); } .agm-r.bad .agm-d { background: var(--red); color: #fff; }
+.agm-r.warn { border: 2px solid var(--amber); } .agm-r.warn .agm-d { background: var(--amber); color: #fff; }
+.agm-r.ok { border: 2px solid var(--green); } .agm-r.ok .agm-d { background: var(--green); color: #fff; }
+.agm-r.gold { border: 2px solid #c98a12; } .agm-r.gold .agm-d { background: #c98a12; color: #fff; }
+.pm-it { border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; margin-bottom: 8px; background: var(--card); }
+.pm-it.bad { border: 2px solid var(--red); }
+.pm-n { font-weight: 800; font-size: 14px; } .pm-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.pm-in { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 8px 0 6px; }
+.pm-in > span { font-size: 12px; font-weight: 700; color: var(--muted); }
+.pm-in input.input { width: 46%; text-align: right; font-size: 18px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.pm-tot { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; font-weight: 700; flex-wrap: wrap; }
+.pm-st { font-size: 11.5px; font-weight: 800; padding: 2px 8px; border-radius: 6px; } .pm-st.ok { background: var(--green-soft); color: var(--green); } .pm-st.warn { background: var(--amber-soft); color: var(--amber); } .pm-st.bad { background: var(--red-soft); color: var(--red); }
+.pm-sum { display: flex; justify-content: space-between; align-items: baseline; padding: 10px 12px; border-top: 2px solid var(--line); font-weight: 800; } .pm-sum b { font-size: 18px; }
 .side-col { display: contents; }
 .preview { position: sticky; top: -14px; z-index: 2; margin: -14px -16px 14px; padding: 12px 16px; background: var(--bg); border-bottom: 1px solid var(--line); display: flex; flex-direction: column; gap: 8px; }
 .preview .kv { display: flex; gap: 14px; font-size: 12px; color: var(--muted); flex-wrap: wrap; } .preview .kv b { color: var(--ink); font-variant-numeric: tabular-nums; }
@@ -1248,7 +1267,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.100.0';
+  const APP_VERSION = '1.101.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Julgamento', 'Aguardando empenho', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -3965,6 +3984,14 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
       const ta = el.querySelector('textarea'); if (ta && window.innerWidth > 600) ta.focus({ preventScroll: true });
     }, 80);
   }
+  document.addEventListener('change', (e) => {
+    const t = e.target;
+    if (!t || !t.matches || !t.matches('[data-pm-lance]')) return;
+    const raw = String(t.value).trim(), v = raw === '' ? null : C.parseBR(raw);
+    if (raw !== '' && (v === null || !isFinite(v) || v < 0)) { toast('Valor inválido'); return; }
+    store.patchItem(t.dataset.pmLance, (it) => { it.lanceFinal = v; });
+    UI.pdf.result = null; UI.keepScroll = true; setTimeout(render, 0);
+  });
   function openItemForm(id, pregaoId) {
     const list = activePregoes();
     if (!list.length) { toast('Cadastre um pregão primeiro'); openPregaoForm(); return; }
@@ -4712,6 +4739,27 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
       </div>`;
   }
 
+  // celular: agenda no topo do Painel (hoje, amanhã, próximos dias) + pregões ganhos para ajustar a proposta final
+  function agendaMobileHtml(R) {
+    const out = [];
+    for (const x of R.pMap.values()) {
+      const p = x.p;
+      if (C.INATIVOS.includes(p.status) || p.status === 'Faturado' || p.ocultoPainel) continue;
+      const hora = (/T(\d{2}:\d{2})/.exec(p.sessao || '') || [])[1] || '';
+      const ds = diasDesde(p.sessao), a = alertaPregao(x), po = posInfo(p);
+      const pre = ['Falta dados', 'Analisando', 'Proposta enviada'].includes(p.status);
+      const dia = ds === 0 ? 'HOJE' : ds === -1 ? 'AMANHÃ' : (p.sessao ? fmtDM(String(p.sessao).slice(0, 10)) : '—');
+      let e = null;
+      if (x.ganho) e = { cls: 'ok', tag: 'GANHEI', big: x.nGanhos + (x.nGanhos === 1 ? ' item' : ' itens'), txt: p.status === 'Aguardando empenho' ? 'Aguardando empenho' : (po && (po.nivel === 'bad' || po.nivel === 'warn') ? po.curto : 'Ajustar proposta final'), btn: true, rank: po && po.nivel === 'bad' ? 0 : 2 };
+      else if (a) e = { cls: a.nivel, tag: dia, big: hora, txt: a.texto, rank: a.nivel === 'bad' ? 0 : a.nivel === 'warn' ? 1 : 3 };
+      else if (pre && ds !== null && ds <= 0 && ds >= -7) e = { cls: '', tag: dia, big: hora, txt: p.status === 'Proposta enviada' ? 'Sessão · proposta enviada' : 'Sessão', rank: 4 };
+      if (e) out.push(Object.assign(e, { p, t: new Date(p.sessao || p.prazoPropostas || '').getTime() || 0 }));
+    }
+    out.sort((a, b) => (a.rank - b.rank) || (a.t - b.t));
+    const org = (p) => String(p.orgao || '').replace(/^(Prefeitura Municipal de|Prefeitura de|Município de)\s+/i, '');
+    return `<div class="card m-only agm"><h3>${icon('calendar', 'sm')}<span class="grow">Agenda</span></h3>${out.length ? out.slice(0, 8).map((e) => `<div class="agm-r ${e.cls}" data-act="abrir-pregao" data-id="${e.p.id}" role="button" tabindex="0"><div class="agm-d"><span>${esc(e.tag)}</span><b>${esc(e.big)}</b></div><div class="agm-t"><b>${esc(org(e.p))} · ${esc(e.p.numero)}</b><small>${esc(e.txt)}</small></div>${e.btn ? `<button type="button" class="btn sm primary" data-act="ir-proposta-final" data-id="${e.p.id}">Proposta</button>` : ''}</div>`).join('') : '<p class="muted small" style="margin:0">Nada urgente nos próximos dias.</p>'}</div>`;
+  }
+
   function renderPainel() {
     const st = store.get();
     if (!st.pregoes.some((p) => !p.deleted)) return emptyWelcome();
@@ -4736,6 +4784,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     const margemTot = comp.venda > 0 ? comp.lucro / comp.venda : null;
 
     return `<div class="page">
+      ${agendaMobileHtml(R)}
       ${drafts.length ? `<div class="alert warn">${icon('alert', 'sm')}<div class="grow">Você tem preenchimento não salvo: ${esc(drafts.slice(0, 2).map((x) => draftDesc(x.key)).join(', '))}.</div><button class="btn sm" data-act="rascunho" data-key="${esc(drafts[0].key)}">Continuar</button></div>` : ''}
       <div class="kpis p-kpis">
         <div class="kpi" style="--c:#1f3864"><div class="l">Limite do MEI</div><div class="v" style="color:var(--ink)">${C.brl0(m.limite)}</div><div class="s">no ano de ${st.config.anoRef}</div></div>
@@ -5505,6 +5554,22 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     return cab + `<div class="card"><h3>3 · O que aparece na proposta</h3>${corpo}</div>`;
   }
 
+  // celular: itens da proposta com o lance editável (sem lance, vale o teto do edital); o resto do app segue igual
+  function pdfItensMobile(L) {
+    if (!L.linhas.length) return '';
+    const R = Rc();
+    return `<div class="pm-list m-only">${L.linhas.map((x) => {
+      const c = R.iMap.get(x.id) || {};
+      const lucro = x.unit && c.custoUnit != null ? (x.unit - c.custoUnit) / x.unit : null;
+      const abaixo = x.unit != null && x.minimo != null && x.unit < x.minimo - 0.005;
+      const msg = x.unit == null ? '<span class="pm-st bad">sem valor</span>' : x.acimaTeto ? '<span class="pm-st warn">acima do teto</span>' : abaixo ? '<span class="pm-st bad">abaixo do mínimo (' + C.brl(x.minimo) + ')</span>' : '<span class="pm-st ok">ok</span>';
+      return `<div class="pm-it${abaixo ? ' bad' : ''}"><div class="pm-n">${esc(C.padLE(x.numeroItem) ? 'Item ' + esc(x.numeroItem) + ' · ' : '')}${esc(x.descricao)}</div>
+        <div class="pm-sub">${C.qtdBR(x.qtd)} ${esc(x.un)} · custo ${c.custoUnit != null ? C.brl(c.custoUnit) : '—'} · teto ${x.teto != null ? C.brl(x.teto) : '—'}</div>
+        <label class="pm-in"><span>Meu lance (un.)</span><input class="input" inputmode="decimal" autocomplete="off" data-pm-lance="${esc(x.id)}" value="${x.lance != null ? C.numBR(x.lance, 2) : ''}" placeholder="${x.teto != null ? C.numBR(x.teto, 2) : ''}"></label>
+        <div class="pm-tot"><span>Total ${x.total != null ? C.brl(x.total) : '—'}${lucro != null ? ' · lucro ' + C.pct(lucro, 0) : ''}</span>${msg}</div></div>`;
+    }).join('')}<div class="pm-sum"><span>Total da proposta</span><b>${C.brl(L.total)}</b></div></div>`;
+  }
+
   function renderPDF() {
     const st = store.get(), cfg = st.config, p = cfg.proposta, w = cfg.marcaDagua, e = cfg.empresa;
     const list = activePregoes();
@@ -5533,8 +5598,9 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
         ${pz0.status !== 'Proposta enviada' ? (pz0.link
           ? `<a class="btn block" style="margin-bottom:12px" href="${esc(/^https?:\/\//i.test(pz0.link) ? pz0.link : 'https://' + pz0.link)}" target="_blank" rel="noopener noreferrer">${icon('eye', 'sm')} Abrir edital</a>`
           : `<div class="alert warn" style="margin-bottom:12px">${icon('alert', 'sm')}<div class="grow">Este pregão não tem o link do edital cadastrado.</div><button class="btn sm" data-act="editar-pregao" data-id="${pz0.id}">Cadastrar link</button></div>`) : ''}
-        <div class="field"><label for="pdff">Qual valor entra na proposta?</label><select class="input" id="pdff" data-ui="fonte">${FONTES.map(([v, l]) => `<option value="${v}"${v === UI.pdf.fonte ? ' selected' : ''}>${l}</option>`).join('')}</select></div>
-        <div class="tbl-scroll"><table class="tbl"><thead><tr><th>Item</th><th class="r">Qtd</th><th class="r">Unit.</th><th class="r">Total</th></tr></thead><tbody>
+        <div class="field m-hide"><label for="pdff">Qual valor entra na proposta?</label><select class="input" id="pdff" data-ui="fonte">${FONTES.map(([v, l]) => `<option value="${v}"${v === UI.pdf.fonte ? ' selected' : ''}>${l}</option>`).join('')}</select></div>
+        ${pdfItensMobile(L)}
+        <div class="tbl-scroll m-hide"><table class="tbl"><thead><tr><th>Item</th><th class="r">Qtd</th><th class="r">Unit.</th><th class="r">Total</th></tr></thead><tbody>
           ${L.linhas.map((x) => `<tr><td>${esc(x.descricao)}${x.acimaTeto ? '<br><span class="badge bad">acima do teto</span>' : ''}${x.limitadoTeto ? '<br><span class="badge warn">limitado ao teto</span>' + (x.abaixoMinimo ? ' <span class="badge bad">abaixo do seu mínimo</span>' : '') : ''}</td><td class="r">${C.qtdBR(x.qtd)}</td><td class="r">${x.unit != null ? C.brl(x.unit) : '<span class="badge bad">sem valor</span>'}</td><td class="r">${x.total != null ? C.brl(x.total) : '—'}</td></tr>`).join('') || '<tr><td colspan="4" class="muted">Nenhum item neste pregão.</td></tr>'}
           </tbody><tfoot><tr><td colspan="3">Total da proposta</td><td class="r">${C.brl(L.total)}</td></tr></tfoot></table></div>
         ${L.omitidos ? `<div class="alert info" style="margin-top:10px">${icon('info', 'sm')}<span>Pregão ganho: a proposta sai só com os itens ganhos. ${L.omitidos} item(ns) marcado(s) como não ganho(s) ficou(aram) de fora.</span></div>` : ''}
@@ -5542,8 +5608,8 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
         ${L.limitados ? `<div class="alert warn" style="margin-top:10px">${icon('alert', 'sm')}<span>${L.limitados} item(ns) passavam do teto do edital e entram na proposta com o valor do teto (${C.brl(L.reducao)} a menos no total), para não desclassificar.${L.abaixoMin ? ' Em ' + L.abaixoMin + ' deles o teto fica abaixo do seu valor mínimo: lucro menor ou prejuízo.' : ''}</span></div>` : ''}
         ${L.semValor ? `<div class="alert warn" style="margin-top:10px">${icon('alert', 'sm')}<span>${L.semValor} item(ns) sem valor nesta opção. Preencha o teto ou o lance final, ou troque a opção acima.</span></div>` : ''}
       </div>
-      ${pdfModelCards(opts, cfg, pz)}
-      <div class="card"><h3>4 · Cabeçalho (imagem e nome) <span class="grow"></span><span class="saved-ind" id="savedInd">Salvo</span></h3>
+      <div class="m-hide">${pdfModelCards(opts, cfg, pz)}</div>
+      <div class="card m-hide"><h3>4 · Cabeçalho (imagem e nome) <span class="grow"></span><span class="saved-ind" id="savedInd">Salvo</span></h3>
         <div class="wm-prev" id="hdPrev" style="height:auto;padding:10px 12px;margin-bottom:12px;display:block">${hdPreviewHtml(hd, cfg.empresa)}</div>
         <label class="switch"><span>Nome e dados da empresa escritos</span><input type="checkbox" data-cfg="cabecalho.mostrarNome" data-type="check" ${hd.mostrarNome ? 'checked' : ''}></label>
         <div class="row" style="margin:6px 0 12px"><label class="btn sm grow" style="cursor:pointer">${icon('image', 'sm')} ${hd.imagem ? 'Trocar imagem' : 'Escolher imagem (logo)'}<input type="file" accept="image/png,image/jpeg" data-hd-file class="hidden"></label>${hd.imagem ? `<button type="button" class="btn sm danger" data-act="hd-remover">${icon('trash', 'sm')}</button>` : ''}</div>
@@ -5555,7 +5621,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
         <div class="field"><label>Ajuste horizontal: <span id="lbHx">${hd.offX}</span></label><input type="range" min="-150" max="150" step="2" data-cfg="cabecalho.offX" data-type="range" data-lb="lbHx" value="${hd.offX}"></div>
         <div class="field"><label>Ajuste vertical: <span id="lbHy">${hd.offY}</span></label><input type="range" min="-40" max="40" step="1" data-cfg="cabecalho.offY" data-type="range" data-lb="lbHy" value="${hd.offY}"></div>` : `<p class="small muted">Sem imagem, o cabeçalho sai só com o nome e os dados da empresa.</p>`}
       </div>
-      <div class="card"><h3>5 · Marca d’água</h3>
+      <div class="card m-hide"><h3>5 · Marca d’água</h3>
         <div class="seg-ctl" role="tablist">${[['nenhuma', 'Nenhuma'], ['texto', 'Texto'], ['imagem', 'Imagem']].map(([v, l]) => `<button type="button" data-act="wm-tipo" data-v="${v}" class="${w.tipo === v ? 'on' : ''}">${l}</button>`).join('')}</div>
         <div style="height:12px"></div>
         <div class="wm-prev" id="wmPrev">${w.tipo === 'imagem' && w.imagem ? `<img alt="" src="${w.imagem}" style="opacity:${Math.max(.15, w.opacidade * 3)};transform:rotate(${-w.angulo}deg)">` : w.tipo === 'texto' ? `<span style="font-size:${wmPrevSize(w)}px;opacity:${Math.max(.15, w.opacidade * 3)};transform:rotate(${-w.angulo}deg)">${wmTexto(w)}</span>` : '<span class="small muted" style="font-weight:600">Sem marca d’água</span>'}</div>
@@ -5569,7 +5635,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
         <div class="field"><label>Ajuste vertical: <span id="lbWy">${w.offY || 0}</span></label><input type="range" min="-200" max="200" step="2" data-cfg="marcaDagua.offY" data-type="range" data-lb="lbWy" value="${w.offY || 0}"></div>` : ''}
       </div>
       ${faltaEmpresaHtml(opts, cfg.empresa)}
-      ${catalogoCardHtml(st, L)}
+      <div class="${C.faltasOferta(st, UI.pdf.pregaoId, UI.pdf.tipo, UI.pdf.fonte).length ? '' : 'm-hide'}">${catalogoCardHtml(st, L)}</div>
       ${gerarCardHtml(st, L)}
       ${r ? `<div class="card" id="pdfPronto"><h3>${r.docx ? 'Catálogo em Word pronto' : r.catalogo ? 'Catálogo pronto' : r.comCatalogo ? 'PDF pronto (proposta + catálogo)' : 'PDF pronto'}</h3><p class="small"><b>${esc(r.name)}</b><br><span class="muted">${r.docx ? 'Arquivo do Word, separado da proposta' : r.paginas + ' página(s)'}${r.catalogo ? '' : ' · total ' + C.brl(r.total)}</span>${r.anonima ? (r.identificacao && r.identificacao.length ? `<br><span style="color:var(--red);font-weight:700">Identifica a empresa: ${esc(r.identificacao.join(', '))}</span>` : '<br><span style="color:var(--green);font-weight:700">Sem identificação: nenhum dado da empresa no texto.</span>') : ''}</p>
         ${r.semValor ? `<div class="alert warn" style="margin:10px 0">${icon('alert', 'sm')}<span>Gerado com ${r.semValor} item(ns) sem valor.</span></div>` : ''}
@@ -5641,9 +5707,9 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     const off = UI.pdf.busy || falt.length ? 'disabled' : '';
     return `<div class="card" id="gerarCard" style="scroll-margin-top:80px"><h3>${icon('pdf', 'sm')} Gerar</h3>
       ${bloq}${aviso}
-      ${L.linhas.length ? `<label class="switch" style="margin-bottom:10px"><span>Anexar o catálogo ao final da proposta<small class="hint" style="display:block;font-weight:500">Ligado: o botão “Gerar PDF da proposta” já sai com o catálogo nas últimas páginas, num arquivo só.</small></span><input type="checkbox" data-cfg="proposta.catalogoJunto" data-type="check" ${st.config.proposta.catalogoJunto ? 'checked' : ''}></label>` : ''}
+      ${L.linhas.length ? `<label class="switch m-hide" style="margin-bottom:10px"><span>Anexar o catálogo ao final da proposta<small class="hint" style="display:block;font-weight:500">Ligado: o botão “Gerar PDF da proposta” já sai com o catálogo nas últimas páginas, num arquivo só.</small></span><input type="checkbox" data-cfg="proposta.catalogoJunto" data-type="check" ${st.config.proposta.catalogoJunto ? 'checked' : ''}></label>` : ''}
       <button class="btn primary block" data-act="pdf-gerar" ${off}>${icon('pdf')} ${UI.pdf.busy ? 'Gerando…' : 'Gerar PDF da proposta'}</button>
-      ${L.linhas.length ? `<div class="grid2" style="margin-top:10px">
+      ${L.linhas.length ? `<div class="grid2 m-hide" style="margin-top:10px">
         <button class="btn" data-act="cat-gerar" ${UI.pdf.busy ? 'disabled' : ''}>${icon('pdf', 'sm')} Só o catálogo (PDF)</button>
         <button class="btn" data-act="cat-docx" ${UI.pdf.busy ? 'disabled' : ''}>${icon('download', 'sm')} Catálogo em Word (.docx)</button>
       </div>` : ''}</div>`;
@@ -6375,6 +6441,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
       case 'demo': store.mergeDemo(); toast('Dados de exemplo carregados'); break;
       case 'pdf-pregao': UI.pdf.pregaoId = id; UI.pdf.fonte = 'auto'; UI.pdf.result = null; saveUI(); setTab('pdf'); break;
       case 'pdf-gerar': gerarPDF(); break;
+      case 'ir-proposta-final': commitAllPending(); UI.pdf.pregaoId = id; UI.pdf.tipo = 'final'; UI.pdf.result = null; UI.tab = 'pdf'; UI.detailId = null; saveUI(); render(); window.scrollTo(0, 0); break;
       case 'pdf-ident-edital': commitAllPending(); identConformeEdital(UI.pdf.pregaoId); UI.pdf.result = null; UI.keepScroll = true; render(); toast('Ajustado conforme o edital'); break;
       case 'cat-gerar': gerarCatalogo(); break;
       case 'acomp-filtro': UI.acomp.filtro = t.dataset.v; UI.keepScroll = true; render(); break;
