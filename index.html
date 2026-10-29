@@ -635,6 +635,8 @@ input.input[type=datetime-local]::-webkit-date-and-time-value, input.input[type=
   .sheet-wide .sheet-foot { justify-content: flex-end; padding: 14px 32px calc(var(--safe-b) + 14px); }
   .sheet-wide .sheet-foot .btn { flex: 0 0 220px; }
   .sheet-wide textarea.input { min-height: 90px; }
+  .sheet-wide .desc-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 0 20px; align-items: start; }
+  .sheet-wide .desc-pair textarea.input { min-height: 230px; }
 }
 /* ---------- Pregões em raias deslizantes e Painel em linhas (v1.98) ---------- */
 .dash-top { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); align-items: start; }
@@ -1212,7 +1214,7 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.99.0';
+  const APP_VERSION = '1.99.1';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Julgamento', 'Aguardando empenho', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -3398,7 +3400,7 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
     const id = 'f_' + o.name;
     const cls = (o.full ? 'field full' : 'field') + (o.cls ? ' ' + o.cls : '');
     let ctl;
-    if (o.type === 'textarea') ctl = `<textarea class="input" id="${id}" name="${o.name}" placeholder="${esc(o.ph || '')}" rows="2">${esc(o.value)}</textarea>`;
+    if (o.type === 'textarea') ctl = `<textarea class="input" id="${id}" name="${o.name}" placeholder="${esc(o.ph || '')}" rows="${o.rows || 2}">${esc(o.value)}</textarea>`;
     else if (o.type === 'select') ctl = `<select class="input" id="${id}" name="${o.name}">${o.options.map((x) => `<option value="${esc(x.v)}"${String(x.v) === String(o.value) ? ' selected' : ''}>${esc(x.l)}</option>`).join('')}</select>`;
     else ctl = `<input class="input" id="${id}" name="${o.name}" type="${o.type || 'text'}" value="${esc(o.value)}" placeholder="${esc(o.ph || '')}"${o.inputmode ? ` inputmode="${o.inputmode}"` : ''} autocomplete="off"${o.list ? ` list="${id}_dl"` : ''}${o.type === 'datetime-local' || o.type === 'date' ? '' : ' autocapitalize="sentences"'}>${o.list ? `<datalist id="${id}_dl">${o.list.map((x) => `<option value="${esc(x)}"></option>`).join('')}</datalist>` : ''}`;
     return `<div class="${cls}"><label for="${id}">${esc(o.label)}</label>${ctl}${o.hint ? `<div class="hint">${esc(o.hint)}</div>` : ''}</div>`;
@@ -3960,7 +3962,9 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
         ${field({ label: 'Nº do item', name: 'itemEdital', value: v.itemEdital, ph: 'ex.: 04', hint: 'Sai “LOTE 01 - ITEM 04” no PDF (1 vira 01 sozinho)' })}
         ${field({ label: 'Marca *', name: 'marca', value: v.marca, ph: 'ex.: Elgin', hint: 'Obrigatória para gerar a proposta' })}
         ${field({ label: 'Modelo', name: 'modelo', value: v.modelo, ph: 'ex.: AA-100' })}
-        <div class="full cat-form">
+        <div class="full desc-pair">
+          ${field({ label: 'Exigido no edital (sai no PDF como “Exigido no edital”)', name: 'descEdital', type: 'textarea', rows: 8, value: v.descEdital, ph: 'Cole aqui a descrição do item como está no edital', hint: 'Se ficar vazia, o PDF usa o nome do item.' })}
+        <div class="cat-form">
           <label class="lbl">Descritivo do item ofertado * <span class="tiny muted" style="font-weight:600">· é o mesmo do catálogo (também dá para editar lá)</span></label>
           <div class="cat-form-acts">${id ? `<label class="btn sm" style="cursor:pointer">${icon('image', 'sm')} Incluir imagem<input type="file" accept="image/png,image/jpeg,image/webp" multiple data-foto-form="${esc(id)}" class="sr-only" style="position:absolute;width:1px;height:1px;opacity:0;overflow:hidden"></label>` : '<span class="tiny muted">Salve o item uma vez para poder incluir imagens.</span>'}</div>
           ${id ? `<div class="cat-thumbs" data-cat-thumbs="${esc(id)}" style="display:flex;flex-wrap:wrap;gap:8px;margin:8px 0"></div>` : ''}
@@ -3969,13 +3973,13 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
           <datalist id="ftitList">${catTitulosOrdem().map((t) => `<option value="${esc(t)}">`).join('')}</datalist>
           <textarea class="input" name="catalogoDesc" rows="5" spellcheck="true" lang="pt-BR" autocorrect="on" placeholder="Descrição pormenorizada do produto (características técnicas, medidas, material, composição, normas, garantia…)" style="margin-top:8px">${esc(v.catalogoDesc)}</textarea>
         </div>
+        </div>
         ${field({ label: 'Unidade', name: 'unidade', value: v.unidade, ph: 'Un, Cx, Resma…' })}
         ${field({ label: 'Quantidade *', name: 'qtd', value: v.qtd, inputmode: 'decimal' })}
         ${field({ label: 'Custo unit. (R$) *', name: 'custo', value: v.custo, inputmode: 'decimal', hint: 'O que eu vou pagar' })}
         ${field({ label: 'Frete do fornecedor (R$, total do item)', name: 'frete', value: v.frete, inputmode: 'decimal' })}
         ${field({ label: 'Valor unit. do edital (teto)', name: 'teto', value: v.teto, inputmode: 'decimal', hint: 'Máximo que o órgão aceita', full: true })}
         ${field({ label: 'Lance final (R$ unit., opcional)', name: 'lanceFinal', value: v.lanceFinal, inputmode: 'decimal', full: true, cls: 'destaque', hint: 'Preenchido, é este o valor que sai na proposta em PDF. Vazio = sai o teto do edital.' })}
-        ${field({ label: 'Exigido no edital (sai no PDF como “Exigido no edital”)', name: 'descEdital', type: 'textarea', value: v.descEdital, full: true, ph: 'Cole aqui a descrição do item como está no edital', hint: 'Se ficar vazia, o PDF usa o nome do item.' })}
         <div class="full cat-atalho"><button type="button" class="btn block" data-ir-catalogo="1">${icon('image', 'sm')} Fotos e descrição para o catálogo</button><div class="hint">Salva o item e abre o catálogo da guia Proposta já neste pregão, no lugar deste item.</div></div>
         <div class="field full" id="linkBox"><label>Opções de compra</label>
           <div class="linkrow">
