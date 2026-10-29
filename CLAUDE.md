@@ -275,6 +275,7 @@ Tomazina 31; Santo Antônio do Paraíso 37; Ponta Grossa 114 e 118 (= 178); FAS 
 Vistos e descartados na busca de 29/10: São Jerônimo da Serra 46 (lotes/pesado); Arapoti Disp. 28; Castro 149, 153, 158 e 161;
 Tomazina 32 (volume); Piraí do Sul 45 (volume); Ponta Grossa 101, 110 e 144; UTFPR 86; Pinhalão 20; Carambeí 59;
 Santo Antônio do Paraíso 38; Tibagi 64 e 65; Rosário do Ivaí 42 e 43.
+Conferido com o backup do app de 29/10/2026: Rio Branco do Ivaí 36 está como Desisti; Imbaú 84 e 85 e EPR-UEL 146 ainda como Julgamento no app.
 (Quando o João mandar um backup do app ou os PDFs de um pregão, atualizar esta lista.)
 
 ### Orientações adicionais do João
