@@ -620,6 +620,22 @@ input.input[type=datetime-local]::-webkit-date-and-time-value, input.input[type=
 .fp-row { display: flex; gap: 8px; align-items: stretch; } .fp-row .search { flex: 1; min-width: 0; }
 .fp-row select.fp-sel { flex: 0 0 auto; width: min(420px, 50%); min-width: 0; text-overflow: ellipsis; appearance: none; -webkit-appearance: none; padding-right: 40px; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='%23667489' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 18px center; background-size: 12px 8px; }
 @media (max-width: 600px) { .fp-row { flex-direction: column; } .fp-row select.fp-sel { width: 100%; } }
+/* janela do item em tela cheia no PC: preview fixo à esquerda e formulário em 4 colunas */
+@media (min-width: 900px) {
+  .sheet-wrap.sheet-wide { align-items: stretch; }
+  .sheet-wide .sheet { max-width: none; width: 100%; height: 100%; max-height: none; border-radius: 0; }
+  .sheet-wide .sheet-head { padding: 12px 24px; } .sheet-wide .sheet-head h2 { font-size: 19px; }
+  .sheet-wide .sheet-body { display: grid; grid-template-columns: minmax(340px, 4fr) minmax(0, 8fr); column-gap: 32px; align-content: start; padding: 22px 32px; }
+  .sheet-wide .sheet-body > * { grid-column: 2; min-width: 0; }
+  .sheet-wide .sheet-body > .preview { grid-column: 1; grid-row: 1 / span 30; position: sticky; top: 0; align-self: start; margin-top: 0; }
+  .sheet-wide .sheet-body > [data-slot="draft"]:empty { display: none; }
+  .sheet-wide .formgrid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0 16px; }
+  .sheet-wide .formgrid .full { grid-column: 1 / -1; }
+  .sheet-wide .formgrid .field.full:has([name=teto]), .sheet-wide .formgrid .field.full:has([name=lanceFinal]) { grid-column: span 2; }
+  .sheet-wide .sheet-foot { justify-content: flex-end; padding: 14px 32px calc(var(--safe-b) + 14px); }
+  .sheet-wide .sheet-foot .btn { flex: 0 0 220px; }
+  .sheet-wide textarea.input { min-height: 90px; }
+}
 /* ---------- Pregões em raias deslizantes e Painel em linhas (v1.98) ---------- */
 .dash-top { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); align-items: start; }
 .dash-top > .card { border-radius: 14px; }
@@ -1196,7 +1212,7 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.98.1';
+  const APP_VERSION = '1.98.2';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Julgamento', 'Aguardando empenho', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -3392,7 +3408,7 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
     if (Sheet.current) closeSheetNow();
     const draft = Draft.load(o.key);
     const wrap = document.createElement('div');
-    wrap.className = 'sheet-wrap';
+    wrap.className = 'sheet-wrap' + (o.wide ? ' sheet-wide' : '');
     wrap.innerHTML = `<div class="sheet-backdrop"></div>
       <section class="sheet" role="dialog" aria-modal="true" aria-label="${esc(o.title)}">
         <header class="sheet-head"><button type="button" class="icon-btn" data-sh="close" aria-label="Fechar">${icon('x')}</button><h2>${esc(o.title)}</h2></header>
@@ -3970,7 +3986,7 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
         ${field({ label: 'Minha colocação na disputa', name: 'colocacao', value: v.colocacao, inputmode: 'numeric', ph: 'ex.: 3', hint: 'Em que lugar você ficou neste item (1 = primeiro).' })}
         ${field({ label: 'Valor do vencedor (R$ unit., se perdi)', name: 'vencedor', value: v.vencedor, inputmode: 'decimal', hint: 'Quanto quem ganhou ofertou. Alimenta a análise “Preço de quem ganhou” no Painel.' })}
       </div>`;
-        openForm({
+        openForm({ wide: true,
       key: 'item:' + (id || 'novo'), title: id ? 'Editar item' : 'Novo item', body, values: v,
       onMount: (form) => {
         const loc = $('[name=localEntrega]', form), km = $('[name=kmEntrega]', form), via = $('[name=viagensEntrega]', form), info = $('#rotaItem', form);
@@ -4702,6 +4718,13 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
     return html + fim;
   }
 
+  // seletor "filtrar por pregão" (guia Itens)
+  function fpregSel(key) {
+    const R = C.computeAll(store.get());
+    const ps = [...R.pMap.values()].sort((a, b) => (rankStatus(a.p.status) - rankStatus(b.p.status)) || ordemPainel(a, b));
+    if (UI[key] && !ps.some((x) => x.p.id === UI[key])) UI[key] = '';
+    return `<select class="input fp-sel" data-fpreg="${key}" aria-label="Filtrar por pregão"><option value="">Todos os pregões</option>${ps.map((x) => `<option value="${esc(x.p.id)}"${x.p.id === UI[key] ? ' selected' : ''}>${esc(pregaoLabel(x.p))}</option>`).join('')}</select>`;
+  }
   function renderPregoes() {
     if (UI.detailId) return renderDetail();
     const st = store.get();

@@ -19,7 +19,8 @@ sempre, acrescente aqui (seção certa) no mesmo commit da tarefa.
 - Tudo em `index.html` (arquivo único). Publicação: GitHub Pages, direto na `main`
   (https://jcaferreira00-dev.github.io/MeusPregoes/). Faça o commit e o push direto, sem PR.
 - A cada publicação, suba a versão em DOIS lugares: `VERSION` no `sw.js` e `APP_VERSION` no `index.html`.
-- Antes de publicar: extraia os `<script>` e rode `node --check`; teste no navegador (Playwright) o que mudou.
+- Antes de publicar: extraia os `<script>` e rode `node --check`; teste no navegador (Playwright) o que mudou E abra TODAS as guias no PC e no celular conferindo erros no console (ao mexer numa função, procure o que dependia dela).
+- No PC, aproveitar a tela inteira (largura e altura): janelas de edição do item em tela cheia (preview fixo à esquerda, formulário em 4 colunas), Painel e quadros usando toda a largura.
 - Ao mudar algo, inclua só o que foi pedido: não tire nem esconda cálculos e informações que já existiam.
 - Visual: mesmo alinhamento, blocos simétricos, status com uma palavra só, órgão em CAIXA ALTA,
   cidade padronizada ("Ortigueira/PR"). Se houver dúvida num ajuste visual, mostre uma prévia antes de publicar.
