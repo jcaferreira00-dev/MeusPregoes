@@ -1142,10 +1142,12 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
 .pq-sec b { background: color-mix(in srgb, var(--muted) 14%, transparent); color: var(--ink); border-radius: 999px; padding: 1px 8px; font-size: 11px; }
 .pcard.tem-selo { position: relative; padding-bottom: 36px; }
 .selo-st { position: absolute; right: 10px; bottom: 8px; transform: rotate(-4deg); display: flex; flex-direction: column; align-items: center; line-height: 1.1; padding: 4px 12px 5px; border-radius: 10px; color: #fff; background: var(--sc-selo); border: 2px dashed rgba(255,255,255,.85); outline: 2px solid var(--sc-selo); box-shadow: 0 3px 8px rgba(0,0,0,.28); pointer-events: auto; z-index: 2; white-space: nowrap; }
-.selo-st small { font-size: 8px; font-weight: 800; letter-spacing: .14em; opacity: .85; }
-.selo-st b { font-size: 12px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; }
+.selo-st b { font-size: 13px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
 .selo-st.sel-jul { --sc-selo: #d99a1c; }
 .selo-st.sel-emp { --sc-selo: #8e44ad; }
+.selo-st.sel-entregar { --sc-selo: #2e75b6; }
+.selo-st.sel-receber { --sc-selo: #0f8b78; }
+.selo-st.sel-pago { --sc-selo: #2f8f3a; }
 .pq-sec.venci { color: var(--green); } .pq-sec.venci b { background: var(--green); color: #fff; }
 .pq-grid + .pq-sec { margin-top: 12px; }
 .pcard.p-venci, .pcard.p-venci.enviada { border: 3px solid var(--green); background: color-mix(in srgb, var(--green) 9%, var(--card)); box-shadow: 0 0 0 3px color-mix(in srgb, var(--green) 22%, transparent), var(--shadow); }
@@ -1273,7 +1275,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.101.4';
+  const APP_VERSION = '1.101.5';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Julgamento', 'Aguardando empenho', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -4861,9 +4863,11 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     // PC: só ícones, sempre nas mesmas posições (edital · modelo · proposta · licitação); o que não tem link fica apagado
     const ib = (u, ic, tip) => u ? `<a class="ib" href="${esc(u)}" target="_blank" rel="noopener noreferrer" data-act="link-externo" title="${tip}" aria-label="${tip}">${icon(ic)}</a>` : `<span class="ib off" title="${tip}: não cadastrado" aria-label="${tip}: não cadastrado">${icon(ic)}</span>`;
     const botoes = ib(url(p.link), 'pdf', 'Abrir o edital') + (p.linkModelo ? ib(url(p.linkModelo), 'copy', 'Modelo de proposta do órgão') : '') + ib(url(p.linkProposta), 'send', 'Enviar proposta e dar lances') + ib(url(p.linkLicitacao), 'globo', 'Ver a licitação no site');
-    const emSelo = (pst.ganho || p.status === 'Aguardando empenho') && ['Julgamento', 'Aguardando empenho'].includes(p.status);
-    const jul = p.status === 'Julgamento';
-    const selo = emSelo ? `<div class="selo-st ${jul ? 'sel-jul' : 'sel-emp'}" title="${jul ? 'Em julgamento: já tem item ganho, mas o órgão ainda está julgando' : 'Ata assinada: aguardando o empenho'}"><small>${jul ? 'STATUS' : 'STATUS'}</small><b>${jul ? '⚖️ Em julgamento' : '📄 Aguardando empenho'}</b></div>` : '';
+    const emSelo = pst.ganho || p.status === 'Aguardando empenho';
+    // etapa depois de ganhar, numa palavra só: Julgamento → Empenho → Entregar → Receber → Pago
+    const selK = p.pagoEm ? 'pago' : p.entregueEm ? 'receber' : (p.empenhoData || p.entregaPrazo) ? 'entregar' : p.status === 'Julgamento' ? 'jul' : 'emp';
+    const SELO = { jul: ['Julgamento', 'Já tem item ganho, mas o órgão ainda está julgando'], emp: ['Empenho', 'Aguardando o empenho'], entregar: ['Entregar', 'Empenho recebido: falta entregar'], receber: ['Receber', 'Entregue: falta receber o pagamento'], pago: ['Pago', 'Pago'] }[selK];
+    const selo = emSelo ? `<div class="selo-st sel-${selK}" title="${SELO[1]}"><b>${SELO[0]}</b></div>` : '';
     return `<article class="pcard${pzCls}${emSelo ? ' tem-selo' : ''}" style="--gc:${corDe(p.id)};--sc:${COR_STATUS[p.status] || '#2e75b6'}" data-act="abrir-pregao" data-id="${p.id}" tabindex="0" role="button">
       ${selo}
       ${alr ? `<div class="p-alert ${alr.nivel}">${icon(alr.nivel === 'gold' ? 'check' : 'alert', 'sm')}<span>${esc(alr.texto)}</span></div>` : ''}
