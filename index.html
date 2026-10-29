@@ -1267,7 +1267,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.101.1';
+  const APP_VERSION = '1.101.2';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Julgamento', 'Aguardando empenho', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -4892,8 +4892,8 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     if (!list.length) return `<div class="card empty"><p class="muted">Nenhum pregão encontrado.</p></div>`;
     // raias por status: cada uma é uma fileira que desliza para o lado (PC e celular); encerrados e concluídos num botão só
     const atvAll = list.filter((x) => !C.INATIVOS.includes(x.p.status)), ina = list.filter((x) => C.INATIVOS.includes(x.p.status)).sort(descPrimeiro);
-    const raias = [['Atenção agora', 'Atenção agora', 'atn'], ['Julgamento', 'Julgamento', 'jul'], ['Aguardando empenho', 'Aguardando empenho', 'emp'], ['Venci', 'Venci', 'venci'], ['Enviadas', 'Enviadas', 'env'], ['Analisando', 'Analisando', 'ana'], ['Incompletos', 'Incompletos', 'inc'], ['Outros', 'Outros', '']].map((r) => r.concat([[]]));
-    const gDe = (x) => { const a = alertaPregao(x); if (a && a.lane) return 0; return 1 + (x.p.status === 'Julgamento' ? 0 : x.p.status === 'Aguardando empenho' ? 1 : x.ganho ? 2 : x.p.status === 'Proposta enviada' ? 3 : x.p.status === 'Analisando' ? 4 : x.p.status === 'Falta dados' ? 5 : 6); };
+    const raias = [['Atenção agora', 'Atenção agora', 'atn'], ['Julgamento', 'Julgamento', 'jul'], ['Venci', 'Venci 🏆', 'venci'], ['Enviadas', 'Enviadas', 'env'], ['Analisando', 'Analisando', 'ana'], ['Incompletos', 'Incompletos', 'inc'], ['Outros', 'Outros', '']].map((r) => r.concat([[]]));
+    const gDe = (x) => { const a = alertaPregao(x); if (a && a.lane) return 0; return 1 + ((x.p.status === 'Aguardando empenho' || x.ganho) ? 1 : x.p.status === 'Julgamento' ? 0 : x.p.status === 'Proposta enviada' ? 2 : x.p.status === 'Analisando' ? 3 : x.p.status === 'Falta dados' ? 4 : 5); };
     atvAll.forEach((x) => raias[gDe(x)][3].push(x));
     raias[0][3].sort((a, b) => { const A = alertaPregao(a), B = alertaPregao(b); return (A.rank - B.rank) || (A.t - B.t); });
     raias[1][3].sort((a, b) => (alertaPregao(b) ? 1 : 0) - (alertaPregao(a) ? 1 : 0));   // Julgamento: os perto de ganhar primeiro
