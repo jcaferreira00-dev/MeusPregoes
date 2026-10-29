@@ -1156,6 +1156,13 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
 .ent-it.ok i { background: var(--green); border-color: var(--green); color: #fff; }
 .ent-it span { flex: 1; min-width: 0; font-weight: 600; font-size: 13px; }
 .ent-it small { flex: none; color: var(--muted); font-size: 11.5px; }
+.pq-sec-bt { cursor: pointer; border-radius: 8px; padding: 3px 6px; margin-left: -2px; }
+.pq-sec-bt:hover { background: color-mix(in srgb, var(--muted) 12%, transparent); text-decoration: underline; }
+.lane-head { display: flex; align-items: center; gap: 14px; margin-bottom: 12px; }
+.lane-head .pq-sec { margin: 0; font-size: 15px; }
+.pq-grid.pq-full { grid-auto-rows: auto; }
+.pc-volta { animation: pcVolta 2.2s ease-out; }
+@keyframes pcVolta { 0%, 60% { box-shadow: 0 0 0 4px var(--blue), var(--shadow); } 100% { box-shadow: var(--shadow); } }
 .pq-sec.venci { color: var(--green); } .pq-sec.venci b { background: var(--green); color: #fff; }
 .pq-grid + .pq-sec { margin-top: 12px; }
 .pcard.p-venci, .pcard.p-venci.enviada { border: 3px solid var(--green); background: color-mix(in srgb, var(--green) 9%, var(--card)); box-shadow: 0 0 0 3px color-mix(in srgb, var(--green) 22%, transparent), var(--shadow); }
@@ -1283,7 +1290,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.102.0';
+  const APP_VERSION = '1.103.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Julgamento', 'Aguardando empenho', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -4929,7 +4936,13 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     raias[0][3].sort((a, b) => { const A = alertaPregao(a), B = alertaPregao(b); return (A.rank - B.rank) || (A.t - B.t); });
     raias[1][3].sort((a, b) => (alertaPregao(b) ? 1 : 0) - (alertaPregao(a) ? 1 : 0));   // Julgamento: os perto de ganhar primeiro
     const cols = raias.filter((r) => r[3].length);
-    const html = `<div class="board-nav"><button type="button" data-act="lane-prev" aria-label="Anterior">‹</button><button type="button" data-act="lane-next" aria-label="Próximo">›</button></div><div class="pq-board" style="--nl:${cols.length}">${cols.map(([, t, k, arr]) => `<section class="pq-col"><div class="pq-sec ${k === 'venci' ? 'venci' : k === 'atn' ? 'atn' : ''}"><span>${t}</span><b>${arr.length}</b></div><div class="pq-grid pq-stack">${arr.map(pregaoCard).join('')}</div></section>`).join('')}</div>`;
+    if (UI.lane && !cols.some((r) => r[0] === UI.lane)) UI.lane = null;
+    const lane = UI.lane ? cols.find((r) => r[0] === UI.lane) : null;
+    if (lane) {
+      const [, lt, lk, larr] = lane;
+      return `<div class="lane-head"><button type="button" class="btn sm" data-act="lane-fechar">${icon('back', 'sm')} Todos os grupos</button><div class="pq-sec ${lk === 'venci' ? 'venci' : lk === 'atn' ? 'atn' : ''}"><span>${lt}</span><b>${larr.length}</b></div></div><div class="pq-grid pq-full">${larr.map(pregaoCard).join('')}</div>`;
+    }
+    const html = `<div class="board-nav"><button type="button" data-act="lane-prev" aria-label="Anterior">‹</button><button type="button" data-act="lane-next" aria-label="Próximo">›</button></div><div class="pq-board" style="--nl:${cols.length}">${cols.map(([key, t, k, arr]) => `<section class="pq-col"><div class="pq-sec pq-sec-bt ${k === 'venci' ? 'venci' : k === 'atn' ? 'atn' : ''}" data-act="lane-abrir" data-k="${esc(key)}" role="button" tabindex="0" title="Ver só este grupo na tela toda"><span>${t}</span><b>${arr.length}</b></div><div class="pq-grid pq-stack">${arr.map(pregaoCard).join('')}</div></section>`).join('')}</div>`;
     const chip = (x) => `<button type="button" class="enc-chip${x.p.status === 'Concluído' ? ' conc' : ''}" data-act="abrir-pregao" data-id="${x.p.id}" title="${esc(x.p.orgao)} · ${esc(stTxt(x.p.status))}"><b>Nº ${esc(x.p.numero)}</b><span class="ell">${esc(x.p.orgao)}</span><i>${esc(stTxt(x.p.status))}</i></button>`;
     const fim = ina.length ? `<div class="enc-box"><button type="button" class="btn sm ghost enc-btn${UI.mostrarEnc ? ' on' : ''}" data-act="painel-encerrados" aria-expanded="${UI.mostrarEnc ? 'true' : 'false'}">${icon('archive', 'sm')} Encerrados e concluídos (${ina.length}) <span class="enc-seta">${UI.mostrarEnc ? '▴' : '▾'}</span></button>${UI.mostrarEnc ? `<div class="enc-chips">${ina.map(chip).join('')}</div>` : ''}</div>` : '';
     return html + fim;
@@ -6291,6 +6304,11 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     const t = TABS.find((x) => x.id === UI.tab);
     $('#subt').textContent = UI.tab === 'pregoes' && UI.detailId ? 'Detalhe do pregão' : t.title;
     if (UI.keepScroll) { window.scrollTo(0, y); UI.keepScroll = false; }
+    // voltou do pregão aberto: vai direto para o cartão em que você estava (na tela cheia do grupo ou no quadro) e o destaca
+    if (UI.tab === 'pregoes' && !UI.detailId && UI.lastCard) {
+      const el = main.querySelector('.pcard[data-id="' + UI.lastCard + '"], .enc-chip[data-id="' + UI.lastCard + '"]'); UI.lastCard = null;
+      if (el) { el.scrollIntoView({ block: 'center', inline: 'center', behavior: 'instant' }); el.classList.add('pc-volta'); setTimeout(() => el.classList.remove('pc-volta'), 2200); }
+    }
     updateStatusPill();
   }
   function setTab(v) {
@@ -6466,7 +6484,9 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
       case 'link-externo': e.stopPropagation(); break;   // deixa o link abrir sem abrir o cartão
       case 'novo-pregao': openPregaoForm(); break;
       case 'editar-pregao': openPregaoForm(id); break;
-      case 'abrir-pregao': UI.tab = 'pregoes'; UI.detailId = id; history.pushState({ detail: id }, ''); saveUI(); render(); window.scrollTo(0, 0); break;
+      case 'lane-abrir': UI.lane = t.dataset.k; render(); window.scrollTo(0, 0); break;
+      case 'lane-fechar': { UI.lane = null; UI.lastCard = null; render(); window.scrollTo(0, 0); break; }
+      case 'abrir-pregao': UI.lastCard = id; UI.tab = 'pregoes'; UI.detailId = id; history.pushState({ detail: id }, ''); saveUI(); render(); window.scrollTo(0, 0); break;
       case 'ocultar-painel': e.stopPropagation(); UI.keepScroll = true; store.upsertPregao({ id, ocultoPainel: true }); toast('Tirado do painel. Continua na aba Pregões'); break;
       case 'ir-status': UI.filtro = t.dataset.v; UI.detailId = null; setTab('pregoes'); break;
       case 'lane-prev': case 'lane-next': { const ln = document.querySelector('.pq-board'); if (ln) { const c1 = ln.querySelector('.pq-col'); ln.scrollBy({ left: (a === 'lane-next' ? 1 : -1) * ((c1 ? c1.offsetWidth : ln.clientWidth) + 14), behavior: 'smooth' }); } break; }
