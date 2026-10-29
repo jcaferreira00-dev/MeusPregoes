@@ -632,7 +632,7 @@ input.input[type=datetime-local]::-webkit-date-and-time-value, input.input[type=
   .sheet-wide .side-col > .preview { position: static; margin: 0 -16px 14px; }
   .sheet-wide #lanceSlot { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; align-items: stretch; }
   .sheet-wide #lanceSlot [data-mv] { display: flex; min-width: 0; }
-  .sheet-wide #lanceSlot [data-mv] .field > label { min-height: 2.6em; }
+  .sheet-wide #lanceSlot [data-mv="lance"] .field > label, .sheet-wide #lanceSlot [data-mv="venc"] .field > label { min-height: 2.6em; }
   .sheet-wide #lanceSlot [data-mv] .field { flex: 1; margin-bottom: 0; box-sizing: border-box; }
   .sheet-wide .sheet-body > [data-slot="draft"]:empty { display: none; }
   .sheet-wide .formgrid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0 16px; }
@@ -643,7 +643,6 @@ input.input[type=datetime-local]::-webkit-date-and-time-value, input.input[type=
   .sheet-wide .formgrid #boxEntrega:empty { display: none; }
   .sheet-wide .formgrid:has(#boxEntrega:empty) .field.full:has([name=localEntrega]) { grid-column: span 2; }
   .sheet-wide .field:has([name=localEntrega]) > .hint { display: none; }
-  .sheet-wide .formgrid .field:has([name=marca]), .sheet-wide .formgrid .field:has([name=modelo]) { grid-column: span 2; }
   .sheet-wide .sheet-foot { justify-content: flex-end; padding: 14px 32px calc(var(--safe-b) + 14px); }
   .sheet-wide .sheet-foot .btn { flex: 0 0 220px; }
   .sheet-wide textarea.input { min-height: 90px; }
@@ -1230,7 +1229,7 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.99.4';
+  const APP_VERSION = '1.99.5';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Julgamento', 'Aguardando empenho', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -3976,8 +3975,12 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
       ${field({ label: 'Item que vou comprar *', name: 'descricao', full: true, value: v.descricao, ph: 'ex.: Caixa organizadora plástica 30 L' })}
         ${field({ label: 'Nº do lote', name: 'loteEdital', value: v.loteEdital, ph: 'ex.: 1', hint: 'Vazio = sai só o item' })}
         ${field({ label: 'Nº do item', name: 'itemEdital', value: v.itemEdital, ph: 'ex.: 04', hint: 'Sai “LOTE 01 - ITEM 04” no PDF (1 vira 01 sozinho)' })}
+        <span hidden data-mv-home="marca"></span><div data-mv="marca">
         ${field({ label: 'Marca *', name: 'marca', value: v.marca, ph: 'ex.: Elgin', hint: 'Obrigatória para gerar a proposta' })}
+        </div>
+        <span hidden data-mv-home="modelo"></span><div data-mv="modelo">
         ${field({ label: 'Modelo', name: 'modelo', value: v.modelo, ph: 'ex.: AA-100' })}
+        </div>
         <div class="full desc-pair">
           ${field({ label: 'Exigido no edital (sai no PDF como “Exigido no edital”)', name: 'descEdital', type: 'textarea', rows: 8, value: v.descEdital, ph: 'Cole aqui a descrição do item como está no edital', hint: 'Se ficar vazia, o PDF usa o nome do item.' })}
         <div class="cat-form">
@@ -4024,7 +4027,7 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
       onMount: (form) => {
         // PC: lance final e valor do vencedor ocupam a coluna da esquerda (abaixo do resumo); celular: ficam no lugar de sempre
         { const slot = $('#lanceSlot', form), mq = window.matchMedia('(min-width: 900px)');
-          const coloca = () => { if (!form.isConnected) return; ['lance', 'venc'].forEach((k) => { const w = $('[data-mv="' + k + '"]', form), h = $('[data-mv-home="' + k + '"]', form); if (!w || !h) return; if (mq.matches) slot.appendChild(w); else h.after(w); }); };
+          const coloca = () => { if (!form.isConnected) return; ['lance', 'venc', 'marca', 'modelo'].forEach((k) => { const w = $('[data-mv="' + k + '"]', form), h = $('[data-mv-home="' + k + '"]', form); if (!w || !h) return; if (mq.matches) slot.appendChild(w); else h.after(w); }); };
           coloca(); if (mq.addEventListener) mq.addEventListener('change', coloca); else mq.addListener(coloca); }
         // imagens e descritivo do catálogo dentro do item (a opção da guia Proposta continua existindo)
         const taC = $('[name=catalogoDesc]', form);
