@@ -86,6 +86,8 @@ sempre, acrescente aqui (seção certa) no mesmo commit da tarefa.
   preço", dizer isso (não é o mesmo que "não compensa"), para o João poder reavaliar. Assim o João vê todos os
   itens na ordem do edital e não há dúvida sobre o que foi incluído ou excluído.
 
+- Pregão que compensa mas ficou com item de interesse SEM cotação (não consegui achar preço): status "Falta dados" (aparece em "Incompletos" no app), com "FALTA COTAR: ..." no início do `obs` (decisão de 29/10/2026). Item cortado por "não compensa" ou "Desisti" não conta como pendência; só o que o João quer e eu não consegui cotar. Pregão sem nenhuma pendência fica "Analisando".
+
 ### Checklist de regras do edital que mudam a proposta (conferir SEMPRE e colocar no JSON)
 | O que procurar no edital | Onde vai no JSON |
 |---|---|
