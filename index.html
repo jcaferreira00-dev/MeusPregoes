@@ -633,23 +633,22 @@ input.input[type=datetime-local]::-webkit-date-and-time-value, input.input[type=
 .dn-row:hover { background: var(--blue-soft); } .dn-row.sel { border-color: var(--blue); background: var(--blue-soft); font-weight: 700; }
 .dtbl .nw { white-space: nowrap; font-size: 12px; color: var(--muted); }
 .pq-board, .pq-stack, .ag-lines, .pend-lista, .tbl-scroll, .st-strip { scroll-behavior: smooth; }
-@media (max-width: 759px) { .pq-board { scroll-snap-type: x mandatory; } }
 @media (prefers-reduced-motion: reduce) { .pq-board, .pq-stack, .ag-lines, .pend-lista, .tbl-scroll, .st-strip { scroll-behavior: auto; } .dn-seg, .dn-row { transition: none; } }
 .board-nav { display: none; justify-content: flex-end; gap: 6px; margin: -2px 2px 6px; }
 .board-nav button { width: 34px; height: 28px; border-radius: 8px; border: 1px solid var(--line); background: var(--card); color: var(--ink); font-size: 18px; line-height: 1; cursor: pointer; }
 .board-nav button:hover { background: var(--blue-soft); }
 @media (hover: hover) and (min-width: 760px) { .board-nav { display: flex; } }
 /* quadro: uma coluna por status; desliza para o lado e cada coluna rola por dentro (a página quase não rola para baixo) */
-.pq-board { display: flex; gap: 14px; overflow-x: auto; overflow-y: hidden; scroll-snap-type: x proximity; overscroll-behavior-x: contain; -webkit-overflow-scrolling: touch; scrollbar-width: thin; --n: 1.12; height: calc(100vh - 300px); height: calc(100dvh - 300px); min-height: 380px; padding: 2px 2px 8px; align-items: stretch; }
-.pq-col { flex: 0 0 calc((100% - (var(--n) - 1) * 14px) / var(--n)); scroll-snap-align: start; min-width: 0; min-height: 0; display: flex; flex-direction: column; background: color-mix(in srgb, var(--muted) 6%, transparent); border-radius: 14px; padding: 8px 8px 0; }
+.pq-board { display: flex; gap: 14px; overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; scroll-padding: 0 2px; overscroll-behavior-x: contain; -webkit-overflow-scrolling: touch; scrollbar-width: thin; --n: 1; height: calc(100vh - 300px); height: calc(100dvh - 300px); min-height: 380px; padding: 2px 2px 8px; align-items: stretch; }
+.pq-col { flex: 0 0 calc((100% - (var(--n) - 1) * 14px) / var(--n)); scroll-snap-align: start; scroll-snap-stop: always; min-width: 0; min-height: 0; display: flex; flex-direction: column; background: color-mix(in srgb, var(--muted) 6%, transparent); border-radius: 14px; padding: 8px 8px 0; }
 .pq-col > .pq-sec { margin: 2px 4px 10px; flex: none; }
 .pq-grid.pq-stack { display: flex; flex-direction: column; grid-template-columns: none; grid-auto-rows: auto; gap: 12px; overflow-y: auto; overscroll-behavior-y: contain; min-height: 0; flex: 1; padding: 2px 2px 10px; scrollbar-width: thin; }
 .pq-stack > .pcard { flex: 0 0 auto; min-width: 0; }
-@media (min-width: 600px) { .pq-board { --n: 2.2; } }
-@media (min-width: 900px) { .pq-board { --n: 3.2; } }
-@media (min-width: 1300px) { .pq-board { --n: 4.2; } }
-@media (min-width: 1700px) { .pq-board { --n: 5.2; } }
-@media (min-width: 2100px) { .pq-board { --n: 6.2; } }
+@media (min-width: 600px) { .pq-board { --n: 2; } }
+@media (min-width: 900px) { .pq-board { --n: 3; } }
+@media (min-width: 1300px) { .pq-board { --n: 4; } }
+@media (min-width: 1700px) { .pq-board { --n: 5; } }
+@media (min-width: 2100px) { .pq-board { --n: 6; } }
 .st-strip { display: flex; gap: 10px; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; padding: 2px; }
 .st-strip::-webkit-scrollbar { display: none; }
 .st-chip { flex: 1 0 auto; min-width: 112px; display: flex; align-items: baseline; gap: 8px; padding: 10px 14px; border-radius: 12px; border: 1px solid var(--line); border-left: 4px solid var(--sc); background: var(--card); font: inherit; color: var(--ink); cursor: pointer; text-align: left; }
@@ -1197,7 +1196,7 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.98.0';
+  const APP_VERSION = '1.98.1';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Julgamento', 'Aguardando empenho', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -6187,7 +6186,7 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
       case 'abrir-pregao': UI.tab = 'pregoes'; UI.detailId = id; history.pushState({ detail: id }, ''); saveUI(); render(); window.scrollTo(0, 0); break;
       case 'ocultar-painel': e.stopPropagation(); UI.keepScroll = true; store.upsertPregao({ id, ocultoPainel: true }); toast('Tirado do painel. Continua na aba Pregões'); break;
       case 'ir-status': UI.filtro = t.dataset.v; UI.detailId = null; setTab('pregoes'); break;
-      case 'lane-prev': case 'lane-next': { const ln = document.querySelector('.pq-board'); if (ln) ln.scrollBy({ left: (a === 'lane-next' ? 1 : -1) * ln.clientWidth * 0.9, behavior: 'smooth' }); break; }
+      case 'lane-prev': case 'lane-next': { const ln = document.querySelector('.pq-board'); if (ln) { const c1 = ln.querySelector('.pq-col'); ln.scrollBy({ left: (a === 'lane-next' ? 1 : -1) * ((c1 ? c1.offsetWidth : ln.clientWidth) + 14), behavior: 'smooth' }); } break; }
       case 'mostrar-painel': UI.keepScroll = true; store.upsertPregao({ id, ocultoPainel: false }); toast('De volta ao painel'); break;
       case 'dash-periodo': UI.dash.periodo = t.dataset.v; UI.dash.mes = null; UI.keepScroll = true; render(); break;
       case 'dash-filtro': { const k = t.dataset.k, v = t.dataset.v; UI.dash[k] = UI.dash[k] === v ? null : v; UI.keepScroll = true; render(); break; }

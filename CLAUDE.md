@@ -2,7 +2,7 @@
 
 > A guia **Itens** (só PC) mostra os itens em blocos simétricos por pregão: nº do edital, nome abreviado, qtd, custo, lance, lance total, teto, lucro, estrelas e botão de compra. A guia Procedimento foi removida (o passo a passo fica aqui neste arquivo).
 > No celular o app é fixo (sem rolagem lateral) e só mostra o básico.
-> A guia Itens tem seletor "Todos os pregões" para filtrar por pregão. O Painel é um dashboard (tela toda no PC): números do topo, contadores por status (clicar abre a guia Pregões filtrada), rosca interativa no topo do dashboard (responde aos filtros e a cliques), funil, evolução, margem, órgãos e uma tabela única de pregões; depois pendências, entregas e certidões. A guia Pregões é um quadro de colunas por status que desliza para o lado (PC e celular) e rola por dentro de cada coluna; encerrados e concluídos ficam num botão só. Rolagem sempre suave.
+> A guia Itens tem seletor "Todos os pregões" para filtrar por pregão. O Painel é um dashboard (tela toda no PC): números do topo, contadores por status (clicar abre a guia Pregões filtrada), rosca interativa no topo do dashboard (responde aos filtros e a cliques), funil, evolução, margem, órgãos e uma tabela única de pregões; depois pendências, entregas e certidões. A guia Pregões é um quadro de colunas por status: no celular uma coluna por vez, sem mostrar um pedaço da próxima, e puxar para a esquerda/direita troca de coluna (encaixa uma por vez); no PC as colunas cabem exatas na tela (3 a 6) e cada uma rola por dentro; encerrados e concluídos ficam num botão só. Rolagem sempre suave.
 
 Este arquivo é a base de regras fixas. Toda vez que for mexer no app, analisar edital,
 criar JSON de importação ou buscar editais, leia este arquivo primeiro e siga o que está aqui.
