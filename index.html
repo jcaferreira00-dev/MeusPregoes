@@ -647,8 +647,10 @@ input.input[type=datetime-local]::-webkit-date-and-time-value, input.input[type=
   .sheet-wide .sheet-foot .btn { flex: 0 0 220px; }
   .sheet-wide textarea.input { min-height: 90px; }
   .sheet-wide .desc-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 0 20px; align-items: start; }
-  .sheet-wide .desc-pair > .field { display: flex; flex-direction: column; }
-  .sheet-wide .desc-pair > .field > textarea.input { flex: none; height: 260px; min-height: 260px; }
+  .sheet-wide .desc-left > .field { display: flex; flex-direction: column; }
+  .sheet-wide #uqSlot { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 16px; }
+  .sheet-wide #uqSlot [data-mv] { min-width: 0; }
+  .sheet-wide .desc-left > .field > textarea.input { flex: none; height: 260px; min-height: 260px; }
   .sheet-wide .cat-form { display: flex; flex-direction: column; }
   .sheet-wide .cat-form > textarea.input { margin-top: 5px; flex: none; height: 260px; min-height: 260px; }
 }
@@ -1234,7 +1236,7 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.99.6';
+  const APP_VERSION = '1.99.7';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Julgamento', 'Aguardando empenho', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -3987,18 +3989,23 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
         ${field({ label: 'Modelo', name: 'modelo', value: v.modelo, ph: 'ex.: AA-100' })}
         </div>
         <div class="full desc-pair">
+          <div class="desc-left">
           ${field({ label: 'Exigido no edital (sai no PDF como “Exigido no edital”)', name: 'descEdital', type: 'textarea', rows: 8, value: v.descEdital, ph: 'Cole aqui a descrição do item como está no edital', hint: 'Se ficar vazia, o PDF usa o nome do item.' })}
+          <div id="uqSlot"></div></div>
         <div class="cat-form">
           <label class="lbl">Descritivo do item ofertado * <span class="tiny muted" style="font-weight:600">· é o mesmo do catálogo (também dá para editar lá)</span></label>
           <textarea class="input" name="catalogoDesc" rows="5" spellcheck="true" lang="pt-BR" autocorrect="on" placeholder="Descrição pormenorizada do produto (características técnicas, medidas, material, composição, normas, garantia…)">${esc(v.catalogoDesc)}</textarea>
+          <div class="cat-tits"><div class="cat-tit-add"><input class="input" data-ftit-in placeholder="Título (ex.: Marca, Modelo, Voltagem)" autocapitalize="characters" enterkeyhint="done"><button type="button" class="btn sm primary" data-ftit-add title="Incluir título na descrição" aria-label="Incluir título">${icon('plus', 'sm')}</button></div>
+            <div class="cat-tit-sug" data-ftit-sug></div></div>
           <div class="cat-img-row">${id ? `<label class="btn sm" style="cursor:pointer">${icon('image', 'sm')} Incluir imagem<input type="file" accept="image/png,image/jpeg,image/webp" multiple data-foto-form="${esc(id)}" class="sr-only" style="position:absolute;width:1px;height:1px;opacity:0;overflow:hidden"></label>` : '<span class="tiny muted">Salve o item uma vez para poder incluir imagens.</span>'}${id ? `<div class="cat-thumbs" data-cat-thumbs="${esc(id)}"></div>` : ''}</div>
-          <div class="cat-tits"><div class="cat-tit-add"><input class="input" list="ftitList" data-ftit-in placeholder="Título (ex.: Marca, Modelo, Voltagem)" autocapitalize="characters" enterkeyhint="done"><button type="button" class="btn sm primary" data-ftit-add title="Incluir título na descrição" aria-label="Incluir título">${icon('plus', 'sm')}</button></div>
-            <div class="cat-tit-sug">${catTitulosOrdem().slice(0, 8).map((t) => `<button type="button" class="chip" data-ftit="${esc(t)}">+ ${esc(t)}</button>`).join('')}</div></div>
-          <datalist id="ftitList">${catTitulosOrdem().map((t) => `<option value="${esc(t)}">`).join('')}</datalist>
+                  </div>
         </div>
-        </div>
+        <span hidden data-mv-home="un"></span><div data-mv="un">
         ${field({ label: 'Unidade', name: 'unidade', value: v.unidade, ph: 'Un, Cx, Resma…' })}
+        </div>
+        <span hidden data-mv-home="qt"></span><div data-mv="qt">
         ${field({ label: 'Quantidade *', name: 'qtd', value: v.qtd, inputmode: 'decimal' })}
+        </div>
         ${field({ label: 'Custo unit. (R$) *', name: 'custo', value: v.custo, inputmode: 'decimal', hint: 'O que eu vou pagar' })}
         ${field({ label: 'Frete do fornecedor (R$, total do item)', name: 'frete', value: v.frete, inputmode: 'decimal' })}
         ${field({ label: 'Valor unit. do edital (teto)', name: 'teto', value: v.teto, inputmode: 'decimal', hint: 'Máximo que o órgão aceita', full: true })}
@@ -4030,8 +4037,8 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
       key: 'item:' + (id || 'novo'), title: id ? 'Editar item' : 'Novo item', body, values: v,
       onMount: (form) => {
         // PC: lance final e valor do vencedor ocupam a coluna da esquerda (abaixo do resumo); celular: ficam no lugar de sempre
-        { const slot = $('#lanceSlot', form), mq = window.matchMedia('(min-width: 900px)');
-          const coloca = () => { if (!form.isConnected) return; ['lance', 'venc', 'marca', 'modelo'].forEach((k) => { const w = $('[data-mv="' + k + '"]', form), h = $('[data-mv-home="' + k + '"]', form); if (!w || !h) return; if (mq.matches) slot.appendChild(w); else h.after(w); }); };
+        { const slot = $('#lanceSlot', form), uq = $('#uqSlot', form), mq = window.matchMedia('(min-width: 900px)');
+          const coloca = () => { if (!form.isConnected) return; ['lance', 'venc', 'marca', 'modelo', 'un', 'qt'].forEach((k) => { const w = $('[data-mv="' + k + '"]', form), h = $('[data-mv-home="' + k + '"]', form); if (!w || !h) return; if (mq.matches) (k === 'un' || k === 'qt' ? uq : slot).appendChild(w); else h.after(w); }); };
           coloca(); if (mq.addEventListener) mq.addEventListener('change', coloca); else mq.addListener(coloca); }
         // imagens e descritivo do catálogo dentro do item (a opção da guia Proposta continua existindo)
         const taC = $('[name=catalogoDesc]', form);
@@ -4043,6 +4050,15 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
           taC.focus(); taC.setSelectionRange(taC.value.length, taC.value.length); disp();
           const u = catTitUso(); u[t] = (u[t] || 0) + 1; store.setConfigPath('catalogoTitulos', u, { silent: true });
         };
+        // sugestões de título: só 3 de início (Marca, Modelo, Dimensões); ao digitar, aparecem as que combinam
+        const inT = $('[data-ftit-in]', form), boxS = $('[data-ftit-sug]', form);
+        const pintaSug = () => {
+          const ja = new Set(String(taC.value || '').split('\n').map((l) => (/^\s*([^:\n]{1,40}):/.exec(l) || [])[1]).filter(Boolean).map(titNorm)), q = titNorm(inT.value);
+          const todos = catTitulosOrdem().filter((t) => !ja.has(t));
+          const lista = q ? todos.filter((t) => t.startsWith(q)).concat(todos.filter((t) => !t.startsWith(q) && t.includes(q))).filter((t) => t !== q).slice(0, 4) : ['MARCA', 'MODELO', 'DIMENSÕES'].filter((t) => !ja.has(t));
+          boxS.innerHTML = lista.map((t) => `<button type="button" class="chip" data-ftit="${esc(t)}">+ ${esc(t)}</button>`).join('');
+        };
+        inT.addEventListener('input', pintaSug); taC.addEventListener('input', pintaSug); pintaSug();
         taC.addEventListener('change', () => { const nv = C.capitalizarTitulos(taC.value); if (nv !== taC.value) { taC.value = nv; disp(); } });
         form.addEventListener('click', (e) => {
           const ch = e.target.closest('[data-ftit]'); if (ch) { addTit(ch.dataset.ftit); return; }
