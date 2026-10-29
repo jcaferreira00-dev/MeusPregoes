@@ -619,6 +619,44 @@ input.input[type=datetime-local]::-webkit-date-and-time-value, input.input[type=
 .fp-row { display: flex; gap: 8px; align-items: stretch; } .fp-row .search { flex: 1; min-width: 0; }
 .fp-row select.fp-sel { flex: 0 0 auto; width: min(420px, 50%); min-width: 0; text-overflow: ellipsis; appearance: none; -webkit-appearance: none; padding-right: 40px; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='%23667489' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 18px center; background-size: 12px 8px; }
 @media (max-width: 600px) { .fp-row { flex-direction: column; } .fp-row select.fp-sel { width: 100%; } }
+/* ---------- Pregões em raias deslizantes e Painel em linhas (v1.98) ---------- */
+.board-nav { display: none; justify-content: flex-end; gap: 6px; margin: -2px 2px 6px; }
+.board-nav button { width: 34px; height: 28px; border-radius: 8px; border: 1px solid var(--line); background: var(--card); color: var(--ink); font-size: 18px; line-height: 1; cursor: pointer; }
+.board-nav button:hover { background: var(--blue-soft); }
+@media (hover: hover) and (min-width: 760px) { .board-nav { display: flex; } }
+/* quadro: uma coluna por status; desliza para o lado e cada coluna rola por dentro (a página quase não rola para baixo) */
+.pq-board { display: flex; gap: 14px; overflow-x: auto; overflow-y: hidden; scroll-snap-type: x proximity; overscroll-behavior-x: contain; -webkit-overflow-scrolling: touch; scrollbar-width: thin; --n: 1.12; height: calc(100vh - 300px); height: calc(100dvh - 300px); min-height: 380px; padding: 2px 2px 8px; align-items: stretch; }
+.pq-col { flex: 0 0 calc((100% - (var(--n) - 1) * 14px) / var(--n)); scroll-snap-align: start; min-width: 0; min-height: 0; display: flex; flex-direction: column; background: color-mix(in srgb, var(--muted) 6%, transparent); border-radius: 14px; padding: 8px 8px 0; }
+.pq-col > .pq-sec { margin: 2px 4px 10px; flex: none; }
+.pq-grid.pq-stack { display: flex; flex-direction: column; grid-template-columns: none; grid-auto-rows: auto; gap: 12px; overflow-y: auto; overscroll-behavior-y: contain; min-height: 0; flex: 1; padding: 2px 2px 10px; scrollbar-width: thin; }
+.pq-stack > .pcard { flex: 0 0 auto; min-width: 0; }
+@media (min-width: 600px) { .pq-board { --n: 2.2; } }
+@media (min-width: 900px) { .pq-board { --n: 3.2; } }
+@media (min-width: 1300px) { .pq-board { --n: 4.2; } }
+@media (min-width: 1700px) { .pq-board { --n: 5.2; } }
+@media (min-width: 2100px) { .pq-board { --n: 6.2; } }
+.st-strip { display: flex; gap: 10px; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; padding: 2px; }
+.st-strip::-webkit-scrollbar { display: none; }
+.st-chip { flex: 1 0 auto; min-width: 112px; display: flex; align-items: baseline; gap: 8px; padding: 10px 14px; border-radius: 12px; border: 1px solid var(--line); border-left: 4px solid var(--sc); background: var(--card); font: inherit; color: var(--ink); cursor: pointer; text-align: left; }
+.st-chip b { font-size: 22px; font-variant-numeric: tabular-nums; color: var(--sc); } .st-chip span { font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+.st-chip.zero { opacity: .55; } .st-chip:hover { background: color-mix(in srgb, var(--sc) 8%, var(--card)); }
+.pend-lista { max-height: 340px; overflow-y: auto; overscroll-behavior: contain; }
+.ag-lines { max-height: 420px; overflow-y: auto; overscroll-behavior: contain; }
+.ag-ln { display: grid; grid-template-columns: 70px 92px minmax(0, 1fr) 96px 104px 84px; gap: 10px; align-items: center; padding: 8px 10px; border-bottom: 1px solid var(--line); border-left: 4px solid transparent; font-size: 13px; }
+.ag-lines .ag-ln { cursor: pointer; border-left-color: var(--sc); } .ag-lines .ag-ln:hover { background: color-mix(in srgb, var(--sc) 7%, var(--card)); }
+.ag-lines .ag-ln.alerta { background: color-mix(in srgb, #d62d20 6%, var(--card)); }
+.ag-head { position: sticky; top: 0; z-index: 1; background: var(--card); font-size: 10.5px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); border-left-color: transparent; }
+.ag-ln .r { text-align: right; }
+.ag-d b { font-size: 16px; } .ag-d small { display: block; color: var(--muted); font-size: 10.5px; }
+.ag-n { font-weight: 700; white-space: nowrap; } .ag-o { min-width: 0; font-weight: 800; text-transform: uppercase; } .ag-o .ell { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .ag-n2 { display: none; font-weight: 600; text-transform: none; color: var(--muted); }
+.ag-s { justify-self: start; font-size: 10.5px; font-weight: 800; padding: 2px 9px; border-radius: 6px; color: #fff; background: var(--sc); white-space: nowrap; }
+.ag-v { text-align: right; font-variant-numeric: tabular-nums; } .ag-c { text-align: right; font-size: 12px; color: var(--muted); white-space: nowrap; } .ag-c.hoje { color: var(--red); font-weight: 800; } .ag-c.amanha { color: var(--amber); font-weight: 800; }
+@media (max-width: 760px) {
+  .ag-ln { grid-template-columns: 48px minmax(0, 1fr) auto; gap: 8px; padding: 8px 6px; }
+  .ag-ln > .ag-n, .ag-ln > .ag-c, .ag-ln > .ag-v, .ag-head > :nth-child(2), .ag-head > :nth-child(5), .ag-head > :nth-child(6) { display: none; }
+  .ag-n2 { display: block; font-size: 11px; }
+  .ag-lines { max-height: 56vh; }
+}
 .falta-lista { display: grid; gap: 6px; margin-top: 8px; }
 .falta-it { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 6px 10px; border-radius: 10px; background: color-mix(in srgb, var(--card) 70%, transparent); font-weight: 600; }
 .falta-it .btn { font-weight: 700; }
@@ -4255,6 +4293,12 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
       <button type="button" class="ag-x" data-act="ocultar-painel" data-id="${p.id}" title="Tirar do painel (não exclui o pregão)" aria-label="Tirar do painel">${icon('x', 'sm')}</button>
     </article>`;
   }
+  // faixa de contagem por status (clicar leva à guia Pregões já filtrada)
+  function painelStatusStrip(R) {
+    const vis = [...R.pMap.values()];
+    const L = [['Julgamento', 'Julgamento'], ['Aguardando empenho', 'Empenho'], ['Proposta enviada', 'Enviadas'], ['Analisando', 'Analisando'], ['Falta dados', 'Incompletos'], ['Faturado', 'Faturados']];
+    return `<div class="st-strip" role="group" aria-label="Pregões por status">${L.map(([s, t]) => { const n = vis.filter((x) => x.p.status === s).length; return `<button type="button" class="st-chip${n ? '' : ' zero'}" style="--sc:${COR_STATUS[s] || '#2e75b6'}" data-act="ir-status" data-v="${esc(s)}"><b>${n}</b><span>${t}</span></button>`; }).join('')}</div>`;
+  }
   function painelPregoesHtml(R) {
     const todos = [...R.pMap.values()];
     const vis = todos.filter((x) => !painelOculto(x.p)).sort((a, b) => (rankStatus(a.p.status) - rankStatus(b.p.status)) || ordemPainel(a, b));
@@ -4271,13 +4315,28 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
       const manual = painelOculto(x.p) === 'manual';
       return `<div class="strow"><div><b class="org-up">${esc(x.p.orgao)}</b><div class="tiny muted">Nº ${esc(x.p.numero)} · ${manual ? 'tirado do painel por você' : 'prazo já passou'}</div></div>${manual ? `<button class="btn sm" data-act="mostrar-painel" data-id="${x.p.id}">Voltar ao painel</button>` : `<button class="btn sm" data-act="abrir-pregao" data-id="${x.p.id}">Abrir</button>`}</div>`;
     }).join('');
-    // agenda: Julgamento e Aguardando empenho no topo; depois pela data (hoje, próximos dias, sem data, já passou)
-    // agenda por categoria (status); dentro de cada uma, pela data (próximas primeiro)
-    const grupos = [['Julgamento', [], 'disp'], ['Aguardando empenho', [], 'emp'], ['Venci (faturados)', [], 'gan'], ['Enviadas', [], 'env'], ['Analisando', [], 'ana'], ['Incompletos', [], 'inc'], ['Outros', [], '']];
-    const gDe = (st) => ({ 'Julgamento': 0, 'Aguardando empenho': 1, 'Ganhou': 2, 'Faturado': 2, 'Proposta enviada': 3, 'Analisando': 4, 'Falta dados': 5 })[st];
-    ativosV.slice().sort(ordemPainel).forEach((x) => { const g = (x.p.status === 'Julgamento' || x.p.status === 'Aguardando empenho') ? gDe(x.p.status) : x.ganho ? 2 : gDe(x.p.status); grupos[g == null ? 6 : g][1].push(x); });
-    const agenda = grupos.filter((g) => g[1].length).map(([t, arr, k]) => `<div class="ag-hd ${k}">${t}<span>${arr.length}</span></div><div class="ag-list ag-${k}">${arr.map(agendaRow).join('')}</div>`).join('');
-    return `<div class="card ag-card"><h3>${icon('calendar', 'sm')}<span class="grow">Agenda dos pregões (${ativosV.length})</span>${oc.length ? `<button class="btn sm" data-act="painel-ocultos">${icon('eye', 'sm')} ${UI.mostrarOcultos ? 'Esconder' : 'Ver'} ocultos (${oc.length})</button>` : ''}<button class="btn sm" data-act="tab" data-v="pregoes">Ver na guia Pregões</button></h3>
+    // agenda em linhas compactas (sem cards): data · pregão · órgão · status · valor · prazo; clicar abre o pregão
+    const linha = (x) => {
+      const p = x.p, cor = COR_STATUS[p.status] || '#2e75b6';
+      const ref = p.sessao || p.prazoPropostas || '', dt = ref ? new Date(ref) : null, ok = dt && isFinite(dt.getTime());
+      const hora = (/T(\d{2}:\d{2})/.exec(ref) || [])[1];
+      const d = diasDesde(ref);
+      const cd = d === null ? '' : d === 0 ? 'Hoje' : d === -1 ? 'Amanhã' : d < 0 ? 'em ' + plural(-d, 'dia', 'dias') : 'há ' + plural(d, 'dia', 'dias');
+      const pz = prazoInfo(p), enviada = p.status === 'Proposta enviada';
+      const ativo = !C.INATIVOS.includes(p.status) && p.status !== 'Faturado' && p.status !== 'Aguardando empenho';
+      const alerta = (!enviada && pz && (pz.nivel === 'bad' || pz.nivel === 'warn')) || (ativo && (d === 0 || d === -1)) || p.status === 'Falta dados';
+      const v = valorPainel(x);
+      return `<div class="ag-ln${alerta ? ' alerta' : ''}" style="--sc:${cor}" data-act="abrir-pregao" data-id="${p.id}" tabindex="0" role="button" aria-label="Abrir pregão ${esc(p.numero)} ${esc(p.orgao)}">
+        <span class="ag-d">${ok ? `<b>${String(dt.getDate()).padStart(2, '0')}</b> ${MESES3[dt.getMonth()]}${hora ? `<small>${hora}</small>` : ''}` : '<small>sem data</small>'}</span>
+        <span class="ag-n">Nº ${esc(p.numero)}</span>
+        <span class="ag-o"><span class="ell" title="${esc(p.orgao)}">${esc(p.orgao)}</span><small class="ag-n2">Nº ${esc(p.numero)}${v != null ? ' · ' + C.brl0(v) : ''}${cd ? ' · ' + cd : ''}</small></span>
+        <span class="ag-s">${esc(stTxt(p.status))}</span>
+        <b class="ag-v">${v != null ? C.brl0(v) : '—'}</b>
+        <span class="ag-c${d === 0 ? ' hoje' : d === -1 ? ' amanha' : ''}">${cd}</span></div>`;
+    };
+    const linhas = ativosV.slice().sort((x, y) => (rankStatus(x.p.status) - rankStatus(y.p.status)) || ordemPainel(x, y)).map(linha).join('');
+    const agenda = `<div class="ag-head ag-ln"><span>Data</span><span>Pregão</span><span>Órgão</span><span>Status</span><span class="r">Valor</span><span class="r">Prazo</span></div><div class="ag-lines">${linhas}</div>`;
+    return `<div class="card ag-card"><h3>${icon('calendar', 'sm')}<span class="grow">Pregões em andamento (${ativosV.length})</span>${oc.length ? `<button class="btn sm" data-act="painel-ocultos">${icon('eye', 'sm')} ${UI.mostrarOcultos ? 'Esconder' : 'Ver'} ocultos (${oc.length})</button>` : ''}<button class="btn sm" data-act="tab" data-v="pregoes">Ver na guia Pregões</button></h3>
       ${ativosV.length ? agenda : (enc.length || concl.length ? '' : `<p class="muted small">Nenhum pregão no painel agora. Os cadastrados continuam na aba Pregões.</p>`)}
       ${conclHtml}
       ${encHtml}
@@ -4314,7 +4373,7 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
     L.sort((a, b) => peso[a[0]] - peso[b[0]]);
     const rows = L.map((l) => `<div class="posrow ${l[0]}" ${l[3]} tabindex="0" role="button"><i class="posdot"></i><div class="grow"><b>${esc(l[1])}</b><span class="tiny muted">${esc(l[2])}</span></div><span class="pend-go">›</span></div>`).join('');
     return `<div class="card"><h3>${icon('alert', 'sm')}<span class="grow">Pendências</span>${L.length ? `<span class="prazo ${L.some((l) => l[0] === 'bad') ? 'bad' : L.some((l) => l[0] === 'warn') ? 'warn' : 'good'}">${L.length}</span>` : ''}</h3>
-      ${L.length ? rows : `<div class="alert ok">${icon('check', 'sm')}<span>Nada pendente agora.</span></div>`}</div>`;
+      ${L.length ? `<div class="pend-lista">${rows}</div>` : `<div class="alert ok">${icon('check', 'sm')}<span>Nada pendente agora.</span></div>`}</div>`;
   }
 
   function painelEntregasHtml(R) {
@@ -4593,11 +4652,12 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
         <div class="kpi" style="--c:${m.saldoAgora < 0 ? '#c0392b' : '#2f7d3a'}"><div class="l">Saldo disponível</div><div class="v">${C.brl0(m.saldoAgora)}</div><div class="s">se ganhar tudo: ${C.brl0(m.saldoSeGanhar)}</div></div>
         <div class="kpi" style="--c:#b7791f"><div class="l">Lucro previsto</div><div class="v">${C.brl0(R.lucroPrevisto)}</div><div class="s">${(() => { let g = 0, d = 0; for (const x of R.pMap.values()) { if (C.INATIVOS.includes(x.p.status)) continue; if (x.ganho) g += x.lucro; else d += x.lucro; } return 'ganho ' + C.brl0(g) + ' · em disputa ' + C.brl0(d); })()}</div></div>
       </div>
+      ${painelStatusStrip(R)}
+      ${painelDashboardHtml(R)}
       <div class="pn-main">
         <div class="pn-col pn-l">${painelPregoesHtml(R)}</div>
         <div class="pn-col pn-r">${painelPendenciasHtml(R)}${painelEntregasHtml(R) || `<div class="card m-hide"><h3>${icon('calendar', 'sm')}<span class="grow">Entregas e recebimentos</span></h3><p class="muted small">Nenhuma entrega ou recebimento pendente.</p></div>`}${painelCertidoesHtml(R)}</div>
       </div>
-      ${painelDashboardHtml(R)}
       <div class="pn-low">
       ${painelResultadosHtml(R)}
       ${painelVencedorHtml(R, st)}
@@ -4675,22 +4735,18 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
     // mesma ordem do Painel: por status e, dentro de cada status, a data mais próxima primeiro
     list.sort((a, b) => (rankStatus(a.p.status) - rankStatus(b.p.status)) || ordemPainel(a, b));
     if (!list.length) return `<div class="card empty"><p class="muted">Nenhum pregão encontrado.</p></div>`;
-    // ativos em blocos quadrados (grade simétrica); encerrados continuam em linha cinza no fim
+    // raias por status: cada uma é uma fileira que desliza para o lado (PC e celular); encerrados e concluídos num botão só
     const atvAll = list.filter((x) => !C.INATIVOS.includes(x.p.status)), ina = list.filter((x) => C.INATIVOS.includes(x.p.status)).sort(descPrimeiro);
-    const venc = atvAll.filter((x) => x.ganho), atv = atvAll.filter((x) => !x.ganho);
-    const titulo = (ic, t, n, cls) => `<div class="pq-sec ${cls || ''}">${icon(ic, 'sm')}<span>${t}</span><b>${n}</b></div>`;
-    return (venc.length ? titulo('acomp', 'Venci', venc.length, 'venci') + `<div class="pq-grid">${venc.map(pregaoCard).join('')}</div>` : '')
-      + (atv.length ? (venc.length ? titulo('pregoes', 'Em andamento', atv.length) : '') + `<div class="pq-grid">${atv.map(pregaoCard).join('')}</div>` : '')
-      + (ina.length ? `<div class="list" style="margin-top:${atvAll.length ? 14 : 0}px">${ina.map(pregaoCard).join('')}</div>` : '');
+    const raias = [['Julgamento', 'Julgamento', 'jul'], ['Aguardando empenho', 'Aguardando empenho', 'emp'], ['Venci', 'Venci', 'venci'], ['Enviadas', 'Enviadas', 'env'], ['Analisando', 'Analisando', 'ana'], ['Incompletos', 'Incompletos', 'inc'], ['Outros', 'Outros', '']].map((r) => r.concat([[]]));
+    const gDe = (x) => (x.p.status === 'Julgamento' ? 0 : x.p.status === 'Aguardando empenho' ? 1 : x.ganho ? 2 : x.p.status === 'Proposta enviada' ? 3 : x.p.status === 'Analisando' ? 4 : x.p.status === 'Falta dados' ? 5 : 6);
+    atvAll.forEach((x) => raias[gDe(x)][3].push(x));
+    const cols = raias.filter((r) => r[3].length);
+    const html = `<div class="board-nav"><button type="button" data-act="lane-prev" aria-label="Anterior">‹</button><button type="button" data-act="lane-next" aria-label="Próximo">›</button></div><div class="pq-board">${cols.map(([, t, k, arr]) => `<section class="pq-col"><div class="pq-sec ${k === 'venci' ? 'venci' : ''}"><span>${t}</span><b>${arr.length}</b></div><div class="pq-grid pq-stack">${arr.map(pregaoCard).join('')}</div></section>`).join('')}</div>`;
+    const chip = (x) => `<button type="button" class="enc-chip${x.p.status === 'Concluído' ? ' conc' : ''}" data-act="abrir-pregao" data-id="${x.p.id}" title="${esc(x.p.orgao)} · ${esc(stTxt(x.p.status))}"><b>Nº ${esc(x.p.numero)}</b><span class="ell">${esc(x.p.orgao)}</span><i>${esc(stTxt(x.p.status))}</i></button>`;
+    const fim = ina.length ? `<div class="enc-box"><button type="button" class="btn sm ghost enc-btn${UI.mostrarEnc ? ' on' : ''}" data-act="painel-encerrados" aria-expanded="${UI.mostrarEnc ? 'true' : 'false'}">${icon('archive', 'sm')} Encerrados e concluídos (${ina.length}) <span class="enc-seta">${UI.mostrarEnc ? '▴' : '▾'}</span></button>${UI.mostrarEnc ? `<div class="enc-chips">${ina.map(chip).join('')}</div>` : ''}</div>` : '';
+    return html + fim;
   }
 
-  // seletor "filtrar por pregão" (guias Pregões e Itens)
-  function fpregSel(key) {
-    const R = C.computeAll(store.get());
-    const ps = [...R.pMap.values()].sort((a, b) => (rankStatus(a.p.status) - rankStatus(b.p.status)) || ordemPainel(a, b));
-    if (UI[key] && !ps.some((x) => x.p.id === UI[key])) UI[key] = '';
-    return `<select class="input fp-sel" data-fpreg="${key}" aria-label="Filtrar por pregão"><option value="">Todos os pregões</option>${ps.map((x) => `<option value="${esc(x.p.id)}"${x.p.id === UI[key] ? ' selected' : ''}>${esc(pregaoLabel(x.p))}</option>`).join('')}</select>`;
-  }
   function renderPregoes() {
     if (UI.detailId) return renderDetail();
     const st = store.get();
@@ -6174,6 +6230,8 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
       case 'editar-pregao': openPregaoForm(id); break;
       case 'abrir-pregao': UI.tab = 'pregoes'; UI.detailId = id; history.pushState({ detail: id }, ''); saveUI(); render(); window.scrollTo(0, 0); break;
       case 'ocultar-painel': e.stopPropagation(); UI.keepScroll = true; store.upsertPregao({ id, ocultoPainel: true }); toast('Tirado do painel. Continua na aba Pregões'); break;
+      case 'ir-status': UI.filtro = t.dataset.v; UI.detailId = null; setTab('pregoes'); break;
+      case 'lane-prev': case 'lane-next': { const ln = document.querySelector('.pq-board'); if (ln) ln.scrollBy({ left: (a === 'lane-next' ? 1 : -1) * ln.clientWidth * 0.9, behavior: 'smooth' }); break; }
       case 'mostrar-painel': UI.keepScroll = true; store.upsertPregao({ id, ocultoPainel: false }); toast('De volta ao painel'); break;
       case 'dash-periodo': UI.dash.periodo = t.dataset.v; UI.dash.mes = null; UI.keepScroll = true; render(); break;
       case 'dash-filtro': { const k = t.dataset.k, v = t.dataset.v; UI.dash[k] = UI.dash[k] === v ? null : v; UI.keepScroll = true; render(); break; }
