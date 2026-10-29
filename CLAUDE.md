@@ -269,11 +269,16 @@ Descartados: Manoel Ribas Disp. 27; Ivaiporã 132; Japira 37; Nova Santa Bárbar
 São João do Ivaí 77.
 Antigos (já analisados antes): Imbaú 89 e 92, Dispensa 15; Ortigueira 90 e 99; Mauá da Serra 61;
 Tibagi 60 e 61; Telêmaco 83; Castro 143 e 461; Piraí 99; Cândido de Abreu 72 e 98.
+Trazidos na busca PNCP de 29/10 (aguardando escolha): Telêmaco Borba 20, 49 (= PCE 85) e 53 (= PCE 87); Imbaú 94;
+Reserva Disp. 48; Piraí do Sul 47; Faxinal 54; Castro 151, 152, 157 e 163; Jaboti 42, 43 e 44; Conselheiro Mairinck 66;
+Tomazina 31; Santo Antônio do Paraíso 37; Ponta Grossa 114 e 118 (= 178); FAS Ponta Grossa 16; Exército Ponta Grossa Disp. 38.
+Vistos e descartados na busca de 29/10: São Jerônimo da Serra 46 (lotes/pesado); Arapoti Disp. 28; Castro 149, 153, 158 e 161;
+Tomazina 32 (volume); Piraí do Sul 45 (volume); Ponta Grossa 101, 110 e 144; UTFPR 86; Pinhalão 20; Carambeí 59;
+Santo Antônio do Paraíso 38; Tibagi 64 e 65; Rosário do Ivaí 42 e 43.
 (Quando o João mandar um backup do app ou os PDFs de um pregão, atualizar esta lista.)
 
 ### Orientações adicionais do João
-- Próxima busca (31/10/2026): trazer de novo na lista Ipiranga 78 e Rio Branco do Ivaí 36, se o prazo de proposta
-  ainda estiver aberto (o João não mandou os PDFs na rodada de 24/10 e quer analisá-los). Depois de trazer, apagar esta linha.
+- (nenhuma pendente; Ipiranga 78 e Rio Branco do Ivaí 36 foram trazidos de novo na busca de 29/10/2026)
 <!-- acrescentar aqui as novas orientações de busca -->
 
 ---
@@ -288,3 +293,4 @@ ou na lista "Já no app ou já descartados" — comparar por órgão + nº do pr
 | 22/10/2026 | divulgador BLL de 21/10/2026 (últimos 14 dias) | Japira 38 e 39; Castro 150; Conselheiro Mairinck 62; Ipiranga 77 e 78; Grandes Rios 41; Faxinal 49; Assaí 103; Manoel Ribas Disp. 27; São João do Ivaí 77 | buscas/2026-10-22.md |
 | 22/10/2026 | PNCP, pregões abertos até 21/12, faixas 1 e 2 (dispensas não) | 19 novos (ver buscas/2026-10-22-pncp.md) | buscas/2026-10-22-pncp.md |
 | 22/10/2026 | Ajuste: raio reduzido para ~120 km + Ponta Grossa; 17 pregões acima disso excluídos do app | — | (JSON pregoes-mei-120km-2026-10-22) |
+| 29/10/2026 | PNCP via Chrome do João, 35 municípios, pregões + dispensas com propostas abertas até 28/12 (201 compras) | 21 novos (+ Ipiranga 78 e Rio Branco do Ivaí 36 de novo) | buscas/2026-10-29.md + pregoes-busca-pncp-2026-10-29.json |
