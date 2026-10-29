@@ -1212,7 +1212,7 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.98.2';
+  const APP_VERSION = '1.99.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Julgamento', 'Aguardando empenho', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -3857,7 +3857,7 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
   }
   function itemValues(it) {
     return {
-      pregaoId: it.pregaoId || '', loteEdital: it.loteEdital || '', itemEdital: it.itemEdital || '', descricao: it.descricao || '', descEdital: it.descEdital || '', marca: it.marca || '', modelo: it.modelo || '', especificacoes: it.especificacoes || '', unidade: it.unidade || 'Un',
+      pregaoId: it.pregaoId || '', loteEdital: it.loteEdital || '', itemEdital: it.itemEdital || '', descricao: it.descricao || '', descEdital: it.descEdital || '', marca: it.marca || '', modelo: it.modelo || '', catalogoDesc: it.catalogoDesc || '', especificacoes: it.especificacoes || '', unidade: it.unidade || 'Un',
       qtd: it.qtd == null ? '' : C.numBR(it.qtd, 3), obs: it.obs || '', possivelGanhar: !!it.possivelGanhar, vencedor: it.vencedor == null ? '' : C.numBR(it.vencedor),
       ...(() => { const o = {}; const L = opcoesParaForm(it); ALTS.forEach((n) => { const a = L[n] || {}; o['alt' + n + 'Usar'] = !!a.usar; o['alt' + n + 'Loja'] = a.loja || ''; o['alt' + n + 'Link'] = a.link || ''; o['alt' + n + 'Custo'] = a.custo == null ? '' : C.numBR(a.custo); o['alt' + n + 'Frete'] = a.frete ? C.numBR(a.frete) : ''; o['alt' + n + 'Qtd'] = a.qtd ? C.numBR(a.qtd, 3) : ''; }); return o; })(),
       custo: it.custo == null ? '' : C.numBR(it.custo), teto: it.teto == null ? '' : C.numBR(it.teto), frete: it.frete ? C.numBR(it.frete) : '',
@@ -3877,7 +3877,7 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
     const custoItem = eff ? C.custoCompra(eff) : C.parseBR(x.custo), freteItem = eff ? C.freteCompra(eff) : (C.parseBR(x.frete) || 0);
     const prim = opts.find((a) => a.usar) || null;
     return {
-      id: id || 'new', pregaoId: x.pregaoId, loteEdital: C.padLE(x.loteEdital), itemEdital: C.padLE(x.itemEdital), descricao: x.descricao.trim(), descEdital: x.descEdital.trim(), marca: x.marca.trim(), modelo: String(x.modelo || '').trim(), especificacoes: old && old.especificacoes ? old.especificacoes : '', unidade: x.unidade.trim() || 'Un',
+      id: id || 'new', pregaoId: x.pregaoId, loteEdital: C.padLE(x.loteEdital), itemEdital: C.padLE(x.itemEdital), descricao: x.descricao.trim(), descEdital: x.descEdital.trim(), marca: x.marca.trim(), modelo: String(x.modelo || '').trim(), catalogoDesc: C.capitalizarTitulos(String(x.catalogoDesc || '').trim()), especificacoes: old && old.especificacoes ? old.especificacoes : '', unidade: x.unidade.trim() || 'Un',
       qtd: C.parseBR(x.qtd), onde: prim ? prim.loja : '', ondeLink: prim ? prim.link : '', obs: String(x.obs || '').trim(), possivelGanhar: !!x.possivelGanhar, vencedor: C.parseBR(x.vencedor),
       alternativas: opts,
       custo: custoItem, teto: C.parseBR(x.teto), frete: freteItem,
@@ -3960,6 +3960,15 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
         ${field({ label: 'Nº do item', name: 'itemEdital', value: v.itemEdital, ph: 'ex.: 04', hint: 'Sai “LOTE 01 - ITEM 04” no PDF (1 vira 01 sozinho)' })}
         ${field({ label: 'Marca *', name: 'marca', value: v.marca, ph: 'ex.: Elgin', hint: 'Obrigatória para gerar a proposta' })}
         ${field({ label: 'Modelo', name: 'modelo', value: v.modelo, ph: 'ex.: AA-100' })}
+        <div class="full cat-form">
+          <label class="lbl">Descritivo do item ofertado * <span class="tiny muted" style="font-weight:600">· é o mesmo do catálogo (também dá para editar lá)</span></label>
+          <div class="cat-form-acts">${id ? `<label class="btn sm" style="cursor:pointer">${icon('image', 'sm')} Incluir imagem<input type="file" accept="image/png,image/jpeg,image/webp" multiple data-foto-form="${esc(id)}" class="sr-only" style="position:absolute;width:1px;height:1px;opacity:0;overflow:hidden"></label>` : '<span class="tiny muted">Salve o item uma vez para poder incluir imagens.</span>'}</div>
+          ${id ? `<div class="cat-thumbs" data-cat-thumbs="${esc(id)}" style="display:flex;flex-wrap:wrap;gap:8px;margin:8px 0"></div>` : ''}
+          <div class="cat-tits"><div class="cat-tit-add"><input class="input" list="ftitList" data-ftit-in placeholder="Título (ex.: Marca, Modelo, Voltagem)" autocapitalize="characters" enterkeyhint="done"><button type="button" class="btn sm primary" data-ftit-add title="Incluir título na descrição" aria-label="Incluir título">${icon('plus', 'sm')}</button></div>
+            <div class="cat-tit-sug">${catTitulosOrdem().slice(0, 8).map((t) => `<button type="button" class="chip" data-ftit="${esc(t)}">+ ${esc(t)}</button>`).join('')}</div></div>
+          <datalist id="ftitList">${catTitulosOrdem().map((t) => `<option value="${esc(t)}">`).join('')}</datalist>
+          <textarea class="input" name="catalogoDesc" rows="5" spellcheck="true" lang="pt-BR" autocorrect="on" placeholder="Descrição pormenorizada do produto (características técnicas, medidas, material, composição, normas, garantia…)" style="margin-top:8px">${esc(v.catalogoDesc)}</textarea>
+        </div>
         ${field({ label: 'Unidade', name: 'unidade', value: v.unidade, ph: 'Un, Cx, Resma…' })}
         ${field({ label: 'Quantidade *', name: 'qtd', value: v.qtd, inputmode: 'decimal' })}
         ${field({ label: 'Custo unit. (R$) *', name: 'custo', value: v.custo, inputmode: 'decimal', hint: 'O que eu vou pagar' })}
@@ -3989,6 +3998,26 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
         openForm({ wide: true,
       key: 'item:' + (id || 'novo'), title: id ? 'Editar item' : 'Novo item', body, values: v,
       onMount: (form) => {
+        // imagens e descritivo do catálogo dentro do item (a opção da guia Proposta continua existindo)
+        const taC = $('[name=catalogoDesc]', form);
+        const disp = () => taC.dispatchEvent(new Event('input', { bubbles: true }));
+        const addTit = (t) => {
+          t = titNorm(t); if (!t) return;
+          const atual = taC.value.replace(/\s+$/, '');
+          taC.value = (atual ? atual + '\n' : '') + t + ': ';
+          taC.focus(); taC.setSelectionRange(taC.value.length, taC.value.length); disp();
+          const u = catTitUso(); u[t] = (u[t] || 0) + 1; store.setConfigPath('catalogoTitulos', u, { silent: true });
+        };
+        taC.addEventListener('change', () => { const nv = C.capitalizarTitulos(taC.value); if (nv !== taC.value) { taC.value = nv; disp(); } });
+        form.addEventListener('click', (e) => {
+          const ch = e.target.closest('[data-ftit]'); if (ch) { addTit(ch.dataset.ftit); return; }
+          if (e.target.closest('[data-ftit-add]')) { const inp = $('[data-ftit-in]', form); if (!inp.value.trim()) { inp.focus(); toast('Digite o título (ex.: Marca)'); return; } addTit(inp.value); inp.value = ''; return; }
+          const del = e.target.closest('[data-act="cat-del"]');
+          if (del) { e.stopPropagation(); const fid = del.dataset.id; (async () => { const arr = (await fotosDoItem(fid)).slice(); arr.splice(Number(del.dataset.v), 1); await gravarFotos(fid, arr); preencherFotosCatalogo(); })(); }
+        });
+        form.addEventListener('change', (e) => { const fi = e.target.closest && e.target.closest('[data-foto-form]'); if (fi && fi.files && fi.files.length) { incluirFotosCatalogo(fi.dataset.fotoForm, [...fi.files]); fi.value = ''; } });
+        $('[data-ftit-in]', form).addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); const b = $('[data-ftit-add]', form); if (b) b.click(); } });
+        setTimeout(preencherFotosCatalogo, 0);
         const loc = $('[name=localEntrega]', form), km = $('[name=kmEntrega]', form), via = $('[name=viagensEntrega]', form), info = $('#rotaItem', form);
         let seq = 0, ajustando = false;
         km.addEventListener('input', () => { if (!ajustando) form.dataset.kmManual = '1'; });
