@@ -230,6 +230,7 @@ input[type=range] { width: 100%; accent-color: var(--blue); }
 .sheet-body { padding: 14px 16px; overflow-y: auto; flex: 1; -webkit-overflow-scrolling: touch; }
 .sheet-foot { display: flex; gap: 10px; padding: 12px 16px calc(var(--safe-b) + 12px); background: var(--card); border-top: 1px solid var(--line); }
 .sheet-foot .btn { flex: 1; }
+.side-col { display: contents; }
 .preview { position: sticky; top: -14px; z-index: 2; margin: -14px -16px 14px; padding: 12px 16px; background: var(--bg); border-bottom: 1px solid var(--line); display: flex; flex-direction: column; gap: 8px; }
 .preview .kv { display: flex; gap: 14px; font-size: 12px; color: var(--muted); flex-wrap: wrap; } .preview .kv b { color: var(--ink); font-variant-numeric: tabular-nums; }
 .draftbar { display: flex; gap: 10px; align-items: center; background: var(--amber-soft); color: var(--amber); border-radius: 12px; padding: 10px 12px; margin-bottom: 12px; font-size: 12.5px; font-weight: 700; }
@@ -627,15 +628,25 @@ input.input[type=datetime-local]::-webkit-date-and-time-value, input.input[type=
   .sheet-wide .sheet-head { padding: 12px 24px; } .sheet-wide .sheet-head h2 { font-size: 19px; }
   .sheet-wide .sheet-body { display: grid; grid-template-columns: minmax(340px, 4fr) minmax(0, 8fr); column-gap: 32px; align-content: start; padding: 22px 32px; }
   .sheet-wide .sheet-body > * { grid-column: 2; min-width: 0; }
-  .sheet-wide .sheet-body > .preview { grid-column: 1; grid-row: 1 / span 30; position: sticky; top: 0; align-self: start; margin-top: 0; }
+  .sheet-wide .sheet-body > .side-col { display: block; grid-column: 1; grid-row: 1 / span 30; position: sticky; top: 0; align-self: start; }
+  .sheet-wide .side-col > .preview { position: static; margin: 0 -16px 14px; }
+  .sheet-wide #lanceSlot [data-mv] .field { margin-bottom: 12px; }
   .sheet-wide .sheet-body > [data-slot="draft"]:empty { display: none; }
   .sheet-wide .formgrid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0 16px; }
   .sheet-wide .formgrid .full { grid-column: 1 / -1; }
-  .sheet-wide .formgrid .field.full:has([name=teto]), .sheet-wide .formgrid .field.full:has([name=lanceFinal]) { grid-column: span 2; }
+  .sheet-wide .formgrid { grid-auto-flow: row dense; }
+  .sheet-wide .formgrid .field.full:has([name=teto]), .sheet-wide .formgrid .field.full:has([name=pregaoId]), .sheet-wide .formgrid .field.full:has([name=descricao]) { grid-column: span 2; }
+  .sheet-wide .formgrid .field.full:has([name=localEntrega]), .sheet-wide .formgrid #boxEntrega { grid-column: span 1; }
+  .sheet-wide .formgrid #boxEntrega:empty { display: none; }
+  .sheet-wide .formgrid:has(#boxEntrega:empty) .field.full:has([name=localEntrega]) { grid-column: span 2; }
+  .sheet-wide .field:has([name=localEntrega]) > .hint { display: none; }
+  .sheet-wide .formgrid .field:has([name=marca]), .sheet-wide .formgrid .field:has([name=modelo]) { grid-column: span 2; }
   .sheet-wide .sheet-foot { justify-content: flex-end; padding: 14px 32px calc(var(--safe-b) + 14px); }
   .sheet-wide .sheet-foot .btn { flex: 0 0 220px; }
   .sheet-wide textarea.input { min-height: 90px; }
-  .sheet-wide .desc-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 0 20px; align-items: start; }
+  .sheet-wide .desc-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 0 20px; align-items: stretch; }
+  .sheet-wide .desc-pair > .field { display: flex; flex-direction: column; }
+  .sheet-wide .desc-pair > .field > textarea.input { flex: 1 1 auto; min-height: 230px; }
   .sheet-wide .desc-pair textarea.input { min-height: 230px; }
 }
 /* ---------- Pregões em raias deslizantes e Painel em linhas (v1.98) ---------- */
@@ -1214,7 +1225,7 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.99.2';
+  const APP_VERSION = '1.99.3';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Julgamento', 'Aguardando empenho', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -3946,18 +3957,18 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
           <div class="full"><button type="button" class="btn ghost sm" data-alt="limpar" data-alt-n="${n}">${icon('trash', 'sm')} Remover esta opção</button></div></div>`;
     const altQtd = ALTS.filter((n) => v['alt' + n + 'Loja'] || v['alt' + n + 'Link'] || v['alt' + n + 'Custo'] || v['alt' + n + 'Frete'] || v['alt' + n + 'Qtd']).length;
     const body = `
-      <div class="preview" id="prev"></div>
-      ${field({ label: 'Pregão / órgão *', name: 'pregaoId', type: 'select', value: v.pregaoId, options: list.map((p) => ({ v: p.id, l: pregaoLabel(p) })) })}
-      <div id="boxEntrega" data-pid="${esc(v.pregaoId)}">${entregaSelectHtml(v.pregaoId, v.entregaId)}</div>
-      ${field({ label: 'Local de entrega deste item', name: 'localEntrega', value: v.localEntrega, ph: 'vazio = local do pregão', hint: 'Por padrão o custo da entrega usa o local do pregão. Preencha só se este item for para outro local (cidade/UF ou endereço).' })}
-      <div id="boxLocalItem" class="hidden"><div class="formgrid">
+      <div class="side-col"><div class="preview" id="prev"></div><div id="lanceSlot"></div></div>
+      <div class="formgrid">
+      ${field({ label: 'Pregão / órgão *', name: 'pregaoId', type: 'select', full: true, value: v.pregaoId, options: list.map((p) => ({ v: p.id, l: pregaoLabel(p) })) })}
+      <div id="boxEntrega" class="full" data-pid="${esc(v.pregaoId)}">${entregaSelectHtml(v.pregaoId, v.entregaId)}</div>
+      ${field({ label: 'Local de entrega deste item', name: 'localEntrega', full: true, value: v.localEntrega, ph: 'vazio = local do pregão', hint: 'Por padrão o custo da entrega usa o local do pregão. Preencha só se este item for para outro local (cidade/UF ou endereço).' })}
+      <div id="boxLocalItem" class="hidden full"><div class="formgrid">
         ${field({ label: 'Km (ida e volta)', name: 'kmEntrega', value: v.kmEntrega, inputmode: 'decimal' })}
         ${field({ label: 'Nº de viagens', name: 'viagensEntrega', value: v.viagensEntrega, inputmode: 'numeric', ph: '1' })}
         ${field({ label: 'Pedágio por viagem (R$)', name: 'pedagioEntrega', value: v.pedagioEntrega, inputmode: 'decimal' })}
         <div class="field"><div class="hint" id="rotaItem" role="status" aria-live="polite"></div><button type="button" class="btn sm" data-rota-item="calc" style="margin-top:6px">Recalcular trajeto</button></div>
       </div><div class="hint" style="margin:-4px 0 12px">Itens com o mesmo local de entrega dividem o custo desta viagem entre si.</div></div>
-      ${field({ label: 'Item que vou comprar *', name: 'descricao', value: v.descricao, ph: 'ex.: Caixa organizadora plástica 30 L' })}
-      <div class="formgrid">
+      ${field({ label: 'Item que vou comprar *', name: 'descricao', full: true, value: v.descricao, ph: 'ex.: Caixa organizadora plástica 30 L' })}
         ${field({ label: 'Nº do lote', name: 'loteEdital', value: v.loteEdital, ph: 'ex.: 1', hint: 'Vazio = sai só o item' })}
         ${field({ label: 'Nº do item', name: 'itemEdital', value: v.itemEdital, ph: 'ex.: 04', hint: 'Sai “LOTE 01 - ITEM 04” no PDF (1 vira 01 sozinho)' })}
         ${field({ label: 'Marca *', name: 'marca', value: v.marca, ph: 'ex.: Elgin', hint: 'Obrigatória para gerar a proposta' })}
@@ -3979,7 +3990,9 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
         ${field({ label: 'Custo unit. (R$) *', name: 'custo', value: v.custo, inputmode: 'decimal', hint: 'O que eu vou pagar' })}
         ${field({ label: 'Frete do fornecedor (R$, total do item)', name: 'frete', value: v.frete, inputmode: 'decimal' })}
         ${field({ label: 'Valor unit. do edital (teto)', name: 'teto', value: v.teto, inputmode: 'decimal', hint: 'Máximo que o órgão aceita', full: true })}
+        <span hidden data-mv-home="lance"></span><div class="full" data-mv="lance">
         ${field({ label: 'Lance final (R$ unit., opcional)', name: 'lanceFinal', value: v.lanceFinal, inputmode: 'decimal', full: true, cls: 'destaque', hint: 'Preenchido, é este o valor que sai na proposta em PDF. Vazio = sai o teto do edital.' })}
+        </div>
         <div class="full cat-atalho"><button type="button" class="btn block" data-ir-catalogo="1">${icon('image', 'sm')} Fotos e descrição para o catálogo</button><div class="hint">Salva o item e abre o catálogo da guia Proposta já neste pregão, no lugar deste item.</div></div>
         <div class="field full" id="linkBox"><label>Opções de compra</label>
           <div class="linkrow">
@@ -3997,11 +4010,17 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
         <div class="full"><label class="switch"><span>Posso ganhar<small class="hint" style="display:block;font-weight:500">Marque se ficou perto do 1º colocado neste item e ainda é possível ganhar. Dá para filtrar no Dashboard.</small></span><input type="checkbox" name="possivelGanhar"${v.possivelGanhar ? ' checked' : ''}></label></div>
         ${field({ label: 'Minha margem (%)', name: 'margem', value: v.margem, inputmode: 'decimal', ph: 'padrão: ' + C.numBR(cfg.margemPadrao * 100, 2).replace(',00', '') + '%', hint: 'Vazio = margem padrão' })}
         ${field({ label: 'Minha colocação na disputa', name: 'colocacao', value: v.colocacao, inputmode: 'numeric', ph: 'ex.: 3', hint: 'Em que lugar você ficou neste item (1 = primeiro).' })}
+        <span hidden data-mv-home="venc"></span><div data-mv="venc">
         ${field({ label: 'Valor do vencedor (R$ unit., se perdi)', name: 'vencedor', value: v.vencedor, inputmode: 'decimal', hint: 'Quanto quem ganhou ofertou. Alimenta a análise “Preço de quem ganhou” no Painel.' })}
+        </div>
       </div>`;
         openForm({ wide: true,
       key: 'item:' + (id || 'novo'), title: id ? 'Editar item' : 'Novo item', body, values: v,
       onMount: (form) => {
+        // PC: lance final e valor do vencedor ocupam a coluna da esquerda (abaixo do resumo); celular: ficam no lugar de sempre
+        { const slot = $('#lanceSlot', form), mq = window.matchMedia('(min-width: 900px)');
+          const coloca = () => { if (!form.isConnected) return; ['lance', 'venc'].forEach((k) => { const w = $('[data-mv="' + k + '"]', form), h = $('[data-mv-home="' + k + '"]', form); if (!w || !h) return; if (mq.matches) slot.appendChild(w); else h.after(w); }); };
+          coloca(); if (mq.addEventListener) mq.addEventListener('change', coloca); else mq.addListener(coloca); }
         // imagens e descritivo do catálogo dentro do item (a opção da guia Proposta continua existindo)
         const taC = $('[name=catalogoDesc]', form);
         const disp = () => taC.dispatchEvent(new Event('input', { bubbles: true }));

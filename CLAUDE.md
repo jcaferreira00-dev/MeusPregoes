@@ -21,6 +21,7 @@ sempre, acrescente aqui (seção certa) no mesmo commit da tarefa.
 - A cada publicação, suba a versão em DOIS lugares: `VERSION` no `sw.js` e `APP_VERSION` no `index.html`.
 - Antes de publicar: extraia os `<script>` e rode `node --check`; teste no navegador (Playwright) o que mudou E abra TODAS as guias no PC e no celular conferindo erros no console (ao mexer numa função, procure o que dependia dela).
 - No PC, aproveitar a tela inteira (largura e altura): janelas de edição do item em tela cheia (preview fixo à esquerda, formulário em 4 colunas), Painel e quadros usando toda a largura.
+- Janela do item no PC (decisão de 29/10/2026): coluna da esquerda = resumo (lance mínimo, lucro) + Lance final + Valor do vencedor (no celular esses dois campos ficam no lugar de antes); pregão e local de entrega na mesma linha, nome do item ao lado de lote e nº do item, marca e modelo lado a lado, e o "Exigido no edital" estica até a altura do descritivo ofertado (sem espaço vazio). Sem espaço sobrando: não deixar campo ocupando a linha inteira à toa.
 - Ao mudar algo, inclua só o que foi pedido: não tire nem esconda cálculos e informações que já existiam.
 - Visual: mesmo alinhamento, blocos simétricos, status com uma palavra só, órgão em CAIXA ALTA,
   cidade padronizada ("Ortigueira/PR"). Se houver dúvida num ajuste visual, mostre uma prévia antes de publicar.
