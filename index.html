@@ -605,9 +605,10 @@ input.input[type=datetime-local]::-webkit-date-and-time-value, input.input[type=
 .main.wide { max-width: 1280px; }
 .main.pn { max-width: 1760px; }
 .pn-main, .pn-low { display: grid; gap: 14px; grid-template-columns: minmax(0, 1fr); align-items: start; min-width: 0; }
+.pn-main > .card { border-radius: 14px; }
 .pn-col { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
 .pn-col > .card, .pn-low > .card { border-radius: 14px; }
-@media (min-width: 1000px) { .pn-main { grid-template-columns: minmax(0, 1.5fr) minmax(360px, 1fr); } }
+@media (min-width: 760px) { .pn-main { grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); } }
 @media (min-width: 760px) { .pn-low { grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); } }
 .enc-box { margin-top: 12px; padding-top: 10px; border-top: 1px dashed var(--line); }
 .enc-btn { gap: 6px; } .enc-btn .enc-seta { opacity: .7; }
@@ -620,6 +621,20 @@ input.input[type=datetime-local]::-webkit-date-and-time-value, input.input[type=
 .fp-row select.fp-sel { flex: 0 0 auto; width: min(420px, 50%); min-width: 0; text-overflow: ellipsis; appearance: none; -webkit-appearance: none; padding-right: 40px; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='%23667489' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 18px center; background-size: 12px 8px; }
 @media (max-width: 600px) { .fp-row { flex-direction: column; } .fp-row select.fp-sel { width: 100%; } }
 /* ---------- Pregões em raias deslizantes e Painel em linhas (v1.98) ---------- */
+.dash-top { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); align-items: start; }
+.dash-top > .card { border-radius: 14px; }
+.dn-card .donut-wrap { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 14px; }
+.dn-card .donut-wrap svg { width: 168px; height: 168px; flex: none; }
+.dn-card .donut-leg { flex: 1 1 170px; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.dn-card svg text { pointer-events: none; }
+.dn-seg { cursor: pointer; transition: opacity .25s ease, stroke-width .25s ease; } .dn-seg:hover { stroke-width: 26; } .dn-seg.dim { opacity: .28; } .dn-seg.sel { stroke-width: 27; }
+.dn-row { display: flex; align-items: center; gap: 8px; width: 100%; padding: 6px 8px; border: 1px solid transparent; border-radius: 9px; background: none; font: inherit; font-size: 13px; color: var(--ink); cursor: pointer; text-align: left; transition: background .2s ease; }
+.dn-row i { width: 10px; height: 10px; border-radius: 3px; flex: none; } .dn-row b { font-variant-numeric: tabular-nums; }
+.dn-row:hover { background: var(--blue-soft); } .dn-row.sel { border-color: var(--blue); background: var(--blue-soft); font-weight: 700; }
+.dtbl .nw { white-space: nowrap; font-size: 12px; color: var(--muted); }
+.pq-board, .pq-stack, .ag-lines, .pend-lista, .tbl-scroll, .st-strip { scroll-behavior: smooth; }
+@media (max-width: 759px) { .pq-board { scroll-snap-type: x mandatory; } }
+@media (prefers-reduced-motion: reduce) { .pq-board, .pq-stack, .ag-lines, .pend-lista, .tbl-scroll, .st-strip { scroll-behavior: auto; } .dn-seg, .dn-row { transition: none; } }
 .board-nav { display: none; justify-content: flex-end; gap: 6px; margin: -2px 2px 6px; }
 .board-nav button { width: 34px; height: 28px; border-radius: 8px; border: 1px solid var(--line); background: var(--card); color: var(--ink); font-size: 18px; line-height: 1; cursor: pointer; }
 .board-nav button:hover { background: var(--blue-soft); }
@@ -1182,7 +1197,7 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.97.1';
+  const APP_VERSION = '1.98.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Julgamento', 'Aguardando empenho', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -4258,91 +4273,12 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
     const v = (pst.ganho && pst.nGanhos < pst.nItens) ? pst.propostaGanha : pst.proposta;
     return v > 0 ? v : null;
   }
-  function agendaRow(pst) {
-    const p = pst.p, cor = COR_STATUS[p.status] || '#2e75b6';
-    const ref = p.sessao || p.prazoPropostas || '', dt = ref ? new Date(ref) : null, ok = dt && isFinite(dt.getTime());
-    const hora = (/T(\d{2}:\d{2})/.exec(ref) || [])[1];
-    const d = diasDesde(ref);
-    const cd = d === null ? '' : d === 0 ? 'Hoje' : d === -1 ? 'Amanhã' : d < 0 ? 'em ' + plural(-d, 'dia', 'dias') : 'há ' + plural(d, 'dia', 'dias');
-    const ativo = !C.INATIVOS.includes(p.status) && p.status !== 'Faturado' && p.status !== 'Aguardando empenho';
-    const enviada = p.status === 'Proposta enviada';
-    const pz = prazoInfo(p), al = [];
-    if (!enviada && pz && (pz.nivel === 'bad' || pz.nivel === 'warn')) al.push([pz.nivel, 'Propostas: ' + pz.curto]);
-    else if (!enviada && pz && pz.nivel === 'off') al.push(['off', 'Propostas encerradas']);
-    if (pst.nGanhos && pst.ganho) al.push(['good', 'Venci ' + pst.nGanhos + ' de ' + pst.itens.length]);
-    if (pst.nDesc) al.push(['bad', pst.nDesc + ' desclassif. pedida' + (pst.nDesc > 1 ? 's' : '')]);
-    if (pst.nPode) al.push(['good', 'Posso ganhar' + (pst.nPode > 1 ? ' (' + pst.nPode + ')' : '')]);
-    const po = posInfo(p);
-    if (po && !p.pagoEm) { if (po.nivel === 'bad' || po.nivel === 'warn') al.push([po.nivel, po.curto]); else if (po.nivel === 'info') al.push(['off', po.curto]); }
-    const urg = (ativo && (d === 0 || d === -1)) || al.some((a) => a[0] === 'bad');
-    const plat = plataformaDe(p);
-    const v = valorPainel(pst);
-    return `<article class="ag-row${urg ? ' urg' : ''}${p.status === 'Falta dados' ? ' falta' : ''}" style="--sc:${cor}" data-act="abrir-pregao" data-id="${p.id}" tabindex="0" role="button" aria-label="Abrir pregão ${esc(p.numero)} ${esc(p.orgao)}">
-      <div class="ag-date${ok ? '' : ' vazio'}">${ok ? `<b>${String(dt.getDate()).padStart(2, '0')}</b><span>${MESES3[dt.getMonth()]}</span>${hora ? `<small>${hora}</small>` : ''}` : '<span>sem<br>data</span>'}</div>
-      <div class="ag-main">
-        <div class="ag-top"><span class="ag-num">Nº ${esc(p.numero)}</span>${plat ? `<span class="ag-plat">${icon('web', 'sm')}${esc(plat)}</span>` : ''}${!p.sessao && p.prazoPropostas ? '<span class="ag-plat">propostas até</span>' : ''}</div>
-        <h4 title="${esc(p.orgao)}">${esc(p.orgao)}</h4>
-        <div class="ag-sub">${p.cidadeUf ? `<span>${icon('pin', 'sm')}${esc(cidadeFmt(p.cidadeUf))}</span>` : ''}${pst.nItens ? `<span class="m-hide">${plural(pst.nItens, 'item', 'itens')}${pst.lucro ? ' · lucro ' + C.brl0(pst.lucro) : ''}</span>` : ''}</div>
-        ${al.length ? `<div class="ag-al">${al.map((a) => `<span class="pgc-al ${a[0]}"><i class="dot"></i>${esc(a[1])}</span>`).join('')}</div>` : ''}
-      </div>
-      <div class="ag-side">
-        <span class="ag-st">${esc(stTxt(p.status))}</span>
-        <b class="ag-val">${v != null ? C.brl(v) : (pst.nItens ? '—' : '<span class="tiny muted">Sem itens</span>')}</b>
-        ${cd ? `<span class="ag-cd${d === 0 ? ' hoje' : d === -1 ? ' amanha' : d > 0 ? ' passou' : ''}">${cd}</span>` : ''}
-      </div>
-      <button type="button" class="ag-x" data-act="ocultar-painel" data-id="${p.id}" title="Tirar do painel (não exclui o pregão)" aria-label="Tirar do painel">${icon('x', 'sm')}</button>
-    </article>`;
-  }
   // faixa de contagem por status (clicar leva à guia Pregões já filtrada)
   function painelStatusStrip(R) {
     const vis = [...R.pMap.values()];
     const L = [['Julgamento', 'Julgamento'], ['Aguardando empenho', 'Empenho'], ['Proposta enviada', 'Enviadas'], ['Analisando', 'Analisando'], ['Falta dados', 'Incompletos'], ['Faturado', 'Faturados']];
     return `<div class="st-strip" role="group" aria-label="Pregões por status">${L.map(([s, t]) => { const n = vis.filter((x) => x.p.status === s).length; return `<button type="button" class="st-chip${n ? '' : ' zero'}" style="--sc:${COR_STATUS[s] || '#2e75b6'}" data-act="ir-status" data-v="${esc(s)}"><b>${n}</b><span>${t}</span></button>`; }).join('')}</div>`;
   }
-  function painelPregoesHtml(R) {
-    const todos = [...R.pMap.values()];
-    const vis = todos.filter((x) => !painelOculto(x.p)).sort((a, b) => (rankStatus(a.p.status) - rankStatus(b.p.status)) || ordemPainel(a, b));
-    const oc = todos.filter((x) => painelOculto(x.p)).sort(ordemPainel);
-    const ativosV = vis.filter((x) => !C.INATIVOS.includes(x.p.status));
-    const concl = vis.filter((x) => x.p.status === 'Concluído');
-    const enc = vis.filter((x) => C.INATIVOS.includes(x.p.status) && x.p.status !== 'Concluído').sort(descPrimeiro);
-    // encerrados e concluídos: um botão só; ao abrir, ficam como etiquetas pequenas (clicar abre o pregão)
-    const fim = concl.concat(enc);
-    const chip = (x) => `<button type="button" class="enc-chip${x.p.status === 'Concluído' ? ' conc' : ''}" data-act="abrir-pregao" data-id="${x.p.id}" title="${esc(x.p.orgao)} · ${esc(stTxt(x.p.status))}"><b>Nº ${esc(x.p.numero)}</b><span class="ell">${esc(x.p.orgao)}</span><i>${esc(stTxt(x.p.status))}</i></button>`;
-    const encHtml = fim.length ? `<div class="enc-box"><button type="button" class="btn sm ghost enc-btn${UI.mostrarEnc ? ' on' : ''}" data-act="painel-encerrados" aria-expanded="${UI.mostrarEnc ? 'true' : 'false'}">${icon('archive', 'sm')} Encerrados e concluídos (${fim.length}) <span class="enc-seta">${UI.mostrarEnc ? '▴' : '▾'}</span></button>${UI.mostrarEnc ? `<div class="enc-chips">${fim.map(chip).join('')}</div>` : ''}</div>` : '';
-    const conclHtml = '';
-    const lista = oc.map((x) => {
-      const manual = painelOculto(x.p) === 'manual';
-      return `<div class="strow"><div><b class="org-up">${esc(x.p.orgao)}</b><div class="tiny muted">Nº ${esc(x.p.numero)} · ${manual ? 'tirado do painel por você' : 'prazo já passou'}</div></div>${manual ? `<button class="btn sm" data-act="mostrar-painel" data-id="${x.p.id}">Voltar ao painel</button>` : `<button class="btn sm" data-act="abrir-pregao" data-id="${x.p.id}">Abrir</button>`}</div>`;
-    }).join('');
-    // agenda em linhas compactas (sem cards): data · pregão · órgão · status · valor · prazo; clicar abre o pregão
-    const linha = (x) => {
-      const p = x.p, cor = COR_STATUS[p.status] || '#2e75b6';
-      const ref = p.sessao || p.prazoPropostas || '', dt = ref ? new Date(ref) : null, ok = dt && isFinite(dt.getTime());
-      const hora = (/T(\d{2}:\d{2})/.exec(ref) || [])[1];
-      const d = diasDesde(ref);
-      const cd = d === null ? '' : d === 0 ? 'Hoje' : d === -1 ? 'Amanhã' : d < 0 ? 'em ' + plural(-d, 'dia', 'dias') : 'há ' + plural(d, 'dia', 'dias');
-      const pz = prazoInfo(p), enviada = p.status === 'Proposta enviada';
-      const ativo = !C.INATIVOS.includes(p.status) && p.status !== 'Faturado' && p.status !== 'Aguardando empenho';
-      const alerta = (!enviada && pz && (pz.nivel === 'bad' || pz.nivel === 'warn')) || (ativo && (d === 0 || d === -1)) || p.status === 'Falta dados';
-      const v = valorPainel(x);
-      return `<div class="ag-ln${alerta ? ' alerta' : ''}" style="--sc:${cor}" data-act="abrir-pregao" data-id="${p.id}" tabindex="0" role="button" aria-label="Abrir pregão ${esc(p.numero)} ${esc(p.orgao)}">
-        <span class="ag-d">${ok ? `<b>${String(dt.getDate()).padStart(2, '0')}</b> ${MESES3[dt.getMonth()]}${hora ? `<small>${hora}</small>` : ''}` : '<small>sem data</small>'}</span>
-        <span class="ag-n">Nº ${esc(p.numero)}</span>
-        <span class="ag-o"><span class="ell" title="${esc(p.orgao)}">${esc(p.orgao)}</span><small class="ag-n2">Nº ${esc(p.numero)}${v != null ? ' · ' + C.brl0(v) : ''}${cd ? ' · ' + cd : ''}</small></span>
-        <span class="ag-s">${esc(stTxt(p.status))}</span>
-        <b class="ag-v">${v != null ? C.brl0(v) : '—'}</b>
-        <span class="ag-c${d === 0 ? ' hoje' : d === -1 ? ' amanha' : ''}">${cd}</span></div>`;
-    };
-    const linhas = ativosV.slice().sort((x, y) => (rankStatus(x.p.status) - rankStatus(y.p.status)) || ordemPainel(x, y)).map(linha).join('');
-    const agenda = `<div class="ag-head ag-ln"><span>Data</span><span>Pregão</span><span>Órgão</span><span>Status</span><span class="r">Valor</span><span class="r">Prazo</span></div><div class="ag-lines">${linhas}</div>`;
-    return `<div class="card ag-card"><h3>${icon('calendar', 'sm')}<span class="grow">Pregões em andamento (${ativosV.length})</span>${oc.length ? `<button class="btn sm" data-act="painel-ocultos">${icon('eye', 'sm')} ${UI.mostrarOcultos ? 'Esconder' : 'Ver'} ocultos (${oc.length})</button>` : ''}<button class="btn sm" data-act="tab" data-v="pregoes">Ver na guia Pregões</button></h3>
-      ${ativosV.length ? agenda : (enc.length || concl.length ? '' : `<p class="muted small">Nenhum pregão no painel agora. Os cadastrados continuam na aba Pregões.</p>`)}
-      ${conclHtml}
-      ${encHtml}
-      ${UI.mostrarOcultos && oc.length ? `<div class="pgoc"><div class="small muted" style="margin-bottom:6px">Fora do painel (continuam na aba Pregões)</div>${lista}</div>` : ''}</div>`;
-  }
-
   // o que precisa de ação agora: dados faltando, propostas por enviar, certidões vencendo
   function painelPendenciasHtml(R) {
     const ps = [...R.pMap.values()].filter((x) => !painelOculto(x.p) && !C.INATIVOS.includes(x.p.status));
@@ -4478,6 +4414,7 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
     const valorItem = (it) => { const c = R.iMap.get(it.id); const u = c ? C.unitProposta(c, 'auto').unit : null; return u == null ? 0 : round2n(u * (Number(it.qtd) || 0)); };
     const pregoesPode = new Set(itensPode.map((r) => r.o.p.id));
     const todos = D.pode ? baseP.filter((o) => pregoesPode.has(o.p.id)) : baseP;
+    const rows0 = () => { let r = todos.slice(); if (D.etapa) r = r.filter((o) => dashEtapaOk(o, D.etapa)); if (D.orgao) r = r.filter((o) => o.p.orgao === D.orgao); if (D.mes) r = r.filter((o) => o.ym === D.mes); return r; };
     const part = todos.filter((o) => DASH_PART.includes(o.p.status));
     const gan = todos.filter((o) => o.x.ganho);
     const ent = gan.filter((o) => o.p.entregueEm), pag = gan.filter((o) => o.p.pagoEm);
@@ -4496,6 +4433,33 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
       <div class="dseg" role="group" aria-label="Período">${periodos.map(([k, n]) => `<button type="button" class="${D.periodo === k ? 'on' : ''}" data-act="dash-periodo" data-v="${k}">${n}</button>`).join('')}</div></div>
       ${chips.length ? `<div class="dash-chips">${chips.map(([k, v, n]) => `<button type="button" class="dchip" data-act="dash-filtro" data-k="${k}" data-v="${esc(v)}">${esc(n)} ✕</button>`).join('')}<button type="button" class="btn sm ghost" data-act="dash-limpar">Limpar filtros</button></div>` : `<p class="tiny muted" style="margin-top:8px">Clique em "Posso ganhar", numa etapa do funil, num mês ou num órgão para filtrar.</p>`}</div>`;
 
+    // rosca: de onde vem o preço de venda (responde ao período, funil, mês e órgão; clicar numa fatia destaca)
+    const compD = { produtos: 0, frete: 0, entrega: 0, impostos: 0, lucro: 0 };
+    rows0().forEach((o) => {
+      if (C.INATIVOS.includes(o.p.status)) return;
+      (o.x.todosItens || []).forEach((it) => {
+        if (it.semLance) return;
+        const c = R.iMap.get(it.id); if (!c || c.naoGanhou) return;
+        compD.produtos += c.produtos || 0; compD.frete += c.frete || 0; compD.entrega += c.entrega || 0; compD.lucro += c.lucro || 0; compD.impostos += (c.imposto || 0) + (c.impostoCompra || 0);
+      });
+    });
+    const segsD = [['produtos', 'Custo dos produtos', compD.produtos, '#5b6b82'], ['frete', 'Frete do fornecedor', compD.frete, '#e8a76b'], ['entrega', 'Entrega de carro', compD.entrega, '#f2cf5b'], ['impostos', 'Impostos', compD.impostos, '#8e6bbf'], ['lucro', 'Lucro', compD.lucro, '#4caf66']];
+    const totD = segsD.reduce((t, x) => t + Math.max(0, x[2]), 0), CIRC = 2 * Math.PI * 54;
+    let accD = 0;
+    const selF = segsD.find((x) => x[0] === D.fatia);
+    const arcsD = totD > 0 ? segsD.map(([k, l, v, col]) => {
+      const len = Math.max(0, v) / totD * CIRC, tip = l + ': ' + C.brl0(v) + ' · ' + C.pct(Math.max(0, v) / totD, 1) + ' do preço de venda';
+      const e = `<circle class="dn-seg${D.fatia === k ? ' sel' : D.fatia ? ' dim' : ''}" cx="80" cy="80" r="54" fill="none" stroke="${col}" stroke-width="22" stroke-dasharray="${len.toFixed(2)} ${(CIRC - len).toFixed(2)}" stroke-dashoffset="${(-accD).toFixed(2)}" transform="rotate(-90 80 80)" data-act="dash-filtro" data-k="fatia" data-v="${k}" data-tip="${esc(tip)}"/>`;
+      accD += len; return e;
+    }).join('') : '';
+    const centro = totD <= 0 ? '<text x="80" y="84" text-anchor="middle" font-size="12" fill="currentColor">sem dados</text>'
+      : selF ? `<text x="80" y="72" text-anchor="middle" font-size="21" font-weight="800" fill="currentColor">${C.pct(Math.max(0, selF[2]) / totD, 0)}</text><text x="80" y="88" text-anchor="middle" font-size="9.5" fill="currentColor">${esc(selF[1])}</text><text x="80" y="102" text-anchor="middle" font-size="10" font-weight="700" fill="currentColor">${C.brl0(selF[2])}</text>`
+      : `<text x="80" y="76" text-anchor="middle" font-size="22" font-weight="800" fill="currentColor">${C.pct(compD.lucro / totD, 0)}</text><text x="80" y="95" text-anchor="middle" font-size="11" fill="currentColor">de lucro</text>`;
+    const donutCard = `<div class="card dn-card"><h3>${icon('painel', 'sm')}<span class="grow">De onde vem o preço de venda</span></h3><div class="donut-wrap">
+      <svg viewBox="0 0 160 160" role="img" aria-label="Composição do preço"><circle cx="80" cy="80" r="54" fill="none" stroke="var(--line)" stroke-width="22"/>${arcsD}${centro}</svg>
+      <div class="donut-leg">${segsD.map(([k, l, v, col]) => `<button type="button" class="dn-row${D.fatia === k ? ' sel' : ''}" data-act="dash-filtro" data-k="fatia" data-v="${k}" data-tip="${esc(l + ': ' + C.brl0(v) + (totD > 0 ? ' · ' + C.pct(Math.max(0, v) / totD, 1) : ''))}"><i style="background:${col}"></i><span class="grow">${l}</span><b>${C.brl0(v)}</b></button>`).join('')}</div></div>
+      <p class="tiny muted" style="margin-top:10px">Pregões ativos do filtro abaixo (exclui Perdeu, Desclassificado e Desisti). Passe o mouse ou clique numa fatia para destacar.</p></div>
+    `;
     // funil
     const etapas = [['enviadas', part, soma(part, 'proposta'), '#2e75b6'], ['ganhas', gan, soma(gan, 'venda'), '#4caf66'], ['entregues', ent, soma(ent, 'venda'), '#e0a800'], ['pagas', pag, soma(pag, 'venda'), '#2f7d3a']];
     const base = Math.max(1, part.length);
@@ -4556,10 +4520,10 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
     const mostrar = D.todos ? rows : rows.slice(0, 10);
     const linhas = mostrar.map((o) => {
       const g = o.x.ganho;
-      return `<tr data-act="abrir-pregao" data-id="${o.p.id}" tabindex="0"><td>${esc(o.p.numero)}</td><td class="ell-td">${esc(o.p.orgao)}</td><td>${badgeStatus(o.p.status)}${o.x.nPode > 0 && !g ? ' <span class="dstar" title="Itens que posso ganhar">★' + o.x.nPode + '</span>' : ''}</td><td class="num">${o.x.proposta > 0 ? C.brl0(o.x.proposta) : '—'}</td><td class="num">${g ? C.brl0(o.x.venda) : '—'}</td><td class="num">${g ? C.brl0(o.x.lucro) : '—'}</td><td class="num">${g && o.x.margem != null ? C.pct(o.x.margem, 0) : '—'}</td></tr>`;
+      return `<tr data-act="abrir-pregao" data-id="${o.p.id}" tabindex="0"><td>${esc(o.p.numero)}</td><td class="nw">${o.p.sessao ? esc(C.fmtSessao(o.p.sessao)) : '—'}</td><td class="ell-td">${esc(o.p.orgao)}</td><td>${badgeStatus(o.p.status)}${o.x.nPode > 0 && !g ? ' <span class="dstar" title="Itens que posso ganhar">★' + o.x.nPode + '</span>' : ''}</td><td class="num">${o.x.proposta > 0 ? C.brl0(o.x.proposta) : '—'}</td><td class="num">${g ? C.brl0(o.x.venda) : '—'}</td><td class="num">${g ? C.brl0(o.x.lucro) : '—'}</td><td class="num">${g && o.x.margem != null ? C.pct(o.x.margem, 0) : '—'}</td></tr>`;
     }).join('');
     const tabelaPregoes = `<div class="card"><h3>${icon('pregoes', 'sm')}<span class="grow">Pregões${chips.length || D.periodo !== 'tudo' ? ' filtrados' : ''} (${rows.length})</span></h3>
-      ${rows.length ? `<div class="tbl-scroll"><table class="tbl dtbl"><thead><tr><th>Nº</th><th>Órgão</th><th>Status</th><th class="num">Proposta</th><th class="num">Ganho</th><th class="num">Lucro</th><th class="num">Margem</th></tr></thead><tbody>${linhas}</tbody></table></div>${rows.length > 10 ? `<button type="button" class="btn sm ghost" style="margin-top:10px" data-act="dash-mais">${D.todos ? 'Mostrar menos' : 'Ver todos (' + rows.length + ')'}</button>` : ''}` : '<p class="muted small">Nenhum pregão com esses filtros.</p>'}</div>`;
+      ${rows.length ? `<div class="tbl-scroll"><table class="tbl dtbl"><thead><tr><th>Nº</th><th>Sessão</th><th>Órgão</th><th>Status</th><th class="num">Proposta</th><th class="num">Ganho</th><th class="num">Lucro</th><th class="num">Margem</th></tr></thead><tbody>${linhas}</tbody></table></div>${rows.length > 10 ? `<button type="button" class="btn sm ghost" style="margin-top:10px" data-act="dash-mais">${D.todos ? 'Mostrar menos' : 'Ver todos (' + rows.length + ')'}</button>` : ''}` : '<p class="muted small">Nenhum pregão com esses filtros.</p>'}</div>`;
     // modo "posso ganhar": uma linha por item, com o pregão de cada um
     let tabela = tabelaPregoes;
     if (D.pode) {
@@ -4575,7 +4539,7 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
       tabela = `<div class="card"><h3>${icon('check', 'sm')}<span class="grow">Itens que posso ganhar (${ir.length})</span></h3>
         ${ir.length ? `<div class="tbl-scroll"><table class="tbl dtbl"><thead><tr><th>Item</th><th>Pregão</th><th>Status</th><th class="num">Qtd</th><th class="num">Proposta</th><th class="num">Margem</th></tr></thead><tbody>${linhasI}</tbody></table></div>${ir.length > 12 ? `<button type="button" class="btn sm ghost" style="margin-top:10px" data-act="dash-mais">${D.todos ? 'Mostrar menos' : 'Ver todos (' + ir.length + ')'}</button>` : ''}` : '<p class="muted small">Nenhum item marcado como "posso ganhar" com esses filtros.</p>'}</div>`;
     }
-    return `<section class="dash m-hide">${barra}<div class="two-col">${funilCard}${evoCard}</div><div class="two-col">${mgCard}${orgCard}</div>${tabela}</section>`;
+    return `<section class="dash m-hide">${barra}<div class="dash-top">${donutCard}${funilCard}${evoCard}</div><div class="two-col">${mgCard}${orgCard}</div>${tabela}</section>`;
   }
 
   // capital de giro: quanto dinheiro sai antes de receber, somando os pregões ativos (pior caso = pedirem tudo de uma vez)
@@ -4654,10 +4618,7 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
       </div>
       ${painelStatusStrip(R)}
       ${painelDashboardHtml(R)}
-      <div class="pn-main">
-        <div class="pn-col pn-l">${painelPregoesHtml(R)}</div>
-        <div class="pn-col pn-r">${painelPendenciasHtml(R)}${painelEntregasHtml(R) || `<div class="card m-hide"><h3>${icon('calendar', 'sm')}<span class="grow">Entregas e recebimentos</span></h3><p class="muted small">Nenhuma entrega ou recebimento pendente.</p></div>`}${painelCertidoesHtml(R)}</div>
-      </div>
+      <div class="pn-main">${painelPendenciasHtml(R)}${painelEntregasHtml(R) || `<div class="card m-hide"><h3>${icon('calendar', 'sm')}<span class="grow">Entregas e recebimentos</span></h3><p class="muted small">Nenhuma entrega ou recebimento pendente.</p></div>`}${painelCertidoesHtml(R)}</div>
       <div class="pn-low">
       ${painelResultadosHtml(R)}
       ${painelVencedorHtml(R, st)}
@@ -4682,12 +4643,7 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
         <div><span>Lucro depois do DAS</span><b style="color:${R.tributos.lucroLiquido < 0 ? 'var(--red)' : 'var(--green)'}">${C.brl(R.tributos.lucroLiquido)}</b></div></div>
         <p class="tiny muted" style="margin-top:10px">Lucro previsto dos pregões ativos menos o DAS do ano. MEI não paga percentual sobre a venda (dentro do limite). Optante do Simples/MEI em geral não sofre retenção de IR, PIS, Cofins e CSLL do órgão público: se o órgão pedir, apresente a declaração do Anexo IV da IN RFB 1.234/2012. Ajuste em Config › Tributos.</p></div>
         <div class="card m-hide"><h3>Pregões por status</h3>${R.statusRows.map((r) => `<div class="strow${r.count ? '' : ' zero'}"><div class="row">${badgeStatus(r.status)}<span class="small muted">${r.count} pregão(ões)</span></div><b>${C.brl0(r.venda)}</b><div class="bar"><div style="width:${(r.venda / maxV * 100).toFixed(1)}%"></div></div></div>`).join('')}</div>
-        <div class="card"><h3>De onde vem o preço de venda</h3><div class="donut-wrap">
-          <svg viewBox="0 0 160 160" role="img" aria-label="Composição do preço"><circle cx="80" cy="80" r="54" fill="none" stroke="var(--line)" stroke-width="22"/>${comp.venda > 0 ? arcs : ''}
-            <text x="80" y="76" text-anchor="middle" font-size="22" font-weight="800" fill="currentColor">${margemTot == null ? '—' : C.pct(margemTot, 0)}</text><text x="80" y="95" text-anchor="middle" font-size="11" fill="var(--muted)">de lucro</text></svg>
-          <div class="donut-leg">${segs.map(([l, v, col]) => `<div><i style="background:${col}"></i>${l}<b>${C.brl0(v)}</b></div>`).join('')}</div></div>
-          <p class="tiny muted" style="margin-top:10px">Pregões ativos (exclui Perdeu, Desclassificado e Desisti).</p></div>
-      </div></div>`;
+      </div>`;
   }
 
   function pregaoCard(pst) {
@@ -6235,7 +6191,7 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
       case 'mostrar-painel': UI.keepScroll = true; store.upsertPregao({ id, ocultoPainel: false }); toast('De volta ao painel'); break;
       case 'dash-periodo': UI.dash.periodo = t.dataset.v; UI.dash.mes = null; UI.keepScroll = true; render(); break;
       case 'dash-filtro': { const k = t.dataset.k, v = t.dataset.v; UI.dash[k] = UI.dash[k] === v ? null : v; UI.keepScroll = true; render(); break; }
-      case 'dash-limpar': UI.dash.etapa = UI.dash.orgao = UI.dash.mes = UI.dash.pode = null; UI.keepScroll = true; render(); break;
+      case 'dash-limpar': UI.dash.etapa = UI.dash.orgao = UI.dash.mes = UI.dash.pode = UI.dash.fatia = null; UI.keepScroll = true; render(); break;
       case 'dash-mais': UI.dash.todos = !UI.dash.todos; UI.keepScroll = true; render(); break;
       case 'painel-concluidos': UI.mostrarConcl = !UI.mostrarConcl; UI.keepScroll = true; render(); break;
       case 'painel-encerrados': UI.mostrarEnc = !UI.mostrarEnc; UI.keepScroll = true; render(); break;
