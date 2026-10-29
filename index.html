@@ -1267,7 +1267,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.101.0';
+  const APP_VERSION = '1.101.1';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Julgamento', 'Aguardando empenho', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -6231,7 +6231,10 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     main.classList.toggle('wide', UI.tab === 'acomp' || (UI.tab === 'pregoes' && !UI.detailId) || UI.tab === 'itens' || UI.tab === 'painel');
     main.classList.toggle('pn', UI.tab === 'painel');
     main.classList.toggle('pg', UI.tab === 'pregoes' && !UI.detailId);
+    // faixas que rolam para o lado (filtros, status, quadro): ao redesenhar no mesmo lugar, mantêm a posição em que você estava
+    const HS = ['.filters', '.st-strip', '.pq-board', '.tbl-scroll'], hx = UI.keepScroll ? HS.map((q) => $$(q, main).map((el) => el.scrollLeft)) : null;
     main.innerHTML = fn();
+    if (hx) HS.forEach((q, k) => $$(q, main).forEach((el, i) => { if (hx[k][i]) { const sb = el.style.scrollBehavior; el.style.scrollBehavior = 'auto'; el.scrollLeft = hx[k][i]; el.style.scrollBehavior = sb; } }));
     $$('.nav button').forEach((b) => b.classList.toggle('on', b.dataset.v === UI.tab));
     const t = TABS.find((x) => x.id === UI.tab);
     $('#subt').textContent = UI.tab === 'pregoes' && UI.detailId ? 'Detalhe do pregão' : t.title;
