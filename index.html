@@ -630,7 +630,10 @@ input.input[type=datetime-local]::-webkit-date-and-time-value, input.input[type=
   .sheet-wide .sheet-body > * { grid-column: 2; min-width: 0; }
   .sheet-wide .sheet-body > .side-col { display: block; grid-column: 1; grid-row: 1 / span 30; position: sticky; top: 0; align-self: start; }
   .sheet-wide .side-col > .preview { position: static; margin: 0 -16px 14px; }
-  .sheet-wide #lanceSlot [data-mv] .field { margin-bottom: 12px; }
+  .sheet-wide #lanceSlot { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; align-items: stretch; }
+  .sheet-wide #lanceSlot [data-mv] { display: flex; min-width: 0; }
+  .sheet-wide #lanceSlot [data-mv] .field > label { min-height: 2.6em; }
+  .sheet-wide #lanceSlot [data-mv] .field { flex: 1; margin-bottom: 0; box-sizing: border-box; }
   .sheet-wide .sheet-body > [data-slot="draft"]:empty { display: none; }
   .sheet-wide .formgrid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0 16px; }
   .sheet-wide .formgrid .full { grid-column: 1 / -1; }
@@ -830,6 +833,8 @@ input[type=color].input { padding: 4px; height: 46px; }
 /* lance final em destaque no formulário do item (é o valor que vai para o PDF) */
 .field.destaque { background: var(--amber-soft); border: 2px solid var(--amber); border-radius: 12px; padding: 10px 12px; }
 .field.destaque label, .field.destaque .hint { color: var(--amber); font-weight: 700; }
+[data-mv="venc"] .field { border: 2px solid var(--red); border-radius: 12px; padding: 10px 12px; }
+[data-mv="venc"] .field label, [data-mv="venc"] .field .hint { color: var(--red); font-weight: 700; }
 
 /* nº do item no edital (facilita achar no PDF do edital) */
 .itag { display: inline-block; font-size: 11.5px; font-weight: 800; padding: 2px 8px; border-radius: 8px; background: var(--blue-soft); color: var(--blue); margin-right: 8px; white-space: nowrap; vertical-align: 1px; }
@@ -1225,7 +1230,7 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.99.3';
+  const APP_VERSION = '1.99.4';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Julgamento', 'Aguardando empenho', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
