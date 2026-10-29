@@ -1214,7 +1214,7 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.99.1';
+  const APP_VERSION = '1.99.2';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Julgamento', 'Aguardando empenho', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -4459,6 +4459,9 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
     // itens marcados "posso ganhar" (pregões ainda sem resultado de ganho), cada um com o pregão a que pertence
     const itensPode = [];
     baseP.forEach((o) => { if (C.INATIVOS.includes(o.p.status)) return; (o.x.todosItens || []).filter((i) => i.possivelGanhar && !i.semLance && !(R.iMap.get(i.id) || {}).ganhou).forEach((it) => itensPode.push({ o, it })); });
+    // itens em que fiquei com colocação (não ganhos), para ficar de olho nos que quase ganhei
+    const itensColoc = [];
+    baseP.forEach((o) => { (o.x.todosItens || []).filter((i) => i.colocacao && !i.semLance && !(R.iMap.get(i.id) || {}).ganhou).forEach((it) => itensColoc.push({ o, it })); });
     const valorItem = (it) => { const c = R.iMap.get(it.id); const u = c ? C.unitProposta(c, 'auto').unit : null; return u == null ? 0 : round2n(u * (Number(it.qtd) || 0)); };
     const pregoesPode = new Set(itensPode.map((r) => r.o.p.id));
     const todos = D.pode ? baseP.filter((o) => pregoesPode.has(o.p.id)) : baseP;
@@ -4471,12 +4474,15 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
     // filtros ativos
     const chips = [];
     if (D.pode) chips.push(['pode', '1', 'Só os itens que posso ganhar']);
+    if (D.coloc) chips.push(['coloc', '1', 'Itens com colocação']);
+    if (D.colocTop) chips.push(['colocTop', '3', 'Até o 3º lugar']);
     if (D.etapa) chips.push(['etapa', D.etapa, DASH_ETAPAS[D.etapa]]);
     if (D.orgao) chips.push(['orgao', D.orgao, D.orgao]);
     if (D.mes) chips.push(['mes', D.mes, 'Mês ' + rotuloMes(D.mes)]);
     const periodos = [['mes', 'Este mês'], ['tri', '3 meses'], ['ano', 'Este ano'], ['tudo', 'Tudo']];
     const barra = `<div class="card"><div class="dash-bar"><h3 style="margin:0" class="grow">${icon('painel', 'sm')}<span class="grow">Dashboard</span></h3>
       <button type="button" class="dpill${D.pode ? ' on' : ''}" data-act="dash-filtro" data-k="pode" data-v="1" data-tip="Itens marcados como 'Posso ganhar' (sem resultado ainda). Clique para ver só eles, com o pregão de cada um.">${icon('check', 'sm')}Posso ganhar <b>${itensPode.length}</b><small>${C.brl0(itensPode.reduce((s, r) => s + valorItem(r.it), 0))}</small></button>
+      <button type="button" class="dpill${D.coloc ? ' on' : ''}" data-act="dash-filtro" data-k="coloc" data-v="1" data-tip="Itens em que fiquei com colocação (1º, 2º, 3º…) e não ganhei. Clique para listar, do mais perto de ganhar para o mais longe.">${icon('acomp', 'sm')}Colocações <b>${itensColoc.length}</b></button>
       <button type="button" class="btn sm ghost" data-act="tab" data-v="acomp" title="Abrir a guia Acompanhar (posso ganhar e vencidos, por pregão)">${icon('acomp', 'sm')} Acompanhar</button>
       <div class="dseg" role="group" aria-label="Período">${periodos.map(([k, n]) => `<button type="button" class="${D.periodo === k ? 'on' : ''}" data-act="dash-periodo" data-v="${k}">${n}</button>`).join('')}</div></div>
       ${chips.length ? `<div class="dash-chips">${chips.map(([k, v, n]) => `<button type="button" class="dchip" data-act="dash-filtro" data-k="${k}" data-v="${esc(v)}">${esc(n)} ✕</button>`).join('')}<button type="button" class="btn sm ghost" data-act="dash-limpar">Limpar filtros</button></div>` : `<p class="tiny muted" style="margin-top:8px">Clique em "Posso ganhar", numa etapa do funil, num mês ou num órgão para filtrar.</p>`}</div>`;
@@ -4586,6 +4592,20 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
       }).join('');
       tabela = `<div class="card"><h3>${icon('check', 'sm')}<span class="grow">Itens que posso ganhar (${ir.length})</span></h3>
         ${ir.length ? `<div class="tbl-scroll"><table class="tbl dtbl"><thead><tr><th>Item</th><th>Pregão</th><th>Status</th><th class="num">Qtd</th><th class="num">Proposta</th><th class="num">Margem</th></tr></thead><tbody>${linhasI}</tbody></table></div>${ir.length > 12 ? `<button type="button" class="btn sm ghost" style="margin-top:10px" data-act="dash-mais">${D.todos ? 'Mostrar menos' : 'Ver todos (' + ir.length + ')'}</button>` : ''}` : '<p class="muted small">Nenhum item marcado como "posso ganhar" com esses filtros.</p>'}</div>`;
+    }
+    if (D.coloc) {
+      let ic = itensColoc.filter((r) => (!D.colocTop || r.it.colocacao <= 3) && (!D.etapa || dashEtapaOk(r.o, D.etapa)) && (!D.orgao || r.o.p.orgao === D.orgao) && (!D.mes || r.o.ym === D.mes));
+      ic.sort((a, b) => (a.it.colocacao - b.it.colocacao) || String(b.o.p.sessao || '').localeCompare(String(a.o.p.sessao || '')));
+      const shownC = D.todos ? ic : ic.slice(0, 15);
+      const linhasC = shownC.map((r) => {
+        const c = R.iMap.get(r.it.id) || {}, u = c.totalVenda != null && Number(r.it.qtd) > 0 ? C.unitProposta(c, 'auto').unit : null, vv = r.it.vencedor == null || r.it.vencedor === '' ? null : Number(r.it.vencedor);
+        const dif = u != null && vv ? (u - vv) / vv : null;
+        const tag = String(r.it.itemEdital || '').trim() ? '<b>Item ' + esc(String(r.it.itemEdital).trim()) + '</b> · ' : '';
+        return `<tr data-act="abrir-pregao" data-id="${r.o.p.id}" tabindex="0"><td><span class="coloc-badge ${r.it.colocacao === 1 ? 'c1' : r.it.colocacao <= 3 ? 'c3' : ''}">${colocTxt(r.it.colocacao)}</span></td><td class="ell-td">${tag}${esc(r.it.descricao)}</td><td class="ped"><b>Nº ${esc(r.o.p.numero)}</b><small>${esc(r.o.p.orgao)}</small></td><td>${badgeStatus(r.o.p.status)}</td><td class="num">${u != null ? C.brl(u) : '—'}</td><td class="num">${vv ? C.brl(vv) : '—'}</td><td class="num">${dif != null ? (dif >= 0 ? '+' : '') + C.pct(dif, 1) : '—'}</td></tr>`;
+      }).join('');
+      tabela = `<div class="card"><h3>${icon('acomp', 'sm')}<span class="grow">Itens com colocação (${ic.length})</span><button type="button" class="dpill${D.colocTop ? ' on' : ''}" data-act="dash-filtro" data-k="colocTop" data-v="3" data-tip="Só quem ficou até o 3º lugar">Até o 3º</button></h3>
+        ${ic.length ? `<div class="tbl-scroll"><table class="tbl dtbl"><thead><tr><th>Lugar</th><th>Item</th><th>Pregão</th><th>Status</th><th class="num">Meu valor</th><th class="num">Vencedor</th><th class="num">Diferença</th></tr></thead><tbody>${linhasC}</tbody></table></div>${!D.todos && ic.length > 15 ? `<button type="button" class="btn sm ghost" data-act="dash-mais">Ver todos (${ic.length})</button>` : ''}` : '<p class="muted small">Nenhum item com colocação neste filtro. Digite a colocação no item (em Pregões ou na janela de edição).</p>'}
+        <p class="tiny muted" style="margin-top:8px">A diferença usa o valor do vencedor que você anotou no item (se anotou). Clique na linha para abrir o pregão.</p></div>`;
     }
     return `<section class="dash m-hide">${barra}<div class="dash-top">${donutCard}${funilCard}${evoCard}</div><div class="two-col">${mgCard}${orgCard}</div>${tabela}</section>`;
   }
@@ -4919,7 +4939,7 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
       ${descLinha}
       ${venc}
       ${decisaoHtml(c)}
-      ${p && !c.fora && (p.status === 'Julgamento' || it.possivelGanhar || it.colocacao) ? `<div class="coloc-row">${colocacaoInput(it)}${it.colocacao ? `<span class="coloc-badge ${it.colocacao === 1 ? 'c1' : it.colocacao <= 3 ? 'c3' : ''}">${colocTxt(it.colocacao)} lugar</span>` : ''}</div>` : ''}
+      ${p && !c.fora && !c.ganhou && (p.status === 'Julgamento' || it.possivelGanhar || it.colocacao || c.resultado === 'perdi' || c.naoGanhou || ['Perdeu', 'Desclassificado', 'Aguardando empenho', 'Faturado', 'Concluído'].includes(p.status) || (p.sessao && (diasDesde(p.sessao) || 0) >= 0)) ? `<div class="coloc-row">${colocacaoInput(it)}${it.colocacao ? `<span class="coloc-badge ${it.colocacao === 1 ? 'c1' : it.colocacao <= 3 ? 'c3' : ''}">${colocTxt(it.colocacao)} lugar</span>` : ''}</div>` : ''}
       ${p && ['Julgamento', 'Proposta enviada'].includes(p.status) && !['perdi', 'desc'].includes(c.resultado) ? simLanceHtml(it, c, meuLance) : ''}
       <div class="icard-actions">${compra}${acao}</div></article>`;
   }
@@ -5113,10 +5133,11 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
     const cps = comprasDoItem(it).filter((k) => k.href), k = cps[0];
     const lanceU = c.lance != null ? c.lance : c.teto;
     const tag = c.fora ? '<span class="badge off">Fora</span>' : c.ganhou ? '<span class="acp-tag venci">Venci</span>' : c.desclass ? '<span class="badge bad">Desclass.</span>' : (it.possivelGanhar ? '<span class="acp-tag posso">Posso</span>' : '');
+    const colocTag = it.colocacao && !c.ganhou ? `<span class="coloc-badge ${it.colocacao === 1 ? 'c1' : it.colocacao <= 3 ? 'c3' : ''}" title="Minha colocação">${colocTxt(it.colocacao)}</span>` : '';
     const lucroCor = c.lucro == null ? '' : c.lucro < 0 ? 'var(--red)' : 'var(--green)';
     const kv = (l, v, cls) => `<div class="ib-kv${cls ? ' ' + cls : ''}"><span>${l}</span><b>${v}</b></div>`;
     return `<article class="ibox${c.fora || (c.naoGanhou && !it.possivelGanhar) ? ' apagado' : ''}" data-id="${it.id}">
-      <div class="ib-hd"><span class="ib-num">${num}</span>${tag}<button type="button" class="ic-btn" data-act="editar-item" data-id="${it.id}" title="Editar item" aria-label="Editar item">${icon('edit', 'sm')}</button></div>
+      <div class="ib-hd"><span class="ib-num">${num}</span>${colocTag}${tag}<button type="button" class="ic-btn" data-act="editar-item" data-id="${it.id}" title="Editar item" aria-label="Editar item">${icon('edit', 'sm')}</button></div>
       <h4 class="ib-nome" title="${esc(it.descricao)}">${esc(nomeCurto(it.descricao, 38))}</h4>
       <div class="ib-grid">
         ${kv('Qtd', C.qtdBR(it.qtd) + (it.unidade ? ' <em>' + esc(String(it.unidade).toLowerCase()) + '</em>' : ''))}
@@ -6246,7 +6267,7 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
       case 'mostrar-painel': UI.keepScroll = true; store.upsertPregao({ id, ocultoPainel: false }); toast('De volta ao painel'); break;
       case 'dash-periodo': UI.dash.periodo = t.dataset.v; UI.dash.mes = null; UI.keepScroll = true; render(); break;
       case 'dash-filtro': { const k = t.dataset.k, v = t.dataset.v; UI.dash[k] = UI.dash[k] === v ? null : v; UI.keepScroll = true; render(); break; }
-      case 'dash-limpar': UI.dash.etapa = UI.dash.orgao = UI.dash.mes = UI.dash.pode = UI.dash.fatia = null; UI.keepScroll = true; render(); break;
+      case 'dash-limpar': UI.dash.etapa = UI.dash.orgao = UI.dash.mes = UI.dash.pode = UI.dash.fatia = UI.dash.coloc = UI.dash.colocTop = null; UI.keepScroll = true; render(); break;
       case 'dash-mais': UI.dash.todos = !UI.dash.todos; UI.keepScroll = true; render(); break;
       case 'painel-concluidos': UI.mostrarConcl = !UI.mostrarConcl; UI.keepScroll = true; render(); break;
       case 'painel-encerrados': UI.mostrarEnc = !UI.mostrarEnc; UI.keepScroll = true; render(); break;
