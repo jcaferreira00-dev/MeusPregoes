@@ -251,7 +251,7 @@ Telêmaco Borba 4127106 (~0); Imbaú 4110078 (~25); Tibagi 4127502 (~38); Ortigu
 ### Já no app ou já descartados (não trazer como novos) — atualizado 22/10/2026
 Concluídos/encerrados: UFPR 2922; Ortigueira 87 (desclassificado);
 UEL 162; Faxinal 52; Ortigueira 95 (desistiu).
-Em andamento: Mauá da Serra 60 (itens ganhos); Ortigueira 91; Imbaú 84 e 85 e EPR-UEL 146 (Julgamento, confirmado em 29/10); Carambeí 54 e 55; UTFPR Ponta Grossa 15 e 17;
+Em andamento: Mauá da Serra 60 (itens ganhos); Ortigueira 91; Imbaú 84 e Carambeí 54 (Julgamento, confirmado pelo João em 29/10); Imbaú 85 e EPR-UEL 146 (Julgamento no app); Carambeí 54 e 55; UTFPR Ponta Grossa 15 e 17;
 Imbaú 91.
 Analisados em 24/10 (JSON entregue): Faxinal 49; São Jerônimo da Serra 47 (PE 40/2026); Ortigueira 102.
 Descartados na análise de 24/10: Castro 150 (por lote); Japira 38 e 39 (por lote); Ipiranga 77 (expediente e
@@ -275,7 +275,7 @@ Tomazina 31; Santo Antônio do Paraíso 37; Ponta Grossa 114 e 118 (= 178); FAS 
 Vistos e descartados na busca de 29/10: São Jerônimo da Serra 46 (lotes/pesado); Arapoti Disp. 28; Castro 149, 153, 158 e 161;
 Tomazina 32 (volume); Piraí do Sul 45 (volume); Ponta Grossa 101, 110 e 144; UTFPR 86; Pinhalão 20; Carambeí 59;
 Santo Antônio do Paraíso 38; Tibagi 64 e 65; Rosário do Ivaí 42 e 43.
-Conferido com o backup do app de 29/10/2026: Rio Branco do Ivaí 36 está como Desisti; Imbaú 84 e 85 e EPR-UEL 146 seguem em Julgamento (o João confirmou).
+Conferido com o backup do app de 29/10/2026: Rio Branco do Ivaí 36 está como Desisti; Ortigueira 91 com a sessão ainda em andamento em 29/10; Imbaú 84 e Carambeí 54 em julgamento (confirmado); Imbaú 85 e EPR-UEL 146 em Julgamento no app (não confirmado).
 (Quando o João mandar um backup do app ou os PDFs de um pregão, atualizar esta lista.)
 
 ### Orientações adicionais do João
