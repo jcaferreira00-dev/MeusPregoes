@@ -1174,6 +1174,7 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
 .p-alert { display: flex; align-items: center; gap: 8px; font-size: 12.5px; font-weight: 800; text-transform: uppercase; letter-spacing: .03em; padding: 6px 10px; border-radius: 8px; color: #fff; line-height: 1.25; }
 .p-alert svg { flex: none; }
 .p-alert.bad { background: var(--red); } .p-alert.warn { background: var(--amber); } .p-alert.gold { background: #c98a12; }
+.p-ask { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin: -2px 0 2px; } .p-ask .btn { padding: 6px 4px; font-size: 12px; justify-content: center; white-space: nowrap; }
 .pcard.al-bad { border: 3px solid var(--red); background: color-mix(in srgb, var(--red) 8%, var(--card)); animation: faltaPulse 1.6s ease-in-out infinite; }
 .pcard.al-warn { border: 3px solid var(--amber); background: color-mix(in srgb, var(--amber) 9%, var(--card)); }
 .pcard.al-gold { border: 3px solid #c98a12; background: color-mix(in srgb, #d99a1c 10%, var(--card)); box-shadow: 0 0 0 3px color-mix(in srgb, #d99a1c 22%, transparent), var(--shadow); }
@@ -1292,7 +1293,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.103.1';
+  const APP_VERSION = '1.104.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Julgamento', 'Aguardando empenho', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -4864,6 +4865,8 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     const hora = (/T(\d{2}:\d{2})/.exec(p.sessao || '') || [])[1];
     const ds = diasDesde(p.sessao), t = new Date(p.sessao || p.prazoPropostas || '').getTime() || 0;
     if (pre && ds === 0) return { nivel: 'bad', lane: true, rank: 0, t, texto: 'Pregão hoje' + (hora ? ' · ' + hora : '') };
+    // a sessão passou de um dia para o outro e o pregão ainda está como Proposta enviada: pergunta se continua ou se precisa de mais dias
+    if (p.status === 'Proposta enviada' && ds !== null && ds > 0) return { nivel: 'warn', lane: true, rank: 1, t, pergunta: true, texto: 'Sessão passou · continua?' };
     const pz = prazoInfo(p), po = posInfo(p);
     if (pz && pz.nivel === 'bad') return { nivel: 'bad', lane: true, rank: 1, t, texto: 'Enviar proposta · ' + pz.curto };
     if (po && po.nivel === 'bad') return { nivel: 'bad', lane: true, rank: 1, t, texto: po.curto };
@@ -4897,6 +4900,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     return `<article class="pcard${pzCls}${emSelo ? ' tem-selo' : ''}" style="--gc:${corDe(p.id)};--sc:${COR_STATUS[p.status] || '#2e75b6'}" data-act="abrir-pregao" data-id="${p.id}" tabindex="0" role="button">
       ${selo}
       ${alr ? `<div class="p-alert ${alr.nivel}">${icon(alr.nivel === 'gold' ? 'check' : 'alert', 'sm')}<span>${esc(alr.texto)}</span></div>` : ''}
+      ${alr && alr.pergunta ? `<div class="p-ask"><button type="button" class="btn sm" data-act="sessao-continua" data-id="${p.id}">Continua amanhã</button><button type="button" class="btn sm" data-act="sessao-mais" data-id="${p.id}">Mais dias</button><button type="button" class="btn sm ghost" data-act="sessao-fim" data-id="${p.id}">Encerrou</button></div>` : ''}
       <div class="row between p-hd"><span class="num" style="color:var(--gc)" title="Pregão nº ${esc(p.numero)}">${/^preg/i.test(String(p.numero).trim()) ? esc(p.numero) : 'PREGÃO Nº ' + esc(p.numero)}</span><span class="m-acts">${url(p.link) ? `<a class="ic-btn" href="${esc(url(p.link))}" target="_blank" rel="noopener noreferrer" data-act="link-externo" title="Abrir edital" aria-label="Abrir edital">${icon('pdf', 'sm')}</a>` : '<span class="ic-btn ic-vazio" aria-hidden="true"></span>'}${url(p.linkProposta) ? `<a class="ic-btn" href="${esc(url(p.linkProposta))}" target="_blank" rel="noopener noreferrer" data-act="link-externo" title="Enviar proposta" aria-label="Enviar proposta">${icon('link', 'sm')}</a>` : '<span class="ic-btn ic-vazio" aria-hidden="true"></span>'}</span>${badgeStatus(p.status)}</div>
       <h4>${esc(p.orgao).replace(/^(Prefeitura Municipal de|Prefeitura de|Município de)\s+/i, '<span class="org-pre">$1 </span>')}</h4>
       <div class="small muted row wrap" style="gap:4px 14px;align-items:center">${url(p.linkProposta) ? `<a class="btn sm lk p-prop" href="${esc(url(p.linkProposta))}" target="_blank" rel="noopener noreferrer" data-act="link-externo">${icon('link', 'sm')} Proposta</a>` : ''}${p.cidadeUf ? `<span class="row" style="gap:4px">${icon('pin', 'sm')}${esc(cidadeFmt(p.cidadeUf))}</span>` : ''}${p.sessao && (!pz || String(p.sessao) !== String(p.prazoPropostas || '')) ? `<span class="row" style="gap:4px">${icon('calendar', 'sm')}${esc(C.fmtSessao(p.sessao))}</span>` : ''}<span class="row p-nit" style="gap:4px">${icon('itens', 'sm')}${pst.itens.length ? pst.itens.length + (pst.itens.length === 1 ? ' item' : ' itens') : 'sem itens'}</span><span class="m-meta">${pst.itens.length ? pst.itens.length + (pst.itens.length === 1 ? ' item' : ' itens') : 'sem itens'}</span>${(p.obs || pst.itens.some((i) => String(i.obs || '').trim())) ? `<span class="m-meta m-obs" title="Tem observação">${icon('info', 'sm')}</span>` : ''}</div>
@@ -5179,6 +5183,31 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
       <button class="btn block" data-act="itens-ganhos" data-id="${p.id}">${icon('edit', 'sm')} Escolher os itens que ganhei</button></div>`;
   }
 
+  // nova data da sessão: o dia de hoje + N dias, mantendo a hora que já estava no pregão
+  function sessaoNova(p, dias) {
+    const hora = (/T(\d{2}:\d{2})/.exec(p.sessao || '') || [])[1] || '09:00';
+    const d = new Date(); d.setDate(d.getDate() + dias);
+    const z = (n) => String(n).padStart(2, '0');
+    return d.getFullYear() + '-' + z(d.getMonth() + 1) + '-' + z(d.getDate()) + 'T' + hora;
+  }
+  // "Mais dias": a sessão não acabou; escolhe a nova data e hora
+  function abrirMaisDias(id) {
+    const p = store.get().pregoes.find((x) => x.id === id && !x.deleted);
+    if (!p) return;
+    openForm({
+      key: 'maisdias:' + id,
+      title: 'Sessão precisa de mais dias',
+      values: { sessao: sessaoNova(p, 1) },
+      body: `<p class="small muted" style="margin-bottom:10px">${esc(p.orgao)} · Nº ${esc(p.numero)}. Escolha quando a sessão volta (o pregão continua em Proposta enviada).</p><div class="formgrid">${field({ label: 'Nova data e hora da sessão', name: 'sessao', type: 'datetime-local', value: sessaoNova(p, 1), full: true })}</div>`,
+      saveLabel: 'Salvar',
+      onSave: (x) => {
+        if (!x.sessao) return 'Informe a nova data da sessão';
+        store.upsertPregao({ id, sessao: x.sessao });
+        toast('Sessão remarcada');
+        return true;
+      },
+    });
+  }
   function openGanhosForm(id) {
     const st = store.get();
     const itens = porItemEdital(st.itens.filter((i) => i.pregaoId === id && !i.deleted && !i.semLance));
@@ -6483,6 +6512,9 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
         if (i >= 0) { lista[i].emissao = C.hojeISO(); salvarCertidoes(lista); toast(lista[i].validadeDias > 0 ? 'Emissão registrada: hoje' : 'Emissão registrada. Informe a validade (lápis) para ver o vencimento'); }
         break;
       }
+      case 'sessao-continua': { e.stopPropagation(); UI.keepScroll = true; const p = store.get().pregoes.find((x) => x.id === id); if (p) { store.upsertPregao({ id, sessao: sessaoNova(p, 1) }); toast('Sessão continua amanhã'); } break; }
+      case 'sessao-mais': e.stopPropagation(); abrirMaisDias(id); break;
+      case 'sessao-fim': { e.stopPropagation(); UI.keepScroll = true; store.upsertPregao({ id, status: 'Julgamento' }); toast('Sessão encerrada · pregão em Julgamento'); break; }
       case 'link-externo': e.stopPropagation(); break;   // deixa o link abrir sem abrir o cartão
       case 'novo-pregao': openPregaoForm(); break;
       case 'editar-pregao': openPregaoForm(id); break;
