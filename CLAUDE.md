@@ -285,7 +285,7 @@ Vistos e descartados na busca de 29/10: São Jerônimo da Serra 46 (lotes/pesado
 Tomazina 32 (volume); Piraí do Sul 45 (volume); Ponta Grossa 101, 110 e 144; UTFPR 86; Pinhalão 20; Carambeí 59;
 Santo Antônio do Paraíso 38; Tibagi 64 e 65; Rosário do Ivaí 42 e 43.
 Conferido com o backup do app de 29/10/2026: Rio Branco do Ivaí 36 está como Desisti; Ortigueira 91 com a sessão ainda em andamento em 29/10; Imbaú 84 e Carambeí 54 em julgamento (confirmado); Imbaú 85 e EPR-UEL 146 em Julgamento no app (não confirmado).
-Conferido com o backup do app de 30/10/2026: Imbaú 91, Carambeí 55 e São Jerônimo da Serra 47 com proposta enviada; UTFPR 17 (sessão 09/11), Ortigueira 102 (10/11) e Ipiranga 78 (05/11) em Analisando, recotados pelo Chrome em 30/10 (preços do Mercado Livre ficaram de 29/10: o ML pediu captcha).
+Conferido com o backup do app de 30/10/2026: Imbaú 91, Carambeí 55 e São Jerônimo da Serra 47 com proposta enviada; UTFPR 17 (sessão 09/11), Ortigueira 102 (10/11) e Ipiranga 78 (05/11) em Analisando, recotados pelo Chrome em 30/10 (Mercado Livre reconferido depois do captcha).
 (Quando o João mandar um backup do app ou os PDFs de um pregão, atualizar esta lista.)
 
 ### Orientações adicionais do João
