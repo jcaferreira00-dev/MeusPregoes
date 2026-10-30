@@ -188,6 +188,7 @@ Municipio de Imbau/                 <- pasta com o nome do promotor (órgão)
 - Raio: até ~120 km de estrada de Telêmaco Borba/PR, MAIS Ponta Grossa (~126 km) — decisão de 22/10/2026
   (180 km ficou longe demais). Quanto mais perto, melhor: está começando e sem caixa para frete grande.
   A lista de municípios com código IBGE está em "Busca no PNCP".
+- Plataformas (decisão de 30/10/2026): o João só usa **Compras.gov.br** e **BLL**. As outras (Licitanet, BNC, Portal de Compras Públicas, Compras Paraná etc.) cobram taxa/mensalidade, então por enquanto NÃO usar: pregão em outra plataforma é descartado na busca e na análise (citar a plataforma no aviso). Na busca, conferir `usuarioNome`/`linkSistemaOrigem` do PNCP. Se o João voltar a usar outra, mudar AQUI.
 - Entrega de carro de passeio, no máximo Strada com carretinha. Itens pesados ou grandes não compensam.
 - Itens em quantidade muito grande são difíceis de comprar (falta de fornecedor e de experiência):
   evitar ou sinalizar.

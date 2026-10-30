@@ -250,6 +250,9 @@ input[type=range] { width: 100%; accent-color: var(--blue); }
 .pm-st { font-size: 11.5px; font-weight: 800; padding: 2px 8px; border-radius: 6px; } .pm-st.ok { background: var(--green-soft); color: var(--green); } .pm-st.warn { background: var(--amber-soft); color: var(--amber); } .pm-st.bad { background: var(--red-soft); color: var(--red); }
 .pm-sum { display: flex; justify-content: space-between; align-items: baseline; padding: 10px 12px; border-top: 2px solid var(--line); font-weight: 800; } .pm-sum b { font-size: 18px; }
 .side-col { display: contents; }
+.pv-lks { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 12px; }
+.pv-lks:empty, #boxLinksPreg:empty { display: none; }
+.sheet-wide .pv-lks { margin: 0 0 10px; }
 .preview { position: sticky; top: -14px; z-index: 2; margin: -14px -16px 14px; padding: 12px 16px; background: var(--bg); border-bottom: 1px solid var(--line); display: flex; flex-direction: column; gap: 8px; }
 .preview .kv { display: flex; gap: 14px; font-size: 12px; color: var(--muted); flex-wrap: wrap; } .preview .kv b { color: var(--ink); font-variant-numeric: tabular-nums; }
 .draftbar { display: flex; gap: 10px; align-items: center; background: var(--amber-soft); color: var(--amber); border-radius: 12px; padding: 10px 12px; margin-bottom: 12px; font-size: 12.5px; font-weight: 700; }
@@ -1293,7 +1296,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.104.0';
+  const APP_VERSION = '1.104.1';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Julgamento', 'Aguardando empenho', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -4018,6 +4021,14 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     store.patchItem(t.dataset.pmLance, (it) => { it.lanceFinal = v; });
     UI.pdf.result = null; UI.keepScroll = true; setTimeout(render, 0);
   });
+  function pregLinksHtml(pid) {   // atalhos do pregão dentro da janela do item: edital e site (BLL/gov.br/PNCP…)
+    const p = store.get().pregoes.find((q) => q.id === pid);
+    if (!p) return '';
+    const u = (v) => { v = String(v || '').trim(); return v ? (/^https?:\/\//i.test(v) ? v : 'https://' + v) : ''; };
+    const bt = (href, ic, txt, tip) => href ? `<a class="btn sm" href="${esc(href)}" target="_blank" rel="noopener noreferrer" data-act="link-externo" title="${tip}">${icon(ic, 'sm')} ${txt}</a>` : '';
+    const h = bt(u(p.link), 'pdf', 'Edital', 'Abrir o edital') + bt(u(p.linkProposta), 'link', 'Proposta / lances', 'Site para enviar a proposta e dar lances') + bt(u(p.linkLicitacao), 'web', 'Site do pregão', 'Página do pregão (BLL, gov.br, PNCP…)');
+    return h ? `<div class="pv-lks">${h}</div>` : '';
+  }
   function openItemForm(id, pregaoId) {
     const list = activePregoes();
     if (!list.length) { toast('Cadastre um pregão primeiro'); openPregaoForm(); return; }
@@ -4033,7 +4044,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
           <div class="full"><button type="button" class="btn ghost sm" data-alt="limpar" data-alt-n="${n}">${icon('trash', 'sm')} Remover esta opção</button></div></div>`;
     const altQtd = ALTS.filter((n) => v['alt' + n + 'Loja'] || v['alt' + n + 'Link'] || v['alt' + n + 'Custo'] || v['alt' + n + 'Frete'] || v['alt' + n + 'Qtd']).length;
     const body = `
-      <div class="side-col"><div class="preview" id="prev"></div><div id="lanceSlot"></div></div>
+      <div class="side-col"><div id="boxLinksPreg" data-pid="${esc(v.pregaoId)}">${pregLinksHtml(v.pregaoId)}</div><div class="preview" id="prev"></div><div id="lanceSlot"></div></div>
       <div class="formgrid">
       ${field({ label: 'Pregão / órgão *', name: 'pregaoId', type: 'select', full: true, value: v.pregaoId, options: list.map((p) => ({ v: p.id, l: pregaoLabel(p) })) })}
       <div id="boxEntrega" class="full" data-pid="${esc(v.pregaoId)}">${entregaSelectHtml(v.pregaoId, v.entregaId)}</div>
@@ -4203,6 +4214,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
         const bl = $('#boxLocalItem', form); if (bl) bl.classList.toggle('hidden', !String(x.localEntrega || '').trim());
         const ph = store.get().pregoes.find((q) => q.id === x.pregaoId);
         const le = $('[name=localEntrega]', form); if (le && ph) le.placeholder = 'vazio = ' + (ph.cidadeUf || 'local do pregão');
+        { const bl2 = $('#boxLinksPreg', form); if (bl2 && bl2.dataset.pid !== x.pregaoId) { bl2.dataset.pid = x.pregaoId; bl2.innerHTML = pregLinksHtml(x.pregaoId); } }
         const bx = $('#boxEntrega', form);
         if (bx && bx.dataset.pid !== x.pregaoId) { bx.dataset.pid = x.pregaoId; bx.innerHTML = entregaSelectHtml(x.pregaoId, ''); x = readForm(form); }
         const c = C.previewItem(store.get(), itemFromForm(x, id));
