@@ -1296,7 +1296,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.104.1';
+  const APP_VERSION = '1.105.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Julgamento', 'Aguardando empenho', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -1863,13 +1863,30 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     const ls = capitalizarTitulos(txt).split(/\n+/).map((l) => l.trim()).filter(Boolean);
     return ls.map((l, i) => (i < ls.length - 1 && !/[.;:!?,]$/.test(l) ? l + ';' : l)).join(' ');
   }
-  // proteção: não emite a proposta sem a marca e o descritivo do item ofertado (digitados pelo João) em cada item
+  // "MARCA: x" e "MODELO: y" escritos no descritivo do item ofertado (linha própria ou separados por ; ou por outro TÍTULO:)
+  function marcaModeloDoTexto(txt) {
+    const r = {};
+    String(txt || '').split(/\n+/).forEach((l) => {
+      const re = /(?:^|[;|•]\s*|\s)(MARCA|MODELO)\s*:\s*(.+?)(?=\s*[;|]|\s+[A-ZÀ-ÖØ-Þ][A-ZÀ-ÖØ-Þ0-9 \/.\-]{1,30}:|$)/giu;
+      let m;
+      while ((m = re.exec(l))) {
+        const k = m[1].toLowerCase(), v = m[2].trim().replace(/[.;,]+$/, '').trim();
+        if (v && !(k in r)) r[k] = v;
+      }
+    });
+    return r;
+  }
+  const normMM = (s) => String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]/g, '');
+  // proteção: não emite a proposta sem a marca, o modelo e o descritivo do item ofertado (digitados pelo João) em cada item,
+  // nem com marca/modelo do item diferente do que está escrito no descritivo ("MARCA:" / "MODELO:")
   function faltasOferta(state, pregaoId, tipo, fonte) {
     const p = state.pregoes.find((x) => x.id === pregaoId && !x.deleted);
     if (!p) return [];
     const op = resolverPdfOpts(p, state.config, tipo);
     const L = linhasProposta(state, pregaoId, fonte || 'auto', op.icmsAliq, tipo);
-    return L.linhas.map((l) => ({ id: l.id, rotulo: l.rotulo, descricao: l.descricao, falta: [!l.marcaSo && 'marca', !l.catalogoH && 'descritivo do item ofertado'].filter(Boolean) })).filter((x) => x.falta.length);
+    return L.linhas.map((l) => ({ id: l.id, rotulo: l.rotulo, descricao: l.descricao, falta: (() => { const mm = marcaModeloDoTexto(l.catalogo); return [!l.marcaSo && 'marca', !l.modeloSo && 'modelo', !l.catalogoH && 'descritivo do item ofertado',
+      mm.marca && l.marcaSo && normMM(mm.marca) !== normMM(l.marcaSo) && ('marca do item (' + l.marcaSo + ') diferente da do descritivo (' + mm.marca + ')'),
+      mm.modelo && l.modeloSo && normMM(mm.modelo) !== normMM(l.modeloSo) && ('modelo do item (' + l.modeloSo + ') diferente do descritivo (' + mm.modelo + ')')].filter(Boolean); })() })).filter((x) => x.falta.length);
   }
   function pendenciasModelo(state, pregaoId, tipo, fonte) {
     const p = state.pregoes.find((x) => x.id === pregaoId && !x.deleted);
@@ -2181,7 +2198,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
   const api = {
     APP_VERSION, STATUS, INATIVOS, DECL_PADRAO, uid, n0, round2, ceil2, parseBR, brl, brl0, pct, numBR, qtdBR,
     fmtSessao, dataExtensa, hojeISO, defaultConfig, emptyState, migrate, custoViagem, localEntregaPadrao, calcItem, limiteMEI,
-    agora, setClockOffset, getClockOffset, pendenciasNuvem, computeAll, divisaoCompra, custoCompra, freteCompra, ordemLoteItem, padLE, dasMensal, mesesAtivos, previewItem, linhasProposta, faltasOferta, horizontal, capitalizarTitulos, unitProposta, resolverPdfOpts, camposModelo, pendenciasModelo, CAMPOS_MODELO, identificaEmpresa, COLUNAS_DESC, CAMPOS_FORNECEDOR, CAMPOS_BANCO, mergeState, diffState, paraNuvem, createStore, demoState,
+    agora, setClockOffset, getClockOffset, pendenciasNuvem, computeAll, divisaoCompra, custoCompra, freteCompra, ordemLoteItem, padLE, dasMensal, mesesAtivos, previewItem, linhasProposta, faltasOferta, marcaModeloDoTexto, normMM, horizontal, capitalizarTitulos, unitProposta, resolverPdfOpts, camposModelo, pendenciasModelo, CAMPOS_MODELO, identificaEmpresa, COLUNAS_DESC, CAMPOS_FORNECEDOR, CAMPOS_BANCO, mergeState, diffState, paraNuvem, createStore, demoState,
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   root.Core = api;
@@ -4059,10 +4076,10 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
         ${field({ label: 'Nº do lote', name: 'loteEdital', value: v.loteEdital, ph: 'ex.: 1', hint: 'Vazio = sai só o item' })}
         ${field({ label: 'Nº do item', name: 'itemEdital', value: v.itemEdital, ph: 'ex.: 04', hint: 'Sai “LOTE 01 - ITEM 04” no PDF (1 vira 01 sozinho)' })}
         <span hidden data-mv-home="marca"></span><div data-mv="marca">
-        ${field({ label: 'Marca *', name: 'marca', value: v.marca, ph: 'ex.: Elgin', hint: 'Obrigatória para gerar a proposta' })}
+        ${field({ label: 'Marca *', name: 'marca', value: v.marca, ph: 'ex.: Elgin', hint: 'Obrigatória. Se o descritivo tiver “MARCA:”, ela vem de lá' })}
         </div>
         <span hidden data-mv-home="modelo"></span><div data-mv="modelo">
-        ${field({ label: 'Modelo', name: 'modelo', value: v.modelo, ph: 'ex.: AA-100' })}
+        ${field({ label: 'Modelo *', name: 'modelo', value: v.modelo, ph: 'ex.: AA-100', hint: 'Obrigatório. Se o descritivo tiver “MODELO:”, ele vem de lá' })}
         </div>
         <div class="full desc-pair">
           <div class="desc-left">
@@ -4207,6 +4224,9 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
         if (loc.value.trim() && !km.value) calc(false);
       },
       onInput: (form) => {
+        { const mm = C.marcaModeloDoTexto(($('[name=catalogoDesc]', form) || {}).value), mi = $('[name=marca]', form), mo = $('[name=modelo]', form);
+          if (mm.marca && mi && C.normMM(mm.marca) !== C.normMM(mi.value)) { mi.value = mm.marca; mi.classList.add('calc'); mi.title = 'Veio do descritivo do item ofertado (MARCA:)'; }
+          if (mm.modelo && mo && C.normMM(mm.modelo) !== C.normMM(mo.value)) { mo.value = mm.modelo; mo.classList.add('calc'); mo.title = 'Veio do descritivo do item ofertado (MODELO:)'; } }
         let x = readForm(form);
         { const tem = ALTS.some((n) => x['alt' + n + 'Usar'] && C.parseBR(x['alt' + n + 'Custo']) != null), ci = $('[name=custo]', form), fi = $('[name=frete]', form);
           [ci, fi].forEach((el) => { if (el) { el.readOnly = tem; el.classList.toggle('calc', tem); el.title = tem ? 'Calculado das opções de compra marcadas' : ''; } });
@@ -5810,8 +5830,8 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
   function gerarCardHtml(st, L) {
     const falt = C.faltasOferta(st, UI.pdf.pregaoId, UI.pdf.tipo, UI.pdf.fonte);
     const pend = C.pendenciasModelo(st, UI.pdf.pregaoId, UI.pdf.tipo, UI.pdf.fonte).filter((x) => !(falt.length && /^Item sem marca/.test(x)));
-    const bloq = falt.length ? `<div class="alert bad" style="margin-bottom:10px">${icon('alert', 'sm')}<div class="grow"><b>Não dá para gerar a proposta ainda.</b> Em cada item precisa ter a marca (no item) e o descritivo do item ofertado (no catálogo, logo acima):<div class="falta-lista">${falt.map((x) => `<div class="falta-it"><span class="grow"><b>${esc(x.rotulo)}</b> · ${esc(x.descricao)}</span>${x.falta.includes('marca') ? `<button type="button" class="btn sm" data-act="editar-item" data-id="${esc(x.id)}">${icon('edit', 'sm')} Marca</button>` : ''}${x.falta.some((f) => f !== 'marca') ? `<button type="button" class="btn sm" data-act="cat-foco" data-id="${esc(x.id)}">${icon('image', 'sm')} Descritivo</button>` : ''}</div>`).join('')}</div></div></div>` : '';
-    const aviso = pend.length ? `<div class="alert warn" style="margin-bottom:10px">${icon('alert', 'sm')}<div class="grow"><b>Confira antes de gerar:</b><br>${pend.map((x) => esc(x)).join('<br>')}</div></div>` : (falt.length ? '' : `<div class="alert ok" style="margin-bottom:10px">${icon('check', 'sm')}<span>Dados conferidos: nenhum campo em branco, todos os itens com marca, descritivo e valor.</span></div>`);
+    const bloq = falt.length ? `<div class="alert bad" style="margin-bottom:10px">${icon('alert', 'sm')}<div class="grow"><b>Não dá para gerar a proposta ainda.</b> Em cada item precisa ter a marca e o modelo (no item, iguais aos do descritivo) e o descritivo do item ofertado (no catálogo, logo acima):<div class="falta-lista">${falt.map((x) => `<div class="falta-it"><span class="grow"><b>${esc(x.rotulo)}</b> · ${esc(x.descricao)}<br><span class="tiny muted">falta: ${esc(x.falta.join('; '))}</span></span>${x.falta.some((f) => f !== 'descritivo do item ofertado') ? `<button type="button" class="btn sm" data-act="editar-item" data-id="${esc(x.id)}">${icon('edit', 'sm')} Marca/modelo</button>` : ''}${x.falta.includes('descritivo do item ofertado') ? `<button type="button" class="btn sm" data-act="cat-foco" data-id="${esc(x.id)}">${icon('image', 'sm')} Descritivo</button>` : ''}</div>`).join('')}</div></div></div>` : '';
+    const aviso = pend.length ? `<div class="alert warn" style="margin-bottom:10px">${icon('alert', 'sm')}<div class="grow"><b>Confira antes de gerar:</b><br>${pend.map((x) => esc(x)).join('<br>')}</div></div>` : (falt.length ? '' : `<div class="alert ok" style="margin-bottom:10px">${icon('check', 'sm')}<span>Dados conferidos: nenhum campo em branco, todos os itens com marca, modelo, descritivo e valor.</span></div>`);
     const off = UI.pdf.busy || falt.length ? 'disabled' : '';
     return `<div class="card" id="gerarCard" style="scroll-margin-top:80px"><h3>${icon('pdf', 'sm')} Gerar</h3>
       ${bloq}${aviso}
@@ -6030,7 +6050,16 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     const id = el.dataset.catDesc, v = C.capitalizarTitulos(el.value);
     if (v !== el.value) el.value = v;   // primeira letra depois de "TÍTULO:" sempre maiúscula
     const it = store.get().itens.find((x) => x.id === id);
-    if (it && (it.catalogoDesc || '') !== v) { store.patchItem(id, (x) => { x.catalogoDesc = v; }); flashSaved(); refreshGerarCard(); }
+    if (it && (it.catalogoDesc || '') !== v) {
+      const mm = C.marcaModeloDoTexto(v), mudou = [];
+      store.patchItem(id, (x) => {
+        x.catalogoDesc = v;
+        if (mm.marca && C.normMM(mm.marca) !== C.normMM(x.marca)) { x.marca = mm.marca; mudou.push('marca'); }
+        if (mm.modelo && C.normMM(mm.modelo) !== C.normMM(x.modelo)) { x.modelo = mm.modelo; mudou.push('modelo'); }
+      });
+      flashSaved(); refreshGerarCard();
+      if (mudou.length) toast((mudou.length > 1 ? 'Marca e modelo' : mudou[0] === 'marca' ? 'Marca' : 'Modelo') + ' do item atualizado(s) pelo descritivo');
+    }
   }
   // atualiza o bloco "Gerar" (lista do que falta) sem redesenhar a guia inteira
   function refreshGerarCard() {
@@ -6129,8 +6158,8 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     if (!id) { toast('Escolha um pregão'); return; }
     const falt = C.faltasOferta(store.get(), id, UI.pdf.tipo, UI.pdf.fonte);
     if (falt.length) {
-      const v = await dialog({ title: 'Falta marca ou descritivo', text: 'Preencha, em cada item, a marca (no item) e o descritivo do item ofertado (no catálogo da guia Proposta) antes de gerar a proposta:\n' + falt.map((x) => '• ' + x.rotulo + ' · ' + x.descricao + ' — falta ' + x.falta.join(' e ')).join('\n'), buttons: [{ label: 'Preencher o primeiro', value: true, cls: 'primary' }, { label: 'Fechar', value: false, cls: 'ghost' }] });
-      if (v) { if (falt[0].falta.includes('marca')) openItemForm(falt[0].id); else irCatalogoItem(falt[0].id); }
+      const v = await dialog({ title: 'Falta marca, modelo ou descritivo', text: 'Preencha, em cada item, a marca e o modelo (no item, iguais aos escritos no descritivo) e o descritivo do item ofertado (no catálogo da guia Proposta) antes de gerar a proposta:\n' + falt.map((x) => '• ' + x.rotulo + ' · ' + x.descricao + ' — falta ' + x.falta.join(' e ')).join('\n'), buttons: [{ label: 'Preencher o primeiro', value: true, cls: 'primary' }, { label: 'Fechar', value: false, cls: 'ghost' }] });
+      if (v) { if (falt[0].falta.some((f) => f !== 'descritivo do item ofertado')) openItemForm(falt[0].id); else irCatalogoItem(falt[0].id); }
       return;
     }
     if (UI.pdf.tipo === 'final' && !(await confirmarPrecosFinal(id))) return;
