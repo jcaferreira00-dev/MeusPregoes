@@ -171,7 +171,8 @@ Municipio de Imbau/                 <- pasta com o nome do promotor (órgão)
 - Edital que exige montagem, instalação ou nivelamento do equipamento (aparelhos de academia etc.): item fora
   (`semLance: true`, motivo no `obs`), conforme a regra de itens que exigem instalação (decisão de 26/10/2026).
 - Observações importantes de cada item no campo `obs` do JSON e no arquivo de observações.
-- Como cotar (decisão de 30/10/2026): conferir preço e pegar o LINK DIRETO pelo Chrome do João (Claude in Chrome), não por resumo de busca. Loja do Mecânico: `https://www.lojadomecanico.com.br/busca?q=<termo>` (o link do produto é `/produto/<id>`); Mercado Livre: `https://lista.mercadolivre.com.br/<termo-com-hifens>`; Magazine Luiza: `/busca/<termo>/`. O WebFetch só abre páginas que já apareceram na conversa e algumas lojas (Pichau, Casas Bahia) bloqueiam.
+- COMO COTAR, PADRÃO OBRIGATÓRIO (decisão de 30/10/2026, reforçada pelo João): toda cotação é feita no Chrome do João (Claude in Chrome), entrando nas lojas, buscando nas páginas e abrindo o produto, para conferir preço atual, especificação e pegar o LINK DIRETO. Resumo de busca (WebSearch) NÃO vale como cotação: gasta token e sai incompleto (links de listagem, preços velhos). Loja do Mecânico: `https://www.lojadomecanico.com.br/busca?q=<termo>` (link do produto = `/produto/<id>`); Mercado Livre: `https://lista.mercadolivre.com.br/<termo-com-hifens>`; Magazine Luiza: `/busca/<termo>/`. O WebFetch só abre páginas já vistas na conversa e algumas lojas (Pichau, Casas Bahia) bloqueiam.
+- Se o Chrome não estiver disponível ou não responder (PC desligado, extensão desconectada) ou se eu travar em alguma loja: PARAR e avisar o João NA HORA (mensagem + notificação) para ele ligar o computador/Chrome. Não seguir cotando por resumo de busca.
 
 ---
 
