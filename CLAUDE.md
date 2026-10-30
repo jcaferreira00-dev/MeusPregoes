@@ -171,6 +171,7 @@ Municipio de Imbau/                 <- pasta com o nome do promotor (órgão)
 - Edital que exige montagem, instalação ou nivelamento do equipamento (aparelhos de academia etc.): item fora
   (`semLance: true`, motivo no `obs`), conforme a regra de itens que exigem instalação (decisão de 26/10/2026).
 - Observações importantes de cada item no campo `obs` do JSON e no arquivo de observações.
+- Como cotar (decisão de 30/10/2026): conferir preço e pegar o LINK DIRETO pelo Chrome do João (Claude in Chrome), não por resumo de busca. Loja do Mecânico: `https://www.lojadomecanico.com.br/busca?q=<termo>` (o link do produto é `/produto/<id>`); Mercado Livre: `https://lista.mercadolivre.com.br/<termo-com-hifens>`; Magazine Luiza: `/busca/<termo>/`. O WebFetch só abre páginas que já apareceram na conversa e algumas lojas (Pichau, Casas Bahia) bloqueiam.
 
 ---
 
@@ -260,6 +261,7 @@ Imbaú 91.
 Analisados em 24/10 (JSON entregue): Faxinal 49; São Jerônimo da Serra 47 (PE 40/2026); Ortigueira 102.
 Descartados na análise de 24/10: Castro 150 (por lote); Japira 38 e 39 (por lote); Ipiranga 77 (expediente e
 entrega em ~15 endereços); Grandes Rios 41 e Conselheiro Mairinck 62 (exigem atestado de capacidade técnica).
+Analisados em 29-30/10 (JSON entregue): Imbaú 94, Jaboti 44 e Piraí do Sul 47 (Analisando); Castro 157 e 163 (Desisti: plataforma IPM, cotação pronta no JSON); demais da busca de 29/10 como Desisti.
 Analisado em 26/10 (JSON entregue): Ipiranga 78 (itens 1–8 aparelhos = Desisti por montagem/nivelamento; 9–16 cotados).
 Trazidos na busca PNCP de 22/10 (aguardando escolha): Rio Branco do Ivaí 36.
 Excluídos em 22/10 por ficarem acima de 120 km: Prudentópolis 124; Califórnia 69; Jardim Alegre 51 e 52;
