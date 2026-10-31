@@ -50,6 +50,10 @@ sempre, acrescente aqui (seção certa) no mesmo commit da tarefa.
 
 - CONFERIR OS DOCUMENTOS ANTES DE ANALISAR OU COTAR (decisão de 31/10/2026): o João vai passar a baixar os documentos direto da plataforma (BLL etc.), que traz vários arquivos. Primeiro listar o que veio e o que falta: edital completo, Termo de Referência, habilitação (atestado, balanço, certidões), modelo de proposta e declarações. Faltando algo, avisar o João e NÃO cotar antes. Procurar logo no edital completo: atestado de capacidade técnica, prazo e locais de entrega, tipo de julgamento (item/lote), registro de preços e plataforma real. Motivo: o PE 157 de Castro parecia viável só com o relatório de itens e caiu quando veio o edital completo (exige atestado e entrega em 48 h úteis).
 
+- ANTES DE COTAR, CONFERIR OS DOCUMENTOS (decisão de 31/10/2026; o João trabalhou à toa em edital que pedia atestado):
+  1. Listar o que veio e o que falta: edital, Termo de Referência, habilitação (atestado, balanço, certidões), modelo de proposta e declarações. Se faltar algo, AVISAR o João e NÃO cotar até ele mandar.
+  2. Ler o edital E o TR inteiros procurando: atestado/qualificação técnica (também "fornecimento anterior", "aptidão", "comprovação de fornecimento", "bens de natureza e complexidade semelhantes" — o edital pode remeter a habilitação ao TR, como Jaboti 44 item 6.1 → TR 9), balanço/DASN, prazo de entrega, locais de entrega e tipo de julgamento (item/lote).
+  3. Mostrar essa conferência ao João (o que veio, o que falta, os 5 pontos) antes de começar a cotação. Atestado ou balanço exigido = Desisti sem cotar.
 - `descEdital` ("Exigido no edital") é CÓPIA FIEL do edital (decisão de 30/10/2026): copiar e colar o texto do item exatamente como está no edital/TR, completo, sem resumir nem limpar (só tirar quebras de página e cabeçalhos de tabela que entraram no meio). O João confere tudo ao revisar as cotações.
 
 - Focar só nos itens/lotes que valem a pena.
