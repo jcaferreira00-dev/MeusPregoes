@@ -50,6 +50,7 @@ sempre, acrescente aqui (seção certa) no mesmo commit da tarefa.
 - Colocação (`colocacao`, 1º, 2º…): digitável em qualquer item não ganho depois da sessão (perdido, pregão perdido/encerrado ou sem item ganho), no cartão do item e na janela de edição. No Dashboard, o botão "Colocações" lista esses itens do mais perto de ganhar para o mais longe (filtro "Até o 3º"), com valor do vencedor e diferença. Na guia Itens o bloco mostra o selo da colocação.
 - Celular (iPhone 13) = só o básico; PC = completo. Não criar guias novas no celular.
 
+- Contexto da otimização (31/10/2026): leia `docs/CONTEXTO-otimizacao.md` (o que não mexer sem decisão, achados e plano). Nada do relatório é aplicado sem o João decidir.
 - Depurador (decisão de 31/10/2026): `depurador/` é um PWA que lê o app e mostra o catálogo de funcionalidades (`depurador/catalogo.js`). Ao criar, mudar ou tirar uma função do app, atualize a entrada dela no catálogo no mesmo commit. O relatório `docs/relatorio-funcionalidades.md` é gerado desse catálogo.
 
 ### Funções protegidas (decisão de 31/10/2026 — NUNCA tirar sem o João pedir)
