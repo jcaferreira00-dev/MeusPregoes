@@ -285,6 +285,8 @@
     `Atalhos para inserir “TÍTULO:” no descritivo, que aprendem os mais usados. Existem duas implementações (janela do item e catálogo).`, { red: ['catalogo-dois-lugares'], para: 'Uma implementação só.', sel: ['[data-ftit]', '[data-cat-tit]'] });
   F('apagar-tudo', AR.conf, 2, 'enxugar', 'Apagar todos os dados',
     `Botão na Config que apaga pregões e itens (também na nuvem). Útil raramente e perigoso.`, { para: 'Pedir digitar uma palavra para confirmar.', sel: ['[data-act=apagar]'] });
+  F('apagar-desisti', AR.conf, 3, 'manter', 'Apagar pregões Desisti (e encolher lápides)',
+    `Botão na Config: apaga de vez os pregões em Desisti e seus itens, e encolhe as lápides antigas. Excluir agora deixa só uma lápide mínima (id, pregaoId, deleted, datas), para liberar espaço no documento da nuvem.`, { sel: ['[data-act=apagar-desisti]'] });
   F('hook-app', AR.cod, 2, 'manter', 'Gancho de depuração (window.__app)',
     `O app expõe store, UI e render para testes e para este depurador.`, { ev: 'index.html, fim do script de interface.' });
 

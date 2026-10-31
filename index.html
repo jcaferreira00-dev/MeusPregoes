@@ -1359,7 +1359,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.110.0';
+  const APP_VERSION = '1.111.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Julgamento', 'Aguardando empenho', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -2058,6 +2058,14 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
   const setClockOffset = (ms) => { clockOffset = Number(ms) || 0; };
   const getClockOffset = () => clockOffset;
 
+  // exclusão: o registro vira uma lápide mínima (só o que a sincronização precisa para avisar os outros aparelhos), sem o conteúdo
+  function lapide(r, t) {
+    const o = { id: r.id, deleted: true, createdAt: r.createdAt || 0, updatedAt: t };
+    if (r.pregaoId) o.pregaoId = r.pregaoId;
+    return o;
+  }
+  const lapideGorda = (r) => !!(r && r.deleted && Object.keys(r).length > 5);
+
   // registros deste aparelho que a nuvem ainda não tem (ou tem numa versão mais velha)
   function pendenciasNuvem(local, server) {
     const L = migrate(local), S = migrate(server || {});
@@ -2162,9 +2170,27 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
       },
       removePregao(id) {
         const t = now();
-        const p = state.pregoes.find((x) => x.id === id);
-        if (p) { p.deleted = true; p.updatedAt = t; }
-        for (const it of state.itens) if (it.pregaoId === id && !it.deleted) { it.deleted = true; it.updatedAt = t; }
+        const iP = state.pregoes.findIndex((x) => x.id === id);
+        if (iP >= 0) state.pregoes[iP] = lapide(state.pregoes[iP], t);
+        state.itens.forEach((it, k) => { if (it.pregaoId === id && !it.deleted) state.itens[k] = lapide(it, t); });
+        persist();
+      },
+      // pregões em Desisti (ainda não excluídos) e lápides antigas que ainda carregam o conteúdo inteiro
+      resumoLimpeza() {
+        const ps = state.pregoes.filter((p) => !p.deleted && p.status === 'Desisti');
+        const ids = new Set(ps.map((p) => p.id));
+        return {
+          pregoes: ps.length,
+          itens: state.itens.filter((i) => !i.deleted && ids.has(i.pregaoId)).length,
+          lapides: state.pregoes.filter(lapideGorda).length + state.itens.filter(lapideGorda).length,
+        };
+      },
+      // apaga de vez os pregões Desisti e encolhe as lápides antigas (cada registro fica só com id, pregaoId, deleted e datas)
+      apagarDesisti() {
+        const t = now();
+        const ids = new Set(state.pregoes.filter((p) => !p.deleted && p.status === 'Desisti').map((p) => p.id));
+        state.pregoes = state.pregoes.map((p) => (ids.has(p.id) || lapideGorda(p) ? lapide(p, t) : p));
+        state.itens = state.itens.map((i) => (ids.has(i.pregaoId) || lapideGorda(i) ? lapide(i, t) : i));
         persist();
       },
       upsertItem(data) {
@@ -2186,8 +2212,8 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
         fn(it); it.updatedAt = now(); persist('silent'); return true;
       },
       removeItem(id) {
-        const it = state.itens.find((x) => x.id === id);
-        if (it) { it.deleted = true; it.updatedAt = now(); }
+        const iI = state.itens.findIndex((x) => x.id === id);
+        if (iI >= 0) state.itens[iI] = lapide(state.itens[iI], now());
         persist();
       },
       // caminho tipo 'empresa.nome' ou 'margemPadrao'
@@ -2218,8 +2244,8 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
       mergeDemo() { state = mergeState(state, demoState()); persist(); },
       clearAll() {
         const t = now();
-        for (const p of state.pregoes) { p.deleted = true; p.updatedAt = t; }
-        for (const i of state.itens) { i.deleted = true; i.updatedAt = t; }
+        state.pregoes = state.pregoes.map((p) => lapide(p, t));
+        state.itens = state.itens.map((i) => lapide(i, t));
         persist();
       },
       changedSince(ts) {
@@ -6434,7 +6460,8 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
         ${fld('Favorecido', 'empresa.favorecido', 'text', e.favorecido, { full: true, hint: 'Vazio = usa o nome da empresa.' })}</div></div>
       <div class="card"><h3>Dados e backup</h3>
         <div class="grid2"><button class="btn" data-act="export">${icon('download', 'sm')} Exportar</button><label class="btn" style="cursor:pointer">${icon('plus', 'sm')} Importar<input type="file" accept="application/json,.json" data-import class="hidden"></label></div>
-        <div class="grid2" style="margin-top:10px"><button class="btn" data-act="demo">Dados de exemplo</button><button class="btn danger" data-act="apagar">${icon('trash', 'sm')} Apagar tudo</button></div></div>
+        <div class="grid2" style="margin-top:10px"><button class="btn" data-act="demo">Dados de exemplo</button><button class="btn danger" data-act="apagar">${icon('trash', 'sm')} Apagar tudo</button></div>
+        <button class="btn danger block" style="margin-top:10px" data-act="apagar-desisti">${icon('trash', 'sm')} Apagar pregões Desisti</button></div>
       ${cloudCard()}
       <div class="card"><h3>Aplicativo</h3><div class="kv-list">
         <div><span>Versão</span><b>${C.APP_VERSION}</b></div></div>
@@ -6782,6 +6809,12 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
         const blob = new Blob([store.export()], { type: 'application/json' });
         const el = document.createElement('a'); el.href = URL.createObjectURL(blob); el.download = `pregoes-mei-backup-${C.hojeISO()}.json`; document.body.appendChild(el); el.click(); el.remove();
         setTimeout(() => URL.revokeObjectURL(el.href), 4000); toast('Backup exportado'); break;
+      }
+      case 'apagar-desisti': {
+        const rs = store.resumoLimpeza();
+        if (!rs.pregoes && !rs.lapides) { toast('Nada para limpar'); break; }
+        confirmar('Apagar pregões Desisti?', `${rs.pregoes} pregão(ões) Desisti e ${rs.itens} item(ns) serão apagados de vez (aqui e na nuvem)` + (rs.lapides ? `, e ${rs.lapides} registro(s) já excluídos serão encolhidos para liberar espaço` : '') + '. Não dá para desfazer. Exporte um backup antes se precisar.', 'Apagar', true).then((ok) => { if (ok) { store.apagarDesisti(); toast('Pregões Desisti apagados'); } });
+        break;
       }
       case 'apagar': confirmar('Apagar todos os dados?', 'Pregões e itens serão removidos deste aparelho (e do servidor, quando a sincronização estiver ligada). Exporte um backup antes se precisar.', 'Apagar tudo', true).then((ok) => { if (ok) { store.clearAll(); toast('Dados apagados'); } }); break;
       case 'atualizar': checkUpdate(true); break;

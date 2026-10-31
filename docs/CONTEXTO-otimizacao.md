@@ -41,3 +41,8 @@
 
 ## 6. Ideias de melhoria do próprio depurador (se o João quiser)
 Sonda de uso por clique mais longa (guardar por dia), botão "gerar plano de mudanças" a partir das decisões (lista de commits sugeridos), comparação de backups (antes/depois da limpeza), simulação de quanto espaço cada limpeza libera na nuvem.
+
+## 7. Atualização 31/10/2026 (v1.111.0)
+- Excluir pregão/item agora deixa só uma lápide mínima (`id`, `pregaoId`, `deleted`, `createdAt`, `updatedAt`); antes o registro inteiro ficava no documento da nuvem e nada era liberado.
+- Botão novo na Config, "Apagar pregões Desisti" (decisão do João): apaga de vez os pregões Desisti e seus itens e encolhe as lápides antigas. Não desfaz; exportar backup antes.
+- Feito: passo 1 e parte do passo 2 do plano de espaço. Falta decidir: remover `onde`/`ondeLink`/`usar` (legado de compra).
