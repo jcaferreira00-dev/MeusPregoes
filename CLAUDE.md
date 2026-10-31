@@ -48,6 +48,8 @@ sempre, acrescente aqui (seção certa) no mesmo commit da tarefa.
 
 ## 2. Análise de edital (quando o João mandar o PDF)
 
+- CONFERIR OS DOCUMENTOS ANTES DE ANALISAR OU COTAR (decisão de 31/10/2026): o João vai passar a baixar os documentos direto da plataforma (BLL etc.), que traz vários arquivos. Primeiro listar o que veio e o que falta: edital completo, Termo de Referência, habilitação (atestado, balanço, certidões), modelo de proposta e declarações. Faltando algo, avisar o João e NÃO cotar antes. Procurar logo no edital completo: atestado de capacidade técnica, prazo e locais de entrega, tipo de julgamento (item/lote), registro de preços e plataforma real. Motivo: o PE 157 de Castro parecia viável só com o relatório de itens e caiu quando veio o edital completo (exige atestado e entrega em 48 h úteis).
+
 - `descEdital` ("Exigido no edital") é CÓPIA FIEL do edital (decisão de 30/10/2026): copiar e colar o texto do item exatamente como está no edital/TR, completo, sem resumir nem limpar (só tirar quebras de página e cabeçalhos de tabela que entraram no meio). O João confere tudo ao revisar as cotações.
 
 - Focar só nos itens/lotes que valem a pena.
