@@ -1359,7 +1359,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.111.0';
+  const APP_VERSION = '1.112.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Julgamento', 'Aguardando empenho', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -2065,6 +2065,15 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     return o;
   }
   const lapideGorda = (r) => !!(r && r.deleted && Object.keys(r).length > 5);
+  // pregão com proposta já enviada (ou além) e sessão que já passou: não dá mais para mudar de ideia sobre os itens deixados de fora.
+  // Em "Proposta enviada" espera 2 dias depois da sessão, porque a sessão pode continuar no dia seguinte.
+  const STATUS_ENVIADOS = ['Proposta enviada', 'Julgamento', 'Aguardando empenho', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado'];
+  function sessaoPassouEnviado(p) {
+    if (!p || p.deleted || !STATUS_ENVIADOS.includes(p.status) || !p.sessao) return false;
+    const d = new Date(p.sessao).getTime();
+    if (!Number.isFinite(d)) return false;
+    return d + (p.status === 'Proposta enviada' ? 2 * 86400000 : 0) < Date.now();
+  }
 
   // registros deste aparelho que a nuvem ainda não tem (ou tem numa versão mais velha)
   function pendenciasNuvem(local, server) {
@@ -2175,22 +2184,26 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
         state.itens.forEach((it, k) => { if (it.pregaoId === id && !it.deleted) state.itens[k] = lapide(it, t); });
         persist();
       },
-      // pregões em Desisti (ainda não excluídos) e lápides antigas que ainda carregam o conteúdo inteiro
+      // pregões em Desisti, itens deixados de fora (semLance) de pregões já enviados com a sessão passada, e lápides antigas que ainda carregam o conteúdo inteiro
       resumoLimpeza() {
         const ps = state.pregoes.filter((p) => !p.deleted && p.status === 'Desisti');
         const ids = new Set(ps.map((p) => p.id));
+        const ja = new Set(state.pregoes.filter(sessaoPassouEnviado).map((p) => p.id));
         return {
           pregoes: ps.length,
           itens: state.itens.filter((i) => !i.deleted && ids.has(i.pregaoId)).length,
+          deixados: state.itens.filter((i) => !i.deleted && i.semLance === true && ja.has(i.pregaoId) && !ids.has(i.pregaoId)).length,
           lapides: state.pregoes.filter(lapideGorda).length + state.itens.filter(lapideGorda).length,
         };
       },
-      // apaga de vez os pregões Desisti e encolhe as lápides antigas (cada registro fica só com id, pregaoId, deleted e datas)
+      // apaga de vez os pregões Desisti e os itens deixados de fora dos pregões já enviados (sessão passada), e encolhe as lápides antigas
+      // (cada registro fica só com id, pregaoId, deleted e datas)
       apagarDesisti() {
         const t = now();
         const ids = new Set(state.pregoes.filter((p) => !p.deleted && p.status === 'Desisti').map((p) => p.id));
+        const ja = new Set(state.pregoes.filter(sessaoPassouEnviado).map((p) => p.id));
         state.pregoes = state.pregoes.map((p) => (ids.has(p.id) || lapideGorda(p) ? lapide(p, t) : p));
-        state.itens = state.itens.map((i) => (ids.has(i.pregaoId) || lapideGorda(i) ? lapide(i, t) : i));
+        state.itens = state.itens.map((i) => (ids.has(i.pregaoId) || lapideGorda(i) || (!i.deleted && i.semLance === true && ja.has(i.pregaoId)) ? lapide(i, t) : i));
         persist();
       },
       upsertItem(data) {
@@ -6461,7 +6474,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
       <div class="card"><h3>Dados e backup</h3>
         <div class="grid2"><button class="btn" data-act="export">${icon('download', 'sm')} Exportar</button><label class="btn" style="cursor:pointer">${icon('plus', 'sm')} Importar<input type="file" accept="application/json,.json" data-import class="hidden"></label></div>
         <div class="grid2" style="margin-top:10px"><button class="btn" data-act="demo">Dados de exemplo</button><button class="btn danger" data-act="apagar">${icon('trash', 'sm')} Apagar tudo</button></div>
-        <button class="btn danger block" style="margin-top:10px" data-act="apagar-desisti">${icon('trash', 'sm')} Apagar pregões Desisti</button></div>
+        <button class="btn danger block" style="margin-top:10px" data-act="apagar-desisti">${icon('trash', 'sm')} Limpar desistências</button></div>
       ${cloudCard()}
       <div class="card"><h3>Aplicativo</h3><div class="kv-list">
         <div><span>Versão</span><b>${C.APP_VERSION}</b></div></div>
@@ -6812,8 +6825,11 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
       }
       case 'apagar-desisti': {
         const rs = store.resumoLimpeza();
-        if (!rs.pregoes && !rs.lapides) { toast('Nada para limpar'); break; }
-        confirmar('Apagar pregões Desisti?', `${rs.pregoes} pregão(ões) Desisti e ${rs.itens} item(ns) serão apagados de vez (aqui e na nuvem)` + (rs.lapides ? `, e ${rs.lapides} registro(s) já excluídos serão encolhidos para liberar espaço` : '') + '. Não dá para desfazer. Exporte um backup antes se precisar.', 'Apagar', true).then((ok) => { if (ok) { store.apagarDesisti(); toast('Pregões Desisti apagados'); } });
+        if (!rs.pregoes && !rs.deixados && !rs.lapides) { toast('Nada para limpar'); break; }
+        const partes = [];
+        if (rs.pregoes) partes.push(`${rs.pregoes} pregão(ões) Desisti e ${rs.itens} item(ns) deles`);
+        if (rs.deixados) partes.push(`${rs.deixados} item(ns) deixado(s) de fora de pregões já enviados com a sessão passada`);
+        confirmar('Limpar desistências?', (partes.length ? 'Serão apagados de vez (aqui e na nuvem): ' + partes.join('; ') + '.' : '') + (rs.lapides ? ` ${rs.lapides} registro(s) já excluídos serão encolhidos para liberar espaço.` : '') + ' Não dá para desfazer. Exporte um backup antes se precisar.', 'Apagar', true).then((ok) => { if (ok) { store.apagarDesisti(); toast('Desistências apagadas'); } });
         break;
       }
       case 'apagar': confirmar('Apagar todos os dados?', 'Pregões e itens serão removidos deste aparelho (e do servidor, quando a sincronização estiver ligada). Exporte um backup antes se precisar.', 'Apagar tudo', true).then((ok) => { if (ok) { store.clearAll(); toast('Dados apagados'); } }); break;
