@@ -644,6 +644,13 @@ input.input[type=datetime-local]::-webkit-date-and-time-value, input.input[type=
 .fp-row { display: flex; gap: 8px; align-items: stretch; } .fp-row .search { flex: 1; min-width: 0; }
 .fp-row select.fp-sel { flex: 0 0 auto; width: min(420px, 50%); min-width: 0; text-overflow: ellipsis; appearance: none; -webkit-appearance: none; padding-right: 40px; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='%23667489' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 18px center; background-size: 12px 8px; }
 @media (max-width: 600px) { .fp-row { flex-direction: column; } .fp-row select.fp-sel { width: 100%; } }
+/* meia tela no PC (900–1199 px, ex.: app numa metade e a loja na outra): uma coluna só, tudo rola junto */
+@media (min-width: 900px) and (max-width: 1199px) {
+  .sheet-wide .sheet-body { grid-template-columns: minmax(0, 1fr) !important; padding: 16px 20px !important; }
+  .sheet-wide .sheet-body > *, .sheet-wide .sheet-body > .side-col { grid-column: 1 !important; grid-row: auto !important; position: static !important; max-height: none !important; overflow: visible !important; }
+  .sheet-wide .formgrid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+  .sheet-wide .formgrid .field.full:has([name=localEntrega]), .sheet-wide .formgrid #boxEntrega { grid-column: span 1; }
+}
 /* janela do item em tela cheia no PC: preview fixo à esquerda e formulário em 4 colunas */
 @media (min-width: 900px) {
   .sheet-wrap.sheet-wide { align-items: stretch; }
@@ -663,6 +670,7 @@ input.input[type=datetime-local]::-webkit-date-and-time-value, input.input[type=
   .sheet-wide .formgrid { grid-auto-flow: row dense; }
   .sheet-wide .formgrid .field.full:has([name=teto]), .sheet-wide .formgrid .field.full:has([name=pregaoId]), .sheet-wide .formgrid .field.full:has([name=descricao]) { grid-column: span 2; }
   .sheet-wide .formgrid .field.full:has([name=localEntrega]), .sheet-wide .formgrid #boxEntrega { grid-column: span 1; }
+  .sheet-wide .sheet-body > .side-col { max-height: calc(100vh - 110px); overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
   .sheet-wide .formgrid #boxEntrega:empty { display: none; }
   .sheet-wide .formgrid:has(#boxEntrega:empty) .field.full:has([name=localEntrega]) { grid-column: span 2; }
   .sheet-wide .field:has([name=localEntrega]) > .hint { display: none; }
@@ -1208,7 +1216,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
 .dec-cols small { font-size: 10px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); }
 .dec-cols b { font-size: 17px; font-weight: 800; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .dec-cols em { font-style: normal; font-size: 11px; color: var(--muted); }
-.dec-cols .neg { color: var(--red); }
+.dec-cols .neg { color: var(--red); } .dec-cols em b.sm { font-size: 11.5px; color: var(--ink); }
 .dec:not(.com-lance) .dec-min b { font-size: 20px; }
 .dec.com-lance .dec-l b { font-size: 19px; }
 .dec.ok:not(.com-lance) .dec-min b { color: var(--green); } .dec.warn:not(.com-lance) .dec-min b { color: var(--amber); }
@@ -4299,6 +4307,8 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
         { const lf = $('[name=lanceFinal]', form), lv = C.parseBR(x.lanceFinal), b = abaixoSolo(c, lv);
           if (lf) { lf.classList.toggle('solo-baixo', b); lf.title = b ? 'Abaixo do mínimo se ganhar só este item: ' + C.brl(soloMin(c)) : ''; } }
         const el = $('#prev', form);
+        const semKm = ph && !(C.n0(ph.km) > 0) && !ph.entregaDiferente && !String(x.localEntrega || '').trim();
+        const avisoKm = semKm ? `<div class="alert warn" style="margin-bottom:8px">${icon('alert', 'sm')}<div class="grow"><b>Pregão sem km da entrega:</b> o app não está contando a viagem (combustível e desgaste) nem o "se ganhar só este". Informe o km (ida e volta) e as viagens no cadastro do pregão.</div></div>` : '';
         const cm = C.parseBR(x.custo);
         const qx = C.parseBR(x.qtd) || 0, fm = C.parseBR(x.frete) || 0;
         const itDraft = itemFromForm(x, id), dv = C.divisaoCompra(itDraft);
@@ -4312,7 +4322,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
         }
         if (!c || c.minimo == null) { el.innerHTML = `<div class="small muted">Informe quantidade e custo para ver o valor mínimo da proposta.</div>${dica}`; return; }
         const bad = c.sitTipo === 'bad';
-        el.innerHTML = `${decisaoHtml(c)}
+        el.innerHTML = `${avisoKm}${decisaoHtml(c)}
           <div class="kv"><span>Custo unit. final <b>${C.brl(c.custoUnit)}</b></span><span>Entrega rateada <b>${C.brl(c.entrega)}</b></span>
           ${(() => { const d = decisao(c); return d.min != null && c.teto ? `<span>Posso baixar do teto até o mínimo <b>${C.brl(c.teto - d.min)} (${C.pct(1 - d.min / c.teto, 0)})</b></span>` : ''; })()}
           ${c.impostoTotal > 0 ? `<span>Impostos <b>${C.brl(c.impostoTotal)}</b></span>` : ''}</div>
@@ -4997,7 +5007,9 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
       <div class="small muted row wrap" style="gap:4px 14px;align-items:center">${url(p.linkProposta) ? `<a class="btn sm lk p-prop" href="${esc(url(p.linkProposta))}" target="_blank" rel="noopener noreferrer" data-act="link-externo">${icon('link', 'sm')} Proposta</a>` : ''}${p.cidadeUf ? `<span class="row" style="gap:4px">${icon('pin', 'sm')}${esc(cidadeFmt(p.cidadeUf))}</span>` : ''}${p.sessao && (!pz || String(p.sessao) !== String(p.prazoPropostas || '')) ? `<span class="row" style="gap:4px">${icon('calendar', 'sm')}${esc(C.fmtSessao(p.sessao))}</span>` : ''}<span class="row p-nit" style="gap:4px">${icon('itens', 'sm')}${pst.itens.length ? pst.itens.length + (pst.itens.length === 1 ? ' item' : ' itens') : 'sem itens'}</span><span class="m-meta">${pst.itens.length ? pst.itens.length + (pst.itens.length === 1 ? ' item' : ' itens') : 'sem itens'}</span>${(p.obs || pst.itens.some((i) => String(i.obs || '').trim())) ? `<span class="m-meta m-obs" title="Tem observação">${icon('info', 'sm')}</span>` : ''}</div>
       ${(() => {
         const nRev = pst.todosItens.filter(temRevisar).length;
+        const semKm = !(C.n0(p.km) > 0) && !p.entregaDiferente && !['Desisti', 'Perdeu', 'Desclassificado', 'Concluído'].includes(p.status);
         const tags = [
+          semKm ? `<span class="prazo warn" title="Sem km da entrega: a viagem não entra no custo. Informe no cadastro do pregão.">${icon('pin', 'sm')}Sem km da entrega</span>` : '',
           nRev ? `<span class="prazo warn p-rev" title="Itens marcados para revisar: abra o pregão">${icon('alert', 'sm')}${nRev} ${nRev === 1 ? 'item para revisar' : 'itens para revisar'}</span>` : '',
           pz ? `<span class="prazo ${pz.nivel}">${icon(pz.nivel === 'ok' ? 'calendar' : 'alert', 'sm')}${esc(pz.texto)}</span>` : '',
           pst.ganho ? `<span class="prazo good">${icon('acomp', 'sm')}Venci ${pst.nGanhos} de ${pst.itens.length} · ${C.brl0(pst.propostaGanha)}</span>` : '',
@@ -5139,7 +5151,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
       ${d.txt ? `<div class="dec-hd">${icon(ic, 'sm')}<span>${d.txt}</span></div>` : ''}
       <div class="dec-cols">
         <div class="dec-min"><small>Lance mínimo (unit.)</small><b>${d.min != null ? C.brl(d.min) : '<span class="neg">Não compensa</span>'}</b><em>${esc(d.minSub)}</em></div>
-        ${d.s ? `<div class="dec-l dec-solo"><small>Lucro ${d.ref}, ganhando só este</small><b>${val(d.solo)}</b><em>viagem toda neste item</em></div>` : ''}
+        ${d.s ? `<div class="dec-l dec-solo"><small>Lucro ${d.ref}, ganhando só este</small><b>${val(d.solo)}</b><em>sem prejuízo: <b class="sm">${C.brl(d.s.empate * (c.qtd || 0))}</b> no total (${C.brl(d.s.empate)}/un.) · viagem ${C.brl(d.s.entrega)}</em></div>` : ''}
         <div class="dec-l"><small>Lucro ${d.ref}${d.s ? ', junto com os outros' : ''}</small><b>${val(d.junto)}</b><em>${d.comLance ? C.pct(c.margemReal, 0) + ' sobre a venda' : c.margemReal != null ? C.pct(c.margemReal, 0) + ' sobre a venda' : ''}${c.impostoTotal > 0 ? ' · impostos ' + C.brl(c.impostoTotal) : ''}</em></div>
       </div></div>`;
   }
