@@ -28,7 +28,7 @@ sempre, acrescente aqui (seção certa) no mesmo commit da tarefa.
 - Tudo em `index.html` (arquivo único). Publicação: GitHub Pages, direto na `main`
   (https://jcaferreira00-dev.github.io/MeusPregoes/). Faça o commit e o push direto, sem PR.
 - A cada publicação, suba a versão em DOIS lugares: `VERSION` no `sw.js` e `APP_VERSION` no `index.html`.
-- Antes de publicar: extraia os `<script>` e rode `node --check`; teste no navegador (Playwright) o que mudou E abra TODAS as guias no PC e no celular conferindo erros no console (ao mexer numa função, procure o que dependia dela).
+- Antes de publicar: rode `python3 tests/protegidas.py` (tem que dar TUDO OK); extraia os `<script>` e rode `node --check`; teste no navegador (Playwright) o que mudou E abra TODAS as guias no PC e no celular conferindo erros no console (ao mexer numa função, procure o que dependia dela).
 - No PC, aproveitar a tela inteira (largura e altura): janelas de edição do item em tela cheia (preview fixo à esquerda, formulário em 4 colunas), Painel e quadros usando toda a largura.
 - Janela do item no PC (decisão de 29/10/2026): coluna da esquerda = resumo (lance mínimo, lucro) + Lance final + Valor do vencedor (no celular esses dois campos ficam no lugar de antes); pregão e local de entrega na mesma linha, nome do item ao lado de lote e nº do item, marca e modelo lado a lado, e o "Exigido no edital" estica até a altura do descritivo ofertado (sem espaço vazio). Sem espaço sobrando: não deixar campo ocupando a linha inteira à toa.
 - Guia Pregões (decisão de 29/10/2026): usa a tela toda no PC (sem limite de largura) e as raias são por importância: "Atenção agora" (vermelha, primeiro: pregão hoje, proposta vencendo em até 1 dia, entrega/pagamento atrasado ou vencendo hoje; pregão amanhã também entra, em âmbar), Julgamento (os "perto de ganhar" — algum item até o 3º lugar na colocação, ou "posso ganhar" — primeiro e em dourado; sem itens ganhos), "Venci 🏆" (decisão de 29/10/2026: reúne os pregões em Aguardando empenho e também os em Julgamento que já têm item ganho; não existe mais a raia "Aguardando empenho"; cada cartão leva um selo flutuante, tipo carimbo de qualidade, no canto inferior direito do cartão: uma palavra só, que acompanha a etapa: Julgamento (âmbar) → Empenho (roxo) → Entregar (azul, depois de informar o empenho/prazo) → Parcial (laranja, quando parte dos itens ganhos já foi entregue; os detalhes "Entregues 1 de 4 · faltam 3" ficam na etiqueta do cartão) → Receber (verde-água, depois de marcar a entrega) → Pago (verde); provisório), Enviadas, Analisando, Incompletos. Cada cartão com urgência mostra uma faixa de alerta colorida no topo; a cor da borda segue a importância (vermelho pulsando = hoje/atrasado, âmbar = amanhã/2 dias, dourado = perto de ganhar). As colunas dividem a largura pelo número de raias.
@@ -49,6 +49,19 @@ sempre, acrescente aqui (seção certa) no mesmo commit da tarefa.
 - Lance acima do teto: o bloco de decisão do item fica vermelho ("ACIMA do teto: desclassifica") e o "Meu lance" também.
 - Colocação (`colocacao`, 1º, 2º…): digitável em qualquer item não ganho depois da sessão (perdido, pregão perdido/encerrado ou sem item ganho), no cartão do item e na janela de edição. No Dashboard, o botão "Colocações" lista esses itens do mais perto de ganhar para o mais longe (filtro "Até o 3º"), com valor do vencedor e diferença. Na guia Itens o bloco mostra o selo da colocação.
 - Celular (iPhone 13) = só o básico; PC = completo. Não criar guias novas no celular.
+
+### Funções protegidas (decisão de 31/10/2026 — NUNCA tirar sem o João pedir)
+O João perdeu funções em mudanças de layout. Antes de publicar, rodar `python3 tests/protegidas.py`: se der FALHA, não publicar.
+Ao acrescentar uma função que o João usa, acrescentar a conferência dela no teste.
+- Cartão e janela do item: destaque grande (com lance = "Meu lucro no lance"; sem lance = "Valor mínimo p/ proposta"), cor pela situação.
+- "Se ganhar só este": lucro e TOTAL sem prejuízo (R$ do item inteiro e por unidade) e o valor da viagem. Com lance, nada de "pelo teto".
+- "Posso baixar do teto" e "Lucro" no cartão E na janela do item.
+- Aviso de lance abaixo do mínimo (vermelho + confirmação ao salvar/gravar) e de lance acima do teto.
+- Simulador de lance, colocação, Posso ganhar, Deixar de fora, resultado por item (Venci/Não ganhei/Desclassif.).
+- Opções de compra só como link (nome da loja, unidades no anúncio, botão Abrir); custo e frete do item nunca travados.
+- km da entrega obrigatório (pregão e item não salvam sem km; o app calcula sozinho pela cidade); etiqueta e pendência "sem km".
+- Alerta Revisar; destaque de Venci e de desclassificação (Rever); sincronização com "Verificar com a nuvem".
+- Tela dividida no PC (900–1199 px): coluna da esquerda estreita e fixa com o destaque, mínimo e "se ganhar só este"; lance final e vencedor compactos logo abaixo; marca/modelo no formulário; caixas alinhadas.
 
 ### Regras de valor da proposta (não mudar sem o João pedir)
 - Lance final preenchido prevalece sobre tudo, na proposta inicial e na final.
@@ -179,6 +192,7 @@ Formato de backup do app (Config › Importar › Mesclar). IDs únicos e novos;
 - Compra: `custo` da opção = preço do anúncio como está na loja; se o anúncio for de pacote/caixa/kit com várias unidades, informar `emb` (unidades no anúncio) em vez de dividir à mão.
 - Compra: `custo` e `frete` do ITEM = os da loja escolhida (são eles que valem nas contas); `alternativas` são só links de referência, com `usar: false`. `semLance` sempre explícito (`true`/`false`), senão a mesclagem mantém o valor antigo do app.
 - Atualizar um pregão que já está no app: partir do backup mais recente, reaproveitar os ids, mandar `updatedAt` novo e NÃO mandar `marca`, `modelo`, `catalogoDesc`, `lanceFinal` nem fotos (o que o JSON não traz continua como está no app).
+- Pregão: SEMPRE mandar `km` (ida e volta a partir de Telêmaco Borba) e `viagens` (decisão de 31/10/2026; sem km o app não conta a viagem nem o "se ganhar só este").
 - `regrasEdital.semIdentificacao`: `true` = edital proíbe identificar na inicial; `false` = exige; omitir se o
   edital não fala. O app mostra o aviso na guia Proposta e trava a geração se a chavinha estiver diferente.
 - `pdfOpts.anonima` deve bater com `regrasEdital.semIdentificacao`.
