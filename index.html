@@ -1221,6 +1221,10 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
   .dec-cols b, .dec.com-lance .dec-l b { font-size: 14px; } .dec-cols em { display: none; }
 }
 .alt-pac { display: flex !important; align-items: center; gap: 5px; color: var(--amber); font-weight: 700; margin-top: 2px; }
+.rev-item { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 10px; background: var(--amber-soft); color: var(--amber); border: 1.5px solid var(--amber); font-size: 12.5px; font-weight: 600; }
+.rev-item b { font-weight: 800; } .rev-item .btn { flex: none; }
+.icard.revisar, .ibox.revisar { box-shadow: 0 0 0 2px var(--amber), var(--shadow); }
+.icard.fora.revisar { filter: none; opacity: 1; } .icard.fora.revisar h4 { color: var(--ink); }
 .neg-tx { color: var(--red); font-weight: 800; white-space: nowrap; }
 .solo-alerta { display: flex; align-items: center; gap: 6px; width: 100%; font-weight: 800; color: var(--red); font-size: 12px; }
 .sim-res .solo-alerta { margin-top: 6px; }
@@ -1309,7 +1313,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.108.1';
+  const APP_VERSION = '1.109.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Julgamento', 'Aguardando empenho', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -4544,6 +4548,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
       if (pz && (pz.nivel === 'bad' || pz.nivel === 'warn')) L.push([pz.nivel, 'Enviar proposta · ' + pz.curto, 'Nº ' + x.p.numero + ' · ' + String(x.p.orgao || '').toLocaleUpperCase('pt-BR'), `data-act="abrir-pregao" data-id="${x.p.id}"`]);
       else if (x.p.status === 'Analisando' && (!pz || pz.nivel !== 'off')) L.push(['info', 'Proposta por enviar' + (pz ? ' · até ' + pz.curto : ''), 'Nº ' + x.p.numero + ' · ' + String(x.p.orgao || '').toLocaleUpperCase('pt-BR'), `data-act="abrir-pregao" data-id="${x.p.id}"`]);
     });
+    [...R.pMap.values()].forEach((x) => { const rv = x.todosItens.filter(temRevisar); if (rv.length) L.push(['warn', 'Revisar ' + rv.length + (rv.length === 1 ? ' item' : ' itens'), 'Nº ' + x.p.numero + ' · ' + String(x.p.orgao || '').toLocaleUpperCase('pt-BR'), `data-act="abrir-pregao" data-id="${x.p.id}"`]); });
     ps.filter((x) => x.nItens === 0).forEach((x) => L.push(['warn', 'Cadastrar os itens', 'Nº ' + x.p.numero + ' · ' + String(x.p.orgao || '').toLocaleUpperCase('pt-BR'), `data-act="abrir-pregao" data-id="${x.p.id}"`]));
     // sessão passou há 2+ dias e nenhum item tem resultado: lembrar de registrar (senão a previsão conta o pregão inteiro)
     ps.filter((x) => ['Proposta enviada', 'Julgamento'].includes(x.p.status) && x.p.sessao && (diasDesde(x.p.sessao) || 0) >= 2).forEach((x) => {
@@ -4991,7 +4996,9 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
       <h4>${esc(p.orgao).replace(/^(Prefeitura Municipal de|Prefeitura de|Município de)\s+/i, '<span class="org-pre">$1 </span>')}</h4>
       <div class="small muted row wrap" style="gap:4px 14px;align-items:center">${url(p.linkProposta) ? `<a class="btn sm lk p-prop" href="${esc(url(p.linkProposta))}" target="_blank" rel="noopener noreferrer" data-act="link-externo">${icon('link', 'sm')} Proposta</a>` : ''}${p.cidadeUf ? `<span class="row" style="gap:4px">${icon('pin', 'sm')}${esc(cidadeFmt(p.cidadeUf))}</span>` : ''}${p.sessao && (!pz || String(p.sessao) !== String(p.prazoPropostas || '')) ? `<span class="row" style="gap:4px">${icon('calendar', 'sm')}${esc(C.fmtSessao(p.sessao))}</span>` : ''}<span class="row p-nit" style="gap:4px">${icon('itens', 'sm')}${pst.itens.length ? pst.itens.length + (pst.itens.length === 1 ? ' item' : ' itens') : 'sem itens'}</span><span class="m-meta">${pst.itens.length ? pst.itens.length + (pst.itens.length === 1 ? ' item' : ' itens') : 'sem itens'}</span>${(p.obs || pst.itens.some((i) => String(i.obs || '').trim())) ? `<span class="m-meta m-obs" title="Tem observação">${icon('info', 'sm')}</span>` : ''}</div>
       ${(() => {
+        const nRev = pst.todosItens.filter(temRevisar).length;
         const tags = [
+          nRev ? `<span class="prazo warn p-rev" title="Itens marcados para revisar: abra o pregão">${icon('alert', 'sm')}${nRev} ${nRev === 1 ? 'item para revisar' : 'itens para revisar'}</span>` : '',
           pz ? `<span class="prazo ${pz.nivel}">${icon(pz.nivel === 'ok' ? 'calendar' : 'alert', 'sm')}${esc(pz.texto)}</span>` : '',
           pst.ganho ? `<span class="prazo good">${icon('acomp', 'sm')}Venci ${pst.nGanhos} de ${pst.itens.length} · ${C.brl0(pst.propostaGanha)}</span>` : '',
           pst.nDesc ? `<span class="prazo bad">${icon('alert', 'sm')}${pst.nDesc} desclassificação${pst.nDesc > 1 ? 'ões' : ''} pedida${pst.nDesc > 1 ? 's' : ''}</span>` : '',
@@ -5111,8 +5118,10 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     const q = c.qtd || 0;
     const solo = s ? (comLance ? s.lucro : s.lucroTeto) : null;
     const junto = comLance ? c.lucro : (c.teto != null ? c.lucro : null);
+    // lance acima do teto: desclassifica, vale mais que qualquer outra conclusão
+    if (comLance && c.teto != null && c.lance > c.teto + 0.004) { tipo = 'bad'; txt = 'Lance ' + C.brl(c.lance) + ' ACIMA do teto ' + C.brl(c.teto) + ': desclassifica. Corrija o lance.'; }
     // com lance, a conclusão é pelo lance (não pelo teto)
-    if (comLance && s) {
+    else if (comLance && s) {
       if (s.lucro <= 0) { tipo = 'bad'; txt = 'Risco: com este lance, se ganhar só este item, dá prejuízo'; }
       else if (s.margemReal < c.margem - 0.0005) { tipo = 'warn'; txt = 'Atenção: com este lance, ganhando só este, tem lucro, mas abaixo da meta de ' + C.pct(c.margem, 0); }
       else { tipo = 'ok'; txt = 'Seguro: com este lance, mesmo ganhando só este, cobre a viagem e a meta'; }
@@ -5162,6 +5171,9 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
       <span class="solo-v"><span>sem prejuízo <b>${C.brl(tot(s.empate))}</b> <small class="solo-un">(${C.brl(s.empate)}/${esc(un)})</small></span>${mg}${res}</span>${c.lance !== null && abaixoSolo(c, c.lance) ? `<span class="solo-alerta">${icon('alert', 'sm')}Seu lance (${C.brl(c.lance)}) está abaixo do mínimo sem prejuízo</span>` : ''}</div>`;
   }
 
+  // alerta "Revisar" (campo revisar = motivo); some com o botão "Revisado"
+  const temRevisar = (it) => !!String((it && it.revisar) || '').trim();
+  const revHtml = (it) => temRevisar(it) ? `<div class="rev-item">${icon('alert', 'sm')}<span class="grow"><b>REVISAR:</b> ${esc(it.revisar)}</span><button type="button" class="btn sm" data-act="item-revisado" data-id="${it.id}" title="Já conferi: tirar o alerta">${icon('check', 'sm')} Revisado</button></div>` : '';
   function itemCard(it, c, opt) {
     const p = opt.pst && opt.pst.p;
     const _lt = C.padLE(it.loteEdital), _it = C.padLE(it.itemEdital);
@@ -5171,8 +5183,8 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     // editar só pelo lápis (clicar no cartão não abre mais a edição)
     const btnEditar = `<button type="button" class="ic-btn i-edit" data-act="editar-item" data-id="${it.id}" title="Editar item" aria-label="Editar item">${icon('edit', 'sm')}</button>`;
     if (c.fora) {
-      return `<article class="icard fora" data-id="${it.id}">
-        <div class="i-hd">${tag}<div class="rcol"><span class="badge off">Fora da disputa</span>${btnEditar}</div></div>${desc}
+      return `<article class="icard fora${temRevisar(it) ? ' revisar' : ''}" data-id="${it.id}">
+        <div class="i-hd">${tag}<div class="rcol"><span class="badge off">Fora da disputa</span>${btnEditar}</div></div>${desc}${revHtml(it)}
         <div class="icard-actions"><button type="button" class="btn sm ghost" data-act="item-fora" data-id="${it.id}">Voltar para a disputa</button></div></article>`;
     }
     const ganhoMode = false;
@@ -5188,7 +5200,8 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     const obs = String(it.obs || '').trim() ? `<div class="obsline item">${esc(it.obs)}</div>` : '';
     // celular: valor do meu lance (lance final; vazio = teto do edital) e mínimo pela margem
     const meuLance = C.unitProposta(c, 'auto').unit;   // mesma regra do PDF: lance final prevalece; sem lance, o teto do edital
-    const baixo = abaixoSolo(c, meuLance) ? ' solo-baixo' : '', baixoTip = baixo ? ` title="${esc('Abaixo do mínimo se ganhar só este item: ' + C.brl(soloMin(c)))}"` : '';
+    const acimaT = c.lance !== null && c.teto != null && c.lance > c.teto + 0.004;
+    const baixo = acimaT || abaixoSolo(c, meuLance) ? ' solo-baixo' : '', baixoTip = acimaT ? ` title="${esc('Acima do teto ' + C.brl(c.teto) + ': desclassifica')}"` : baixo ? ` title="${esc('Abaixo do mínimo se ganhar só este item: ' + C.brl(soloMin(c)))}"` : '';
     const dc = decisao(c);
     const mVals = `<div class="i-mvals"><div class="v-lance${baixo}"${baixoTip}><span>${c.lance !== null ? 'Meu lance' : 'Meu lance (teto)'}</span><b>${meuLance != null ? C.brl(meuLance) : '—'}</b></div><div class="v-min ${dc.tipo}"><span>Lance mínimo</span><b>${dc.min != null ? C.brl(dc.min) : 'Não compensa'}</b></div></div>`;
     const vals = mVals + `<div class="i-vals"><div class="v-lance-pc ${viabCls(c)}${baixo}"${baixoTip}><span>${c.lance !== null ? 'Meu lance (unit.)' : 'Meu lance (teto)'}</span><b>${meuLance != null ? C.brl(meuLance) : '—'}</b></div><div><span>Custo total</span><b>${it.custo > 0 && it.qtd > 0 ? C.brl(c.produtos) : '—'}</b></div><div class="v-mintot"><span>Mín. total</span><b>${dc.minTot != null ? C.brl(dc.minTot) : '—'}</b></div><div><span>Edital total</span><b>${c.tetoTotal != null ? C.brl(c.tetoTotal) : '—'}</b></div></div>`;
@@ -5200,9 +5213,10 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     const acaoEnt = c.ganhou && p && !p.pagoEm ? `<div class="res-sel"><button type="button" class="btn sm${dEnt ? ' res-venci on' : ''}" data-act="item-entregue" data-id="${it.id}" title="${dEnt ? 'Desmarcar entrega' : 'Marcar este item como entregue'}">${icon('truck', 'sm')}<span>${dEnt ? 'Entregue ' + esc(fmtDM(dEnt)) : 'Marcar entregue'}</span></button></div>` : '';
     const resBadge = c.resultado === 'venci' ? '<span class="badge ok">Venci</span>' : c.resultado === 'desc' ? `<span class="badge bad" title="${esc('Pedido em ' + C.fmtSessao(it.desclassEm || '') + (it.desclassMotivo ? ' · ' + it.desclassMotivo : ''))}">Desclassif.</span>` : c.resultado === 'perdi' ? '<span class="badge off">Não ganhei</span>' : c.resultado === 'aguard' ? '<span class="badge warn" title="Fora das contas até você marcar Venci">Aguardando</span>' : '';
     const descLinha = c.desclass ? `<div class="obsline desc-line">${icon('alert', 'sm')}<span>Desclassificação pedida em ${esc(C.fmtSessao(it.desclassEm || ''))}${it.desclassMotivo ? ' · ' + esc(it.desclassMotivo) : ''}</span></div>` : '';
-    return `<article class="icard${c.naoGanhou && !it.possivelGanhar && !c.aguardando && !c.desclass ? ' nao-ganho' : ''}${c.ganhou ? ' venci' : ''}${c.resultado ? ' res-' + c.resultado : ''}" data-id="${it.id}">
+    return `<article class="icard${c.naoGanhou && !it.possivelGanhar && !c.aguardando && !c.desclass ? ' nao-ganho' : ''}${c.ganhou ? ' venci' : ''}${c.resultado ? ' res-' + c.resultado : ''}${temRevisar(it) ? ' revisar' : ''}" data-id="${it.id}">
       <div class="i-hd">${tag}<div class="rcol">${resBadge}${it.possivelGanhar && !ganhoMode ? '<span class="prazo good">★ Posso ganhar</span>' : ''}${c.situacao ? `<span class="badge ${c.sitTipo}" title="${esc(c.situacao)}"><span class="s-lg">${esc(c.situacao)}</span><span class="s-sm">${esc(c.sitCurta || c.situacao)}</span></span>` : ''}${estrelasHtml(c)}${btnEditar}</div></div>
       ${desc}
+      ${revHtml(it)}
       ${opt.showOrg && p ? `<div class="chips"><span class="chip org">#${esc(p.numero)} · ${esc(p.orgao)}</span></div>` : ''}
       <div class="small muted i-meta"><span class="i-meta-tx">${C.qtdBR(it.qtd)} ${esc(it.unidade || 'Un')} · custo ${c.divisao ? C.brl(c.custoCompra) + ' (média de ' + c.divisao.partes.length + ' fornecedores)' : C.brl(it.custo)}<span class="i-teto"> · teto ${C.brl(c.teto)}</span>${it.marca ? ' · ' + esc(it.marca) : ''}</span>${(() => { const nf = Number(it.fotosN) || 0; return `<button type="button" class="foto-tag hide-m ${nf ? 'tem' : 'sem'}" data-act="cat-ir" data-id="${it.id}" title="${nf ? 'Tem foto no catálogo. Clique para ver.' : 'Sem foto no catálogo. Clique para incluir.'}">${icon('image', 'sm')}${nf ? nf + (nf === 1 ? ' foto' : ' fotos') : 'Sem foto'}</button>`; })()}</div>
       ${vals}
@@ -5453,8 +5467,8 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     const colocTag = it.colocacao && !c.ganhou ? `<span class="coloc-badge ${it.colocacao === 1 ? 'c1' : it.colocacao <= 3 ? 'c3' : ''}" title="Minha colocação">${colocTxt(it.colocacao)}</span>` : '';
     const lucroCor = c.lucro == null ? '' : c.lucro < 0 ? 'var(--red)' : 'var(--green)';
     const kv = (l, v, cls) => `<div class="ib-kv${cls ? ' ' + cls : ''}"><span>${l}</span><b>${v}</b></div>`;
-    return `<article class="ibox${c.fora || (c.naoGanhou && !it.possivelGanhar) ? ' apagado' : ''}" data-id="${it.id}">
-      <div class="ib-hd"><span class="ib-num">${num}</span>${colocTag}${tag}<button type="button" class="ic-btn" data-act="editar-item" data-id="${it.id}" title="Editar item" aria-label="Editar item">${icon('edit', 'sm')}</button></div>
+    return `<article class="ibox${c.fora || (c.naoGanhou && !it.possivelGanhar) ? ' apagado' : ''}${temRevisar(it) ? ' revisar' : ''}" data-id="${it.id}">
+      <div class="ib-hd"><span class="ib-num">${num}</span>${colocTag}${tag}${temRevisar(it) ? `<span class="badge warn" title="${esc('Revisar: ' + it.revisar)}">Revisar</span>` : ''}<button type="button" class="ic-btn" data-act="editar-item" data-id="${it.id}" title="Editar item" aria-label="Editar item">${icon('edit', 'sm')}</button></div>
       <h4 class="ib-nome" title="${esc(it.descricao)}">${esc(nomeCurto(it.descricao, 38))}</h4>
       <div class="ib-grid">
         ${kv('Qtd', C.qtdBR(it.qtd) + (it.unidade ? ' <em>' + esc(String(it.unidade).toLowerCase()) + '</em>' : ''))}
@@ -6597,6 +6611,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
       case 'item-res': { UI.keepScroll = true; const c = Rc().iMap.get(id); const v = t.dataset.v; definirResultado(id, c && c.resultado === v ? '' : v); break; }
       case 'item-venci': { UI.keepScroll = true; const c = Rc().iMap.get(id); marcarGanho(id, !(c && c.ganhou)); break; }
       case 'item-ganho': { UI.keepScroll = true; const it = store.get().itens.find((i) => i.id === id); const perdeu = !(it && it.naoGanhou); store.upsertItem({ id, naoGanhou: perdeu }); toast(perdeu ? 'Item marcado como não ganho' : 'Item marcado como ganho'); break; }
+      case 'item-revisado': { UI.keepScroll = true; store.upsertItem({ id, revisar: '' }); toast('Alerta de revisão tirado'); break; }
       case 'item-pode': { UI.keepScroll = true; const it = store.get().itens.find((i) => i.id === id); const liga = !(it && it.possivelGanhar); store.upsertItem({ id, possivelGanhar: liga }); toast(liga ? 'Item marcado: posso ganhar' : 'Marcação removida'); break; }
       case 'item-fora': { UI.keepScroll = true; const it = store.get().itens.find((i) => i.id === id); const fora = !(it && it.semLance); store.upsertItem({ id, semLance: fora }); toast(fora ? 'Item fora da disputa' : 'Item de volta à disputa'); break; }
       case 'item-entregue': UI.keepScroll = true; alternarEntregaItem(id); break;
