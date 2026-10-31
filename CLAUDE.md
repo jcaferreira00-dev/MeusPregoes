@@ -237,13 +237,14 @@ Toda busca de editais (agendada ou pedida na conversa) usa somente as definiçõ
 e as buscas salvas em `buscas/`. Não usar contexto de conversas antigas nem memória para decidir
 filtro, raio, ramos ou o que já foi analisado. Se precisar mudar uma regra, mudar AQUI primeiro.
 
-### Ciclo semanal (decisão de 24/10/2026)
-- Próxima busca (pedido de 31/10/2026): provavelmente na quinta ou sexta (05 ou 06/11/2026), quando o João pedir. Referência do que já está no app: `buscas/referencia-app-2026-10-31.md` (backup de 31/10) + este arquivo.
-- Sábado 18h43 (depois que os tokens da semana reiniciam): busca no PNCP, lista + JSON da busca.
-- Até domingo ou segunda: o João manda os PDFs dos escolhidos; análise e cotação de todos juntos (um JSON só).
-- Durante a semana: o João revisa e envia as propostas.
+### Ciclo semanal (decisão de 31/10/2026 — substitui o de sábado)
+- O limite de uso do João reinicia no sábado. Estratégia: usar os créditos que sobram da semana na quinta e na sexta.
+- **Quinta 07h47: busca no PNCP** (tarefa agendada), com aviso ao João no início ("deixe o Chrome ligado") e a lista + JSON no fim.
+- Quinta e sexta: o João manda os documentos completos dos escolhidos; conferência + análise + cotação de todos juntos (um JSON só) até sexta.
+- Depois: o João revisa e envia as propostas. Referência do que já está no app: `buscas/referencia-app-2026-10-31.md` (backup de 31/10) + este arquivo; atualizar a referência quando ele mandar backup novo.
 
-### Tarefa agendada "Busca de pregões" (todo sábado 18h43)
+### Tarefa agendada "Busca de pregões" (toda quinta 07h47)
+0. Avisar o João no início (mensagem + notificação): começou a busca, deixar o Chrome ligado no PC.
 1. Ler este arquivo (já está fazendo isso).
 2. Ler o "Log das buscas" (fim deste arquivo) e a referência mais recente do app em `buscas/` (hoje: `referencia-app-2026-10-31.md`).
    Buscar no PNCP (seção "Busca no PNCP"), município por município, pregões e dispensas.
