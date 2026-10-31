@@ -1309,7 +1309,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.108.0';
+  const APP_VERSION = '1.108.1';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Julgamento', 'Aguardando empenho', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -1461,7 +1461,8 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
   function opcoesUsadas(it) {
     const all = Array.isArray(it.alternativas) ? it.alternativas : [];
     if (!all.some((a) => a && typeof a.usar === 'boolean')) return null;
-    if (OPCOES_SO_LINK) return [];   // decisão de 31/10/2026: opções são só links; custo e frete = os digitados no item
+    // decisão de 31/10/2026: as opções são só links. Item salvo a partir da v1.108 grava todas com usar:false e vale o custo digitado.
+    // Item antigo com opção marcada continua com o custo calculado delas (até ser aberto e salvo de novo, quando o valor vira o digitado).
     return all.filter((a) => a && a.usar === true && a.custo !== null && a.custo !== undefined && a.custo !== '');
   }
   function divisaoCompra(it) {
@@ -3999,7 +4000,8 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
       pregaoId: it.pregaoId || '', loteEdital: it.loteEdital || '', itemEdital: it.itemEdital || '', descricao: it.descricao || '', descEdital: it.descEdital || '', marca: it.marca || '', modelo: it.modelo || '', catalogoDesc: it.catalogoDesc || '', especificacoes: it.especificacoes || '', unidade: it.unidade || 'Un',
       qtd: it.qtd == null ? '' : C.numBR(it.qtd, 3), obs: it.obs || '', possivelGanhar: !!it.possivelGanhar, vencedor: it.vencedor == null ? '' : C.numBR(it.vencedor),
       ...(() => { const o = {}; const L = opcoesParaForm(it); ALTS.forEach((n) => { const a = L[n] || {}; o['alt' + n + 'Usar'] = !!a.usar; o['alt' + n + 'Loja'] = a.loja || ''; o['alt' + n + 'Link'] = a.link || ''; o['alt' + n + 'Custo'] = a.custo == null ? '' : C.numBR(a.custo); o['alt' + n + 'Emb'] = a.emb > 1 ? C.numBR(a.emb, 0) : ''; o['alt' + n + 'Frete'] = a.frete ? C.numBR(a.frete) : ''; o['alt' + n + 'Qtd'] = a.qtd ? C.numBR(a.qtd, 3) : ''; }); return o; })(),
-      custo: it.custo == null ? '' : C.numBR(it.custo), teto: it.teto == null ? '' : C.numBR(it.teto), frete: it.frete ? C.numBR(it.frete) : '',
+      // custo/frete efetivos (item antigo com opções marcadas: o calculado delas), para o campo abrir com o valor que vale nas contas
+      custo: it.custo == null && !(Array.isArray(it.alternativas) && it.alternativas.some((a) => a && a.usar === true)) ? '' : C.numBR(Math.round(C.custoCompra(it) * 10000) / 10000, 4), teto: it.teto == null ? '' : C.numBR(it.teto), frete: C.freteCompra(it) ? C.numBR(C.freteCompra(it)) : '',
       margem: it.margem == null ? '' : C.numBR(it.margem * 100, 2), lanceFinal: it.lanceFinal == null ? '' : C.numBR(it.lanceFinal), colocacao: it.colocacao == null ? '' : String(it.colocacao),
       entregaId: it.entregaId || '',
       localEntrega: it.localEntrega || '', kmEntrega: it.kmEntrega ? C.numBR(it.kmEntrega, 1) : '',
