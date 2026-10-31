@@ -644,12 +644,33 @@ input.input[type=datetime-local]::-webkit-date-and-time-value, input.input[type=
 .fp-row { display: flex; gap: 8px; align-items: stretch; } .fp-row .search { flex: 1; min-width: 0; }
 .fp-row select.fp-sel { flex: 0 0 auto; width: min(420px, 50%); min-width: 0; text-overflow: ellipsis; appearance: none; -webkit-appearance: none; padding-right: 40px; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='%23667489' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 18px center; background-size: 12px 8px; }
 @media (max-width: 600px) { .fp-row { flex-direction: column; } .fp-row select.fp-sel { width: 100%; } }
-/* meia tela no PC (900–1199 px, ex.: app numa metade e a loja na outra): uma coluna só, tudo rola junto */
+/* PC: caixas lado a lado sempre alinhadas (título com altura de 2 linhas, alinhado por baixo) */
+@media (min-width: 900px) {
+  .sheet-wide .formgrid > .field:not(.full) > label, .sheet-wide .formgrid > div:not(.full) > .field > label, .sheet-wide .formgrid > .field:has([name=teto]) > label { min-height: 2.5em; display: flex; align-items: flex-end; line-height: 1.25; }
+  .sheet-wide .formgrid { align-items: start; }
+}
+/* tela dividida no PC (900–1199 px, ex.: app numa metade e a loja na outra): coluna da esquerda estreita e fixa, sem marca/modelo, lance e vencedor compactos */
 @media (min-width: 900px) and (max-width: 1199px) {
-  .sheet-wide .sheet-body { grid-template-columns: minmax(0, 1fr) !important; padding: 16px 20px !important; }
-  .sheet-wide .sheet-body > *, .sheet-wide .sheet-body > .side-col { grid-column: 1 !important; grid-row: auto !important; position: static !important; max-height: none !important; overflow: visible !important; }
+  .sheet-wide .sheet-body { grid-template-columns: minmax(250px, 290px) minmax(0, 1fr) !important; column-gap: 18px !important; padding: 14px 16px !important; }
   .sheet-wide .formgrid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
-  .sheet-wide .formgrid .field.full:has([name=localEntrega]), .sheet-wide .formgrid #boxEntrega { grid-column: span 1; }
+  .sheet-wide .side-col > .preview { margin: 0 -8px 10px !important; }
+  .sheet-wide .side-col .dec-hd { font-size: 11.5px; padding: 6px 9px; }
+  .sheet-wide .side-col .dec-big { padding: 8px 9px; } .sheet-wide .side-col .dec-big > b { font-size: 19px; } .sheet-wide .side-col .dec-big em { display: none; }
+  .sheet-wide .side-col .dec-cols { grid-auto-flow: row; grid-template-columns: 1fr 1fr; }
+  .sheet-wide .side-col .dec-cols > div { padding: 6px 9px; } .sheet-wide .side-col .dec-cols b { font-size: 14px !important; }
+  .sheet-wide .side-col .dec-cols .dec-min:not(.dup) { grid-column: 1 / -1; }
+  .sheet-wide .side-col .dec-cols em { font-size: 10.5px; }
+  .sheet-wide .side-col .kv { font-size: 11.5px; gap: 2px 8px; }
+  .sheet-wide #lanceSlot { gap: 8px !important; }
+  .sheet-wide #lanceSlot [data-mv] .field { padding: 6px 8px !important; }
+  .sheet-wide #lanceSlot [data-mv] .field > label { min-height: 0 !important; font-size: 11px; }
+  .sheet-wide #lanceSlot [data-mv] .field .hint { display: none; }
+  .sheet-wide #lanceSlot [data-mv] .input { min-height: 36px; padding: 6px 9px; font-size: 15px; }
+  .sheet-wide #boxLinksPreg .btn { padding: 4px 8px; font-size: 12px; min-height: 30px; }
+  .sheet-wide #lanceSlot { margin-bottom: 10px; }
+  .sheet-wide .prev-ops .altrow { flex-wrap: wrap; gap: 4px 8px; padding: 6px 8px; }
+  .sheet-wide .prev-ops .altrow > .grow { flex: 1 1 100%; font-size: 13px; }
+  .sheet-wide .prev-ops .altrow .btn { min-height: 28px; padding: 2px 8px; font-size: 12px; }
 }
 /* janela do item em tela cheia no PC: preview fixo à esquerda e formulário em 4 colunas */
 @media (min-width: 900px) {
@@ -1248,6 +1269,8 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
 .rev-item b { font-weight: 800; } .rev-item .btn { flex: none; }
 .icard.revisar, .ibox.revisar { box-shadow: 0 0 0 2px var(--amber), var(--shadow); }
 .icard.fora.revisar { filter: none; opacity: 1; } .icard.fora.revisar h4 { color: var(--ink); }
+.prev-ops:empty { display: none; }
+.sheet-wide .side-col > .prev-ops { margin: 0 -16px 0; }
 .neg-tx { color: var(--red); font-weight: 800; white-space: nowrap; }
 .solo-alerta { display: flex; align-items: center; gap: 6px; width: 100%; font-weight: 800; color: var(--red); font-size: 12px; }
 .sim-res .solo-alerta { margin-top: 6px; }
@@ -4160,7 +4183,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
           <div class="full"><button type="button" class="btn ghost sm" data-alt="limpar" data-alt-n="${n}">${icon('trash', 'sm')} Remover esta opção</button></div></div>`;
     const altQtd = ALTS.filter((n) => v['alt' + n + 'Loja'] || v['alt' + n + 'Link'] || v['alt' + n + 'Custo'] || v['alt' + n + 'Frete'] || v['alt' + n + 'Qtd']).length;
     const body = `
-      <div class="side-col"><div id="boxLinksPreg" data-pid="${esc(v.pregaoId)}">${pregLinksHtml(v.pregaoId)}</div><div class="preview" id="prev"></div><div id="lanceSlot"></div></div>
+      <div class="side-col"><div id="boxLinksPreg" data-pid="${esc(v.pregaoId)}">${pregLinksHtml(v.pregaoId)}</div><div class="preview" id="prev"></div><div id="lanceSlot"></div><div class="preview prev-ops" id="prevOps"></div></div>
       <div class="formgrid">
       ${field({ label: 'Pregão / órgão *', name: 'pregaoId', type: 'select', full: true, value: v.pregaoId, options: list.map((p) => ({ v: p.id, l: pregaoLabel(p) })) })}
       <div id="boxEntrega" class="full" data-pid="${esc(v.pregaoId)}">${entregaSelectHtml(v.pregaoId, v.entregaId)}</div>
@@ -4210,7 +4233,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
           ${ALTS.map((n) => `<span class="altpar" data-altpar="${n}" hidden><input type="checkbox" name="alt${n}Usar" hidden><a class="btn ibtn altc" data-alt-go="${n}" href="#" target="_blank" rel="noopener noreferrer" aria-label="Abrir a loja da opção ${n + 1}" title="Abrir a loja da opção ${n + 1}">${icon('cart')}<span class="altc-t"></span></a><button type="button" class="btn ghost ibtn altc" data-alt="abrir" data-alt-n="${n}" aria-label="Editar opção ${n + 1}" title="Editar opção ${n + 1}">${icon('edit', 'sm')}</button></span>`).join('')}
           <button type="button" class="btn ibtn altplus" data-alt="abrir" aria-label="Incluir opção de compra" title="Incluir opção de compra">${icon('plus')}<span class="altplus-n"${altQtd ? '' : ' hidden'}>${altQtd}</span></button>
           </div>
-          <div class="hint">Toque no + para incluir uma opção (link, loja e frete). Marque ✓ as que vai usar: o custo e o frete do item vêm delas.</div>
+          <div class="hint">Toque no + para incluir uma opção (link, loja, preço do anúncio e frete). As opções são links para conferir: o custo e o frete do item são os que você digita.</div>
           </div>
         <div class="altpop" id="altPop" hidden role="dialog" aria-modal="true" aria-label="Opção de compra"><div class="altpop-box">
           <div class="altpop-hd"><b>Opção de compra</b><button type="button" class="btn ghost sm" data-alt="fechar" aria-label="Fechar">✕</button></div>
@@ -4230,8 +4253,9 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
       onMount: (form) => {
         // PC: lance final e valor do vencedor ocupam a coluna da esquerda (abaixo do resumo); celular: ficam no lugar de sempre
         { const slot = $('#lanceSlot', form), uq = $('#uqSlot', form), mq = window.matchMedia('(min-width: 900px)');
-          const coloca = () => { if (!form.isConnected) return; ['lance', 'venc', 'marca', 'modelo', 'un', 'qt'].forEach((k) => { const w = $('[data-mv="' + k + '"]', form), h = $('[data-mv-home="' + k + '"]', form); if (!w || !h) return; if (mq.matches) (k === 'un' || k === 'qt' ? uq : slot).appendChild(w); else h.after(w); }); };
-          coloca(); if (mq.addEventListener) mq.addEventListener('change', coloca); else mq.addListener(coloca); }
+          const mqL = window.matchMedia('(min-width: 1200px)');   // tela dividida (900–1199 px): marca e modelo ficam no formulário
+          const coloca = () => { if (!form.isConnected) return; ['lance', 'venc', 'marca', 'modelo', 'un', 'qt'].forEach((k) => { const w = $('[data-mv="' + k + '"]', form), h = $('[data-mv-home="' + k + '"]', form); if (!w || !h) return; const vai = mq.matches && (k === 'marca' || k === 'modelo' ? mqL.matches : true); if (vai) (k === 'un' || k === 'qt' ? uq : slot).appendChild(w); else h.after(w); }); };
+          coloca(); [mq, mqL].forEach((m) => { if (m.addEventListener) m.addEventListener('change', coloca); else m.addListener(coloca); }); }
         // imagens e descritivo do catálogo dentro do item (a opção da guia Proposta continua existindo)
         const taC = $('[name=catalogoDesc]', form);
         const disp = () => taC.dispatchEvent(new Event('input', { bubbles: true }));
@@ -4365,13 +4389,14 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
           const nomeP = (k) => k.loja || 'Outra opção';
           dica += `<div class="altdica" style="display:block">${icon('cart', 'sm')} <b>Compra dividida:</b> ${dv.partes.map((k) => `${esc(nomeP(k))} ${C.qtdBR(k.qtd)} × ${C.brl(k.custo)}${k.frete ? ' + frete ' + C.brl(k.frete) : ''}`).join(' · ')}<br>Custo médio <b>${C.brl(dv.custo)}</b> por unidade · frete total <b>${C.brl(dv.frete)}</b>${dv.excesso ? `<br><b>Atenção:</b> as opções somam ${C.qtdBR(dv.qAlt)}, mais que a quantidade do item (${C.qtdBR(qx)}).` : ''}${dv.falta ? `<br><b>Atenção:</b> faltam ${C.qtdBR(dv.falta)} unidades: preencha “Comprar aqui” em cada opção marcada.` : ''}</div>`;
         }
-        if (!c || c.minimo == null) { el.innerHTML = `<div class="small muted">Informe quantidade e custo para ver o valor mínimo da proposta.</div>${dica}`; return; }
+        const elOps = $('#prevOps', form); if (elOps) elOps.innerHTML = dica;   // opções de compra ficam abaixo do lance final/vencedor
+        if (!c || c.minimo == null) { el.innerHTML = `<div class="small muted">Informe quantidade e custo para ver o valor mínimo da proposta.</div>${elOps ? '' : dica}`; return; }
         const bad = c.sitTipo === 'bad';
         el.innerHTML = `${avisoKm}${decisaoHtml(c)}
           <div class="kv"><span>Custo unit. final <b>${C.brl(c.custoUnit)}</b></span><span>Entrega rateada <b>${C.brl(c.entrega)}</b></span>
           ${(() => { const d = decisao(c); return (d.min != null && c.teto ? `<span>Posso baixar do teto até o mínimo <b>${C.brl(c.teto - d.min)} (${C.pct(1 - d.min / c.teto, 0)})</b></span>` : '') + `<span>Lucro ${c.lance !== null ? 'no lance' : 'pelo teto'} <b style="color:${c.lucro != null && c.lucro < 0 ? 'var(--red)' : 'var(--ink)'}">${C.brl(c.lucro)}</b></span>`; })()}
           ${c.impostoTotal > 0 ? `<span>Impostos <b>${C.brl(c.impostoTotal)}</b></span>` : ''}</div>
-          ${c.situacao ? `<div><span class="badge ${c.sitTipo}">${esc(c.situacao)}</span> ${estrelasHtml(c)} <span class="tiny muted">Lucro previsto ${C.brl(c.lucro)}</span></div>` : ''}${dica}`;
+          ${c.situacao ? `<div><span class="badge ${c.sitTipo}">${esc(c.situacao)}</span> ${estrelasHtml(c)} <span class="tiny muted">Lucro previsto ${C.brl(c.lucro)}</span></div>` : ''}${elOps ? '' : dica}`;
       },
       onSave: (x, form) => {
         $$('.input.err', form).forEach((e) => e.classList.remove('err'));
