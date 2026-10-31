@@ -4,6 +4,15 @@
 > No celular o app é fixo (sem rolagem lateral) e só mostra o básico.
 > A guia Itens tem seletor "Todos os pregões" para filtrar por pregão. O Painel é um dashboard (tela toda no PC): números do topo, contadores por status (clicar abre a guia Pregões filtrada), rosca interativa no topo do dashboard (responde aos filtros e a cliques), funil, evolução, margem, órgãos e uma tabela única de pregões; depois pendências, entregas e certidões. A guia Pregões é um quadro de colunas por status: no celular uma coluna por vez, sem mostrar um pedaço da próxima, e puxar para a esquerda/direita troca de coluna (encaixa uma por vez); no PC as colunas cabem exatas na tela (3 a 6) e cada uma rola por dentro; encerrados e concluídos ficam num botão só. Rolagem sempre suave.
 
+## 0. Regras de ouro (decisão de 31/10/2026 — valem para tudo)
+
+1. **Ler TODOS os documentos que o João mandar, inteiros, sem pressa e sem perguntar se pode continuar.** Edital, TR, anexos, ata, ETP, planilhas: tudo. Não basta o edital: a falha de 31/10 (Jaboti 44) estava no TR.
+2. **Conferir os documentos ANTES de cotar** (seção 2, "Conferência"): o que veio, o que falta e os pontos que derrubam o pregão. Faltou algo → avisar e não cotar.
+3. **Tudo pelo Chrome do João** (Claude in Chrome): cotação item por item, entrando na loja e abrindo o produto (link direto), e também a busca no PNCP. Chrome fora do ar ou loja travando → PARAR e avisar NA HORA (mensagem + notificação) para ele ligar o PC. Nunca cotar por resumo de busca.
+4. **Plataforma não descarta pregão.** O João só tem cadastro no Compras.gov.br e na BLL: pregão em outra plataforma entra normalmente, mas AVISAR na análise/lista ("plataforma X: precisa de cadastro"; e se cobra taxa do fornecedor).
+5. **Salvar sempre no Google Drive** (seção 8), na pasta do órgão/pregão, com o LEIA-ME e as declarações específicas que o edital pedir (.docx). Não existe mais zip.
+6. **Trabalhar até o fim sem pedir licença** para continuar; só parar para o que é do João decidir ou quando faltar documento/Chrome.
+
 Este arquivo é a base de regras fixas. Toda vez que for mexer no app, analisar edital,
 criar JSON de importação ou buscar editais, leia este arquivo primeiro e siga o que está aqui.
 O João não deve precisar repetir estas regras. Quando ele passar uma regra nova que valha
@@ -48,12 +57,17 @@ sempre, acrescente aqui (seção certa) no mesmo commit da tarefa.
 
 ## 2. Análise de edital (quando o João mandar o PDF)
 
-- CONFERIR OS DOCUMENTOS ANTES DE ANALISAR OU COTAR (decisão de 31/10/2026): o João vai passar a baixar os documentos direto da plataforma (BLL etc.), que traz vários arquivos. Primeiro listar o que veio e o que falta: edital completo, Termo de Referência, habilitação (atestado, balanço, certidões), modelo de proposta e declarações. Faltando algo, avisar o João e NÃO cotar antes. Procurar logo no edital completo: atestado de capacidade técnica, prazo e locais de entrega, tipo de julgamento (item/lote), registro de preços e plataforma real. Motivo: o PE 157 de Castro parecia viável só com o relatório de itens e caiu quando veio o edital completo (exige atestado e entrega em 48 h úteis).
+### Conferência dos documentos (ANTES de analisar ou cotar — decisão de 31/10/2026)
+O João baixa os documentos da plataforma (BLL, Compras.gov etc.), que vêm em vários arquivos. Ler TODOS, inteiros.
+1. **Listar o que veio e o que falta:** edital completo, Termo de Referência, habilitação (atestado, balanço, certidões), modelo de proposta e declarações (e ETP/ata quando houver). Faltando algo → avisar o João e NÃO cotar até ele mandar. Relatório de itens do PNCP NÃO é edital.
+2. **Procurar no edital E no TR (o edital pode remeter a habilitação ao TR):**
+   - atestado/qualificação técnica — também "fornecimento anterior", "aptidão", "comprovação de fornecimento", "bens de natureza e complexidade semelhantes" (ex.: Jaboti 44, edital 6.1 → TR 9);
+   - balanço / DASN-SIMEI / demonstrações contábeis (ex.: Ipiranga 78 pede DASN dos 2 últimos anos);
+   - prazo de entrega (ex.: Castro 157 = 48 h úteis);
+   - locais de entrega (um endereço ou vários);
+   - tipo de julgamento (item ou lote/grupo), registro de preços e plataforma real (o PNCP às vezes erra: Castro 157 e 163 apareciam como IPM e são BLL).
+3. **Mostrar a conferência ao João** (o que veio, o que falta, os pontos acima) e só então cotar. Atestado ou balanço exigido = Desisti sem cotar (avisar; dá para pedir esclarecimento quando couber).
 
-- ANTES DE COTAR, CONFERIR OS DOCUMENTOS (decisão de 31/10/2026; o João trabalhou à toa em edital que pedia atestado):
-  1. Listar o que veio e o que falta: edital, Termo de Referência, habilitação (atestado, balanço, certidões), modelo de proposta e declarações. Se faltar algo, AVISAR o João e NÃO cotar até ele mandar.
-  2. Ler o edital E o TR inteiros procurando: atestado/qualificação técnica (também "fornecimento anterior", "aptidão", "comprovação de fornecimento", "bens de natureza e complexidade semelhantes" — o edital pode remeter a habilitação ao TR, como Jaboti 44 item 6.1 → TR 9), balanço/DASN, prazo de entrega, locais de entrega e tipo de julgamento (item/lote).
-  3. Mostrar essa conferência ao João (o que veio, o que falta, os 5 pontos) antes de começar a cotação. Atestado ou balanço exigido = Desisti sem cotar.
 - `descEdital` ("Exigido no edital") é CÓPIA FIEL do edital (decisão de 30/10/2026): copiar e colar o texto do item exatamente como está no edital/TR, completo, sem resumir nem limpar (só tirar quebras de página e cabeçalhos de tabela que entraram no meio). O João confere tudo ao revisar as cotações.
 
 - Focar só nos itens/lotes que valem a pena.
@@ -63,7 +77,7 @@ sempre, acrescente aqui (seção certa) no mesmo commit da tarefa.
 - Considerar o caso de ganhar só um item (frete, carro e combustível todos nele): informar o lance
   mínimo sem prejuízo.
 - Custo pela embalagem de compra (ex.: isopor em pacote de 25 placas → para 20 compra 1 pacote).
-- Sempre mais de uma opção de compra, de lojas diferentes, com link DIRETO do produto (nunca link de busca).
+- Procurar mais de uma opção de compra, de lojas diferentes, com link DIRETO do produto (nunca link de busca). Se só achar uma loja, tudo bem: deixar anotado no `obs` (o João avalia depois — 31/10/2026).
 - Entrega parcelada: deixar claro e mostrar o capital de giro necessário.
 - Valor e capital de giro NÃO são motivo de descarte (nem o limite anual do MEI).
 - Entrega de carro: Strada com carretinha, até 3 viagens. Fora: itens grandes, pesados, frágeis
@@ -77,7 +91,7 @@ sempre, acrescente aqui (seção certa) no mesmo commit da tarefa.
   PE 87 de Ortigueira; capacete de skate exige EN1078; bola de tênis de mesa "oficial" pode exigir ITTF.
 - Habilitação: ainda não tem atestado de capacidade técnica; MEI não tem balanço (descartar se exigido).
   Tem SICAF.
-- Pregão inviável: só avisar, sem criar JSON nem arquivos.
+- Pregão inviável: avisar o motivo em 1–2 linhas; no JSON ele entra como Desisti com o motivo no `obs`, sem pasta no Drive.
 - Julgamento por LOTE/GRUPO (ter que comprar o grupo inteiro): descartar. Julgamento por item, ou edital em que
   cada "lote" é um item só, vale.
 - Entrega que precisa ser distribuída em vários lugares (cada escola, várias secretarias/endereços): descartar.
@@ -86,8 +100,8 @@ sempre, acrescente aqui (seção certa) no mesmo commit da tarefa.
 - CNAE NÃO desclassifica (decisão de 24/10/2026): é fácil incluir/trocar CNAE no MEI. Item ou pregão fora dos
   CNAEs atuais entra normalmente na análise e no JSON, com observação no `obs` dizendo qual CNAE falta
   (ex.: livros = 4761-0/01; papelaria = 4761-0/03; tintas = 4741-5/00; tecidos/armarinho = 4755-5/01/02).
-- Na análise, entregar primeiro UM JSON só (todos os pregões; os que não compensam com status Desisti) e depois o
-  zip das pastas SEM o JSON dentro.
+- Na análise, entregar UM JSON só (todos os pregões; os que não compensam com status Desisti) e salvar as pastas
+  no Google Drive (seção 8). Não existe mais zip.
 - TODOS os itens do pregão entram no JSON (decisão de 25/10/2026), nenhum fica de fora sem registro. O item que
   não vale a pena (sem margem, sem preço confiável, produto não encontrado, hospitalar/ANVISA, fora do CNAE sem
   interesse, grande/pesado etc.) entra como descartado: `semLance: true` e o motivo no `obs`, com o número do
@@ -146,31 +160,35 @@ Formato de backup do app (Config › Importar › Mesclar). IDs únicos e novos;
     "id": "it_imbau_91_01", "pregaoId": "pz_imbau_91_2026", "loteEdital": "", "itemEdital": "01",
     "descricao": "nome curto", "descEdital": "descrição completa do edital", "marca": "", "modelo": "", "unidade": "Un",
     "qtd": 10, "custo": 2.0, "teto": 5.0, "frete": 0, "margem": null, "lanceFinal": null,
-    "onde": "Loja", "ondeLink": "https://link-direto-do-produto",
-    "alternativas": [{ "loja": "Outra loja", "link": "https://...", "custo": 2.1, "frete": 0, "qtd": 0 }],
+    "semLance": false,
+    "alternativas": [
+      { "loja": "Loja A", "link": "https://link-direto-do-produto", "custo": 2.0, "frete": 0, "usar": true },
+      { "loja": "Loja B", "link": "https://link-direto-do-produto", "custo": 2.1, "frete": 0, "usar": false }
+    ],
     "obs": "", "createdAt": 0, "updatedAt": 0, "deleted": false
   }]
 }
 ```
 
+- Compra: só `alternativas` com `usar` (modelo novo). `semLance` sempre explícito (`true`/`false`), senão a mesclagem mantém o valor antigo do app.
+- Atualizar um pregão que já está no app: partir do backup mais recente, reaproveitar os ids, mandar `updatedAt` novo e NÃO mandar `marca`, `modelo`, `catalogoDesc`, `lanceFinal` nem fotos (o que o JSON não traz continua como está no app).
 - `regrasEdital.semIdentificacao`: `true` = edital proíbe identificar na inicial; `false` = exige; omitir se o
   edital não fala. O app mostra o aviso na guia Proposta e trava a geração se a chavinha estiver diferente.
 - `pdfOpts.anonima` deve bater com `regrasEdital.semIdentificacao`.
 
-### Entrega dos arquivos (padrão fixo desde 22/10/2026 — substitui qualquer padrão anterior)
-Um zip organizado assim, SEM acentos nem caracteres especiais nos nomes das pastas
-(a barra do número vira hífen, porque "/" não pode em nome de pasta):
-
+### Entrega dos arquivos (decisão de 31/10/2026 — substitui o zip)
+JSON único (acima) + pastas no Google Drive conforme a seção 8:
 ```
-Municipio de Imbau/                 <- pasta com o nome do promotor (órgão)
-  EDITAL N 091-2026/                <- uma pasta por pregão
-    LEIA-ME                         <- resumo, regras do edital, prazos, riscos
-    Observacoes                     <- pontos de atenção item a item
-    Declaracoes (.docx)             <- declarações do edital já preenchidas
-    Proposta modelo proprio (.docx) <- quando o edital tiver modelo próprio
+01- PREGÕES/
+  Municipio de Imbau/                               <- pasta do órgão (sem acento)
+    PREGÃO ELETRÔNICO - EDITAL nº 094-2026/         <- uma pasta por pregão
+      LEIA-ME.txt                                   <- conferência dos documentos, regras do edital, prazos, riscos, itens
+      Observacoes.txt                               <- pontos de atenção item a item (quando houver muitos)
+      Declaracoes (.docx)                           <- as declarações que o edital pede, já preenchidas
+      Proposta modelo proprio (.docx)               <- quando o edital tiver modelo próprio
 ```
 
-- Cotação de cada item em pelo menos 2 fornecedores (lojas diferentes, link direto do produto).
+- Cotação de cada item, de preferência em 2 lojas diferentes, com link direto do produto (uma só é aceitável, anotada no `obs`).
 - Qualidade da cotação (decisão de 26/10/2026): a opção marcada para USAR (`usar: true`) deve cumprir TODAS as
   especificações mínimas do TR/edital (potência, dimensões, capacidade, material, garantia etc.), em loja
   especializada ou fabricante do ramo, para não arriscar desclassificação por produto errado. Margem muito alta
@@ -179,7 +197,7 @@ Municipio de Imbau/                 <- pasta com o nome do promotor (órgão)
 - Edital que exige montagem, instalação ou nivelamento do equipamento (aparelhos de academia etc.): item fora
   (`semLance: true`, motivo no `obs`), conforme a regra de itens que exigem instalação (decisão de 26/10/2026).
 - Observações importantes de cada item no campo `obs` do JSON e no arquivo de observações.
-- COMO COTAR, PADRÃO OBRIGATÓRIO (decisão de 30/10/2026, reforçada pelo João): toda cotação é feita no Chrome do João (Claude in Chrome), entrando nas lojas, buscando nas páginas e abrindo o produto, para conferir preço atual, especificação e pegar o LINK DIRETO. Resumo de busca (WebSearch) NÃO vale como cotação: gasta token e sai incompleto (links de listagem, preços velhos). Loja do Mecânico: `https://www.lojadomecanico.com.br/busca?q=<termo>` (link do produto = `/produto/<id>`); Mercado Livre: `https://lista.mercadolivre.com.br/<termo-com-hifens>`; Magazine Luiza: `/busca/<termo>/`. O WebFetch só abre páginas já vistas na conversa e algumas lojas (Pichau, Casas Bahia) bloqueiam.
+- COMO COTAR, PADRÃO OBRIGATÓRIO (decisão de 30/10/2026, reforçada pelo João): toda cotação é feita no Chrome do João (Claude in Chrome), entrando nas lojas, buscando nas páginas e abrindo o produto, para conferir preço atual, especificação e pegar o LINK DIRETO. Resumo de busca (WebSearch) NÃO vale como cotação: gasta token e sai incompleto (links de listagem, preços velhos). Item por item, direto no navegador (decisão de 31/10/2026). Mercado Livre pode pedir captcha: aí parar e pedir ao João para liberar no PC. Amazon: `/s?k=<termo>` e produto `/dp/<código>`. Loja do Mecânico: `https://www.lojadomecanico.com.br/busca?q=<termo>` (link do produto = `/produto/<id>`); Mercado Livre: `https://lista.mercadolivre.com.br/<termo-com-hifens>`; Magazine Luiza: `/busca/<termo>/`. O WebFetch só abre páginas já vistas na conversa e algumas lojas (Pichau, Casas Bahia) bloqueiam.
 - Se o Chrome não estiver disponível ou não responder (PC desligado, extensão desconectada) ou se eu travar em alguma loja: PARAR e avisar o João NA HORA (mensagem + notificação) para ele ligar o computador/Chrome. Não seguir cotando por resumo de busca.
 
 ---
@@ -188,17 +206,17 @@ Municipio de Imbau/                 <- pasta com o nome do promotor (órgão)
 
 ### Fluxo de trabalho (sempre nesta ordem)
 1. **Varredura → lista de oportunidades + UM JSON único** com todos os pregões novos (cadastro básico,
-   para importar com "Mesclar"). Sem pastas, sem zip, sem análise de itens nessa etapa.
-2. **João escolhe e manda os PDFs** dos editais que quer.
-3. **Análise precisa, item por item**, com todas as regras do edital (seção 2 e checklist).
-4. **Entrega da análise:** JSON com cotações em pelo menos 2 fornecedores, observações e o zip com as pastas da seção 3.
+   para importar com "Mesclar"). Sem pastas e sem análise de itens nessa etapa.
+2. **João escolhe e manda os documentos** (edital, TR e anexos) dos que quer.
+3. **Conferência dos documentos (seção 2) e depois análise precisa, item por item**, com todas as regras do edital (seção 2 e checklist).
+4. **Entrega da análise:** JSON com as cotações (link direto, de preferência 2 lojas), observações e as pastas no Google Drive (seção 8) com LEIA-ME e declarações.
 
 ### Filtro da varredura
 - Fonte: **PNCP** (não usar o e-mail do João). Ver "Busca no PNCP" abaixo.
 - Raio: até ~120 km de estrada de Telêmaco Borba/PR, MAIS Ponta Grossa (~126 km) — decisão de 22/10/2026
   (180 km ficou longe demais). Quanto mais perto, melhor: está começando e sem caixa para frete grande.
   A lista de municípios com código IBGE está em "Busca no PNCP".
-- Plataformas (decisão de 30/10/2026): o João usa **Compras.gov.br**, **BLL** e **IPM** (eLicita/Atende.Net — sem taxa para o fornecedor; voltou em 30/10, Castro 157 e 163). As outras (Licitanet, BNC, Portal de Compras Públicas, Compras Paraná etc.) cobram taxa/mensalidade, então por enquanto NÃO usar: pregão em outra plataforma é descartado na busca e na análise (citar a plataforma no aviso). Antes de descartar por plataforma, conferir se ela cobra do fornecedor. Na busca, conferir `usuarioNome`/`linkSistemaOrigem` do PNCP. Se o João voltar a usar outra, mudar AQUI.
+- Plataformas (decisão de 31/10/2026): NÃO descartar por plataforma. O João só tem cadastro no **Compras.gov.br** e na **BLL**; pregão em outra plataforma (IPM/eLicita, Licitanet, BNC, Portal de Compras Públicas, Compras Paraná etc.) entra na lista/análise normalmente, com AVISO: "plataforma X — precisa de cadastro" e se ela cobra taxa do fornecedor (a IPM não cobra; Licitanet, BNC e outras costumam cobrar). Conferir a plataforma em `usuarioNome`/`linkSistemaOrigem` do PNCP e no próprio edital (o PNCP pode errar).
 - Entrega de carro de passeio, no máximo Strada com carretinha. Itens pesados ou grandes não compensam.
 - Itens em quantidade muito grande são difíceis de comprar (falta de fornecedor e de experiência):
   evitar ou sinalizar.
@@ -220,13 +238,14 @@ e as buscas salvas em `buscas/`. Não usar contexto de conversas antigas nem mem
 filtro, raio, ramos ou o que já foi analisado. Se precisar mudar uma regra, mudar AQUI primeiro.
 
 ### Ciclo semanal (decisão de 24/10/2026)
+- Próxima busca (pedido de 31/10/2026): provavelmente na quinta ou sexta (05 ou 06/11/2026), quando o João pedir. Referência do que já está no app: `buscas/referencia-app-2026-10-31.md` (backup de 31/10) + este arquivo.
 - Sábado 18h43 (depois que os tokens da semana reiniciam): busca no PNCP, lista + JSON da busca.
 - Até domingo ou segunda: o João manda os PDFs dos escolhidos; análise e cotação de todos juntos (um JSON só).
 - Durante a semana: o João revisa e envia as propostas.
 
 ### Tarefa agendada "Busca de pregões" (todo sábado 18h43)
 1. Ler este arquivo (já está fazendo isso).
-2. Ler o "Log das buscas" (fim deste arquivo) para saber a última verificação.
+2. Ler o "Log das buscas" (fim deste arquivo) e a referência mais recente do app em `buscas/` (hoje: `referencia-app-2026-10-31.md`).
    Buscar no PNCP (seção "Busca no PNCP"), município por município, pregões e dispensas.
    NÃO usar o Gmail.
 3. Descartar: prazo de proposta já vencido, fora do raio, itens grandes/pesados,
@@ -238,23 +257,23 @@ filtro, raio, ramos ou o que já foi analisado. Se precisar mudar uma regra, mud
    link do PNCP em `link`/`linkLicitacao`, objeto e triagem em `obs`, id fixo que a análise depois
    reaproveita) — o João importa com "Mesclar". Na mesma lista, marcar `deleted: true` nos pregões do app
    que deixaram de valer (prazo vencido sem proposta, fora do raio), nunca nos que têm proposta enviada,
-   item ganho, empenho, entrega ou pagamento. NÃO criar pastas nem zip na busca: as pastas da seção 3
-   só existem depois da análise dos PDFs.
+   item ganho, empenho, entrega ou pagamento. NÃO criar pastas na busca: as pastas do Drive (seção 8)
+   só existem depois da análise dos documentos.
 6. Salvar a lista em `buscas/AAAA-MM-DD.md` neste repositório e REGISTRAR NO LOG (fim deste arquivo):
    uma linha nova na tabela e os pregões trazidos acrescentados na lista "Já no app ou já descartados".
    Commit direto na main. Busca sem registro no log = busca não feita.
-7. Se algo falhar (PNCP fora do ar ou bloqueando, GitHub, página que precise do navegador), avisar o João NA HORA
+7. Se algo falhar (Chrome desligado, PNCP fora do ar ou bloqueando, GitHub), avisar o João NA HORA
    (mensagem + notificação) pedindo para ligar o Chrome no PC; às vezes no celular não funciona.
 
-### Busca no PNCP (testado em 22/10/2026: responde por município; o PR inteiro de uma vez é grande demais)
-- Só via WebFetch (o shell não acessa pncp.gov.br).
+### Busca no PNCP (responde por município; o PR inteiro de uma vez é grande demais)
+- Pelo Chrome do João (desde 29/10/2026): abrir as URLs da API numa aba e ler o JSON (o shell não acessa pncp.gov.br; WebFetch só como último recurso).
 - Consulta: `https://pncp.gov.br/api/consulta/v1/contratacoes/proposta?dataFinal=<hoje+60 dias AAAAMMDD>&codigoModalidadeContratacao=<6 pregão | 8 dispensa>&uf=PR&codigoMunicipioIbge=<código>&pagina=1&tamanhoPagina=50`
   (se `totalPaginas` > 1, buscar as outras páginas).
 - Itens e tetos (só dos candidatos): `https://pncp.gov.br/api/pncp/v1/orgaos/<cnpj>/compras/<ano>/<sequencial>/itens?pagina=1&tamanhoPagina=50`
   (cnpj, ano e sequencial vêm do `numeroControlePNCP` = "cnpj-1-sequencial/ano").
 - Link para o João baixar o edital: `https://pncp.gov.br/app/editais/<cnpj>/<ano>/<sequencial>`; plataforma em `usuarioNome` e `linkSistemaOrigem`.
 - Pregões (modalidade 6) e dispensas (8) em todos os municípios da lista.
-- Para economizar: pedir ao WebFetch só as compras dos ramos do MEI (lista de áreas no prompt), uma linha por compra.
+- Para economizar: ler do JSON só as compras dos ramos do MEI, uma linha por compra (no Chrome, filtrar com JavaScript na própria aba).
 - Limite: até ~5 chamadas por vez. Se vier HTTP 429, esperar 2 min e seguir; listar no fim o que falhou.
 - Órgãos estaduais/federais nesses municípios (UTFPR, UEPG, UEL etc.) aparecem na mesma consulta.
 - Distância = linha reta × 1,3 (estimativa de estrada a partir de Telêmaco Borba).
@@ -262,17 +281,17 @@ filtro, raio, ramos ou o que já foi analisado. Se precisar mudar uma regra, mud
 **Municípios da busca — até ~120 km + Ponta Grossa (35):**
 Telêmaco Borba 4127106 (~0); Imbaú 4110078 (~25); Tibagi 4127502 (~38); Ortigueira 4117305 (~43); Curiúva 4107009 (~47); Ventania 4128534 (~51); Reserva 4121703 (~56); Sapopema 4126207 (~60); Figueira 4107751 (~75); Rosário do Ivaí 4122651 (~87); São Jerônimo da Serra 4124707 (~89); Ibaiti 4109708 (~89); Rio Branco do Ivaí 4122172 (~92); Piraí do Sul 4119400 (~94); Japira 4112306 (~97); Cândido de Abreu 4104402 (~101); Ipiranga 4110508 (~101); Mauá da Serra 4115754 (~101); Ivaí 4111407 (~104); Faxinal 4107603 (~104); Castro 4104907 (~104); Pinhalão 4119202 (~106); Arapoti 4101606 (~107); Tamarana 4126678 (~108); Nova Santa Bárbara 4117214 (~108); Carambeí 4104659 (~109); Jaboti 4111704 (~111); Congonhinhas 4106001 (~112); Conselheiro Mairinck 4106100 (~117); Tomazina 4127809 (~118); Santa Cecília do Pavão 4123204 (~118); Cruzmaltina 4106852 (~119); Santo Antônio do Paraíso 4124301 (~120); Grandes Rios 4108700 (~120); Ponta Grossa 4119905 (~126)
 
-### Já no app ou já descartados (não trazer como novos) — atualizado 22/10/2026
+### Já no app ou já descartados (não trazer como novos) — atualizado 31/10/2026
+Lista completa e oficial: `buscas/referencia-app-2026-10-31.md` (todos os pregões do backup de 31/10, por status, inclusive os excluídos). O histórico abaixo explica os motivos.
 Concluídos/encerrados: UFPR 2922; Ortigueira 87 (desclassificado);
 UEL 162; Faxinal 52; Ortigueira 95 (desistiu).
-Em andamento: Mauá da Serra 60 (itens ganhos); Ortigueira 91; Imbaú 84 e Carambeí 54 (Julgamento, confirmado pelo João em 29/10); Imbaú 85 e EPR-UEL 146 (Julgamento no app); Carambeí 54 e 55; UTFPR Ponta Grossa 15 e 17;
-Imbaú 91.
+Situação no backup de 31/10: Aguardando empenho — Mauá da Serra 60. Julgamento — Ortigueira 91, Imbaú 84 e 85, Carambeí 54, EPR-UEL 146, Faxinal 49. Proposta enviada — Imbaú 91, Carambeí 55, São Jerônimo da Serra 47. Analisando — Ortigueira 102, Ipiranga 78, Imbaú 94, Piraí do Sul 47. Falta dados — Castro 163. Desisti — UTFPR 15 e 17, Castro 157, Jaboti 44 (31/10) e os demais da lista.
 Analisados em 24/10 (JSON entregue): Faxinal 49; São Jerônimo da Serra 47 (PE 40/2026); Ortigueira 102.
 Descartados na análise de 24/10: Castro 150 (por lote); Japira 38 e 39 (por lote); Ipiranga 77 (expediente e
 entrega em ~15 endereços); Grandes Rios 41 e Conselheiro Mairinck 62 (exigem atestado de capacidade técnica).
-Analisados em 29-30/10 (JSON entregue): Imbaú 94, Jaboti 44 e Piraí do Sul 47 (Analisando); Castro 157 e 163 (voltaram para Analisando em 30/10: IPM não cobra taxa; falta o edital completo); demais da busca de 29/10 como Desisti.
-Analisados em 31/10 (JSON entregue, mesmos ids da busca): Castro 157 = Desisti (edital completo: BLL, Registro de Preços; exige atestado de capacidade técnica na habilitação 1.5 e TR 9.1, e entrega em 48 h úteis após o empenho; 16 itens ficaram cotados no JSON caso o João consiga atestado) e Castro 163 (BLL; só o item 5 compensa, item 6 falta cotar; pasta no Drive em Municipio de Castro). Castro 157 e 163 são ambos BLL (o PNCP os listava como IPM).
-Conferência de documentos em 31/10 (backup do app de 31/10): Jaboti 44 = Desisti (atestado no TR 9, via edital 6.1); Ortigueira 102 conferido com edital completo (sem atestado/balanço, segue); Ipiranga 78 segue com pendência da DASN-SIMEI (Anexo II 2.3.3); Imbaú 94, Piraí 47 e UTFPR 17 sem atestado/balanço.
+Analisados em 29-30/10 (JSON entregue): Imbaú 94 e Piraí do Sul 47 (Analisando); Jaboti 44 (Desisti em 31/10: atestado no TR 9); demais da busca de 29/10 como Desisti.
+Analisados em 31/10 com o edital completo (JSON entregue, mesmos ids da busca): Castro 157 = Desisti (edital completo: BLL, Registro de Preços; exige atestado de capacidade técnica na habilitação 1.5 e TR 9.1, e entrega em 48 h úteis após o empenho; 16 itens ficaram cotados no JSON caso o João consiga atestado) e Castro 163 (BLL; só o item 5 compensa, item 6 falta cotar; pasta no Drive em Municipio de Castro). Castro 157 e 163 são ambos BLL (o PNCP os listava como IPM).
+Conferência de documentos em 31/10: Jaboti 44 = Desisti (atestado no TR 9, via edital 6.1); Ortigueira 102 conferido com o edital completo (sem atestado/balanço, segue); Ipiranga 78 segue com pendência da DASN-SIMEI (Anexo II 2.3.3, pedir esclarecimento); Imbaú 94 e Piraí 47 sem atestado/balanço.
 Analisado em 26/10 (JSON entregue): Ipiranga 78 (itens 1–8 aparelhos = Desisti por montagem/nivelamento; 9–16 cotados).
 Trazidos na busca PNCP de 22/10 (aguardando escolha): Rio Branco do Ivaí 36.
 Excluídos em 22/10 por ficarem acima de 120 km: Prudentópolis 124; Califórnia 69; Jardim Alegre 51 e 52;
@@ -332,7 +351,8 @@ ou na lista "Já no app ou já descartados" — comparar por órgão + nº do pr
 
 ## 8. Pastas no Google Drive (decisão de 29/10/2026)
 
+- Arquivos .docx: subir como .docx (não converter para Google Docs), em formato enxuto (sem o modelo pesado do python-docx), com as lacunas em amarelo.
 - As pastas das análises ficam no Google Drive do João, dentro de "01- PREGÕES": uma pasta por órgão ("Municipio de Castro"; sem acento) e, dentro, "PREGÃO ELETRÔNICO - EDITAL nº 157-2026" (dispensa: "DISPENSA ELETRÔNICA - EDITAL nº 48-2026"; quando o PNCP usa outro número, pôr entre parênteses, ex.: "(PCE 53-2026)"). Dentro de cada uma, o LEIA-ME.txt.
-- Só vão para o Drive os pregões que COMPENSAM (status Analisando). Os que ficam Desisti NÃO ganham pasta no Drive: o motivo fica no JSON (obs) e no resumo do projeto.
+- Toda análise que compensa é SALVA no Drive sem o João precisar pedir. Só vão para o Drive os pregões que COMPENSAM (status Analisando/Falta dados). Os que ficam Desisti NÃO ganham pasta no Drive: o motivo fica no JSON (obs) e no resumo do projeto.
 - Cada pasta de pregão que compensa leva, além do LEIA-ME, as DECLARAÇÕES que o edital pede por escrito (Declaração Unificada/Conjunta, ME/EPP etc.) em .docx, já com razão social, CNPJ e endereço do MEI e as lacunas de CPF/RG/data em amarelo, e o modelo próprio de proposta quando houver (decisão de 30/10/2026; o João cobrou: "esses documentos são importantes"). Edital em que as declarações são só no sistema (Compras.gov, "desnecessária a apresentação por escrito") não precisa: dizer isso no LEIA-ME.
 - Pasta de órgão que já existe (ex.: "Município de Faxinal") é reaproveitada: procurar antes de criar.
