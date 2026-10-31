@@ -1,0 +1,398 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Depurador · Meus Pregões</title>
+<meta name="theme-color" content="#1f3a5f">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<style>
+:root{--bg:#f4f6f9;--card:#fff;--tx:#18222f;--mut:#5c6b7d;--bd:#d9e0e8;--pri:#1f3a5f;--ok:#1b7f4b;--warn:#b26a00;--bad:#b3261e;--info:#1a5fb4;--chip:#eaf0f7}
+@media (prefers-color-scheme:dark){:root{--bg:#10151c;--card:#18202a;--tx:#e6ebf1;--mut:#9aa8b8;--bd:#2b3644;--pri:#8fb4e8;--ok:#5fd09a;--warn:#f0b04a;--bad:#ff8a80;--info:#8ab8ff;--chip:#223042}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;padding-bottom:env(safe-area-inset-bottom)}
+header{position:sticky;top:0;z-index:20;background:var(--pri);color:#fff;padding:10px 16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+@media (prefers-color-scheme:dark){header{color:#10151c}}
+header h1{font-size:17px;margin:0;font-weight:700}
+header small{opacity:.85}
+nav{display:flex;gap:4px;flex-wrap:wrap;margin-left:auto}
+nav button{background:rgba(255,255,255,.14);color:inherit;border:0;border-radius:8px;padding:7px 12px;font:inherit;font-size:14px;cursor:pointer}
+nav button.on{background:#fff;color:#1f3a5f;font-weight:700}
+@media (prefers-color-scheme:dark){nav button{background:rgba(0,0,0,.18)}nav button.on{background:#10151c;color:#8fb4e8}}
+main{max-width:1200px;margin:0 auto;padding:16px}
+section.tab{display:none}section.tab.on{display:block}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:14px 16px;margin-bottom:12px}
+.grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(170px,1fr))}
+.kpi b{display:block;font-size:26px;line-height:1.1}.kpi span{color:var(--mut);font-size:13px}
+h2{font-size:18px;margin:4px 0 10px}h3{font-size:15px;margin:0 0 6px}
+.mut{color:var(--mut)}.sm{font-size:13px}
+.chip{display:inline-block;background:var(--chip);border-radius:99px;padding:2px 10px;font-size:12px;margin:0 4px 4px 0;white-space:nowrap}
+.i5{background:#1b7f4b;color:#fff}.i4{background:#2f6fb5;color:#fff}.i3{background:#6b7a8c;color:#fff}.i2{background:#b26a00;color:#fff}.i1{background:#b3261e;color:#fff}
+.v-manter{color:var(--ok)}.v-remover{color:var(--bad)}.v-fundir,.v-revisar{color:var(--warn)}.v-enxugar{color:var(--info)}
+.bar{height:12px;background:var(--chip);border-radius:6px;overflow:hidden}.bar i{display:block;height:100%;background:var(--pri)}
+.bar.warn i{background:var(--warn)}.bar.bad i{background:var(--bad)}.bar.ok i{background:var(--ok)}
+.tools{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;align-items:center}
+input[type=search],select,textarea,input[type=text]{background:var(--card);color:var(--tx);border:1px solid var(--bd);border-radius:8px;padding:8px 10px;font:inherit}
+input[type=search]{flex:1;min-width:200px}
+button.b{background:var(--pri);color:#fff;border:0;border-radius:8px;padding:8px 14px;font:inherit;cursor:pointer}
+@media (prefers-color-scheme:dark){button.b{color:#10151c}}
+button.b.sec{background:var(--chip);color:var(--tx)}
+.feat{border-left:5px solid var(--bd)}
+.feat.f5{border-left-color:#1b7f4b}.feat.f4{border-left-color:#2f6fb5}.feat.f3{border-left-color:#6b7a8c}.feat.f2{border-left-color:#b26a00}.feat.f1{border-left-color:#b3261e}
+.feat .hd{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.feat .id{font-weight:700;color:var(--mut)}
+.feat p{margin:6px 0}
+.link{color:var(--info);cursor:pointer;text-decoration:underline;background:none;border:0;padding:0;font:inherit}
+.dec{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;align-items:center}
+.dec label{border:1px solid var(--bd);border-radius:8px;padding:4px 10px;cursor:pointer;font-size:13px}
+.dec input{display:none}.dec label.on{background:var(--pri);color:#fff;border-color:var(--pri)}
+@media (prefers-color-scheme:dark){.dec label.on{color:#10151c}}
+.dec textarea{flex:1 1 100%;min-height:36px}
+table{border-collapse:collapse;width:100%}th,td{border-bottom:1px solid var(--bd);padding:6px 8px;text-align:left;vertical-align:top;font-size:14px}
+th{color:var(--mut);font-weight:600;font-size:13px}
+.live{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:12px}
+@media (max-width:900px){.live{grid-template-columns:1fr}}
+.frame{border:1px solid var(--bd);border-radius:12px;overflow:hidden;background:#fff;display:flex;justify-content:center}
+.frame iframe{border:0;width:100%;height:72vh;background:#fff}
+pre{background:var(--chip);border-radius:8px;padding:10px;overflow:auto;font-size:12.5px;max-height:260px;white-space:pre-wrap;word-break:break-word}
+.okb{color:var(--ok);font-weight:700}.warnb{color:var(--warn);font-weight:700}.badb{color:var(--bad);font-weight:700}
+.toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:var(--pri);color:#fff;padding:8px 16px;border-radius:99px;z-index:50;display:none}
+@media (prefers-color-scheme:dark){.toast{color:#10151c}}
+@media print{header,.tools,.dec,nav,.live,.noprint{display:none!important}section.tab{display:block!important}.card{break-inside:avoid;border:1px solid #bbb}body{background:#fff;color:#000}}
+</style>
+</head>
+<body>
+<header>
+  <h1>🔧 Depurador · Meus Pregões</h1><small id="ver">lendo o app…</small>
+  <nav id="nav">
+    <button data-t="resumo" class="on">Resumo</button>
+    <button data-t="func">Funcionalidades</button>
+    <button data-t="vivo">App ao vivo</button>
+    <button data-t="saude">Saúde</button>
+    <button data-t="cod">Código</button>
+    <button data-t="uso">Uso</button>
+  </nav>
+</header>
+<main>
+<section class="tab on" id="t-resumo"></section>
+<section class="tab" id="t-func">
+  <div class="tools">
+    <input type="search" id="q" placeholder="Buscar função, texto ou código (F12…)">
+    <select id="fImp"><option value="">Toda importância</option><option value="5">5 · Essencial</option><option value="4">4 · Importante</option><option value="3">3 · Útil</option><option value="2">2 · Pouco usada</option><option value="1">1 · Redundante/morta</option></select>
+    <select id="fVer"><option value="">Todo veredito</option></select>
+    <select id="fAr"><option value="">Toda área</option></select>
+    <select id="fDec"><option value="">Minha decisão: todas</option><option value="_sem">Sem decisão</option></select>
+  </div>
+  <div id="lista"></div>
+</section>
+<section class="tab" id="t-vivo">
+  <div class="tools noprint">
+    <button class="b sec" data-w="100%">PC</button><button class="b sec" data-w="1000px">Tela dividida (1000)</button><button class="b sec" data-w="390px">Celular (390)</button>
+    <button class="b" id="bScan">Procurar funções na tela</button>
+    <button class="b" id="bInsp">Inspetor: desligado</button>
+    <button class="b sec" id="bReload">Recarregar o app</button>
+  </div>
+  <div class="live">
+    <div class="frame" id="frameBox"><iframe id="fr" src="../index.html" title="App Meus Pregões"></iframe></div>
+    <div>
+      <div class="card"><h3>O que a tela mostra</h3><div id="scanOut" class="sm mut">Clique em “Procurar funções na tela”. Cada função do catálogo é procurada na tela que está aberta no app (navegue pelas guias e repita).</div></div>
+      <div class="card"><h3>Inspetor</h3><div id="inspOut" class="sm mut">Ligue o inspetor e clique em qualquer coisa do app: aparece a qual função ela pertence e que ação (data-act) ela dispara. Com o inspetor ligado o clique não executa nada.</div></div>
+      <div class="card"><h3>Erros do console</h3><div id="errOut" class="sm mut">nenhum erro</div></div>
+    </div>
+  </div>
+</section>
+<section class="tab" id="t-saude"></section>
+<section class="tab" id="t-cod"></section>
+<section class="tab" id="t-uso"></section>
+</main>
+<div class="toast" id="toast"></div>
+<script src="catalogo.js"></script>
+<script>
+'use strict';
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const fmt = (n) => Number(n).toLocaleString('pt-BR');
+const C = window.Catalogo, LISTA = C.lista;
+function toast(t) { const e = $('#toast'); e.textContent = t; e.style.display = 'block'; clearTimeout(toast.h); toast.h = setTimeout(() => e.style.display = 'none', 2200); }
+function lsGet(k, d) { try { const r = localStorage.getItem(k); return r ? JSON.parse(r) : d; } catch (e) { return d; } }
+function lsSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* sem armazenamento */ } }
+
+/* ---------- dados do app ---------- */
+const S = { state: null, origem: '', appVersion: '', swVersion: '', texto: '', erros: [], uso: lsGet('dep.uso', {}), dec: lsGet('dep.decisoes', {}), insp: false };
+function frWin() { try { return $('#fr').contentWindow; } catch (e) { return null; } }
+function lerEstado() {
+  const w = frWin();
+  try { if (w && w.__app && w.__app.store) { S.state = w.__app.store.get(); S.origem = 'app aberto aqui ao lado'; return; } } catch (e) { /* tenta o armazenamento */ }
+  try { const r = localStorage.getItem('mp.state.v1'); if (r) { S.state = JSON.parse(r); S.origem = 'dados deste navegador'; return; } } catch (e) { /* nada */ }
+  if (!S.state) { S.state = { pregoes: [], itens: [], config: {} }; S.origem = 'sem dados (carregue um backup)'; }
+}
+function ctx() {
+  const st = S.state || { pregoes: [], itens: [] };
+  const allP = st.pregoes || [], allI = st.itens || [];
+  const P = allP.filter((p) => !p.deleted), I = allI.filter((i) => !i.deleted);
+  let nuvem = 0;
+  try { const w = frWin(); nuvem = JSON.stringify(w && w.Core && w.Core.paraNuvem ? w.Core.paraNuvem(st) : st).length; } catch (e) { try { nuvem = JSON.stringify(st).length; } catch (e2) { nuvem = 0; } }
+  const ui = lsGet('mp.ui', {});
+  return { P, I, allP, allI, cfg: st.config || {}, nuvemChars: nuvem, ui };
+}
+async function lerCodigo() {
+  try {
+    const r = await fetch('../index.html', { cache: 'no-store' }); S.texto = await r.text();
+    const m = S.texto.match(/APP_VERSION\s*=\s*['"]([^'"]+)['"]/); S.appVersion = m ? m[1] : '?';
+  } catch (e) { S.texto = ''; S.appVersion = '?'; }
+  try { const r = await fetch('../sw.js', { cache: 'no-store' }); const t = await r.text(); const m = t.match(/VERSION\s*=\s*['"]([^'"]+)['"]/); S.swVersion = m ? m[1] : '?'; } catch (e) { S.swVersion = '?'; }
+  $('#ver').textContent = 'app v' + S.appVersion + (S.appVersion !== S.swVersion ? ' (sw ' + S.swVersion + ' ≠)' : '');
+}
+function sondas() {
+  const c = ctx(), out = {};
+  for (const [k, f] of Object.entries(C.PROBES)) { try { out[k] = f(c); } catch (e) { out[k] = null; } }
+  return out;
+}
+
+/* ---------- análise estática do index.html ---------- */
+function analisar() {
+  const t = S.texto; if (!t) return null;
+  const toks = t.match(/[A-Za-z_$][\w$]*/g) || [], freq = {};
+  for (const k of toks) freq[k] = (freq[k] || 0) + 1;
+  const decl = new Set();
+  let m; const r1 = /function\s+([A-Za-z_$][\w$]*)\s*\(/g; while ((m = r1.exec(t))) decl.add(m[1]);
+  const r2 = /\bconst\s+([A-Za-z_$][\w$]*)\s*=\s*(?:async\s*)?(?:\([^)]*\)|[A-Za-z_$][\w$]*)\s*=>/g; while ((m = r2.exec(t))) decl.add(m[1]);
+  const mortas = [...decl].filter((n) => freq[n] === 1).sort();
+  const prod = new Set(); const r3 = /data-act=\\?["']([\w-]+)/g; while ((m = r3.exec(t))) prod.add(m[1]);
+  const casos = new Set(); const r4 = /case\s+'([\w-]+)'\s*:/g; while ((m = r4.exec(t))) casos.add(m[1]);
+  const semBotao = [...casos].filter((n) => !prod.has(n) && (t.split("'" + n + "'").length - 1) <= 2).sort();
+  const css = (t.match(/<style[^>]*>([\s\S]*?)<\/style>/) || [])[1] || '';
+  const resto = t.replace(css, '');
+  const cls = new Set(); const r5 = /\.([a-zA-Z][\w-]*)/g; while ((m = r5.exec(css.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\{[^}]*\}/g, '{}')))) cls.add(m[1]);
+  const semUso = [...cls].filter((n) => !resto.includes(n)).sort();
+  const grupos = {}; semUso.forEach((n) => { const g = n.split('-')[0]; (grupos[g] = grupos[g] || []).push(n); });
+  const scripts = []; const r6 = /<script[^>]*>([\s\S]*?)<\/script>/g; while ((m = r6.exec(t))) scripts.push(m[1]);
+  return { linhas: t.split('\n').length, bytes: t.length, css: css.length, scripts: scripts.map((s) => s.length), mortas, semBotao, semUso, grupos, nProd: prod.size, nCasos: casos.size, nFunc: decl.size };
+}
+
+/* ---------- Resumo ---------- */
+function bloco(titulo, corpo) { return '<div class="card"><h2>' + titulo + '</h2>' + corpo + '</div>'; }
+function renderResumo() {
+  const c = ctx(); const total = LISTA.length;
+  const porImp = [5, 4, 3, 2, 1].map((n) => ({ n, q: LISTA.filter((x) => x.imp === n).length }));
+  const porVer = Object.keys(C.VEREDITOS).map((v) => ({ v, q: LISTA.filter((x) => x.v === v).length }));
+  const pct = c.nuvemChars / 950000 * 100;
+  const dd = Object.keys(S.dec).filter((k) => S.dec[k] && S.dec[k].d).length;
+  const alvo = LISTA.filter((x) => x.imp <= 2 || x.v === 'fundir' || x.v === 'remover');
+  let h = '<div class="grid">' + [
+    ['Funcionalidades catalogadas', total], ['Essenciais e importantes', porImp[0].q + porImp[1].q],
+    ['Redundantes, mortas ou a decidir', LISTA.filter((x) => x.imp <= 2).length], ['Suas decisões até agora', dd + ' de ' + total],
+  ].map((a) => '<div class="card kpi"><b>' + a[1] + '</b><span>' + a[0] + '</span></div>').join('') + '</div>';
+  h += bloco('Espaço do documento da nuvem', '<p>O Firestore guarda tudo num único documento de no máximo 1 MB; o app trava a sincronização acima de 950.000 caracteres. Hoje: <b class="' + (pct > 85 ? 'badb' : pct > 65 ? 'warnb' : 'okb') + '">' + fmt(c.nuvemChars) + ' caracteres (' + pct.toFixed(0) + '%)</b>.</p><div class="bar ' + (pct > 85 ? 'bad' : pct > 65 ? 'warn' : 'ok') + '"><i style="width:' + Math.min(100, pct) + '%"></i></div><p class="sm mut">Fonte: ' + esc(S.origem) + '. Detalhe e o que ocupa mais espaço: aba Saúde.</p>');
+  h += bloco('Como ler o relatório', '<p class="sm">Cada função tem uma nota de <b>importância</b> (5 = sem ela o app não serve · 1 = repetida, antiga ou morta) e um <b>veredito</b>: Manter · Manter e enxugar · Fundir com outra · Decidir com dados · Remover. Quando uma função repete outra, o cartão aponta o número da função para onde ir (ex.: <i>F12</i>). Na aba Funcionalidades você marca a sua decisão em cada uma; tudo é guardado neste navegador e pode ser exportado.</p>');
+  h += '<div class="grid"><div class="card"><h3>Por importância</h3>' + porImp.map((a) => '<div class="sm">' + C.NIVEIS[a.n] + ' <b>' + a.q + '</b><div class="bar"><i style="width:' + a.q / total * 100 + '%"></i></div></div>').join('') + '</div>' +
+    '<div class="card"><h3>Por veredito</h3>' + porVer.map((a) => '<div class="sm">' + C.VEREDITOS[a.v] + ' <b>' + a.q + '</b><div class="bar"><i style="width:' + a.q / total * 100 + '%"></i></div></div>').join('') + '</div></div>';
+  h += bloco('Candidatas a sair ou a juntar (' + alvo.length + ')', '<table><tr><th>#</th><th>Função</th><th>Veredito</th><th>Para onde ir / o que fazer</th></tr>' + alvo.map((x) => '<tr><td>' + x.id + '</td><td><button class="link" data-go="' + x.id + '">' + esc(x.nome) + '</button></td><td class="v-' + x.v + '">' + C.VEREDITOS[x.v] + '</td><td class="sm">' + esc(x.para || '') + (x.redIds.length ? ' <span class="mut">(repete ' + x.redIds.join(', ') + ')</span>' : '') + '</td></tr>').join('') + '</table>');
+  h += '<div class="tools noprint"><button class="b" data-ex="md">Baixar relatório (.md)</button><button class="b sec" data-ex="json">Baixar minhas decisões (.json)</button><button class="b sec" data-ex="print">Imprimir / salvar PDF</button><label class="b sec" style="cursor:pointer">Carregar backup do app<input type="file" id="fBackup" accept=".json" hidden></label></div>';
+  $('#t-resumo').innerHTML = h;
+}
+
+/* ---------- Funcionalidades ---------- */
+function setupFiltros() {
+  $('#fVer').innerHTML += Object.keys(C.VEREDITOS).map((v) => '<option value="' + v + '">' + C.VEREDITOS[v] + '</option>').join('');
+  $('#fAr').innerHTML += Object.values(C.AR).map((a) => '<option>' + esc(a) + '</option>').join('');
+  $('#fDec').innerHTML += ['manter', 'enxugar', 'fundir', 'remover', 'depois'].map((d) => '<option value="' + d + '">Decidi: ' + d + '</option>').join('');
+  ['q', 'fImp', 'fVer', 'fAr', 'fDec'].forEach((id) => $('#' + id).addEventListener('input', renderLista));
+}
+function probeHtml(x, pr) {
+  if (!x.probe || !pr[x.probe]) return '';
+  const p = pr[x.probe]; if (!p) return '';
+  if (x.probe === 'espaco') return '<div class="sm">📊 ' + fmt(p.n) + ' de ' + fmt(p.de) + ' caracteres (' + (p.n / p.de * 100).toFixed(0) + '%)</div>';
+  const pc = p.de ? p.n / p.de * 100 : 0;
+  return '<div class="sm">📊 Nos seus dados: <b>' + fmt(p.n) + '</b> de ' + fmt(p.de) + ' ' + esc(p.rot) + (p.de ? ' (' + pc.toFixed(0) + '%)' : '') + '<div class="bar" style="max-width:260px"><i style="width:' + Math.min(100, pc) + '%"></i></div></div>';
+}
+function renderLista() {
+  const pr = sondas(), q = $('#q').value.trim().toLowerCase(), fi = $('#fImp').value, fv = $('#fVer').value, fa = $('#fAr').value, fd = $('#fDec').value;
+  const itens = LISTA.filter((x) => {
+    if (fi && String(x.imp) !== fi) return false; if (fv && x.v !== fv) return false; if (fa && x.area !== fa) return false;
+    const d = (S.dec[x.k] || {}).d; if (fd === '_sem' && d) return false; if (fd && fd !== '_sem' && d !== fd) return false;
+    if (q && !(x.nome + ' ' + x.faz + ' ' + (x.para || '') + ' ' + (x.ev || '') + ' ' + x.id).toLowerCase().includes(q)) return false;
+    return true;
+  });
+  $('#lista').innerHTML = (itens.length ? '' : '<p class="mut">Nada com esse filtro.</p>') + itens.map((x) => {
+    const d = S.dec[x.k] || {};
+    const reds = x.redIds.length ? '<p class="sm">↪ Repete / vá para: ' + x.red.map((k, i) => '<button class="link" data-go="' + C.porK[k].id + '">' + C.porK[k].id + ' ' + esc(C.porK[k].nome) + '</button>').join(' · ') + '</p>' : '';
+    return '<div class="card feat f' + x.imp + '" id="' + x.id + '"><div class="hd"><span class="id">' + x.id + '</span><h3 style="margin:0">' + esc(x.nome) + (x.prot ? ' 🔒' : '') + '</h3></div>' +
+      '<div style="margin-top:4px"><span class="chip i' + x.imp + '">' + x.imp + ' · ' + C.NIVEIS[x.imp] + '</span><span class="chip">' + esc(x.area) + '</span><span class="chip v-' + x.v + '">' + C.VEREDITOS[x.v] + '</span></div>' +
+      '<p>' + esc(x.faz) + '</p>' + probeHtml(x, pr) + reds +
+      (x.para ? '<p class="sm"><b>Sugestão:</b> ' + esc(x.para) + '</p>' : '') + (x.ev ? '<p class="sm mut">Evidência: ' + esc(x.ev) + '</p>' : '') +
+      (x.sel ? '<p class="sm"><button class="link" data-show="' + x.k + '">Mostrar no app ao vivo</button></p>' : '') +
+      '<div class="dec" data-k="' + x.k + '"><span class="sm mut">Minha decisão:</span>' + [['manter', 'Manter'], ['enxugar', 'Enxugar'], ['fundir', 'Fundir'], ['remover', 'Remover'], ['depois', 'Decidir depois']].map((o) => '<label class="' + (d.d === o[0] ? 'on' : '') + '"><input type="radio" name="d-' + x.k + '" value="' + o[0] + '"' + (d.d === o[0] ? ' checked' : '') + '>' + o[1] + '</label>').join('') +
+      '<textarea placeholder="Anotação (opcional)" data-n="' + x.k + '">' + esc(d.n || '') + '</textarea></div></div>';
+  }).join('');
+}
+document.addEventListener('change', (e) => {
+  const t = e.target;
+  if (t.matches('.dec input[type=radio]')) { const k = t.closest('.dec').dataset.k; S.dec[k] = Object.assign(S.dec[k] || {}, { d: t.value }); lsSet('dep.decisoes', S.dec); $$('label', t.closest('.dec')).forEach((l) => l.classList.toggle('on', l.contains(t))); toast('Decisão guardada'); }
+  if (t.id === 'fBackup' && t.files[0]) {
+    const fr = new FileReader(); fr.onload = () => { try { const j = JSON.parse(fr.result); S.state = j.pregoes ? j : (j.state || j); S.origem = 'backup carregado: ' + t.files[0].name; renderTudo(); toast('Backup carregado só para análise'); } catch (err) { toast('Arquivo inválido'); } }; fr.readAsText(t.files[0]);
+  }
+});
+document.addEventListener('input', (e) => { const t = e.target; if (t.matches('textarea[data-n]')) { const k = t.dataset.n; S.dec[k] = Object.assign(S.dec[k] || {}, { n: t.value }); lsSet('dep.decisoes', S.dec); } });
+
+/* ---------- App ao vivo ---------- */
+function aplicarLargura(w) { $('#fr').style.maxWidth = w; $('#fr').style.width = w === '100%' ? '100%' : w; }
+function resolverSel(el, ret) {
+  const achados = [];
+  for (const x of LISTA) { if (!x.sel) continue; for (const s of x.sel) { try { if (el.closest(s)) { achados.push(x); break; } } catch (e) { /* seletor inválido */ } } }
+  return ret ? achados : achados.map((x) => x.id + ' ' + x.nome);
+}
+function ligarFrame() {
+  const w = frWin(); if (!w) return;
+  let d; try { d = w.document; } catch (e) { return; }
+  S.erros = [];
+  const reg = (m) => { S.erros.push(m); $('#errOut').innerHTML = S.erros.slice(-8).map((x) => '<div class="badb">' + esc(x) + '</div>').join(''); };
+  try { w.addEventListener('error', (ev) => reg(ev.message + ' (' + (ev.filename || '').split('/').pop() + ':' + ev.lineno + ')')); const ce = w.console.error; w.console.error = function () { reg(Array.from(arguments).map(String).join(' ')); return ce.apply(this, arguments); }; } catch (e) { /* sem acesso */ }
+  d.addEventListener('click', (ev) => {
+    const el = ev.target; if (!el || !el.closest) return;
+    if (S.insp) { ev.preventDefault(); ev.stopPropagation(); inspecionar(el); return; }
+    const a = el.closest('[data-act]'); if (a) { const k = a.getAttribute('data-act'); S.uso[k] = (S.uso[k] || 0) + 1; lsSet('dep.uso', S.uso); }
+  }, true);
+  d.addEventListener('mouseover', (ev) => { if (!S.insp) return; const el = ev.target; if (el.style) { el.__o = el.style.outline; el.style.outline = '2px solid #e8590c'; } }, true);
+  d.addEventListener('mouseout', (ev) => { if (!S.insp) return; const el = ev.target; if (el.style) el.style.outline = el.__o || ''; }, true);
+  lerEstado(); renderTudo();
+}
+function inspecionar(el) {
+  const act = el.closest('[data-act]'); const funcs = resolverSel(el, true);
+  const cls = (el.className && el.className.toString) ? el.className.toString().trim().split(/\s+/).slice(0, 6).join(' ') : '';
+  $('#inspOut').innerHTML = '<div><b>&lt;' + esc(el.tagName.toLowerCase()) + '&gt;</b> <span class="mut">' + esc(cls) + '</span></div>' +
+    '<div>Ação (data-act): <b>' + esc(act ? act.getAttribute('data-act') : '— nenhuma —') + '</b></div>' +
+    '<div>Texto: <i>' + esc((el.textContent || '').trim().slice(0, 80)) + '</i></div>' +
+    '<div style="margin-top:6px">Pertence a:</div>' + (funcs.length ? funcs.map((x) => '<div><button class="link" data-go="' + x.id + '">' + x.id + ' ' + esc(x.nome) + '</button> <span class="chip i' + x.imp + '">' + x.imp + '</span> <span class="v-' + x.v + '">' + C.VEREDITOS[x.v] + '</span></div>').join('') : '<div class="mut">nenhuma função do catálogo reconhece este elemento (talvez falte no catálogo)</div>');
+}
+function varrer() {
+  const w = frWin(); let d; try { d = w.document; } catch (e) { $('#scanOut').textContent = 'Não consegui ler o app (precisa estar no mesmo endereço).'; return; }
+  const ach = [], aus = [];
+  for (const x of LISTA) {
+    if (!x.sel) continue; let n = 0;
+    for (const s of x.sel) { try { n += d.querySelectorAll(s).length; } catch (e) { /* seletor inválido */ } }
+    (n ? ach : aus).push([x, n]);
+  }
+  $('#scanOut').innerHTML = '<p><b class="okb">' + ach.length + ' presentes</b> · <span class="mut">' + aus.length + ' fora desta tela</span></p>' +
+    ach.map((a) => '<div class="sm"><button class="link" data-go="' + a[0].id + '">' + a[0].id + '</button> ' + esc(a[0].nome) + ' ×' + a[1] + '</div>').join('') +
+    '<details><summary class="sm mut">Não encontradas nesta tela (' + aus.length + ')</summary>' + aus.map((a) => '<div class="sm mut">' + a[0].id + ' ' + esc(a[0].nome) + '</div>').join('') + '</details>';
+}
+function mostrar(k) {
+  const x = C.porK[k]; if (!x || !x.sel) return;
+  activate('vivo');
+  const d = frWin().document; let n = 0;
+  $$('[data-dep-hl]', d).forEach((e) => { e.style.outline = e.__o2 || ''; e.removeAttribute('data-dep-hl'); });
+  x.sel.forEach((s) => { try { d.querySelectorAll(s).forEach((e) => { e.__o2 = e.style.outline; e.style.outline = '3px solid #e8590c'; e.setAttribute('data-dep-hl', '1'); n++; }); } catch (e) { /* inválido */ } });
+  const p = d.querySelector('[data-dep-hl]'); if (p && p.scrollIntoView) p.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  toast(n ? n + ' elemento(s) marcado(s) em laranja' : 'Não está nesta tela: abra a guia certa no app e repita');
+}
+
+/* ---------- Saúde ---------- */
+function renderSaude() {
+  const c = ctx(), pr = sondas(); const L = [];
+  const ok = (b, t, d) => L.push([b ? 'ok' : 'warn', t, d]);
+  ok(S.appVersion === S.swVersion && S.appVersion !== '?', 'Versão do app = versão do service worker', 'app ' + S.appVersion + ' · sw ' + S.swVersion + '. Se forem diferentes, o celular pode ficar com a versão velha.');
+  const pct = c.nuvemChars / 950000 * 100;
+  L.push([pct > 90 ? 'bad' : pct > 70 ? 'warn' : 'ok', 'Espaço do documento na nuvem', fmt(c.nuvemChars) + ' de 950.000 (' + pct.toFixed(0) + '%). Acima de 100% a sincronização para.']);
+  ok(S.erros.length === 0, 'Erros no console do app (nesta sessão)', S.erros.length ? S.erros.slice(0, 3).join(' | ') : 'nenhum');
+  const ativos = c.P.filter((p) => !['Desisti', 'Perdeu', 'Desclassificado', 'Concluído'].includes(p.status));
+  const semKm = ativos.filter((p) => !(Number(p.km) > 0) && !p.entregaDiferente);
+  ok(!semKm.length, 'Pregões ativos com km', semKm.length ? 'sem km: ' + semKm.map((p) => p.numero + ' ' + (p.orgao || '')).slice(0, 5).join('; ') : 'todos têm km');
+  const idsP = new Set(c.allP.map((p) => p.id)); const orf = c.I.filter((i) => !idsP.has(i.pregaoId));
+  ok(!orf.length, 'Itens sem pregão (órfãos)', orf.length + ' item(ns)');
+  const semTeto = c.I.filter((i) => !i.semLance && !(Number(i.teto) > 0)); ok(!semTeto.length, 'Itens da disputa sem teto', semTeto.length + ' item(ns)');
+  const semCusto = c.I.filter((i) => !i.semLance && !(Number(i.custo) > 0) && ativos.some((p) => p.id === i.pregaoId)); ok(!semCusto.length, 'Itens ativos sem custo', semCusto.length + ' item(ns)');
+  const ids = c.allI.map((i) => i.id), dup = ids.length - new Set(ids).size; ok(!dup, 'IDs de item repetidos', dup + ' repetido(s)');
+  const lap = c.allP.length - c.P.length + c.allI.length - c.I.length; L.push([lap > 200 ? 'warn' : 'ok', 'Registros excluídos (lápides)', lap + ' guardados e enviados à nuvem para sempre']);
+  const cfg = c.cfg || {}; ok(!!(cfg.empresa && cfg.empresa.cnpj), 'Dados da empresa preenchidos', cfg.empresa && cfg.empresa.cnpj ? 'CNPJ presente' : 'CNPJ vazio (só é problema se for gerar proposta identificada)');
+  let h = bloco('Verificações', '<table>' + L.map((r) => '<tr><td class="' + r[0] + 'b" style="width:60px">' + (r[0] === 'ok' ? '✔' : r[0] === 'warn' ? '⚠' : '✖') + '</td><td><b>' + esc(r[1]) + '</b><div class="sm mut">' + esc(r[2]) + '</div></td></tr>').join('') + '</table>');
+  // espaço por tipo
+  const sz = (o) => { try { return JSON.stringify(o).length; } catch (e) { return 0; } };
+  const pDes = new Set(c.allP.filter((p) => ['Desisti'].includes(p.status) && !p.deleted).map((p) => p.id));
+  const itDes = c.allI.filter((i) => !i.deleted && pDes.has(i.pregaoId)), itSem = c.allI.filter((i) => !i.deleted && i.semLance), itDel = c.allI.filter((i) => i.deleted), pDel = c.allP.filter((p) => p.deleted);
+  const cmp = (f) => c.allI.reduce((a, i) => a + (i[f] ? sz(i[f]) : 0), 0);
+  const linhas = [['Itens de pregões “Desisti”', sz(itDes), 'arquivar fora da nuvem'], ['Itens “fora da disputa” (semLance)', sz(itSem), 'encurtar texto ou arquivar'], ['Texto “Exigido no edital”', cmp('descEdital'), 'maior campo de texto'], ['Opções de compra (alternativas)', cmp('alternativas'), ''], ['Campos antigos onde/ondeLink', c.allI.reduce((a, i) => a + String(i.onde || '').length + String(i.ondeLink || '').length, 0), 'remover (legado)'], ['Itens excluídos (lápides)', sz(itDel) + sz(pDel), 'limpar antigas'], ['Todos os pregões', sz(c.allP), ''], ['Todos os itens', sz(c.allI), '']];
+  h += bloco('O que ocupa o espaço (caracteres)', '<table><tr><th>Grupo</th><th>Tamanho</th><th>% do limite</th><th>Ação sugerida</th></tr>' + linhas.map((l) => '<tr><td>' + l[0] + '</td><td>' + fmt(l[1]) + '</td><td style="min-width:140px"><div class="bar"><i style="width:' + Math.min(100, l[1] / 9500) + '%"></i></div>' + (l[1] / 9500).toFixed(1) + '%</td><td class="sm">' + l[2] + '</td></tr>').join('') + '</table><p class="sm mut">Os grupos se sobrepõem (um item “Desisti” também conta em “Todos os itens”).</p>');
+  h += bloco('Pregões por status', '<div>' + Object.entries(c.P.reduce((a, p) => (a[p.status] = (a[p.status] || 0) + 1, a), {})).map((e) => '<span class="chip">' + esc(e[0]) + ' <b>' + e[1] + '</b></span>').join('') + '</div>');
+  $('#t-saude').innerHTML = h;
+}
+
+/* ---------- Código ---------- */
+function renderCod() {
+  const a = analisar(); if (!a) { $('#t-cod').innerHTML = bloco('Código', '<p class="mut">Não consegui ler o index.html.</p>'); return; }
+  let h = '<div class="grid">' + [['Linhas', fmt(a.linhas)], ['Tamanho', (a.bytes / 1024).toFixed(0) + ' KB'], ['CSS', (a.css / 1024).toFixed(0) + ' KB'], ['Funções', a.nFunc], ['Ações (data-act)', a.nProd]].map((k) => '<div class="card kpi"><b>' + k[1] + '</b><span>' + k[0] + '</span></div>').join('') + '</div>';
+  h += bloco('Funções que ninguém chama (' + a.mortas.length + ')', '<p class="sm mut">Nome aparece uma única vez no arquivo (só na declaração). Código morto: pode ser apagado com segurança, depois de rodar tests/protegidas.py.</p>' + a.mortas.map((n) => '<span class="chip">' + esc(n) + '</span>').join(''));
+  h += bloco('Ações sem botão (' + a.semBotao.length + ')', '<p class="sm mut">Existe tratamento no onClick, mas nenhum botão gera essa ação (provável: sobra de tela antiga; botões criados em texto dinâmico podem aparecer aqui por engano).</p>' + a.semBotao.map((n) => '<span class="chip">' + esc(n) + '</span>').join(''));
+  h += bloco('Estilos (CSS) sem uso aparente (' + a.semUso.length + ')', '<p class="sm mut">Classes do CSS cujo nome não aparece no resto do arquivo. Nomes montados por código (al-*, st-*, sel-*…) podem estar em uso: trate como “provável”. Agrupado pelo prefixo.</p>' +
+    Object.entries(a.grupos).sort((x, y) => y[1].length - x[1].length).slice(0, 40).map((e) => '<div class="sm"><b>' + esc(e[0]) + '-</b> ' + e[1].length + ': <span class="mut">' + esc(e[1].slice(0, 12).join(', ')) + (e[1].length > 12 ? '…' : '') + '</span></div>').join(''));
+  h += bloco('Blocos do arquivo', '<table><tr><th>Bloco</th><th>Tamanho</th></tr>' + a.scripts.map((n, i) => '<tr><td>Script ' + (i + 1) + '</td><td>' + (n / 1024).toFixed(0) + ' KB</td></tr>').join('') + '<tr><td>CSS</td><td>' + (a.css / 1024).toFixed(0) + ' KB</td></tr></table>');
+  $('#t-cod').innerHTML = h;
+}
+
+/* ---------- Uso ---------- */
+function renderUso() {
+  const pr = sondas();
+  const comProbe = LISTA.filter((x) => x.probe && pr[x.probe]).map((x) => ({ x, p: pr[x.probe] })).filter((a) => a.x.probe !== 'espaco' && a.x.probe !== 'fonteValor');
+  let h = bloco('Uso nos seus dados', '<p class="sm mut">Quanto cada função aparece nos pregões e itens que você realmente tem. Função com 0 de muitos é candidata a sair; 100% é essencial.</p><table><tr><th>#</th><th>Função</th><th>Usos</th><th></th></tr>' + comProbe.sort((a, b) => (a.p.de ? a.p.n / a.p.de : 0) - (b.p.de ? b.p.n / b.p.de : 0)).map((a) => '<tr><td>' + a.x.id + '</td><td><button class="link" data-go="' + a.x.id + '">' + esc(a.x.nome) + '</button><div class="sm mut">' + esc(a.p.rot) + '</div></td><td><b>' + fmt(a.p.n) + '</b> / ' + fmt(a.p.de) + '</td><td style="min-width:120px"><div class="bar"><i style="width:' + (a.p.de ? Math.min(100, a.p.n / a.p.de * 100) : 0) + '%"></i></div></td></tr>').join('') + '</table>');
+  const u = Object.entries(S.uso).sort((a, b) => b[1] - a[1]);
+  h += bloco('Cliques que você deu (contados aqui)', u.length ? '<p class="sm mut">Contagem de ações (data-act) clicadas dentro do app aberto na aba “App ao vivo”, neste navegador. Use o app normalmente por alguns dias e volte aqui.</p>' + u.map((e) => '<span class="chip">' + esc(e[0]) + ' <b>' + e[1] + '</b></span>').join('') + '<p><button class="b sec" id="bZerar">Zerar contagem</button></p>' : '<p class="sm mut">Ainda sem cliques. Abra “App ao vivo” e use o app; cada botão clicado é contado.</p>');
+  $('#t-uso').innerHTML = h;
+}
+
+/* ---------- Exportar ---------- */
+function relatorioMd() {
+  const pr = sondas(); const L = ['# Relatório de funcionalidades — Meus Pregões', '', 'App v' + S.appVersion + ' · gerado em ' + new Date().toLocaleString('pt-BR'), '', '> Importância: 5 essencial · 4 importante · 3 útil · 2 pouco usada · 1 redundante/morta.', ''];
+  let ult = 0;
+  for (const x of LISTA) {
+    if (x.imp !== ult) { ult = x.imp; L.push('## ' + x.imp + ' · ' + C.NIVEIS[x.imp], ''); }
+    const d = S.dec[x.k] || {}, p = x.probe && pr[x.probe];
+    L.push('### ' + x.id + ' — ' + x.nome + (x.prot ? ' 🔒' : ''), '', '*' + x.area + ' · veredito: ' + C.VEREDITOS[x.v] + '*', '', x.faz, '');
+    if (p && x.probe !== 'espaco') L.push('- Nos seus dados: ' + fmt(p.n) + ' de ' + fmt(p.de) + ' ' + p.rot);
+    if (x.redIds.length) L.push('- Repete / ir para: ' + x.red.map((k) => C.porK[k].id + ' ' + C.porK[k].nome).join('; '));
+    if (x.para) L.push('- Sugestão: ' + x.para);
+    if (x.ev) L.push('- Evidência: ' + x.ev);
+    L.push('- **Minha decisão:** ' + (d.d || '(a decidir)') + (d.n ? ' — ' + d.n : ''), '');
+  }
+  return L.join('\n');
+}
+function baixar(nome, txt, tipo) { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([txt], { type: tipo })); a.download = nome; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500); }
+
+/* ---------- navegação ---------- */
+function activate(t) {
+  $$('#nav button').forEach((b) => b.classList.toggle('on', b.dataset.t === t));
+  $$('section.tab').forEach((s) => s.classList.toggle('on', s.id === 't-' + t));
+  if (t === 'saude') renderSaude(); if (t === 'cod') renderCod(); if (t === 'uso') renderUso(); if (t === 'resumo') renderResumo();
+  window.scrollTo({ top: 0 });
+}
+function irPara(id) {
+  activate('func'); $('#q').value = ''; $('#fImp').value = ''; $('#fVer').value = ''; $('#fAr').value = ''; $('#fDec').value = ''; renderLista();
+  const e = document.getElementById(id); if (e) { e.scrollIntoView({ block: 'start', behavior: 'smooth' }); e.style.boxShadow = '0 0 0 3px #e8590c'; setTimeout(() => e.style.boxShadow = '', 1800); }
+}
+function renderTudo() { renderResumo(); renderLista(); const on = ($('section.tab.on') || {}).id; if (on === 't-saude') renderSaude(); if (on === 't-cod') renderCod(); if (on === 't-uso') renderUso(); }
+document.addEventListener('click', (e) => {
+  const t = e.target.closest('button,label'); if (!t) return;
+  if (t.dataset.t) activate(t.dataset.t);
+  else if (t.dataset.go) irPara(t.dataset.go);
+  else if (t.dataset.show) mostrar(t.dataset.show);
+  else if (t.dataset.w) aplicarLargura(t.dataset.w);
+  else if (t.dataset.ex === 'md') baixar('relatorio-funcionalidades.md', relatorioMd(), 'text/markdown');
+  else if (t.dataset.ex === 'json') baixar('decisoes-depurador.json', JSON.stringify(S.dec, null, 2), 'application/json');
+  else if (t.dataset.ex === 'print') { activate('resumo'); setTimeout(() => { $$('section.tab').forEach((s) => s.classList.add('on')); renderLista(); window.print(); setTimeout(() => activate('resumo'), 300); }, 50); }
+  else if (t.id === 'bScan') varrer();
+  else if (t.id === 'bInsp') { S.insp = !S.insp; t.textContent = 'Inspetor: ' + (S.insp ? 'LIGADO' : 'desligado'); t.classList.toggle('sec', !S.insp); }
+  else if (t.id === 'bReload') { $('#fr').src = $('#fr').src; }
+  else if (t.id === 'bZerar') { S.uso = {}; lsSet('dep.uso', S.uso); renderUso(); }
+});
+
+/* ---------- partida ---------- */
+(async function () {
+  setupFiltros(); await lerCodigo(); lerEstado(); renderTudo();
+  $('#fr').addEventListener('load', () => setTimeout(ligarFrame, 600));
+  if ('serviceWorker' in navigator) { try { navigator.serviceWorker.register('sw.js'); } catch (e) { /* sem SW */ } }
+})();
+</script>
+</body>
+</html>
