@@ -46,3 +46,4 @@ Sonda de uso por clique mais longa (guardar por dia), botão "gerar plano de mud
 - Excluir pregão/item agora deixa só uma lápide mínima (`id`, `pregaoId`, `deleted`, `createdAt`, `updatedAt`); antes o registro inteiro ficava no documento da nuvem e nada era liberado.
 - Botão novo na Config, "Apagar pregões Desisti" (decisão do João): apaga de vez os pregões Desisti e seus itens e encolhe as lápides antigas. Não desfaz; exportar backup antes.
 - Feito: passo 1 e parte do passo 2 do plano de espaço. Falta decidir: remover `onde`/`ondeLink`/`usar` (legado de compra).
+- Próxima rodada (decisão do João, 31/10/2026): apagar também os itens de desistência (`semLance: true`) dos pregões com proposta já enviada cuja sessão já passou, porque não dá mais para mudar de ideia. Mesmo molde do botão "Apagar pregões Desisti" (confirmação com contagem, lápide mínima). Não mexer nos pregões cuja sessão ainda não passou nem nos itens ganhos.
