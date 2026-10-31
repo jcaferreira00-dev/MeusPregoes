@@ -42,6 +42,7 @@ sempre, acrescente aqui (seção certa) no mesmo commit da tarefa.
 - Botão de compra (cartão do item, catálogo e formulário): SEMPRE com o nome do site/loja (sem nome, o domínio do link), também no celular. As opções marcadas para usar vêm primeiro, com borda verde.
 - Opções de compra aparecem na prévia do item comparando o total (custo × qtd + frete) e marcando a mais barata; o botão "Usar" marca/desmarca.
 - Proposta: `marca`, `modelo` (no item) e o descritivo do item ofertado (= `catalogoDesc`, o texto do catálogo na guia Proposta, o mesmo do catálogo) são TODOS digitados pelo João: nunca preencher na análise nem no JSON (deixar vazios). No PDF/Word o texto sai sempre em linha corrida (linhas empilhadas viram parágrafo), e a primeira letra depois de "TÍTULO EM CAIXA ALTA:" fica maiúscula; o campo tem correção ortográfica do navegador. O PDF mostra "EXIGIDO NO EDITAL" (texto do edital) e, logo abaixo, "DESCRITIVO DO ITEM OFERTADO" seguido, depois de uma linha tracejada, da marca/modelo. A proposta NÃO é gerada enquanto algum item tiver marca, modelo ou descritivo ofertado em branco (decisão de 30/10/2026: modelo passou a ser obrigatório), nem quando a marca/modelo do item for diferente do que está escrito no descritivo. Se o descritivo tiver "MARCA:" e/ou "MODELO:", o app preenche sozinho os campos marca e modelo do item com esse texto (no formulário do item e no catálogo da guia Proposta), para nunca sair marca diferente em um e em outro. Botões de gerar (proposta, só catálogo, Word) ficam juntos no fim da guia Proposta. As imagens e o descritivo (com os títulos em caixa alta) podem ser incluídos tanto na janela de edição do item quanto no catálogo da guia Proposta: é o mesmo dado (`catalogoDesc` + fotos), as duas opções convivem.
+- Tipo de compra (decisão de 31/10/2026): campo `tipoCompra` do pregão = "SRP" (Registro de preços: gera ata, pedidos conforme a demanda) ou "Aquisição" (compra direta). Aparece como selo ao lado do status: no cartão do quadro "SRP" / "Compra" / "?" (não informado), no cabeçalho do pregão "Reg. preços" / "Aquisição", e há um seletor "Tipo de compra" ao lado do Status no pregão e no cadastro. Sem o campo, o app tenta reconhecer "registro de preços"/"SRP" nas observações. NÃO usar observações para isso.
 - Status do pregão: Falta dados, Analisando, Proposta enviada, Julgamento (antigo "Em disputa", que o app converte sozinho; os editais ficam dias avaliando a proposta), Aguardando empenho (ata assinada, esperando o empenho), Faturado, Concluído, Perdeu, Desclassificado, Desisti. Julgamento e Aguardando empenho ficam no topo das listas, com cores próprias (âmbar e roxo). Nos JSON usar "Julgamento", nunca "Em disputa".
 - Colocação (`colocacao`, 1º, 2º…): digitável em qualquer item não ganho depois da sessão (perdido, pregão perdido/encerrado ou sem item ganho), no cartão do item e na janela de edição. No Dashboard, o botão "Colocações" lista esses itens do mais perto de ganhar para o mais longe (filtro "Até o 3º"), com valor do vencedor e diferença. Na guia Itens o bloco mostra o selo da colocação.
 - Celular (iPhone 13) = só o básico; PC = completo. Não criar guias novas no celular.
@@ -65,7 +66,7 @@ O João baixa os documentos da plataforma (BLL, Compras.gov etc.), que vêm em v
    - balanço / DASN-SIMEI / demonstrações contábeis (ex.: Ipiranga 78 pede DASN dos 2 últimos anos);
    - prazo de entrega (ex.: Castro 157 = 48 h úteis);
    - locais de entrega (um endereço ou vários);
-   - tipo de julgamento (item ou lote/grupo), registro de preços e plataforma real (o PNCP às vezes erra: Castro 157 e 163 apareciam como IPM e são BLL).
+   - tipo de julgamento (item ou lote/grupo), tipo de compra (registro de preços ou aquisição → `tipoCompra`) e plataforma real (o PNCP às vezes erra: Castro 157 e 163 apareciam como IPM e são BLL).
 3. **Mostrar a conferência ao João** (o que veio, o que falta, os pontos acima) e só então cotar. Atestado ou balanço exigido = Desisti sem cotar (avisar; dá para pedir esclarecimento quando couber).
 
 - `descEdital` ("Exigido no edital") é CÓPIA FIEL do edital (decisão de 30/10/2026): copiar e colar o texto do item exatamente como está no edital/TR, completo, sem resumir nem limpar (só tirar quebras de página e cabeçalhos de tabela que entraram no meio). O João confere tudo ao revisar as cotações.
@@ -145,7 +146,7 @@ Formato de backup do app (Config › Importar › Mesclar). IDs únicos e novos;
     "id": "pz_imbau_91_2026", "numero": "91/2026", "orgao": "Prefeitura Municipal de Imbaú",
     "plataforma": "BLL", "cidadeUf": "Imbaú/PR",
     "prazoPropostas": "2026-11-03T13:00", "sessao": "2026-11-03T13:30",
-    "status": "Analisando", "prazoEntregaDias": 10, "pagamentoDias": 30,
+    "status": "Analisando", "tipoCompra": "SRP", "prazoEntregaDias": 10, "pagamentoDias": 30,
     "exigencias": "", "obs": "", "link": "", "linkProposta": "", "linkLicitacao": "",
     "modeloProprio": false, "linkModelo": "", "entregaParcelada": false, "entregaParceladaObs": "",
     "regrasEdital": {
@@ -170,6 +171,7 @@ Formato de backup do app (Config › Importar › Mesclar). IDs únicos e novos;
 }
 ```
 
+- `tipoCompra`: SEMPRE preencher, "SRP" ou "Aquisição" (na busca, pelo campo `srp` do PNCP; na análise, confirmar no edital: "Registro de preços"/"Ata de registro" = SRP; "aquisição" com contrato/empenho único = Aquisição).
 - Compra: só `alternativas` com `usar` (modelo novo). `semLance` sempre explícito (`true`/`false`), senão a mesclagem mantém o valor antigo do app.
 - Atualizar um pregão que já está no app: partir do backup mais recente, reaproveitar os ids, mandar `updatedAt` novo e NÃO mandar `marca`, `modelo`, `catalogoDesc`, `lanceFinal` nem fotos (o que o JSON não traz continua como está no app).
 - `regrasEdital.semIdentificacao`: `true` = edital proíbe identificar na inicial; `false` = exige; omitir se o
@@ -254,7 +256,7 @@ filtro, raio, ramos ou o que já foi analisado. Se precisar mudar uma regra, mud
 4. Entregar só a LISTA de oportunidades (tabela curta, mais perto primeiro): cidade e distância aprox.,
    órgão, nº do pregão, fim das propostas, objeto resumido, por que vale, link BLL.
    Depois, uma linha com os principais descartados.
-5. Entregar UM JSON SÓ com todos os pregões novos da busca (cadastro básico, status "Falta dados",
+5. Entregar UM JSON SÓ com todos os pregões novos da busca (cadastro básico, status "Falta dados", `tipoCompra` pelo campo `srp` do PNCP,
    link do PNCP em `link`/`linkLicitacao`, objeto e triagem em `obs`, id fixo que a análise depois
    reaproveita) — o João importa com "Mesclar". Na mesma lista, marcar `deleted: true` nos pregões do app
    que deixaram de valer (prazo vencido sem proposta, fora do raio), nunca nos que têm proposta enviada,

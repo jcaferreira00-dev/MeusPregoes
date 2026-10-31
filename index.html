@@ -821,6 +821,17 @@ input[type=color].input { padding: 4px; height: 46px; }
 .pgc-foot > * { max-width: 100%; }
 .pgc-foot b, .pgc-foot .tiny { line-height: 1.2; min-height: 1.2em; }
 .pgc-foot b { font-variant-numeric: tabular-nums; font-size: 14px; }
+.tipo-chip { display: inline-flex; align-items: center; font-size: 10.5px; font-weight: 800; letter-spacing: .02em; padding: 2px 7px; border-radius: 6px; white-space: nowrap; line-height: 1.4; border: 1px solid transparent; }
+.tipo-chip.srp { background: color-mix(in srgb, #6b46c1 16%, var(--card)); color: color-mix(in srgb, #6b46c1 80%, var(--ink)); border-color: color-mix(in srgb, #6b46c1 35%, transparent); }
+.tipo-chip.aq { background: color-mix(in srgb, #0f766e 16%, var(--card)); color: color-mix(in srgb, #0f766e 80%, var(--ink)); border-color: color-mix(in srgb, #0f766e 35%, transparent); }
+.tipo-chip.nd { color: var(--muted); border: 1px dashed color-mix(in srgb, var(--muted) 45%, transparent); font-weight: 600; }
+.tipo-chip.hero { font-size: 11.5px; padding: 2px 9px; }
+.tipo-chip.hero.nd { color: inherit; opacity: .8; border-color: currentColor; }
+.tipo-chip.mini { font-size: 9.5px; padding: 1px 5px; margin-left: 4px; flex: none; }
+.p-hd-r { display: inline-flex; align-items: center; gap: 5px; flex: none; }
+.pgc-fl { display: inline-flex; align-items: center; gap: 5px; min-width: 0; flex-wrap: wrap; justify-content: center; }
+.card.st-tipo { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 520px) { .card.st-tipo { grid-template-columns: 1fr; } }
 .pgc-st { font-size: 11px; font-weight: 800; padding: 3px 9px; border-radius: 99px; overflow: hidden; text-overflow: ellipsis; background: color-mix(in srgb, var(--sc) 22%, var(--card)); color: color-mix(in srgb, var(--sc) 70%, var(--ink)); white-space: nowrap; }
 .pgc-x { position: absolute; top: 6px; right: 6px; width: 32px; height: 32px; border-radius: 50%; border: 0; background: color-mix(in srgb, var(--card) 70%, transparent); color: var(--muted); display: grid; place-items: center; cursor: pointer; opacity: .8; }
 .pgc-x:hover, .pgc-x:focus-visible { opacity: 1; color: var(--red); }
@@ -882,6 +893,7 @@ html body .pgc .pgc-plat.vazio { border: 0; background: none; padding: 0; font-s
 .pgc h4 { font-weight: 750; letter-spacing: -.005em; }
 .pgc-cd { background: color-mix(in srgb, var(--ink) 4%, transparent); border: 1px solid var(--line); border-radius: 8px; }
 .pgc-al { border-radius: 6px; font-weight: 700; }
+html body .pgc-fl { justify-content: flex-start; }
 html body .pgc-foot { flex-direction: row; justify-content: space-between; align-items: center; text-align: left; gap: 8px; padding-top: 9px; border-top: 1px solid color-mix(in srgb, var(--sc) 25%, var(--line)); }
 html body .pgc-foot b { font-size: 15px; font-weight: 800; letter-spacing: -.01em; white-space: nowrap; }
 html body .pgc-st { border-radius: 6px; font-size: 10.5px; letter-spacing: .02em; flex: 0 1 auto; min-width: 0; }
@@ -1296,7 +1308,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.105.0';
+  const APP_VERSION = '1.106.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Julgamento', 'Aguardando empenho', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -3614,9 +3626,23 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     const hit = l && PLAT_HOST.find(([re]) => re.test(l));
     return hit ? hit[1] : '';
   }
+  // tipo de compra: Registro de preços (SRP, ata — compra conforme a demanda) ou Aquisição (compra direta, tudo de uma vez)
+  const TIPO_COMPRA = [{ v: '', l: 'Não informado' }, { v: 'SRP', l: 'Registro de preços (ata)' }, { v: 'Aquisição', l: 'Aquisição (compra direta)' }];
+  function tipoCompraDe(p) {
+    if (p.tipoCompra === 'SRP' || p.tipoCompra === 'Aquisição') return p.tipoCompra;
+    const t = [p.obs, p.exigencias, p.entregaParceladaObs, p.numero, p.orgao].join(' ');
+    return /registro\s+de\s+pre[çc]os?|\bSRP\b|ata\s+de\s+registro/i.test(t) ? 'SRP' : '';
+  }
+  function tipoChip(p, cls) {
+    const t = tipoCompraDe(p);
+    const c = cls === 'curto';   // cartão do quadro: rótulo curto para não cortar o nº do pregão
+    if (t === 'SRP') return `<span class="tipo-chip srp ${cls || ''}" title="Registro de preços (SRP): gera ata; o órgão compra conforme a demanda, em pedidos ao longo da vigência">${c ? 'SRP' : 'Reg. preços'}</span>`;
+    if (t === 'Aquisição') return `<span class="tipo-chip aq ${cls || ''}" title="Aquisição: compra direta, normalmente um pedido só com tudo">${c ? 'Compra' : 'Aquisição'}</span>`;
+    return `<span class="tipo-chip nd ${cls || ''}" title="Informe no pregão se é Registro de preços ou Aquisição">${c ? '?' : 'Tipo?'}</span>`;
+  }
   function pregaoValues(p) {
     return {
-      numero: p.numero || '', orgao: p.orgao || '', plataforma: p.plataforma || '', cidadeUf: p.cidadeUf || '', sessao: p.sessao || '', prazoPropostas: p.prazoPropostas || '',
+      numero: p.numero || '', orgao: p.orgao || '', plataforma: p.plataforma || '', tipoCompra: tipoCompraDe(p), cidadeUf: p.cidadeUf || '', sessao: p.sessao || '', prazoPropostas: p.prazoPropostas || '',
       prazoEntregaDias: p.prazoEntregaDias == null ? '' : String(p.prazoEntregaDias), exigencias: p.exigencias || '', status: p.status || 'Falta dados',
       km: p.km ? C.numBR(p.km, 1) : '', viagens: p.viagens == null ? '1' : String(p.viagens), pedagio: p.pedagio ? C.numBR(p.pedagio) : '',
       entregaDiferente: !!p.entregaDiferente, locaisEntrega: p.locaisEntrega || '',
@@ -3710,7 +3736,8 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
         ${field({ label: 'Nº do pregão *', name: 'numero', value: v.numero, ph: 'ex.: 90001/2026', inputmode: 'text', hint: 'Só números e . - / (a proposta já escreve “Pregão nº” antes).' })}
         ${field({ label: 'Status', name: 'status', type: 'select', value: v.status, options: (C.STATUS.includes(v.status) ? C.STATUS : [v.status].concat(C.STATUS)).map((s) => ({ v: s, l: stTxt(s) })), hint: 'Incompleto = ainda preenchendo. Itens ganhos: marque “Venci” no item. Concluído = terminou (sai do painel).' })}
         ${field({ label: 'Órgão / entidade *', name: 'orgao', value: v.orgao, full: true, ph: 'ex.: Universidade de Londrina' })}
-        ${field({ label: 'Plataforma do pregão', name: 'plataforma', value: v.plataforma, full: true, ph: 'ex.: BLL, Compras.gov.br', list: PLATAFORMAS, hint: 'Onde a disputa acontece. Aparece no cartão do Painel. Se ficar vazio, o app tenta reconhecer pelo site da proposta.' })}
+        ${field({ label: 'Plataforma do pregão', name: 'plataforma', value: v.plataforma, ph: 'ex.: BLL, Compras.gov.br', list: PLATAFORMAS, hint: 'Onde a disputa acontece. Se ficar vazio, o app tenta reconhecer pelo site da proposta.' })}
+        ${field({ label: 'Tipo de compra', name: 'tipoCompra', type: 'select', value: v.tipoCompra, options: TIPO_COMPRA, hint: 'Registro de preços = ata, pedidos conforme a demanda. Aquisição = compra direta. Aparece como selo no cartão.' })}
         ${field({ label: 'Local do pregão (cidade/UF)', name: 'cidadeUf', value: v.cidadeUf, full: true, ph: 'Londrina/PR', hint: 'Ao preencher, o trajeto de ida e volta a partir do endereço da sua empresa é calculado sozinho.' })}
         ${field({ label: 'Link do edital', name: 'link', type: 'url', value: v.link, full: true, ph: 'https://…' })}
         ${field({ label: 'Site para enviar a proposta (ex.: BLL)', name: 'linkProposta', type: 'url', value: v.linkProposta, full: true, ph: 'https://…', hint: 'Aparece como botão no cartão da guia Pregões.' })}
@@ -3884,7 +3911,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
         const ent = x.entregaDiferente && form._lerEntregas ? form._lerEntregas() : [];
         if (x.entregaDiferente && !ent.length) { $('[name=locaisEntrega]', form).classList.add('err'); return 'Informe ao menos um local de entrega ou desmarque a opção.'; }
         const data = {
-          numero: x.numero.trim(), orgao: x.orgao.trim(), plataforma: (x.plataforma || '').trim(), cidadeUf: x.cidadeUf.trim(), sessao: x.sessao || '', prazoPropostas: x.prazoPropostas || '',
+          numero: x.numero.trim(), orgao: x.orgao.trim(), plataforma: (x.plataforma || '').trim(), tipoCompra: x.tipoCompra || '', cidadeUf: x.cidadeUf.trim(), sessao: x.sessao || '', prazoPropostas: x.prazoPropostas || '',
           entregaDiferente: !!x.entregaDiferente, kmManual: form.dataset.kmManual === '1',
           prazoEntregaDias: x.prazoEntregaDias ? parseInt(x.prazoEntregaDias, 10) : null, exigencias: x.exigencias.trim(), status: x.status,
           link: x.link.trim(), linkProposta: (x.linkProposta || '').trim(), linkLicitacao: (x.linkLicitacao || '').trim(), obs: x.obs.trim(),
@@ -4416,7 +4443,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
   const descPrimeiro = (a, b) => (descPedidaDe(b.p) ? 1 : 0) - (descPedidaDe(a.p) ? 1 : 0);
   function miniPregao(p, flag) {
     const conc = p.status === 'Concluído', desc = !conc && descPedidaDe(p);
-    return `<article class="mini-p${conc ? ' conc' : ''}${desc ? ' desc' : ''}" data-act="abrir-pregao" data-id="${p.id}" tabindex="0" role="button" aria-label="Abrir pregão ${esc(p.numero)} ${esc(p.orgao)}"${desc ? ' title="Pedi desclassificação: rever"' : ''}>${conc ? `<span class="mp-ok">${icon('check', 'sm')}</span>` : ''}${desc ? `<span class="mp-ok mp-desc">${icon('alert', 'sm')}</span>` : ''}<span class="mp-num">Nº ${esc(p.numero)}</span><span class="mp-org ell">${esc(p.orgao)}</span>${flag ? '<span class="mp-star" title="Tem item que posso ganhar">★</span>' : ''}${desc ? '<span class="mp-rever">Rever</span>' : ''}<span class="mp-st">${esc(stTxt(p.status))}</span></article>`;
+    return `<article class="mini-p${conc ? ' conc' : ''}${desc ? ' desc' : ''}" data-act="abrir-pregao" data-id="${p.id}" tabindex="0" role="button" aria-label="Abrir pregão ${esc(p.numero)} ${esc(p.orgao)}"${desc ? ' title="Pedi desclassificação: rever"' : ''}>${conc ? `<span class="mp-ok">${icon('check', 'sm')}</span>` : ''}${desc ? `<span class="mp-ok mp-desc">${icon('alert', 'sm')}</span>` : ''}<span class="mp-num">Nº ${esc(p.numero)}</span><span class="mp-org ell">${esc(p.orgao)}</span>${flag ? '<span class="mp-star" title="Tem item que posso ganhar">★</span>' : ''}${desc ? '<span class="mp-rever">Rever</span>' : ''}<span class="mp-st">${esc(stTxt(p.status))}</span>${tipoCompraDe(p) ? tipoChip(p, 'mini') : ''}</article>`;
   }
   function painelOculto(p) {
     if (p.ocultoPainel) return 'manual';
@@ -4465,7 +4492,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
         return cd || info ? `<div class="pgc-cd m-hide">${cd ? `<div><small>${rot}</small> <b class="${d === 0 ? 'hoje' : d < 0 && d >= -3 ? 'perto' : d > 0 ? 'passou' : ''}">${cd}</b></div>` : ''}${info ? `<span>${esc(info)}</span>` : ''}</div>` : '';
       })()}
       ${al.length ? `<div class="pgc-alertas">${al.map((a) => `<span class="pgc-al ${a[0]}"><i class="dot"></i>${esc(a[1])}</span>`).join('')}</div>` : ''}
-      <div class="pgc-foot"><span class="pgc-st">${esc(stTxt(p.status))}</span>${pst.nItens ? `<b title="Valor da proposta (igual ao total do PDF); se ganhou só parte dos itens, o valor do que foi ganho">${(() => { const v = (pst.ganho && pst.nGanhos < pst.nItens) ? pst.propostaGanha : pst.proposta; return v > 0 ? C.brl(v) : '—'; })()}</b>` : '<span class="tiny muted">Sem itens</span>'}</div></article>`;
+      <div class="pgc-foot"><span class="pgc-fl"><span class="pgc-st">${esc(stTxt(p.status))}</span>${tipoChip(p)}</span>${pst.nItens ? `<b title="Valor da proposta (igual ao total do PDF); se ganhou só parte dos itens, o valor do que foi ganho">${(() => { const v = (pst.ganho && pst.nGanhos < pst.nItens) ? pst.propostaGanha : pst.proposta; return v > 0 ? C.brl(v) : '—'; })()}</b>` : '<span class="tiny muted">Sem itens</span>'}</div></article>`;
   }
   // Painel = agenda (o que vem pela frente) — os cartões completos ficam na guia Pregões
   const MESES3 = ['JAN', 'FEV', 'MAR', 'ABR', 'MAI', 'JUN', 'JUL', 'AGO', 'SET', 'OUT', 'NOV', 'DEZ'];
@@ -4933,7 +4960,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
       ${selo}
       ${alr ? `<div class="p-alert ${alr.nivel}">${icon(alr.nivel === 'gold' ? 'check' : 'alert', 'sm')}<span>${esc(alr.texto)}</span></div>` : ''}
       ${alr && alr.pergunta ? `<div class="p-ask"><button type="button" class="btn sm" data-act="sessao-continua" data-id="${p.id}">Continua amanhã</button><button type="button" class="btn sm" data-act="sessao-mais" data-id="${p.id}">Mais dias</button><button type="button" class="btn sm ghost" data-act="sessao-fim" data-id="${p.id}">Encerrou</button></div>` : ''}
-      <div class="row between p-hd"><span class="num" style="color:var(--gc)" title="Pregão nº ${esc(p.numero)}">${/^preg/i.test(String(p.numero).trim()) ? esc(p.numero) : 'PREGÃO Nº ' + esc(p.numero)}</span><span class="m-acts">${url(p.link) ? `<a class="ic-btn" href="${esc(url(p.link))}" target="_blank" rel="noopener noreferrer" data-act="link-externo" title="Abrir edital" aria-label="Abrir edital">${icon('pdf', 'sm')}</a>` : '<span class="ic-btn ic-vazio" aria-hidden="true"></span>'}${url(p.linkProposta) ? `<a class="ic-btn" href="${esc(url(p.linkProposta))}" target="_blank" rel="noopener noreferrer" data-act="link-externo" title="Enviar proposta" aria-label="Enviar proposta">${icon('link', 'sm')}</a>` : '<span class="ic-btn ic-vazio" aria-hidden="true"></span>'}</span>${badgeStatus(p.status)}</div>
+      <div class="row between p-hd"><span class="num" style="color:var(--gc)" title="Pregão nº ${esc(p.numero)}">${/^preg/i.test(String(p.numero).trim()) ? esc(p.numero) : 'PREGÃO Nº ' + esc(p.numero)}</span><span class="m-acts">${url(p.link) ? `<a class="ic-btn" href="${esc(url(p.link))}" target="_blank" rel="noopener noreferrer" data-act="link-externo" title="Abrir edital" aria-label="Abrir edital">${icon('pdf', 'sm')}</a>` : '<span class="ic-btn ic-vazio" aria-hidden="true"></span>'}${url(p.linkProposta) ? `<a class="ic-btn" href="${esc(url(p.linkProposta))}" target="_blank" rel="noopener noreferrer" data-act="link-externo" title="Enviar proposta" aria-label="Enviar proposta">${icon('link', 'sm')}</a>` : '<span class="ic-btn ic-vazio" aria-hidden="true"></span>'}</span><span class="p-hd-r">${tipoChip(p, 'curto')}${badgeStatus(p.status)}</span></div>
       <h4>${esc(p.orgao).replace(/^(Prefeitura Municipal de|Prefeitura de|Município de)\s+/i, '<span class="org-pre">$1 </span>')}</h4>
       <div class="small muted row wrap" style="gap:4px 14px;align-items:center">${url(p.linkProposta) ? `<a class="btn sm lk p-prop" href="${esc(url(p.linkProposta))}" target="_blank" rel="noopener noreferrer" data-act="link-externo">${icon('link', 'sm')} Proposta</a>` : ''}${p.cidadeUf ? `<span class="row" style="gap:4px">${icon('pin', 'sm')}${esc(cidadeFmt(p.cidadeUf))}</span>` : ''}${p.sessao && (!pz || String(p.sessao) !== String(p.prazoPropostas || '')) ? `<span class="row" style="gap:4px">${icon('calendar', 'sm')}${esc(C.fmtSessao(p.sessao))}</span>` : ''}<span class="row p-nit" style="gap:4px">${icon('itens', 'sm')}${pst.itens.length ? pst.itens.length + (pst.itens.length === 1 ? ' item' : ' itens') : 'sem itens'}</span><span class="m-meta">${pst.itens.length ? pst.itens.length + (pst.itens.length === 1 ? ' item' : ' itens') : 'sem itens'}</span>${(p.obs || pst.itens.some((i) => String(i.obs || '').trim())) ? `<span class="m-meta m-obs" title="Tem observação">${icon('info', 'sm')}</span>` : ''}</div>
       ${(() => {
@@ -5341,7 +5368,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
       <div class="detail-top"><button class="back" data-act="voltar">${icon('back')} Pregões</button>
         <button type="button" class="icon-btn" data-act="pdf-pregao" data-id="${p.id}" title="Proposta PDF" aria-label="Proposta PDF">${icon('pdf')}</button></div>
       <div class="hero"><div class="hero-info"><span class="num">${/^preg/i.test(String(p.numero).trim()) ? esc(p.numero) : 'PREGÃO Nº ' + esc(p.numero)}</span><h2>${esc(p.orgao)}</h2>
-        <div class="m">${p.cidadeUf ? `<span>${esc(cidadeFmt(p.cidadeUf))}</span>` : ''}${p.sessao ? `<span>Sessão ${esc(C.fmtSessao(p.sessao))}</span>` : ''}</div></div>
+        <div class="m">${tipoChip(p, 'hero')}${p.cidadeUf ? `<span>${esc(cidadeFmt(p.cidadeUf))}</span>` : ''}${p.sessao ? `<span>Sessão ${esc(C.fmtSessao(p.sessao))}</span>` : ''}</div></div>
         ${(() => {   // atalhos do pregão no cabeçalho: edital, site da proposta/lances, licitação e modelo
           const u = (v) => { v = String(v || '').trim(); return v ? (/^https?:\/\//i.test(v) ? v : 'https://' + v) : ''; };
           const bt = (href, ic, txt, tip) => href ? `<a class="hero-lk" href="${esc(href)}" target="_blank" rel="noopener noreferrer" data-act="link-externo" title="${tip}">${icon(ic, 'sm')}<span class="tx">${txt}</span></a>` : '';
@@ -5357,8 +5384,10 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
           ${href ? `<a class="btn block" style="margin-bottom:10px" href="${esc(href)}" target="_blank" rel="noopener noreferrer">${icon('link', 'sm')} Abrir modelo de proposta / documento adicional</a>` : ''}
           ${p.obs ? `<div class="obstxt">${esc(p.obs)}</div>` : ''}</div>`;
       })()}
-      <div class="card"><div class="field" style="margin:0"><label for="stsel">Status do pregão</label>
-        <select class="input" id="stsel" data-status-pregao="${p.id}">${C.STATUS.map((s) => `<option value="${esc(s)}"${s === p.status ? ' selected' : ''}>${esc(stTxt(s))}</option>`).join('')}</select></div></div>
+      <div class="card st-tipo"><div class="field" style="margin:0"><label for="stsel">Status do pregão</label>
+        <select class="input" id="stsel" data-status-pregao="${p.id}">${C.STATUS.map((s) => `<option value="${esc(s)}"${s === p.status ? ' selected' : ''}>${esc(stTxt(s))}</option>`).join('')}</select></div>
+        <div class="field" style="margin:0"><label for="tcsel">Tipo de compra</label>
+        <select class="input" id="tcsel" data-tipo-pregao="${p.id}">${TIPO_COMPRA.map((o) => `<option value="${esc(o.v)}"${o.v === tipoCompraDe(p) ? ' selected' : ''}>${esc(o.l)}</option>`).join('')}</select></div></div>
       ${posCardHtml(pst)}
       ${ganhosCardHtml(pst)}
       <div class="kpis">
@@ -6667,6 +6696,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     if (t.dataset.ui) { UI.pdf[t.dataset.ui] = t.value; return; }
     if (t.dataset.pdf || t.dataset.bloco !== undefined) { commitPdf(t); return; }
     if (t.dataset.cfg) { commitCfg(t); return; }
+    if (t.dataset.tipoPregao) { store.upsertPregao({ id: t.dataset.tipoPregao, tipoCompra: t.value }); toast(t.value ? 'Tipo: ' + (t.value === 'SRP' ? 'Registro de preços' : t.value) : 'Tipo de compra limpo'); render(); return; }
     if (t.dataset.statusPregao) { const idp = t.dataset.statusPregao, antes = (store.get().pregoes.find((x) => x.id === idp) || {}).status; store.upsertPregao({ id: idp, status: t.value }); toast('Status: ' + t.value); perguntarItensGanhos(idp, antes); return; }
     if (t.dataset.coloc) {
       const iid = t.dataset.coloc, v = colocacaoDe(t.value);
