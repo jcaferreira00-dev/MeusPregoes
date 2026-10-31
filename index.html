@@ -1216,7 +1216,22 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
 .dec-cols small { font-size: 10px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); }
 .dec-cols b { font-size: 17px; font-weight: 800; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .dec-cols em { font-style: normal; font-size: 11px; color: var(--muted); }
-.dec-cols .neg { color: var(--red); } .dec-cols em b.sm { font-size: 11.5px; color: var(--ink); }
+.dec-cols .neg { color: var(--red); }
+.dec-big { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 12px; }
+.dec-big > div { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.dec-big small { font-size: 11px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; }
+.dec-big em { font-style: normal; font-size: 11.5px; color: var(--muted); }
+.dec-big > b { font-size: 24px; font-weight: 800; font-variant-numeric: tabular-nums; white-space: nowrap; flex: none; }
+.dec.ok .dec-big { background: var(--green-soft); } .dec.ok .dec-big small, .dec.ok .dec-big > b { color: var(--green); }
+.dec.warn .dec-big { background: var(--amber-soft); } .dec.warn .dec-big small, .dec.warn .dec-big > b { color: var(--amber); }
+.dec.bad .dec-big { background: var(--red-soft); } .dec.bad .dec-big small, .dec.bad .dec-big > b { color: var(--red); }
+.dec .dec-big > b.neg { color: var(--red); }
+.dec-hd + .dec-big { border-top: 1px solid color-mix(in srgb, currentColor 12%, transparent); }
+.dec-big + .dec-cols { border-top: 1px solid var(--line); }
+.dec-cols > .dup { display: none; }
+@media (max-width: 600px) { .dec-big { padding: 8px 10px; } .dec-big > b { font-size: 19px; } .dec-big em { display: none; } }
+@media (max-width: 600px) { .dec-cols .dec-solo em { display: block !important; font-size: 10.5px; } }
+.dec .dec-cols em b.sm { font-size: 12px !important; font-weight: 800; color: var(--ink) !important; display: inline; }
 .dec:not(.com-lance) .dec-min b { font-size: 20px; }
 .dec.com-lance .dec-l b { font-size: 19px; }
 .dec.ok:not(.com-lance) .dec-min b { color: var(--green); } .dec.warn:not(.com-lance) .dec-min b { color: var(--amber); }
@@ -1321,7 +1336,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.109.0';
+  const APP_VERSION = '1.110.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Julgamento', 'Aguardando empenho', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -3730,6 +3745,33 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     return { calcular };
   })();
 
+  // pregão sem km da entrega (só conta enquanto ainda vale cotar/entregar)
+  const PREG_SEM_KM_OK = ['Desisti', 'Perdeu', 'Desclassificado', 'Concluído'];
+  const pregaoSemKm = (p) => !!p && !p.deleted && !PREG_SEM_KM_OK.includes(p.status) && (p.entregaDiferente ? (Array.isArray(p.entregas) && p.entregas.some((e) => !(C.n0(e.km) > 0))) : !(C.n0(p.km) > 0));
+  // km automático: pregão sem km e com cidade → calcula o trajeto (ida e volta) e grava. Roda ao abrir o app e depois de importar/sincronizar.
+  const AutoKm = { rodando: false, falhou: new Set(), t: null };
+  function autoKmAgendar(ms) { clearTimeout(AutoKm.t); AutoKm.t = setTimeout(autoKmRodar, ms == null ? 1500 : ms); }
+  async function autoKmRodar() {
+    if (AutoKm.rodando || !navigator.onLine) return;
+    const cfg = store.get().config;
+    const lista = store.get().pregoes.filter((p) => pregaoSemKm(p) && !p.entregaDiferente && String(p.cidadeUf || '').trim() && !AutoKm.falhou.has(p.id));
+    if (!lista.length) return;
+    AutoKm.rodando = true;
+    const feitos = [];
+    try {
+      for (const p of lista) {
+        try {
+          const r = await Rota.calcular(cfg.empresa, [String(p.cidadeUf).trim()]);
+          const atual = store.get().pregoes.find((x) => x.id === p.id);
+          if (!atual || !pregaoSemKm(atual)) continue;
+          store.upsertPregao({ id: p.id, km: r.km, viagens: C.n0(atual.viagens) > 0 ? atual.viagens : 1, kmAuto: true });
+          feitos.push(cidadeFmt(p.cidadeUf) + ' ' + C.numBR(r.km, 0) + ' km');
+        } catch (e) { AutoKm.falhou.add(p.id); if (/empresa/i.test(String(e && e.message))) { toast(e.message); break; } }
+      }
+    } finally { AutoKm.rodando = false; }
+    if (feitos.length) toast('Km da entrega calculado pela cidade: ' + feitos.join(' · ') + '. Confira no cadastro do pregão.');
+  }
+
   /* ---------- prazo de envio das propostas: cor muda com 2 dias (amarelo) e 1 dia ou menos (vermelho) ---------- */
   function prazoInfo(p) {
     if (!p || !p.prazoPropostas) return null;
@@ -3934,6 +3976,9 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
         const km = C.parseBR(x.km) || 0;
         const ent = x.entregaDiferente && form._lerEntregas ? form._lerEntregas() : [];
         if (x.entregaDiferente && !ent.length) { $('[name=locaisEntrega]', form).classList.add('err'); return 'Informe ao menos um local de entrega ou desmarque a opção.'; }
+        // km da entrega é obrigatório: sem ele o app não conta a viagem nem o "se ganhar só este" (decisão de 31/10/2026)
+        if (!x.entregaDiferente && !(km > 0) && !PREG_SEM_KM_OK.includes(x.status)) { $('[name=km]', form).classList.add('err'); $('[name=km]', form).scrollIntoView({ block: 'center' }); return 'Informe o km da entrega (ida e volta). Toque em “Recalcular trajeto” para o app calcular pela cidade.'; }
+        if (x.entregaDiferente && ent.some((e) => !(C.n0(e.km) > 0)) && !PREG_SEM_KM_OK.includes(x.status)) return 'Informe o km de cada local de entrega.';
         const data = {
           numero: x.numero.trim(), orgao: x.orgao.trim(), plataforma: (x.plataforma || '').trim(), tipoCompra: x.tipoCompra || '', cidadeUf: x.cidadeUf.trim(), sessao: x.sessao || '', prazoPropostas: x.prazoPropostas || '',
           entregaDiferente: !!x.entregaDiferente, kmManual: form.dataset.kmManual === '1',
@@ -4307,7 +4352,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
         { const lf = $('[name=lanceFinal]', form), lv = C.parseBR(x.lanceFinal), b = abaixoSolo(c, lv);
           if (lf) { lf.classList.toggle('solo-baixo', b); lf.title = b ? 'Abaixo do mínimo se ganhar só este item: ' + C.brl(soloMin(c)) : ''; } }
         const el = $('#prev', form);
-        const semKm = ph && !(C.n0(ph.km) > 0) && !ph.entregaDiferente && !String(x.localEntrega || '').trim();
+        const semKm = pregaoSemKm(ph) && !String(x.localEntrega || '').trim();
         const avisoKm = semKm ? `<div class="alert warn" style="margin-bottom:8px">${icon('alert', 'sm')}<div class="grow"><b>Pregão sem km da entrega:</b> o app não está contando a viagem (combustível e desgaste) nem o "se ganhar só este". Informe o km (ida e volta) e as viagens no cadastro do pregão.</div></div>` : '';
         const cm = C.parseBR(x.custo);
         const qx = C.parseBR(x.qtd) || 0, fm = C.parseBR(x.frete) || 0;
@@ -4324,7 +4369,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
         const bad = c.sitTipo === 'bad';
         el.innerHTML = `${avisoKm}${decisaoHtml(c)}
           <div class="kv"><span>Custo unit. final <b>${C.brl(c.custoUnit)}</b></span><span>Entrega rateada <b>${C.brl(c.entrega)}</b></span>
-          ${(() => { const d = decisao(c); return d.min != null && c.teto ? `<span>Posso baixar do teto até o mínimo <b>${C.brl(c.teto - d.min)} (${C.pct(1 - d.min / c.teto, 0)})</b></span>` : ''; })()}
+          ${(() => { const d = decisao(c); return (d.min != null && c.teto ? `<span>Posso baixar do teto até o mínimo <b>${C.brl(c.teto - d.min)} (${C.pct(1 - d.min / c.teto, 0)})</b></span>` : '') + `<span>Lucro ${c.lance !== null ? 'no lance' : 'pelo teto'} <b style="color:${c.lucro != null && c.lucro < 0 ? 'var(--red)' : 'var(--ink)'}">${C.brl(c.lucro)}</b></span>`; })()}
           ${c.impostoTotal > 0 ? `<span>Impostos <b>${C.brl(c.impostoTotal)}</b></span>` : ''}</div>
           ${c.situacao ? `<div><span class="badge ${c.sitTipo}">${esc(c.situacao)}</span> ${estrelasHtml(c)} <span class="tiny muted">Lucro previsto ${C.brl(c.lucro)}</span></div>` : ''}${dica}`;
       },
@@ -4339,6 +4384,8 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
         if (!(it.qtd > 0)) miss.push('qtd');
         if (it.custo == null || it.custo < 0) miss.push('custo');
         if (miss.length) { miss.forEach((n) => $('[name=' + n + ']', form).classList.add('err')); return 'Preencha pregão, item, quantidade e custo.'; }
+        { const pg = store.get().pregoes.find((q) => q.id === it.pregaoId);
+          if (pg && pregaoSemKm(pg) && !String(it.localEntrega || '').trim() && !it.semLance) return 'O pregão está sem o km da entrega: a viagem e o "se ganhar só este" ficariam errados. Informe o km no cadastro do pregão (o app tenta calcular sozinho pela cidade quando há internet).'; }
         for (const n of ALTS) { if (String(x['alt' + n + 'Link'] || '').trim() && !urlSeg(x['alt' + n + 'Link'])) { $('[name=alt' + n + 'Link]', form).classList.add('err'); const ap = $('#altPop', form); if (ap) ap.hidden = false; return 'Link da opção ' + (n + 2) + ' inválido. Cole o endereço completo, sem espaços.'; } }
         if (it.margem != null && it.margem >= 1) { $('[name=margem]', form).classList.add('err'); return 'A margem precisa ser menor que 100%.'; }
         if (it.lanceFinal != null && form.dataset.okSolo !== String(it.lanceFinal)) {
@@ -4558,6 +4605,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
       if (pz && (pz.nivel === 'bad' || pz.nivel === 'warn')) L.push([pz.nivel, 'Enviar proposta · ' + pz.curto, 'Nº ' + x.p.numero + ' · ' + String(x.p.orgao || '').toLocaleUpperCase('pt-BR'), `data-act="abrir-pregao" data-id="${x.p.id}"`]);
       else if (x.p.status === 'Analisando' && (!pz || pz.nivel !== 'off')) L.push(['info', 'Proposta por enviar' + (pz ? ' · até ' + pz.curto : ''), 'Nº ' + x.p.numero + ' · ' + String(x.p.orgao || '').toLocaleUpperCase('pt-BR'), `data-act="abrir-pregao" data-id="${x.p.id}"`]);
     });
+    [...R.pMap.values()].filter((x) => pregaoSemKm(x.p)).forEach((x) => L.push(['bad', 'Informar km da entrega', 'Nº ' + x.p.numero + ' · ' + String(x.p.orgao || '').toLocaleUpperCase('pt-BR') + ' · sem km a viagem não entra no custo', `data-act="editar-pregao" data-id="${x.p.id}"`]));
     [...R.pMap.values()].forEach((x) => { const rv = x.todosItens.filter(temRevisar); if (rv.length) L.push(['warn', 'Revisar ' + rv.length + (rv.length === 1 ? ' item' : ' itens'), 'Nº ' + x.p.numero + ' · ' + String(x.p.orgao || '').toLocaleUpperCase('pt-BR'), `data-act="abrir-pregao" data-id="${x.p.id}"`]); });
     ps.filter((x) => x.nItens === 0).forEach((x) => L.push(['warn', 'Cadastrar os itens', 'Nº ' + x.p.numero + ' · ' + String(x.p.orgao || '').toLocaleUpperCase('pt-BR'), `data-act="abrir-pregao" data-id="${x.p.id}"`]));
     // sessão passou há 2+ dias e nenhum item tem resultado: lembrar de registrar (senão a previsão conta o pregão inteiro)
@@ -5007,7 +5055,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
       <div class="small muted row wrap" style="gap:4px 14px;align-items:center">${url(p.linkProposta) ? `<a class="btn sm lk p-prop" href="${esc(url(p.linkProposta))}" target="_blank" rel="noopener noreferrer" data-act="link-externo">${icon('link', 'sm')} Proposta</a>` : ''}${p.cidadeUf ? `<span class="row" style="gap:4px">${icon('pin', 'sm')}${esc(cidadeFmt(p.cidadeUf))}</span>` : ''}${p.sessao && (!pz || String(p.sessao) !== String(p.prazoPropostas || '')) ? `<span class="row" style="gap:4px">${icon('calendar', 'sm')}${esc(C.fmtSessao(p.sessao))}</span>` : ''}<span class="row p-nit" style="gap:4px">${icon('itens', 'sm')}${pst.itens.length ? pst.itens.length + (pst.itens.length === 1 ? ' item' : ' itens') : 'sem itens'}</span><span class="m-meta">${pst.itens.length ? pst.itens.length + (pst.itens.length === 1 ? ' item' : ' itens') : 'sem itens'}</span>${(p.obs || pst.itens.some((i) => String(i.obs || '').trim())) ? `<span class="m-meta m-obs" title="Tem observação">${icon('info', 'sm')}</span>` : ''}</div>
       ${(() => {
         const nRev = pst.todosItens.filter(temRevisar).length;
-        const semKm = !(C.n0(p.km) > 0) && !p.entregaDiferente && !['Desisti', 'Perdeu', 'Desclassificado', 'Concluído'].includes(p.status);
+        const semKm = pregaoSemKm(p);
         const tags = [
           semKm ? `<span class="prazo warn" title="Sem km da entrega: a viagem não entra no custo. Informe no cadastro do pregão.">${icon('pin', 'sm')}Sem km da entrega</span>` : '',
           nRev ? `<span class="prazo warn p-rev" title="Itens marcados para revisar: abra o pregão">${icon('alert', 'sm')}${nRev} ${nRev === 1 ? 'item para revisar' : 'itens para revisar'}</span>` : '',
@@ -5147,12 +5195,16 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     const ic = d.tipo === 'ok' ? 'check' : 'alert';
     const val = (v) => v == null ? '—' : v <= 0 ? '<span class="neg">prejuízo ' + C.brl(-v) + '</span>' : C.brl(v);
     const tip = d.s ? `Ganhando só este, a entrega de carro fica toda nele: ${C.brl(d.s.entrega)} (no rateio: ${C.brl(d.s.entrega - d.s.extra)}).` : '';
+    const big = d.comLance
+      ? `<div class="dec-big"><div><small>Meu lucro no lance</small><em>lance ${C.brl(c.lance)} · ${C.pct(c.margemReal, 1)} sobre a venda${c.viab ? ' · ' + esc(c.viab) : ''} · custo final ${C.brl(c.custoUnit)}</em></div><b class="${d.junto != null && d.junto <= 0 ? 'neg' : ''}">${d.junto != null ? C.brl(d.junto) : '—'}</b></div>`
+      : `<div class="dec-big"><div><small>Valor mínimo p/ proposta (unit.)</small><em>${esc(d.minSub)} · custo final ${C.brl(c.custoUnit)}</em></div><b class="${d.min == null ? 'neg' : ''}">${d.min != null ? C.brl(d.min) : 'Não compensa'}</b></div>`;
     return `<div class="dec ${d.tipo}${d.comLance ? ' com-lance' : ''}" title="${esc(tip)}">
       ${d.txt ? `<div class="dec-hd">${icon(ic, 'sm')}<span>${d.txt}</span></div>` : ''}
+      ${big}
       <div class="dec-cols">
-        <div class="dec-min"><small>Lance mínimo (unit.)</small><b>${d.min != null ? C.brl(d.min) : '<span class="neg">Não compensa</span>'}</b><em>${esc(d.minSub)}</em></div>
+        <div class="dec-min${d.comLance ? '' : ' dup'}"><small>Lance mínimo (unit.)</small><b>${d.min != null ? C.brl(d.min) : '<span class="neg">Não compensa</span>'}</b><em>${esc(d.minSub)}</em></div>
         ${d.s ? `<div class="dec-l dec-solo"><small>Lucro ${d.ref}, ganhando só este</small><b>${val(d.solo)}</b><em>sem prejuízo: <b class="sm">${C.brl(d.s.empate * (c.qtd || 0))}</b> no total (${C.brl(d.s.empate)}/un.) · viagem ${C.brl(d.s.entrega)}</em></div>` : ''}
-        <div class="dec-l"><small>Lucro ${d.ref}${d.s ? ', junto com os outros' : ''}</small><b>${val(d.junto)}</b><em>${d.comLance ? C.pct(c.margemReal, 0) + ' sobre a venda' : c.margemReal != null ? C.pct(c.margemReal, 0) + ' sobre a venda' : ''}${c.impostoTotal > 0 ? ' · impostos ' + C.brl(c.impostoTotal) : ''}</em></div>
+        <div class="dec-l${d.comLance ? ' dup' : ''}"><small>Lucro ${d.ref}${d.s ? ', junto com os outros' : ''}</small><b>${val(d.junto)}</b><em>${d.comLance ? C.pct(c.margemReal, 0) + ' sobre a venda' : c.margemReal != null ? C.pct(c.margemReal, 0) + ' sobre a venda' : ''}${c.impostoTotal > 0 ? ' · impostos ' + C.brl(c.impostoTotal) : ''}</em></div>
       </div></div>`;
   }
   function destaqueHtml(c) {
@@ -5236,6 +5288,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
       ${descLinha}
       ${venc}
       ${decisaoHtml(c)}
+      ${(() => { const d = decisao(c); return `<div class="row between wrap small muted i-fin2" style="gap:4px 10px"><span>Posso baixar do teto até o mínimo: <b style="color:var(--ink)">${d.min != null && c.teto ? C.brl(c.teto - d.min) + ' (' + C.pct(1 - d.min / c.teto, 0) + ')' : '—'}</b></span><span>${c.impostoTotal > 0 ? 'Impostos ' + C.brl(c.impostoTotal) + ' · ' : ''}Lucro ${c.lance !== null ? 'no lance' : 'pelo teto'}: <b style="color:${c.lucro != null && c.lucro < 0 ? 'var(--red)' : 'var(--ink)'}">${C.brl(c.lucro)}</b></span></div>`; })()}
       ${p && !c.fora && !c.ganhou && (p.status === 'Julgamento' || it.possivelGanhar || it.colocacao || c.resultado === 'perdi' || c.naoGanhou || ['Perdeu', 'Desclassificado', 'Aguardando empenho', 'Faturado', 'Concluído'].includes(p.status) || (p.sessao && (diasDesde(p.sessao) || 0) >= 0)) ? `<div class="coloc-row">${colocacaoInput(it)}${it.colocacao ? `<span class="coloc-badge ${it.colocacao === 1 ? 'c1' : it.colocacao <= 3 ? 'c3' : ''}">${colocTxt(it.colocacao)} lugar</span>` : ''}</div>` : ''}
       ${p && ['Julgamento', 'Proposta enviada'].includes(p.status) && !['perdi', 'desc'].includes(c.resultado) ? simLanceHtml(it, c, meuLance) : ''}
       <div class="icard-actions">${compra}${acao}${acaoEnt}</div></article>`;
@@ -7077,7 +7130,10 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
       if (kind === 'error') { toast('Armazenamento do aparelho cheio. Exporte um backup e libere espaço.'); return; }
       if (kind !== 'remote') S.schedule('alteração');   // 'remote' = veio da nuvem: não reenvia (evita laço)
       if (kind === 'change' || kind === 'remote') render(); else updateStatusPill();
+      if (kind === 'remote' || kind === 'change') autoKmAgendar();
     });
+    autoKmAgendar(2500);
+    window.addEventListener('online', () => { AutoKm.falhou.clear(); autoKmAgendar(1500); });
     S.on(() => { updateStatusPill(); const m = $('#syncMsg'); if (m) m.textContent = S.message; });
     window.addEventListener('online', updateStatusPill); window.addEventListener('offline', updateStatusPill);
     window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); UI.deferredPrompt = e; if (UI.tab === 'config') render(); });
