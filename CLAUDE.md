@@ -265,7 +265,7 @@ Analisados em 24/10 (JSON entregue): Faxinal 49; São Jerônimo da Serra 47 (PE 
 Descartados na análise de 24/10: Castro 150 (por lote); Japira 38 e 39 (por lote); Ipiranga 77 (expediente e
 entrega em ~15 endereços); Grandes Rios 41 e Conselheiro Mairinck 62 (exigem atestado de capacidade técnica).
 Analisados em 29-30/10 (JSON entregue): Imbaú 94, Jaboti 44 e Piraí do Sul 47 (Analisando); Castro 157 e 163 (voltaram para Analisando em 30/10: IPM não cobra taxa; falta o edital completo); demais da busca de 29/10 como Desisti.
-Analisados em 31/10 (JSON entregue, mesmos ids da busca): Castro 157 (219 itens; só o relatório de itens, falta o edital completo; 16 itens cotados) e Castro 163 (BLL; só o item 5 compensa, item 6 falta cotar). Pastas no Drive em Municipio de Castro.
+Analisados em 31/10 (JSON entregue, mesmos ids da busca): Castro 157 = Desisti (edital completo: BLL, Registro de Preços; exige atestado de capacidade técnica na habilitação 1.5 e TR 9.1, e entrega em 48 h úteis após o empenho; 16 itens ficaram cotados no JSON caso o João consiga atestado) e Castro 163 (BLL; só o item 5 compensa, item 6 falta cotar; pasta no Drive em Municipio de Castro). Castro 157 e 163 são ambos BLL (o PNCP os listava como IPM).
 Analisado em 26/10 (JSON entregue): Ipiranga 78 (itens 1–8 aparelhos = Desisti por montagem/nivelamento; 9–16 cotados).
 Trazidos na busca PNCP de 22/10 (aguardando escolha): Rio Branco do Ivaí 36.
 Excluídos em 22/10 por ficarem acima de 120 km: Prudentópolis 124; Califórnia 69; Jardim Alegre 51 e 52;
