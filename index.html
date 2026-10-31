@@ -1309,7 +1309,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.107.0';
+  const APP_VERSION = '1.108.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Julgamento', 'Aguardando empenho', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -1449,6 +1449,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
   // Modo "opções marcadas": quando as opções de compra têm o campo usar (true/false), só as marcadas valem.
   // Uma marcada = custo e frete dela. Várias = cada uma leva a sua quantidade ("comprar aqui"); a que ficar sem
   // quantidade leva o que sobrar. Sem nenhuma marcada, valem o custo e o frete digitados no item.
+  const OPCOES_SO_LINK = true;
   // preço do anúncio pode ser de um pacote (ex.: 10 un.): compra-se em pacotes inteiros.
   // custo por unidade = (nº de pacotes × preço do anúncio) ÷ quantidade. Sem 'emb' (ou 1) = preço por unidade, como antes.
   const embDe = (a) => Math.max(1, n0(a && a.emb) || 1);
@@ -1460,6 +1461,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
   function opcoesUsadas(it) {
     const all = Array.isArray(it.alternativas) ? it.alternativas : [];
     if (!all.some((a) => a && typeof a.usar === 'boolean')) return null;
+    if (OPCOES_SO_LINK) return [];   // decisão de 31/10/2026: opções são só links; custo e frete = os digitados no item
     return all.filter((a) => a && a.usar === true && a.custo !== null && a.custo !== undefined && a.custo !== '');
   }
   function divisaoCompra(it) {
@@ -3976,7 +3978,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
       let label = nome && !pareceUrl(nome) ? nome : '';
       if (!label && href) { try { label = new URL(href).hostname.replace(/^www\./, ''); } catch (_) { label = 'link'; } }
       const custo = a.custo == null ? null : C.custoUnitOpc(a, Number(it.qtd) || 0);
-      out.push({ principal: novo && a.usar === true && !out.some((o) => o.principal), usada: novo ? a.usar === true : Number(a.qtd) > 0, href, label, nome, custo, barato: custo != null && it.custo != null && custo < it.custo });
+      out.push({ principal: false, usada: novo ? false : Number(a.qtd) > 0, href, label, nome, custo, barato: custo != null && it.custo != null && custo < it.custo });
     });
     // o que vou usar para comprar vem primeiro (ordem do cadastro dentro de cada grupo)
     return out.map((o, i) => [o, i]).sort((a, b) => (b[0].usada ? 1 : 0) - (a[0].usada ? 1 : 0) || a[1] - b[1]).map((x) => x[0]);
@@ -4007,11 +4009,11 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
   function itemFromForm(x, id) {
     const m = C.parseBR(x.margem);
     const old = id && id !== 'new' ? store.get().itens.find((i) => i.id === id) : null;
-    const opts = ALTS.map((n) => ({ loja: String(x['alt' + n + 'Loja'] || '').trim(), link: urlSeg(x['alt' + n + 'Link']), custo: C.parseBR(x['alt' + n + 'Custo']), emb: Math.max(1, Math.round(C.parseBR(x['alt' + n + 'Emb']) || 1)), frete: C.parseBR(x['alt' + n + 'Frete']) || 0, qtd: C.parseBR(x['alt' + n + 'Qtd']) || 0, usar: !!x['alt' + n + 'Usar'] }))
+    const opts = ALTS.map((n) => ({ loja: String(x['alt' + n + 'Loja'] || '').trim(), link: urlSeg(x['alt' + n + 'Link']), custo: C.parseBR(x['alt' + n + 'Custo']), emb: Math.max(1, Math.round(C.parseBR(x['alt' + n + 'Emb']) || 1)), frete: C.parseBR(x['alt' + n + 'Frete']) || 0, qtd: C.parseBR(x['alt' + n + 'Qtd']) || 0, usar: false }))
       .filter((a) => a.loja || a.link || a.custo != null || a.frete || a.qtd)
       .map((a) => { if (!(a.emb > 1)) delete a.emb; return a; });
     // opções marcadas mandam no custo e no frete do item; sem marcação, valem os campos digitados
-    const marc = opts.filter((a) => a.usar && a.custo != null), eff = marc.length ? { qtd: C.parseBR(x.qtd), alternativas: opts } : null;
+    const marc = [], eff = marc.length ? { qtd: C.parseBR(x.qtd), alternativas: opts } : null;
     const custoItem = eff ? C.custoCompra(eff) : C.parseBR(x.custo), freteItem = eff ? C.freteCompra(eff) : (C.parseBR(x.frete) || 0);
     const prim = opts.find((a) => a.usar) || null;
     return {
@@ -4091,11 +4093,11 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     const cfg = store.get().config;
     const altFields = (n) => `<div class="altslot" data-slot="${n}" hidden><div class="full"><div class="lbl" style="margin:2px 0 8px">Opção ${n + 1}</div></div>
           ${field({ label: 'Link da compra', name: 'alt' + n + 'Link', type: 'url', value: v['alt' + n + 'Link'], full: true, ph: 'https://…', inputmode: 'url' })}
-          ${field({ label: 'Loja ou site', name: 'alt' + n + 'Loja', value: v['alt' + n + 'Loja'], full: true })}
+          ${field({ label: 'Loja ou site', name: 'alt' + n + 'Loja', value: v['alt' + n + 'Loja'] })}
+          ${field({ label: 'Frete (R$, total)', name: 'alt' + n + 'Frete', value: v['alt' + n + 'Frete'], inputmode: 'decimal' })}
           ${field({ label: 'Preço do anúncio (R$)', name: 'alt' + n + 'Custo', value: v['alt' + n + 'Custo'], inputmode: 'decimal' })}
           ${field({ label: 'Unidades no anúncio', name: 'alt' + n + 'Emb', value: v['alt' + n + 'Emb'], inputmode: 'numeric', ph: '1 (vazio = preço por unidade)' })}
-          ${field({ label: 'Frete (R$, total)', name: 'alt' + n + 'Frete', value: v['alt' + n + 'Frete'], inputmode: 'decimal' })}
-          ${field({ label: 'Comprar aqui (qtd)', name: 'alt' + n + 'Qtd', value: v['alt' + n + 'Qtd'], inputmode: 'decimal', ph: 'opcional' })}
+          <input type="hidden" name="alt${n}Qtd" value="${esc(v['alt' + n + 'Qtd'] || '')}">
           <div class="full"><button type="button" class="btn ghost sm" data-alt="limpar" data-alt-n="${n}">${icon('trash', 'sm')} Remover esta opção</button></div></div>`;
     const altQtd = ALTS.filter((n) => v['alt' + n + 'Loja'] || v['alt' + n + 'Link'] || v['alt' + n + 'Custo'] || v['alt' + n + 'Frete'] || v['alt' + n + 'Qtd']).length;
     const body = `
@@ -4146,7 +4148,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
         <div class="full cat-atalho"><button type="button" class="btn block" data-ir-catalogo="1">${icon('image', 'sm')} Fotos e descrição para o catálogo</button><div class="hint">Salva o item e abre o catálogo da guia Proposta já neste pregão, no lugar deste item.</div></div>
         <div class="field full" id="linkBox"><label>Opções de compra</label>
           <div class="linkrow">
-          ${ALTS.map((n) => `<span class="altpar" data-altpar="${n}" hidden><label class="btn ibtn altusar" title="Vou comprar nesta opção (marque para entrar no custo)"><input type="checkbox" name="alt${n}Usar"${v['alt' + n + 'Usar'] ? ' checked' : ''} aria-label="Vou comprar na opção ${n + 1}">${icon('check', 'sm')}</label><a class="btn ibtn altc" data-alt-go="${n}" href="#" target="_blank" rel="noopener noreferrer" aria-label="Abrir a loja da opção ${n + 1}" title="Abrir a loja da opção ${n + 1}">${icon('cart')}<span class="altc-t"></span></a><button type="button" class="btn ghost ibtn altc" data-alt="abrir" data-alt-n="${n}" aria-label="Editar opção ${n + 1}" title="Editar opção ${n + 1}">${icon('edit', 'sm')}</button></span>`).join('')}
+          ${ALTS.map((n) => `<span class="altpar" data-altpar="${n}" hidden><input type="checkbox" name="alt${n}Usar" hidden><a class="btn ibtn altc" data-alt-go="${n}" href="#" target="_blank" rel="noopener noreferrer" aria-label="Abrir a loja da opção ${n + 1}" title="Abrir a loja da opção ${n + 1}">${icon('cart')}<span class="altc-t"></span></a><button type="button" class="btn ghost ibtn altc" data-alt="abrir" data-alt-n="${n}" aria-label="Editar opção ${n + 1}" title="Editar opção ${n + 1}">${icon('edit', 'sm')}</button></span>`).join('')}
           <button type="button" class="btn ibtn altplus" data-alt="abrir" aria-label="Incluir opção de compra" title="Incluir opção de compra">${icon('plus')}<span class="altplus-n"${altQtd ? '' : ' hidden'}>${altQtd}</span></button>
           </div>
           <div class="hint">Toque no + para incluir uma opção (link, loja e frete). Marque ✓ as que vai usar: o custo e o frete do item vêm delas.</div>
@@ -4227,7 +4229,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
         const altPop = $('#altPop', form);
         const fechaAlt = () => {
           altPop.hidden = true;
-          if (form._autoTick != null) { const n = form._autoTick; form._autoTick = null; const cb = $('[name=alt' + n + 'Usar]', form), tem = ['Loja', 'Link', 'Custo', 'Frete'].some((f) => $('[name=alt' + n + f + ']', form).value.trim()); if (tem && !ALTS.some((m) => $('[name=alt' + m + 'Usar]', form).checked)) { cb.checked = true; cb.dispatchEvent(new Event('input', { bubbles: true })); } }
+          if (false && form._autoTick != null) { const n = form._autoTick; form._autoTick = null; const cb = $('[name=alt' + n + 'Usar]', form), tem = ['Loja', 'Link', 'Custo', 'Frete'].some((f) => $('[name=alt' + n + f + ']', form).value.trim()); if (tem && !ALTS.some((m) => $('[name=alt' + m + 'Usar]', form).checked)) { cb.checked = true; cb.dispatchEvent(new Event('input', { bubbles: true })); } }
           altConta();
         };
         const altConta = () => {
@@ -4294,10 +4296,10 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
         const cm = C.parseBR(x.custo);
         const qx = C.parseBR(x.qtd) || 0, fm = C.parseBR(x.frete) || 0;
         const itDraft = itemFromForm(x, id), dv = C.divisaoCompra(itDraft);
-        const ops = ALTS.map((n) => ({ n, preco: C.parseBR(x['alt' + n + 'Custo']), emb: Math.max(1, Math.round(C.parseBR(x['alt' + n + 'Emb']) || 1)), frete: C.parseBR(x['alt' + n + 'Frete']) || 0, loja: String(x['alt' + n + 'Loja'] || '').trim() || (() => { const h = urlSeg(x['alt' + n + 'Link']); try { return h ? new URL(h).hostname.replace(/^www\./, '') : ''; } catch (_) { return ''; } })(), usar: !!x['alt' + n + 'Usar'] })).filter((o) => o.preco != null).map((o) => Object.assign(o, { custo: C.custoUnitOpc({ custo: o.preco, emb: o.emb }, qx) }));
+        const ops = ALTS.map((n) => ({ n, preco: C.parseBR(x['alt' + n + 'Custo']), emb: Math.max(1, Math.round(C.parseBR(x['alt' + n + 'Emb']) || 1)), frete: C.parseBR(x['alt' + n + 'Frete']) || 0, loja: String(x['alt' + n + 'Loja'] || '').trim() || (() => { const h = urlSeg(x['alt' + n + 'Link']); try { return h ? new URL(h).hostname.replace(/^www\./, '') : ''; } catch (_) { return ''; } })(), usar: false, href: urlSeg(x['alt' + n + 'Link']) })).filter((o) => o.preco != null).map((o) => Object.assign(o, { custo: C.custoUnitOpc({ custo: o.preco, emb: o.emb }, qx) }));
         const tot = (o) => (qx > 0 ? o.custo * qx + o.frete : o.custo);   // custo já é por unidade (considera pacote inteiro)
         const menor = ops.length > 1 ? Math.min(...ops.map(tot)) : null;
-        let dica = ops.length ? `<div class="altcomp"><div class="tiny muted">Opções de compra${qx > 0 ? ' (' + C.qtdBR(qx) + ' un., com frete)' : ''}: escolha as que vai usar</div>${ops.map((o) => `<div class="altrow${o.usar ? ' on' : ''}"><span class="grow">${esc(o.loja || 'Opção ' + (o.n + 1))}<small>${o.emb > 1 ? C.brl(o.preco) + ' o anúncio de ' + o.emb + ' un.' + (qx > 0 ? ' × ' + Math.ceil(qx / o.emb - 1e-9) + ' anúncio' + (Math.ceil(qx / o.emb - 1e-9) > 1 ? 's' : '') + ' (' + C.brl(o.custo) + '/un.)' : ' (' + C.brl(o.custo) + '/un.)') : C.brl(o.custo) + (qx > 0 ? ' × ' + C.qtdBR(qx) : '')}${o.frete ? ' + frete ' + C.brl(o.frete) : ''} = <b>${C.brl(tot(o))}</b></small>${o.emb === 1 && C.parseBR(x.teto) > 0 && o.custo > C.parseBR(x.teto) ? `<small class="alt-pac">${icon('alert', 'sm')} Preço acima do teto: o anúncio é de um pacote? Informe "Unidades no anúncio" (lápis da opção).</small>` : ''}</span>${menor != null && Math.abs(tot(o) - menor) < 0.005 ? '<span class="prazo good">Mais barata</span>' : ''}<button type="button" class="btn sm${o.usar ? ' primary' : ''}" data-usar-alt="${o.n}">${o.usar ? '✓ Vou usar' : 'Usar'}</button></div>`).join('')}</div>` : '';
+        let dica = ops.length ? `<div class="altcomp"><div class="tiny muted">Opções de compra${qx > 0 ? ' (' + C.qtdBR(qx) + ' un., com frete)' : ''}: links para conferir (o custo do item é o que você digita)</div>${ops.map((o) => `<div class="altrow${o.usar ? ' on' : ''}"><span class="grow">${esc(o.loja || 'Opção ' + (o.n + 1))}<small>${o.emb > 1 ? C.brl(o.preco) + ' o anúncio de ' + o.emb + ' un.' + (qx > 0 ? ' × ' + Math.ceil(qx / o.emb - 1e-9) + ' anúncio' + (Math.ceil(qx / o.emb - 1e-9) > 1 ? 's' : '') + ' (' + C.brl(o.custo) + '/un.)' : ' (' + C.brl(o.custo) + '/un.)') : C.brl(o.custo) + (qx > 0 ? ' × ' + C.qtdBR(qx) : '')}${o.frete ? ' + frete ' + C.brl(o.frete) : ''} = <b>${C.brl(tot(o))}</b></small>${o.emb === 1 && C.parseBR(x.teto) > 0 && o.custo > C.parseBR(x.teto) ? `<small class="alt-pac">${icon('alert', 'sm')} Preço acima do teto: o anúncio é de um pacote? Informe "Unidades no anúncio" (lápis da opção).</small>` : ''}</span>${menor != null && Math.abs(tot(o) - menor) < 0.005 ? '<span class="prazo good">Mais barata</span>' : ''}${o.href ? `<a class="btn sm" href="${esc(o.href)}" target="_blank" rel="noopener noreferrer" title="Abrir o anúncio">${icon('cart', 'sm')} Abrir</a>` : ''}</div>`).join('')}</div>` : '';
         if (dv) {
           const nomeP = (k) => k.loja || 'Outra opção';
           dica += `<div class="altdica" style="display:block">${icon('cart', 'sm')} <b>Compra dividida:</b> ${dv.partes.map((k) => `${esc(nomeP(k))} ${C.qtdBR(k.qtd)} × ${C.brl(k.custo)}${k.frete ? ' + frete ' + C.brl(k.frete) : ''}`).join(' · ')}<br>Custo médio <b>${C.brl(dv.custo)}</b> por unidade · frete total <b>${C.brl(dv.frete)}</b>${dv.excesso ? `<br><b>Atenção:</b> as opções somam ${C.qtdBR(dv.qAlt)}, mais que a quantidade do item (${C.qtdBR(qx)}).` : ''}${dv.falta ? `<br><b>Atenção:</b> faltam ${C.qtdBR(dv.falta)} unidades: preencha “Comprar aqui” em cada opção marcada.` : ''}</div>`;

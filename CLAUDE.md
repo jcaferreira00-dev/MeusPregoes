@@ -38,10 +38,10 @@ sempre, acrescente aqui (seção certa) no mesmo commit da tarefa.
 - Visual: mesmo alinhamento, blocos simétricos, status com uma palavra só, órgão em CAIXA ALTA,
   cidade padronizada ("Ortigueira/PR"). Se houver dúvida num ajuste visual, mostre uma prévia antes de publicar.
 - Botões de link dos cartões de pregão (guia Pregões, PC): só ícone, sempre nas mesmas posições (edital, modelo, enviar proposta, licitação); o que não tem link fica apagado. No celular, título do órgão sem o prefixo "Prefeitura Municipal de".
-- Formulário do item: NÃO existe campo "onde comprar". Só o botão "+" (opções de compra: link, loja, frete, custo e "comprar aqui"; até 8). Cada opção vira tique ✓ + cesta + lápis; o João marca as que vai usar. Marcada uma: custo e frete do item vêm dela; várias: cada uma com a sua quantidade (a que ficar em branco leva o resto), custo médio e soma dos fretes. Sem nenhuma marcada, valem o custo e o frete digitados. No JSON, cada opção de `alternativas` pode ter `usar: true/false`; sem `usar` o item é lido no modelo antigo (principal `onde`/`ondeLink` + alternativas com `qtd`) e o app converte ao abrir.
-- Preço de pacote (decisão de 31/10/2026): cada opção de compra tem "Preço do anúncio" (`custo`) e "Unidades no anúncio" (`emb`, vazio/1 = preço por unidade). O app compra em anúncios inteiros: custo por unidade = (nº de anúncios × preço) ÷ qtd (ex.: 20 un. com anúncio de 10 = 2 anúncios). Opção com preço acima do teto e sem `emb` mostra o aviso "o anúncio é de um pacote?". Os campos Custo e Frete do item NUNCA ficam travados: com opção marcada eles mostram o valor calculado, e se o João digitar, as opções ficam desmarcadas (continuam salvas) e vale o digitado.
-- Botão de compra (cartão do item, catálogo e formulário): SEMPRE com o nome do site/loja (sem nome, o domínio do link), também no celular. As opções marcadas para usar vêm primeiro, com borda verde.
-- Opções de compra aparecem na prévia do item comparando o total (custo × qtd + frete) e marcando a mais barata; o botão "Usar" marca/desmarca.
+- Formulário do item: NÃO existe campo "onde comprar". Só o botão "+" (opções de compra: link, loja, frete, preço do anúncio e unidades no anúncio; até 8). Decisão de 31/10/2026: as opções são SÓ LINKS para o João abrir quando quiser (cesta + lápis); NÃO existe mais "Usar"/tique e as opções NÃO mexem no custo: Custo e Frete do item são sempre os digitados (nunca travados). A prévia lista as opções com o total de cada uma e marca a mais barata, com botão "Abrir". No JSON, `usar` é ignorado (mandar `false`).
+- Preço de pacote (decisão de 31/10/2026): cada opção de compra tem "Preço do anúncio" (`custo`) e "Unidades no anúncio" (`emb`, vazio/1 = preço por unidade); a prévia mostra o custo por unidade comprando anúncios inteiros (20 un. com anúncio de 10 = 2 anúncios). Opção com preço acima do teto e sem `emb` mostra o aviso "o anúncio é de um pacote?". O custo do item (por unidade) é digitado pelo João.
+- Botão de compra (cartão do item, catálogo e formulário): SEMPRE com o nome do site/loja (sem nome, o domínio do link), também no celular, na ordem do cadastro.
+- Opções de compra aparecem na prévia do item comparando o total (custo × qtd + frete) e marcando a mais barata; cada uma com botão "Abrir".
 - Proposta: `marca`, `modelo` (no item) e o descritivo do item ofertado (= `catalogoDesc`, o texto do catálogo na guia Proposta, o mesmo do catálogo) são TODOS digitados pelo João: nunca preencher na análise nem no JSON (deixar vazios). No PDF/Word o texto sai sempre em linha corrida (linhas empilhadas viram parágrafo), e a primeira letra depois de "TÍTULO EM CAIXA ALTA:" fica maiúscula; o campo tem correção ortográfica do navegador. O PDF mostra "EXIGIDO NO EDITAL" (texto do edital) e, logo abaixo, "DESCRITIVO DO ITEM OFERTADO" seguido, depois de uma linha tracejada, da marca/modelo. A proposta NÃO é gerada enquanto algum item tiver marca, modelo ou descritivo ofertado em branco (decisão de 30/10/2026: modelo passou a ser obrigatório), nem quando a marca/modelo do item for diferente do que está escrito no descritivo. Se o descritivo tiver "MARCA:" e/ou "MODELO:", o app preenche sozinho os campos marca e modelo do item com esse texto (no formulário do item e no catálogo da guia Proposta), para nunca sair marca diferente em um e em outro. Botões de gerar (proposta, só catálogo, Word) ficam juntos no fim da guia Proposta. As imagens e o descritivo (com os títulos em caixa alta) podem ser incluídos tanto na janela de edição do item quanto no catálogo da guia Proposta: é o mesmo dado (`catalogoDesc` + fotos), as duas opções convivem.
 - Tipo de compra (decisão de 31/10/2026): campo `tipoCompra` do pregão = "SRP" (Registro de preços: gera ata, pedidos conforme a demanda) ou "Aquisição" (compra direta). Aparece como selo ao lado do status: no cartão do quadro "SRP" / "Compra" / "?" (não informado), no cabeçalho do pregão "Reg. preços" / "Aquisição", e há um seletor "Tipo de compra" ao lado do Status no pregão e no cadastro. Sem o campo, o app tenta reconhecer "registro de preços"/"SRP" nas observações. NÃO usar observações para isso.
 - Status do pregão: Falta dados, Analisando, Proposta enviada, Julgamento (antigo "Em disputa", que o app converte sozinho; os editais ficam dias avaliando a proposta), Aguardando empenho (ata assinada, esperando o empenho), Faturado, Concluído, Perdeu, Desclassificado, Desisti. Julgamento e Aguardando empenho ficam no topo das listas, com cores próprias (âmbar e roxo). Nos JSON usar "Julgamento", nunca "Em disputa".
@@ -164,7 +164,7 @@ Formato de backup do app (Config › Importar › Mesclar). IDs únicos e novos;
     "qtd": 10, "custo": 2.0, "teto": 5.0, "frete": 0, "margem": null, "lanceFinal": null,
     "semLance": false,
     "alternativas": [
-      { "loja": "Loja A", "link": "https://link-direto-do-produto", "custo": 2.0, "frete": 0, "usar": true },
+      { "loja": "Loja A", "link": "https://link-direto-do-produto", "custo": 2.0, "frete": 0, "usar": false },
       { "loja": "Loja C (pacote)", "link": "https://link-direto-do-produto", "custo": 18.0, "emb": 10, "frete": 0, "usar": false },
       { "loja": "Loja B", "link": "https://link-direto-do-produto", "custo": 2.1, "frete": 0, "usar": false }
     ],
@@ -175,7 +175,7 @@ Formato de backup do app (Config › Importar › Mesclar). IDs únicos e novos;
 
 - `tipoCompra`: SEMPRE preencher, "SRP" ou "Aquisição" (na busca, pelo campo `srp` do PNCP; na análise, confirmar no edital: "Registro de preços"/"Ata de registro" = SRP; "aquisição" com contrato/empenho único = Aquisição).
 - Compra: `custo` da opção = preço do anúncio como está na loja; se o anúncio for de pacote/caixa/kit com várias unidades, informar `emb` (unidades no anúncio) em vez de dividir à mão.
-- Compra: só `alternativas` com `usar` (modelo novo). `semLance` sempre explícito (`true`/`false`), senão a mesclagem mantém o valor antigo do app.
+- Compra: `custo` e `frete` do ITEM = os da loja escolhida (são eles que valem nas contas); `alternativas` são só links de referência, com `usar: false`. `semLance` sempre explícito (`true`/`false`), senão a mesclagem mantém o valor antigo do app.
 - Atualizar um pregão que já está no app: partir do backup mais recente, reaproveitar os ids, mandar `updatedAt` novo e NÃO mandar `marca`, `modelo`, `catalogoDesc`, `lanceFinal` nem fotos (o que o JSON não traz continua como está no app).
 - `regrasEdital.semIdentificacao`: `true` = edital proíbe identificar na inicial; `false` = exige; omitir se o
   edital não fala. O app mostra o aviso na guia Proposta e trava a geração se a chavinha estiver diferente.
@@ -194,11 +194,11 @@ JSON único (acima) + pastas no Google Drive conforme a seção 8:
 ```
 
 - Cotação de cada item, de preferência em 2 lojas diferentes, com link direto do produto (uma só é aceitável, anotada no `obs`).
-- Qualidade da cotação (decisão de 26/10/2026): a opção marcada para USAR (`usar: true`) deve cumprir TODAS as
+- Qualidade da cotação (decisão de 26/10/2026): a loja escolhida (a que dá o `custo`/`frete` do item) deve cumprir TODAS as
   especificações mínimas do TR/edital (potência, dimensões, capacidade, material, garantia etc.), em loja
   especializada ou fabricante do ramo, para não arriscar desclassificação por produto errado. Margem muito alta
   (acima de ~50-60%) costuma indicar produto inferior à especificação: marcar no `obs` "conferir ficha técnica".
-  Cotações mais baratas/inferiores PODEM entrar como opção extra de comparação (`usar: false`), sem serem a base do lance.
+  Cotações mais baratas/inferiores PODEM entrar como opção extra de comparação (só link), sem serem a base do custo.
 - Edital que exige montagem, instalação ou nivelamento do equipamento (aparelhos de academia etc.): item fora
   (`semLance: true`, motivo no `obs`), conforme a regra de itens que exigem instalação (decisão de 26/10/2026).
 - Observações importantes de cada item no campo `obs` do JSON e no arquivo de observações.
