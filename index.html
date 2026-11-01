@@ -1359,7 +1359,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.112.0';
+  const APP_VERSION = '1.113.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Julgamento', 'Aguardando empenho', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -6474,7 +6474,8 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
       <div class="card"><h3>Dados e backup</h3>
         <div class="grid2"><button class="btn" data-act="export">${icon('download', 'sm')} Exportar</button><label class="btn" style="cursor:pointer">${icon('plus', 'sm')} Importar<input type="file" accept="application/json,.json" data-import class="hidden"></label></div>
         <div class="grid2" style="margin-top:10px"><button class="btn" data-act="demo">Dados de exemplo</button><button class="btn danger" data-act="apagar">${icon('trash', 'sm')} Apagar tudo</button></div>
-        <button class="btn danger block" style="margin-top:10px" data-act="apagar-desisti">${icon('trash', 'sm')} Limpar desistências</button></div>
+        <button class="btn danger block" style="margin-top:10px" data-act="apagar-desisti">${icon('trash', 'sm')} Limpar desistências</button>
+        <a class="btn block m-hide" style="margin-top:10px;text-decoration:none;color:inherit" href="depurador/" data-depurador>${icon('search', 'sm')} Abrir o Depurador</a></div>
       ${cloudCard()}
       <div class="card"><h3>Aplicativo</h3><div class="kv-list">
         <div><span>Versão</span><b>${C.APP_VERSION}</b></div></div>
