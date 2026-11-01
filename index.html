@@ -69,6 +69,7 @@ svg.i.sm { width: 16px; height: 16px; }
 .topbar .logo { width: 34px; height: 34px; border-radius: 9px; flex: none; }
 .topbar h1 { font-size: 17px; font-weight: 700; letter-spacing: .2px; }
 .topbar .sub { font-size: 12px; opacity: .75; }
+.topbar a.depurar { color: inherit; text-decoration: none; font-weight: 700; font-size: 14px; border: 1px solid currentColor; border-radius: 99px; padding: 5px 12px; white-space: nowrap; flex: none; }
 .topbar .grow { flex: 1; min-width: 0; }
 .pill { display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px; padding: 5px 10px; border-radius: 99px; background: rgba(255,255,255,.14); color: #fff; white-space: nowrap; }
 .pill .dot { width: 7px; height: 7px; border-radius: 50%; background: #62d26f; }
@@ -1359,7 +1360,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.113.0';
+  const APP_VERSION = '1.114.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Julgamento', 'Aguardando empenho', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -6474,8 +6475,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
       <div class="card"><h3>Dados e backup</h3>
         <div class="grid2"><button class="btn" data-act="export">${icon('download', 'sm')} Exportar</button><label class="btn" style="cursor:pointer">${icon('plus', 'sm')} Importar<input type="file" accept="application/json,.json" data-import class="hidden"></label></div>
         <div class="grid2" style="margin-top:10px"><button class="btn" data-act="demo">Dados de exemplo</button><button class="btn danger" data-act="apagar">${icon('trash', 'sm')} Apagar tudo</button></div>
-        <button class="btn danger block" style="margin-top:10px" data-act="apagar-desisti">${icon('trash', 'sm')} Limpar desistências</button>
-        <a class="btn block m-hide" style="margin-top:10px;text-decoration:none;color:inherit" href="depurador/" data-depurador>${icon('search', 'sm')} Abrir o Depurador</a></div>
+        <button class="btn danger block" style="margin-top:10px" data-act="apagar-desisti">${icon('trash', 'sm')} Limpar desistências</button></div>
       ${cloudCard()}
       <div class="card"><h3>Aplicativo</h3><div class="kv-list">
         <div><span>Versão</span><b>${C.APP_VERSION}</b></div></div>
@@ -7172,7 +7172,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
   /* ---------- inicialização ---------- */
   function buildShell() {
     $('#app').innerHTML = `<div class="shell">
-      <header class="topbar"><img class="logo" src="icons/icon-96.png" alt="" width="34" height="34"><div class="grow"><h1>Meus Pregões</h1><div class="sub" id="subt"></div></div><button type="button" class="pill" id="pill" data-act="sync-pill" title="Sincronização: toque para conferir com a nuvem"></button></header>
+      <header class="topbar"><a class="depurar m-hide" href="depurador/" data-depurador>🔧 Depurar</a><img class="logo" src="icons/icon-96.png" alt="" width="34" height="34"><div class="grow"><h1>Meus Pregões</h1><div class="sub" id="subt"></div></div><button type="button" class="pill" id="pill" data-act="sync-pill" title="Sincronização: toque para conferir com a nuvem"></button></header>
       <nav class="nav" aria-label="Seções">${TABS.map((t) => `<button data-v="${t.id}" aria-label="${t.t}">${icon(t.id)}<span>${t.t}</span></button>`).join('')}</nav>
       <main class="main" id="main" tabindex="-1"></main></div>`;
     $('.nav').addEventListener('click', (e) => { const b = e.target.closest('button[data-v]'); if (b) setTab(b.dataset.v); });
