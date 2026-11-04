@@ -58,3 +58,6 @@ Ficaram para depois, de propósito:
 Rodada 2: fundir/enxugar Painel e itens (só informativo pode agrupar sem perguntar; o que mexe em proposta, cálculo ou Config → o João avalia antes). Rodada 3: proposta (modelo padrão p/ todos, só a versão sem identificação muda; sem cláusulas; declarações em documento separado) + tela de login (entra sozinho com senha salva; sem "criar conta" até resolver o limite do Firebase).
 F28 "Posso baixar do teto" (nota do João, 04/11): o piso não é lucro zero. Considerar o custo do dinheiro parado (Selic/Tesouro no prazo em que o dinheiro fica fora, compra no cartão) e um lucro mínimo em R$ que compense (≈ R$ 400–500 numa compra maior), proporcional ao valor investido (gastar R$ 10 mil para lucrar R$ 400 não vale). "Nada engessado": propor a regra e mostrar prévia antes.
 F38: o selo SRP/Compra tampa a cidade e o número do pregão no cartão → corrigir com prévia.
+
+## 9. Próxima sessão grande (sábado, depois das 18h)
+Sincronização com uma ficha por pregão: ver `docs/PLANO-sync-por-pregao.md`. Planejado em 04/11, não feito.
