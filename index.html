@@ -156,6 +156,7 @@ button.pill { border: 0; font: inherit; cursor: pointer; }
 .meter > div { height: 100%; border-radius: 99px; background: linear-gradient(90deg, var(--blue), #5aa2e6); }
 .meter.red > div { background: linear-gradient(90deg, #e07a5f, var(--red)); }
 .alert { display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; border-radius: 12px; font-weight: 700; font-size: 13.5px; }
+.avisos-i { display: grid; gap: 8px; margin-bottom: 12px; } .aviso-i { align-items: center; } .aviso-i > .btn { min-width: 150px; justify-content: center; } .aviso-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; font-weight: 500; } .aviso-chips .chip { cursor: pointer; }
 .alert.ok { background: var(--green-soft); color: var(--green); } .alert.warn { background: var(--amber-soft); color: var(--amber); } .alert.bad { background: var(--red-soft); color: var(--red); }
 .alert.info { background: var(--blue-soft); color: var(--blue); }
 .strow { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 10px; align-items: center; padding: 8px 0; border-bottom: 1px dashed var(--line); }
@@ -1289,7 +1290,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.116.0';
+  const APP_VERSION = '1.117.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Julgamento', 'Aguardando empenho', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -3435,7 +3436,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
   /* ---------- estado da interface ---------- */
   const UI = {
     sim: {},   // lances simulados (só na memória; não entram na proposta)
-    tab: 'painel', detailId: null, filtro: 'todos', busca: '', buscaI: '', fPregaoI: '', mostrarOcultos: false, mostrarEnc: false, mostrarConcl: false, dash: { periodo: 'tudo', etapa: null, orgao: null, mes: null, pode: null, todos: false },
+    tab: 'painel', detailId: null, filtro: 'todos', busca: '', buscaI: '', fPregaoI: '', pendI: '', mostrarOcultos: false, mostrarEnc: false, mostrarConcl: false, dash: { periodo: 'tudo', etapa: null, orgao: null, mes: null, pode: null, todos: false },
     acomp: { filtro: 'todos' }, pdf: { pregaoId: null, tipo: 'inicial', fonte: 'auto', data: C.hojeISO(), busy: false, result: null }, acc: new Set(['acc-forn']),
     ignorePop: 0, deferredPrompt: null, reloadPending: false, updateBanner: false,
   };
@@ -5393,7 +5394,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     const lucroCor = c.lucro == null ? '' : c.lucro < 0 ? 'var(--red)' : 'var(--green)';
     const kv = (l, v, cls) => `<div class="ib-kv${cls ? ' ' + cls : ''}"><span>${l}</span><b>${v}</b></div>`;
     return `<article class="ibox${c.fora || (c.naoGanhou && !it.possivelGanhar) ? ' apagado' : ''}${temRevisar(it) ? ' revisar' : ''}" data-id="${it.id}">
-      <div class="ib-hd"><span class="ib-num">${num}</span>${colocTag}${tag}${temRevisar(it) ? `<span class="badge warn" title="${esc('Revisar: ' + it.revisar)}">Revisar</span>` : ''}<button type="button" class="ic-btn" data-act="editar-item" data-id="${it.id}" title="Editar item" aria-label="Editar item">${icon('edit', 'sm')}</button></div>
+      <div class="ib-hd"><span class="ib-num">${num}</span>${colocTag}${tag}${temRevisar(it) ? `<span class="badge warn" title="${esc('Revisar: ' + it.revisar)}">Revisar</span>` : ''}${!c.fora && !it.semLance && !(Number(it.fotosN) > 0) ? '<span class="badge bad" title="Sem foto no catálogo">Sem foto</span>' : ''}<button type="button" class="ic-btn" data-act="editar-item" data-id="${it.id}" title="Editar item" aria-label="Editar item">${icon('edit', 'sm')}</button></div>
       <h4 class="ib-nome" title="${esc(it.descricao)}">${esc(nomeCurto(it.descricao, 38))}</h4>
       <div class="ib-grid">
         ${kv('Qtd', C.qtdBR(it.qtd) + (it.unidade ? ' <em>' + esc(String(it.unidade).toLowerCase()) + '</em>' : ''))}
@@ -5406,16 +5407,34 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
       <div class="ib-ft">${c.estrelas != null ? `<span class="stars s${c.estrelas}" title="${c.estrelas} de 5 estrelas · lucro ${C.pct(c.margemReal, 0)}">★${c.estrelas}${c.margemReal != null ? ' <small>' + C.pct(c.margemReal, 0) + '</small>' : ''}</span>` : '<span></span>'}${k ? `<a class="btn sm lk ib-buy" href="${esc(k.href)}" target="_blank" rel="noopener noreferrer" data-act="link-externo" title="Comprar: ${esc(k.label || 'link')}">${icon('cart', 'sm')}<span class="ell">${esc(nomeCurto(k.label || 'Comprar', 16))}</span></a>` : '<span class="muted tiny">sem link</span>'}</div>
     </article>`;
   }
+  // guia Itens: aviso de itens sem foto no catálogo e de preços cotados para revisar (pedido do João, 04/11/2026)
+  // sem foto = item na disputa (não está "fora") de pregão ativo; revisar = campo revisar preenchido (também nos "fora")
+  const semFotoItem = (g, i) => !C.INATIVOS.includes(g.p.status) && !i.semLance && !(Number(i.fotosN) > 0);
+  function avisoItensHtml(groups) {
+    const ativos = groups.filter((g) => !C.INATIVOS.includes(g.p.status) && (!UI.fPregaoI || g.p.id === UI.fPregaoI));
+    const foto = [], rev = [];
+    for (const g of ativos) {
+      const nf = g.todosItens.filter((i) => semFotoItem(g, i)).length, nr = g.todosItens.filter(temRevisar).length;
+      if (nf) foto.push([g, nf]); if (nr) rev.push([g, nr]);
+    }
+    const tot = (L) => L.reduce((t, x) => t + x[1], 0);
+    const chips = (L) => L.map(([g, k]) => `<button type="button" class="chip" data-act="aviso-preg-i" data-id="${g.p.id}" title="Ver só este pregão">${esc(g.p.numero)} · ${esc(String(g.p.cidadeUf || g.p.orgao).split('/')[0])} <b>${k}</b></button>`).join('');
+    const linha = (L, tipo, cls, txt) => L.length ? `<div class="alert ${cls} aviso-i"><div class="grow"><div>${icon(tipo === 'foto' ? 'image' : 'alert', 'sm')} ${tot(L)} ${txt}</div><div class="aviso-chips">${chips(L)}</div></div><button type="button" class="btn sm" data-act="aviso-pend-i" data-v="${tipo}">${UI.pendI === tipo ? 'Mostrar todos' : 'Mostrar só esses'}</button></div>` : '';
+    const out = linha(rev, 'rev', 'warn', tot(rev) === 1 ? 'item com preço para revisar' : 'itens com preço para revisar') + linha(foto, 'foto', 'bad', tot(foto) === 1 ? 'item sem foto no catálogo' : 'itens sem foto no catálogo');
+    if (!out && UI.pendI) UI.pendI = '';
+    return out ? `<div class="avisos-i">${out}</div>` : '';
+  }
   function itensListHtml() {
     const R = C.computeAll(store.get());
     const q = UI.buscaI.trim().toLowerCase();
     const enc = (g) => (C.INATIVOS.includes(g.p.status) ? 1 : 0);
     const disp = (g) => (g.p.status === 'Julgamento' ? 0 : g.p.status === 'Aguardando empenho' ? 1 : 2);
     const groups = [...R.pMap.values()].sort((a, b) => (enc(a) - enc(b)) || (disp(a) - disp(b)) || (b.p.createdAt || 0) - (a.p.createdAt || 0));   // encerrados sempre no fim
-    let html = '', n = 0;
+    let html = avisoItensHtml(groups), n = 0;
     for (const g of groups) {
       if (UI.fPregaoI && g.p.id !== UI.fPregaoI) continue;
-      const its = porItemEdital(g.todosItens).filter((i) => !q || (i.descricao + ' ' + (i.marca || '') + ' ' + (Array.isArray(i.alternativas) ? i.alternativas.map((a) => (a && a.loja) || '').join(' ') : '') + ' ' + g.p.orgao + ' ' + g.p.numero).toLowerCase().includes(q));
+      if (UI.pendI && enc(g)) continue;
+      const its = porItemEdital(g.todosItens).filter((i) => !UI.pendI || (UI.pendI === 'foto' ? semFotoItem(g, i) : temRevisar(i))).filter((i) => !q || (i.descricao + ' ' + (i.marca || '') + ' ' + (Array.isArray(i.alternativas) ? i.alternativas.map((a) => (a && a.loja) || '').join(' ') : '') + ' ' + g.p.orgao + ' ' + g.p.numero).toLowerCase().includes(q));
       if (!its.length) continue;
       n += its.length;
       if (enc(g)) { html += miniPregao(g.p, g.nPode > 0); continue; }
@@ -6534,6 +6553,8 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
       case 'tab': setTab(t.dataset.v); break;
       case 'itens-ganhos': openGanhosForm(id); break;
       case 'item-res': { UI.keepScroll = true; const c = Rc().iMap.get(id); const v = t.dataset.v; definirResultado(id, c && c.resultado === v ? '' : v); break; }
+      case 'aviso-pend-i': UI.pendI = UI.pendI === t.dataset.v ? '' : t.dataset.v; UI.keepScroll = true; render(); break;
+      case 'aviso-preg-i': UI.fPregaoI = UI.fPregaoI === id ? '' : id; UI.keepScroll = true; render(); break;
       case 'item-revisado': { UI.keepScroll = true; store.upsertItem({ id, revisar: '' }); toast('Alerta de revisão tirado'); break; }
       case 'item-pode': { UI.keepScroll = true; const it = store.get().itens.find((i) => i.id === id); const liga = !(it && it.possivelGanhar); store.upsertItem({ id, possivelGanhar: liga }); toast(liga ? 'Item marcado: posso ganhar' : 'Marcação removida'); break; }
       case 'item-fora': { UI.keepScroll = true; const it = store.get().itens.find((i) => i.id === id); const fora = !(it && it.semLance); store.upsertItem({ id, semLance: fora }); toast(fora ? 'Item fora da disputa' : 'Item de volta à disputa'); break; }

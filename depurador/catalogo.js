@@ -287,6 +287,8 @@
     `Botão na Config: apaga de vez os pregões em Desisti e seus itens, os itens deixados de fora (semLance) dos pregões já enviados com a sessão passada (em Proposta enviada, 2 dias depois), e encolhe as lápides antigas. Excluir agora deixa só uma lápide mínima (id, pregaoId, deleted, datas), para liberar espaço no documento da nuvem.`, { sel: ['[data-act=apagar-desisti]'] });
   F('abrir-depurador', AR.conf, 2, 'manter', 'Botão “Depurar” no topo do app',
     `Atalho no canto esquerdo do topo (só no PC), na mesma posição do “✕ Fechar” do Depurador. Abre o Depurador em outra guia do navegador; o app continua aberto. O Depurador tem o botão “← Pregões” para voltar.`, { sel: ['[data-depurador]'] });
+  F('aviso-itens', AR.item, 4, 'manter', 'Guia Itens: aviso de itens sem foto e de preços para revisar',
+    `No topo da guia Itens: quantos itens dos pregões ativos estão sem foto no catálogo e quantos têm o alerta Revisar (preço cotado a conferir), por pregão. Clicar no pregão filtra; “Mostrar só esses” deixa só os itens pendentes. No bloco do item aparece o selo “Sem foto”.`, { sel: ['.avisos-i', '[data-act=aviso-pend-i]'] });
   F('hook-app', AR.cod, 2, 'manter', 'Gancho de depuração (window.__app)',
     `O app expõe store, UI e render para testes e para este depurador.`, { ev: 'index.html, fim do script de interface.' });
 
