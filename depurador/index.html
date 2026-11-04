@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Depurador · Meus Pregões</title>
 <meta name="theme-color" content="#1f3a5f">
-<link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/icon-192.png">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
 <style>
@@ -66,7 +65,7 @@ pre{background:var(--chip);border-radius:8px;padding:10px;overflow:auto;font-siz
 </head>
 <body>
 <header>
-  <a class="voltar" href="../">← Pregões</a>
+  <a class="voltar" href="../" id="voltarApp" title="Fecha esta guia (o app continua aberto na outra)">✕ Fechar</a>
   <h1>🔧 Depurador · Meus Pregões</h1><small id="ver">lendo o app…</small>
   <nav id="nav">
     <button data-t="resumo" class="on">Resumo</button>
@@ -393,6 +392,8 @@ document.addEventListener('click', (e) => {
 (async function () {
   setupFiltros(); await lerCodigo(); lerEstado(); renderTudo();
   $('#fr').addEventListener('load', () => setTimeout(ligarFrame, 600));
+  // aberto em outra guia pelo app: Fechar fecha a guia; se não der (aberto direto), volta para o app
+  { const v = document.getElementById('voltarApp'); if (v) v.addEventListener('click', (e) => { e.preventDefault(); window.close(); setTimeout(() => { location.href = '../'; }, 200); }); }
   if ('serviceWorker' in navigator) { try { navigator.serviceWorker.register('sw.js'); } catch (e) { /* sem SW */ } }
 })();
 </script>

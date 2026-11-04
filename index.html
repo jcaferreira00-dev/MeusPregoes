@@ -1289,7 +1289,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.115.0';
+  const APP_VERSION = '1.116.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Julgamento', 'Aguardando empenho', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -6958,7 +6958,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
   /* ---------- inicialização ---------- */
   function buildShell() {
     $('#app').innerHTML = `<div class="shell">
-      <header class="topbar"><a class="depurar m-hide" href="depurador/" data-depurador>🔧 Depurar</a><img class="logo" src="icons/icon-96.png" alt="" width="34" height="34"><div class="grow"><h1>Meus Pregões</h1><div class="sub" id="subt"></div></div><button type="button" class="pill" id="pill" data-act="sync-pill" title="Sincronização: toque para conferir com a nuvem"></button></header>
+      <header class="topbar"><a class="depurar m-hide" href="depurador/" target="_blank" rel="noopener" data-depurador title="Abre o Depurador em outra guia do navegador">🔧 Depurar</a><img class="logo" src="icons/icon-96.png" alt="" width="34" height="34"><div class="grow"><h1>Meus Pregões</h1><div class="sub" id="subt"></div></div><button type="button" class="pill" id="pill" data-act="sync-pill" title="Sincronização: toque para conferir com a nuvem"></button></header>
       <nav class="nav" aria-label="Seções">${TABS.map((t) => `<button data-v="${t.id}" aria-label="${t.t}">${icon(t.id)}<span>${t.t}</span></button>`).join('')}</nav>
       <main class="main" id="main" tabindex="-1"></main></div>`;
     $('.nav').addEventListener('click', (e) => { const b = e.target.closest('button[data-v]'); if (b) setTab(b.dataset.v); });
