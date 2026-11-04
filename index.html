@@ -1290,7 +1290,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.117.0';
+  const APP_VERSION = '1.118.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Julgamento', 'Aguardando empenho', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -1353,6 +1353,8 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
   const defaultConfig = () => ({
     margemPadrao: 0.20,
     lucroBom: 1000,   // lucro em R$ num item que já compensa, mesmo com margem menor
+    selicPct: 13.75,  // Selic ao ano (%): comparação "vale mais que deixar no Tesouro?" (04/11/2026)
+    diasDinheiroFora: 45,   // dias com o dinheiro fora quando o pregão não tem prazo de entrega/pagamento
     consumo: 10,
     combustivel: 6,
     desgaste: 0.30,
@@ -1491,6 +1493,26 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
   const freteCompra = (it) => n0(it.frete);
   const compraBase = (it) => n0(it.qtd) * n0(it.custo) + n0(it.frete);
 
+  /* Comparação com o Tesouro Selic (pedido do João, 04/11/2026): não é piso fixo, é uma medida.
+   * capital = custo total do item (compra + frete + parte da viagem); dias = prazo de entrega + prazo de pagamento do pregão
+   * (sem prazos, usa cfg.diasDinheiroFora). rend = quanto o capital renderia na Selic nesses dias (bruto, sem IR).
+   * vezes = lucro ÷ rend (2× = o pregão rende o dobro do Tesouro). pisoUnit = lance unitário em que o lucro empata com o Tesouro. */
+  function tesouro(capital, lucro, qtd, p, cfg, impPct) {
+    const selic = n0(cfg.selicPct) > 0 ? n0(cfg.selicPct) / 100 : 0;
+    if (!(capital > 0) || !(selic > 0)) return null;
+    const dp = n0(p && p.prazoEntregaDias) + n0(p && p.pagamentoDias);
+    const dias = dp > 0 ? dp : (n0(cfg.diasDinheiroFora) > 0 ? n0(cfg.diasDinheiroFora) : 45);
+    const rend = capital * (Math.pow(1 + selic, dias / 365) - 1);
+    const div = qtd > 0 ? qtd * (1 - Math.max(0, impPct || 0)) : 0;
+    return {
+      dias, diasEst: !(dp > 0), selic, rend,
+      vezes: lucro != null && rend > 0 ? lucro / rend : null,
+      pisoUnit: div > 0 ? (capital + rend) / div : null,
+      anual: lucro != null ? Math.pow(Math.max(0, 1 + lucro / capital), 365 / dias) - 1 : null,
+    };
+  }
+  const corTesouro = (t) => (!t || t.vezes == null ? '' : t.vezes < 1 ? 'var(--red)' : t.vezes < 2 ? 'var(--amber)' : 'var(--green)');
+
   function calcItem(it, pst, cfg) {
     const qtd = n0(it.qtd), custo = custoCompra(it), frete = freteCompra(it);
     const compra = compraBase(it);
@@ -1544,7 +1566,8 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     }
     const minTotal = minimo !== null ? round2(minimo * qtd) : null;
     const tetoTotal = teto !== null ? round2(teto * qtd) : null;
-    return { qtd, unidade: it.unidade, nota, viab, viabTipo, sitCurta, margemReal, estrelas, minTotal, tetoTotal, compra, entrega, custoTotal, custoUnit, margem, minimo, teto, lance, folgaRs, folgaPct, totalVenda, lucro, situacao, sitTipo, produtos: qtd * custo, frete, custoCompra: custo, imposto, impostoTotal: imposto };
+    const tes = tesouro(custoTotal, lucro, qtd, pst && pst.p, cfg, impPct);
+    return { tesouro: tes, qtd, unidade: it.unidade, nota, viab, viabTipo, sitCurta, margemReal, estrelas, minTotal, tetoTotal, compra, entrega, custoTotal, custoUnit, margem, minimo, teto, lance, folgaRs, folgaPct, totalVenda, lucro, situacao, sitTipo, produtos: qtd * custo, frete, custoCompra: custo, imposto, impostoTotal: imposto };
   }
 
   // "se eu ganhar só este item": ele paga sozinho a viagem inteira da rota dele (frete do fornecedor já é do item).
@@ -1684,6 +1707,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     }
     for (const pst of pMap.values()) {
       pst.margem = pst.venda > 0 ? pst.lucro / pst.venda : null;
+      pst.tesouro = tesouro(pst.custo, pst.venda > 0 ? pst.lucro : null, 0, pst.p, cfg, 0);
       // valor da proposta = o total que sai no PDF (fonte automática): lance final, senão teto do edital
       const somaProp = (arr) => round2(arr.reduce((s, it) => { const u = unitProposta(iMap.get(it.id), 'auto').unit; return u !== null ? s + round2(n0(it.qtd) * u) : s; }, 0));
       pst.proposta = somaProp(pst.itens);
@@ -2225,7 +2249,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
   const api = {
     APP_VERSION, STATUS, INATIVOS, DECL_PADRAO, uid, n0, round2, ceil2, parseBR, brl, brl0, pct, numBR, qtdBR,
     fmtSessao, dataExtensa, hojeISO, defaultConfig, emptyState, migrate, custoViagem, localEntregaPadrao, calcItem, limiteMEI,
-    custoUnitOpc, embDe, agora, setClockOffset, getClockOffset, pendenciasNuvem, computeAll, custoCompra, freteCompra, ordemLoteItem, padLE, dasMensal, mesesAtivos, previewItem, linhasProposta, faltasOferta, marcaModeloDoTexto, normMM, horizontal, capitalizarTitulos, unitProposta, resolverPdfOpts, camposModelo, pendenciasModelo, CAMPOS_MODELO, identificaEmpresa, COLUNAS_DESC, CAMPOS_FORNECEDOR, CAMPOS_BANCO, mergeState, diffState, paraNuvem, createStore, };
+    custoUnitOpc, embDe, tesouro, corTesouro, agora, setClockOffset, getClockOffset, pendenciasNuvem, computeAll, custoCompra, freteCompra, ordemLoteItem, padLE, dasMensal, mesesAtivos, previewItem, linhasProposta, faltasOferta, marcaModeloDoTexto, normMM, horizontal, capitalizarTitulos, unitProposta, resolverPdfOpts, camposModelo, pendenciasModelo, CAMPOS_MODELO, identificaEmpresa, COLUNAS_DESC, CAMPOS_FORNECEDOR, CAMPOS_BANCO, mergeState, diffState, paraNuvem, createStore, };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   root.Core = api;
 })(typeof window !== 'undefined' ? window : globalThis);
@@ -4316,7 +4340,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
         const bad = c.sitTipo === 'bad';
         el.innerHTML = `${avisoKm}${decisaoHtml(c)}
           <div class="kv"><span>Custo unit. final <b>${C.brl(c.custoUnit)}</b></span><span>Entrega rateada <b>${C.brl(c.entrega)}</b></span>
-          ${(() => { const d = decisao(c); return (d.min != null && c.teto ? `<span>Posso baixar do teto até o mínimo <b>${C.brl(c.teto - d.min)} (${C.pct(1 - d.min / c.teto, 0)})</b></span>` : '') + `<span>Lucro ${c.lance !== null ? 'no lance' : 'pelo teto'} <b style="color:${c.lucro != null && c.lucro < 0 ? 'var(--red)' : 'var(--ink)'}">${C.brl(c.lucro)}</b></span>`; })()}
+          ${(() => { const d = decisao(c); return (d.min != null && c.teto ? `<span>Posso baixar do teto até o mínimo <b>${C.brl(c.teto - d.min)} (${C.pct(1 - d.min / c.teto, 0)})</b></span>` : '') + `<span>Lucro ${c.lance !== null ? 'no lance' : 'pelo teto'} <b style="color:${c.lucro != null && c.lucro < 0 ? 'var(--red)' : 'var(--ink)'}">${C.brl(c.lucro)}</b></span>` + tesouroTxt(c.tesouro); })()}
           ${c.impostoTotal > 0 ? `<span>Impostos <b>${C.brl(c.impostoTotal)}</b></span>` : ''}</div>
           ${c.situacao ? `<div><span class="badge ${c.sitTipo}">${esc(c.situacao)}</span> ${estrelasHtml(c)} <span class="tiny muted">Lucro previsto ${C.brl(c.lucro)}</span></div>` : ''}${elOps ? '' : dica}`;
       },
@@ -5155,7 +5179,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
       ${descLinha}
       ${venc}
       ${decisaoHtml(c)}
-      ${(() => { const d = decisao(c); return `<div class="row between wrap small muted i-fin2" style="gap:4px 10px"><span>Posso baixar do teto até o mínimo: <b style="color:var(--ink)">${d.min != null && c.teto ? C.brl(c.teto - d.min) + ' (' + C.pct(1 - d.min / c.teto, 0) + ')' : '—'}</b></span><span>${c.impostoTotal > 0 ? 'Impostos ' + C.brl(c.impostoTotal) + ' · ' : ''}Lucro ${c.lance !== null ? 'no lance' : 'pelo teto'}: <b style="color:${c.lucro != null && c.lucro < 0 ? 'var(--red)' : 'var(--ink)'}">${C.brl(c.lucro)}</b></span></div>`; })()}
+      ${(() => { const d = decisao(c); return `<div class="row between wrap small muted i-fin2" style="gap:4px 10px"><span>Posso baixar do teto até o mínimo: <b style="color:var(--ink)">${d.min != null && c.teto ? C.brl(c.teto - d.min) + ' (' + C.pct(1 - d.min / c.teto, 0) + ')' : '—'}</b></span><span>${c.impostoTotal > 0 ? 'Impostos ' + C.brl(c.impostoTotal) + ' · ' : ''}Lucro ${c.lance !== null ? 'no lance' : 'pelo teto'}: <b style="color:${c.lucro != null && c.lucro < 0 ? 'var(--red)' : 'var(--ink)'}">${C.brl(c.lucro)}</b></span>${tesouroTxt(c.tesouro)}</div>`; })()}
       ${p && !c.fora && !c.ganhou && (p.status === 'Julgamento' || it.possivelGanhar || it.colocacao || c.resultado === 'perdi' || c.naoGanhou || ['Perdeu', 'Desclassificado', 'Aguardando empenho', 'Faturado', 'Concluído'].includes(p.status) || (p.sessao && (diasDesde(p.sessao) || 0) >= 0)) ? `<div class="coloc-row">${colocacaoInput(it)}${it.colocacao ? `<span class="coloc-badge ${it.colocacao === 1 ? 'c1' : it.colocacao <= 3 ? 'c3' : ''}">${colocTxt(it.colocacao)} lugar</span>` : ''}</div>` : ''}
       ${p && ['Julgamento', 'Proposta enviada'].includes(p.status) && !['perdi', 'desc'].includes(c.resultado) ? simLanceHtml(it, c, meuLance) : ''}
       <div class="icard-actions">${compra}${acao}${acaoEnt}</div></article>`;
@@ -5366,7 +5390,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
       <div class="kpis">
         <div class="kpi"><div class="l">Total de venda</div><div class="v">${C.brl0(pst.venda)}</div></div>
         <div class="kpi" style="--c:#667489"><div class="l">Custo total</div><div class="v" style="color:var(--ink)">${C.brl0(pst.custo)}</div><div class="s">entrega ${C.brl0(pst.viagem)}${pst.imposto > 0 ? ' · impostos ' + C.brl0(pst.imposto) : ''}</div></div>
-        <div class="kpi" style="--c:#2f7d3a"><div class="l">Lucro</div><div class="v">${C.brl0(pst.lucro)}</div></div>
+        <div class="kpi" style="--c:#2f7d3a"><div class="l">Lucro</div><div class="v">${C.brl0(pst.lucro)}</div>${pst.tesouro && pst.tesouro.vezes != null ? `<div class="s">${tesouroTxt(pst.tesouro, true)} em ~${pst.tesouro.dias} dias</div>` : ''}</div>
         <div class="kpi" style="--c:#b7791f"><div class="l">Margem real</div><div class="v">${C.pct(pst.margem, 1)}</div></div>
       </div>
       <div class="card"><h3><span class="grow">Itens deste pregão (${pst.nItens})</span><button class="btn sm primary" data-act="novo-item" data-pid="${p.id}">${icon('plus', 'sm')} Item</button></h3>
@@ -5384,6 +5408,13 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     return (sp > max * 0.55 ? cut.slice(0, sp) : cut).replace(/[\s,.;:/-]+$/, '') + '…';
   }
   // bloco do item (PC): sempre as mesmas linhas, na mesma posição
+  // "vale mais que o Tesouro?" (Selic no prazo em que o dinheiro fica fora) — medida, não trava nada
+  function tesouroTxt(t, curto) {
+    if (!t || t.vezes == null) return '';
+    const vz = t.vezes <= 0 ? 'não rende' : C.numBR(t.vezes, 1) + '×';
+    const tip = `Comprando por ${C.brl(t.rend / (Math.pow(1 + t.selic, t.dias / 365) - 1))}, o dinheiro fica fora ~${t.dias} dias${t.diasEst ? ' (prazo estimado: o pregão não tem prazo de entrega/pagamento)' : ''}. Na Selic (${C.pct(t.selic, 2)} a.a., bruto) renderia ${C.brl(t.rend)}. Seu lucro equivale a ${t.anual != null ? C.pct(t.anual, 0) : '—'} ao ano.`;
+    return `<span title="${esc(tip)}">vs Tesouro <b style="color:${C.corTesouro(t)}">${vz}</b>${!curto && t.anual != null && t.vezes > 0 ? ` (≈ ${C.pct(t.anual, 0)} a.a.)` : ''}${!curto && t.pisoUnit != null ? ` · empata em ${C.brl(t.pisoUnit)}/un` : ''}</span>`;
+  }
   function itemBloco(it, c) {
     const lt = C.padLE(it.loteEdital), ie = C.padLE(it.itemEdital);
     const num = (lt || ie) ? (lt ? 'L' + esc(lt) + (ie ? ' · ' : '') : '') + (ie ? 'ITEM ' + esc(ie) : '') : 'S/Nº';
@@ -6245,7 +6276,9 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
         ${fld('Consumo do carro (km/l)', 'consumo', 'num', C.numBR(c.consumo, 2), { im: 'decimal' })}
         ${fld('Combustível (R$/l)', 'combustivel', 'num', C.numBR(c.combustivel, 2), { im: 'decimal' })}
         ${fld('Desgaste do carro (R$/km)', 'desgaste', 'num', C.numBR(c.desgaste, 2), { im: 'decimal', hint: 'Pneu, óleo, manutenção. Estimativa: ajuste ou zere.' })}
-        ${fld('Capital de giro disponível (R$)', 'capitalGiro', 'num', C.numBR(c.capitalGiro || 0, 2), { im: 'decimal', hint: 'Quanto dá para comprar antes de receber. O aviso de entrega parcelada compara com ele.' })}</div></div>
+        ${fld('Capital de giro disponível (R$)', 'capitalGiro', 'num', C.numBR(c.capitalGiro || 0, 2), { im: 'decimal', hint: 'Quanto dá para comprar antes de receber. O aviso de entrega parcelada compara com ele.' })}
+        ${fld('Selic (% ao ano)', 'selicPct', 'num', C.numBR(c.selicPct != null ? c.selicPct : 13.75, 2), { im: 'decimal', hint: 'Compara o lucro com o que o dinheiro renderia parado no Tesouro Selic. Atualize quando o Copom mudar.' })}
+        ${fld('Dias com o dinheiro fora (padrão)', 'diasDinheiroFora', 'int', c.diasDinheiroFora != null ? c.diasDinheiroFora : 45, { im: 'numeric', hint: 'Usado quando o pregão não tem prazo de entrega e de pagamento.' })}</div></div>
       <div class="card"><h3>Limite do MEI</h3><div class="formgrid">
         ${fld('Ano de referência', 'anoRef', 'int', c.anoRef, { im: 'numeric' })}
         ${fld('Limite anual cheio (R$)', 'limiteCheio', 'num', C.numBR(c.limiteCheio, 2), { im: 'decimal', hint: 'Valor de referência. Confirme o vigente.' })}
