@@ -290,7 +290,7 @@
   F('aviso-itens', AR.item, 4, 'manter', 'Guia Itens: aviso de itens sem foto e de preços para revisar',
     `No topo da guia Itens: quantos itens dos pregões ativos estão sem foto no catálogo e quantos têm o alerta Revisar (preço cotado a conferir), por pregão. Clicar no pregão filtra; “Mostrar só esses” deixa só os itens pendentes. No bloco do item aparece o selo “Sem foto”.`, { sel: ['.avisos-i', '[data-act=aviso-pend-i]'] });
   F('vs-tesouro', AR.calc, 4, 'manter', 'Comparação com o Tesouro Selic (vale mais que deixar o dinheiro parado?)',
-    `No item (cartão e janela) e no pregão (cartão Lucro): quantas vezes o lucro supera o que o mesmo dinheiro renderia na Selic no prazo em que fica fora (entrega + pagamento do pregão; sem prazo, o padrão da Config), o equivalente ao ano e o lance unitário em que empata com o Tesouro. Cor: vermelho abaixo de 1×, âmbar até 2×, verde acima. Só mede, não trava nada. Selic e dias padrão na Config.`, { sel: ['[title*=Selic]'] });
+    `No item (cartão e janela) e no pregão (cartão Lucro): quantas vezes o lucro supera o que o mesmo dinheiro renderia na Selic no prazo em que fica fora (entrega + pagamento do pregão; sem prazo, o padrão da Config), o equivalente ao ano e o lance unitário em que empata com o Tesouro. Cor: vermelho abaixo de 1×, âmbar até 2×, verde acima. Só mede, não trava nada. A Selic vem sozinha do Banco Central (série 432, meta Copom) uma vez por dia; dias padrão na Config.`, { sel: ['[title*=Selic]'] });
   F('hook-app', AR.cod, 2, 'manter', 'Gancho de depuração (window.__app)',
     `O app expõe store, UI e render para testes e para este depurador.`, { ev: 'index.html, fim do script de interface.' });
 

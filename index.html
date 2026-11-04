@@ -1290,7 +1290,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.118.0';
+  const APP_VERSION = '1.119.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Julgamento', 'Aguardando empenho', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -6277,7 +6277,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
         ${fld('Combustível (R$/l)', 'combustivel', 'num', C.numBR(c.combustivel, 2), { im: 'decimal' })}
         ${fld('Desgaste do carro (R$/km)', 'desgaste', 'num', C.numBR(c.desgaste, 2), { im: 'decimal', hint: 'Pneu, óleo, manutenção. Estimativa: ajuste ou zere.' })}
         ${fld('Capital de giro disponível (R$)', 'capitalGiro', 'num', C.numBR(c.capitalGiro || 0, 2), { im: 'decimal', hint: 'Quanto dá para comprar antes de receber. O aviso de entrega parcelada compara com ele.' })}
-        ${fld('Selic (% ao ano)', 'selicPct', 'num', C.numBR(c.selicPct != null ? c.selicPct : 13.75, 2), { im: 'decimal', hint: 'Compara o lucro com o que o dinheiro renderia parado no Tesouro Selic. Atualize quando o Copom mudar.' })}
+        ${fld('Selic (% ao ano)', 'selicPct', 'num', C.numBR(c.selicPct != null ? c.selicPct : 13.75, 2), { im: 'decimal', hint: c.selicEm ? 'Atualizada sozinha pelo Banco Central (meta Copom) em ' + esc(c.selicEm.split('-').reverse().join('/')) + '. Compara o lucro com o Tesouro Selic.' : 'O app busca sozinho no Banco Central uma vez por dia (meta Copom). Compara o lucro com o Tesouro Selic.' })}
         ${fld('Dias com o dinheiro fora (padrão)', 'diasDinheiroFora', 'int', c.diasDinheiroFora != null ? c.diasDinheiroFora : 45, { im: 'numeric', hint: 'Usado quando o pregão não tem prazo de entrega e de pagamento.' })}</div></div>
       <div class="card"><h3>Limite do MEI</h3><div class="formgrid">
         ${fld('Ano de referência', 'anoRef', 'int', c.anoRef, { im: 'numeric' })}
@@ -6855,6 +6855,20 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
   }
 
   // sincroniza: lê o servidor, mescla e grava numa transação (aparelho desatualizado nunca sobrescreve o servidor)
+  // Selic automática (pedido do João, 04/11/2026): série 432 do SGS do Banco Central = meta Selic definida pelo Copom.
+  // Busca no máximo uma vez por dia; sem internet ou se o BC não responder, fica o último valor salvo (e dá para digitar).
+  async function atualizarSelic() {
+    const cfg = store.get().config, d0 = new Date(), hoje = d0.getFullYear() + '-' + String(d0.getMonth() + 1).padStart(2, '0') + '-' + String(d0.getDate()).padStart(2, '0');
+    if (cfg.selicEm === hoje || !navigator.onLine) return;
+    try {
+      const r = await fetch('https://api.bcb.gov.br/dados/serie/bcdata.sgs.432/dados/ultimos/1?formato=json', { cache: 'no-store' });
+      const v = parseFloat(((await r.json())[0] || {}).valor);
+      if (!(v > 0 && v < 100)) return;
+      if (v !== Number(cfg.selicPct)) store.setConfigPath('selicPct', v, { silent: true });
+      store.setConfigPath('selicEm', hoje, { silent: true });
+      if (UI.tab === 'config' || UI.detailId) render();
+    } catch (e) { /* sem resposta do BC: mantém o valor salvo */ }
+  }
   function adaptadorFirebase(uid) {
     return {
       sync: (local) => window.CloudSync.mesclarNaNuvem(uid, (remoto) => {
@@ -7062,6 +7076,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     if (q.has('tab') || q.has('acao') || q.has('source')) history.replaceState(null, '', location.pathname);
     initSW();
     iniciarNuvem(false);                                   // carrega o Firebase sem travar a abertura
+    atualizarSelic();                                      // Selic do Banco Central (meta Copom), uma vez por dia
     window.addEventListener('online', () => { if (!Cloud.ligado) iniciarNuvem(false); else sincronizarImagens(); });
   }
 
