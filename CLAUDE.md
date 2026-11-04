@@ -38,7 +38,7 @@ sempre, acrescente aqui (seção certa) no mesmo commit da tarefa.
 - Visual: mesmo alinhamento, blocos simétricos, status com uma palavra só, órgão em CAIXA ALTA,
   cidade padronizada ("Ortigueira/PR"). Se houver dúvida num ajuste visual, mostre uma prévia antes de publicar.
 - Botões de link dos cartões de pregão (guia Pregões, PC): só ícone, sempre nas mesmas posições (edital, modelo, enviar proposta, licitação); o que não tem link fica apagado. No celular, título do órgão sem o prefixo "Prefeitura Municipal de".
-- Formulário do item: NÃO existe campo "onde comprar". Só o botão "+" (opções de compra: link, loja, frete, preço do anúncio e unidades no anúncio; até 8). Decisão de 31/10/2026: as opções são SÓ LINKS para o João abrir quando quiser (cesta + lápis); NÃO existe mais "Usar"/tique e as opções NÃO mexem no custo: Custo e Frete do item são sempre os digitados (nunca travados). A prévia lista as opções com o total de cada uma e marca a mais barata, com botão "Abrir". No JSON, `usar` é ignorado (mandar `false`).
+- Formulário do item: NÃO existe campo "onde comprar". Só o botão "+" (opções de compra: link, loja, frete, preço do anúncio e unidades no anúncio; até 8). Decisão de 31/10/2026: as opções são SÓ LINKS para o João abrir quando quiser (cesta + lápis); NÃO existe mais "Usar"/tique e as opções NÃO mexem no custo: Custo e Frete do item são sempre os digitados (nunca travados). A prévia lista as opções com o total de cada uma e marca a mais barata, com botão "Abrir". No JSON não mandar `usar` (saiu na v1.115.0, decisão de 04/11/2026).
 - Preço de pacote (decisão de 31/10/2026): cada opção de compra tem "Preço do anúncio" (`custo`) e "Unidades no anúncio" (`emb`, vazio/1 = preço por unidade); a prévia mostra o custo por unidade comprando anúncios inteiros (20 un. com anúncio de 10 = 2 anúncios). Opção com preço acima do teto e sem `emb` mostra o aviso "o anúncio é de um pacote?". O custo do item (por unidade) é digitado pelo João.
 - Botão de compra (cartão do item, catálogo e formulário): SEMPRE com o nome do site/loja (sem nome, o domínio do link), também no celular, na ordem do cadastro.
 - Opções de compra aparecem na prévia do item comparando o total (custo × qtd + frete) e marcando a mais barata; cada uma com botão "Abrir".
@@ -182,9 +182,9 @@ Formato de backup do app (Config › Importar › Mesclar). IDs únicos e novos;
     "qtd": 10, "custo": 2.0, "teto": 5.0, "frete": 0, "margem": null, "lanceFinal": null,
     "semLance": false,
     "alternativas": [
-      { "loja": "Loja A", "link": "https://link-direto-do-produto", "custo": 2.0, "frete": 0, "usar": false },
-      { "loja": "Loja C (pacote)", "link": "https://link-direto-do-produto", "custo": 18.0, "emb": 10, "frete": 0, "usar": false },
-      { "loja": "Loja B", "link": "https://link-direto-do-produto", "custo": 2.1, "frete": 0, "usar": false }
+      { "loja": "Loja A", "link": "https://link-direto-do-produto", "custo": 2.0, "frete": 0 },
+      { "loja": "Loja C (pacote)", "link": "https://link-direto-do-produto", "custo": 18.0, "emb": 10, "frete": 0 },
+      { "loja": "Loja B", "link": "https://link-direto-do-produto", "custo": 2.1, "frete": 0 }
     ],
     "obs": "", "createdAt": 0, "updatedAt": 0, "deleted": false
   }]
@@ -193,7 +193,7 @@ Formato de backup do app (Config › Importar › Mesclar). IDs únicos e novos;
 
 - `tipoCompra`: SEMPRE preencher, "SRP" ou "Aquisição" (na busca, pelo campo `srp` do PNCP; na análise, confirmar no edital: "Registro de preços"/"Ata de registro" = SRP; "aquisição" com contrato/empenho único = Aquisição).
 - Compra: `custo` da opção = preço do anúncio como está na loja; se o anúncio for de pacote/caixa/kit com várias unidades, informar `emb` (unidades no anúncio) em vez de dividir à mão.
-- Compra: `custo` e `frete` do ITEM = os da loja escolhida (são eles que valem nas contas); `alternativas` são só links de referência, com `usar: false`. `semLance` sempre explícito (`true`/`false`), senão a mesclagem mantém o valor antigo do app.
+- Compra: `custo` e `frete` do ITEM = os da loja escolhida (são eles que valem nas contas); `alternativas` são só links de referência (sem `usar` nem `qtd`: a compra dividida e os campos `onde`/`ondeLink`/`impostoCompraPct` saíram na v1.115.0; o app migra dados antigos sozinho, congelando custo e frete no valor que já valia). `semLance` sempre explícito (`true`/`false`), senão a mesclagem mantém o valor antigo do app.
 - Atualizar um pregão que já está no app: partir do backup mais recente, reaproveitar os ids, mandar `updatedAt` novo e NÃO mandar `marca`, `modelo`, `catalogoDesc`, `lanceFinal` nem fotos (o que o JSON não traz continua como está no app).
 - Pregão: SEMPRE mandar `km` (ida e volta a partir de Telêmaco Borba) e `viagens` (decisão de 31/10/2026; sem km o app não conta a viagem nem o "se ganhar só este").
 - `regrasEdital.semIdentificacao`: `true` = edital proíbe identificar na inicial; `false` = exige; omitir se o

@@ -247,8 +247,6 @@
   F('filtros-status', AR.quad, 2, 'remover', 'Barra de filtros por status (acima do quadro)',
     `Botões Todos/Incompleto/Analisando/Enviada/…/Desisti que filtram o quadro. As raias já agrupam por status e o grupo em tela cheia mostra um status só; o Painel também leva à guia já filtrada.`,
     { red: ['cartao-quadro', 'grupo-tela-cheia'], para: 'Remover a barra; manter o clique nos números do Painel (que filtra) ou trocar por abrir o grupo em tela cheia.', sel: ['.filters'] });
-  F('tipo-dados-detalhe', AR.quad, 2, 'remover', 'Quadro “Dados do pregão” no detalhe',
-    `Lista com envio das propostas, local, prazo de entrega, entregas e link do edital. Quase tudo já está no cabeçalho, nas etiquetas ou no formulário.`, { red: ['detalhe-pregao'], sel: ['.kv-list'] });
   F('mini-pregao', AR.quad, 2, 'fundir', 'Cartão compacto de encerrados (duas versões)',
     `Há dois desenhos para o pregão encerrado: o cartão pequeno “mini” (guia Itens) e o chip “enc-chip” (guia Pregões, botão Encerrados e concluídos).`, { red: ['cartao-quadro'], para: 'Ficar com um só desenho.', sel: ['.mini-p', '.enc-chip'] });
   F('painel-itens', AR.pain, 2, 'fundir', 'Painel: tabelas “Itens que posso ganhar” e “Itens com colocação”',
@@ -293,15 +291,6 @@
     `O app expõe store, UI e render para testes e para este depurador.`, { ev: 'index.html, fim do script de interface.' });
 
   /* ================= 1 · REDUNDANTES, LEGADAS E MORTAS ================= */
-  F('opcoes-legado', AR.item, 1, 'remover', 'Campos antigos de compra: onde, ondeLink e “usar”',
-    `Antes das opções de compra existiam os campos “onde comprar” e o tique “Usar”. Os dados antigos continuam no item e duplicam o link da primeira opção; o código ainda tem ramos para o modelo antigo.`,
-    { red: ['opcoes-compra'], probe: 'ondeLegado', para: 'Migrar (copiar para a opção 1 quando faltar) e apagar onde/ondeLink/usar. Só os links já ocupam cerca de 33 mil caracteres da nuvem.', ev: 'comprasDoItem/opcoesParaForm/opcoesUsadas guardam o caminho antigo; OPCOES_SO_LINK nunca é lida.' });
-  F('compra-dividida', AR.calc, 1, 'remover', 'Compra dividida entre fornecedores (“Comprar aqui”)',
-    `Calculava custo médio quando cada loja levava uma parte da quantidade. O campo foi tirado da tela (ficou oculto) e a decisão de 31/10 é que as opções são só links.`,
-    { red: ['opcoes-compra'], probe: 'optQtd', para: 'Remover divisaoCompra e o campo oculto; conferir os poucos itens que ainda têm quantidade em alguma opção.', ev: 'divisaoCompra + hidden input altNQtd.' });
-  F('imposto-compra', AR.calc, 1, 'remover', 'Imposto na compra por item (ICMS-ST) e alíquota ICMS',
-    `Campos retirados do formulário. A conta ainda soma o imposto na compra; a alíquota ICMS só alimenta colunas da tabela de especificações (sempre desligada).`,
-    { probe: 'impostoCompra', para: 'Remover os dois campos e a conta.', ev: 'calcItem/compraBase/linhasProposta.' });
   F('pdf-tabela-espec', AR.pdf, 1, 'remover', 'Tabela de especificações técnicas do PDF (11 colunas)',
     `Tabela alternativa à lista de itens, com colunas opcionais (código, marca, ICMS…). É sempre desligada por padrão (o detalhamento vai no catálogo) e o campo “código do produto” não tem onde ser digitado.`,
     { red: ['pdf-catalogo'], probe: 'tabelaEspec', para: 'Remover tabela, colunas, código e especificações.', ev: 'resolverPdfOpts força tabela=false.', sel: ['#acc-tab'] });
@@ -311,27 +300,10 @@
   F('entrega-separada', AR.preg, 1, 'fundir', '“Calcular cada ida separadamente” (entregas do pregão)',
     `Divide o pregão em várias entregas, cada uma com km/viagens/pedágio e itens próprios. Faz o mesmo que o local de entrega do item, de outra forma. Nenhum dos seus pregões usa.`,
     { red: ['local-item'], probe: 'entregaDiferente', para: 'Ficar com o local do item.', sel: ['[name=entregaDiferente]', '#egList'] });
-  F('intervalo-min', AR.preg, 1, 'remover', 'Intervalo mínimo entre lances',
-    `Só aparece como linha no quadro de dados; não existe campo para digitar (foi retirado do formulário).`, { probe: 'intervaloMin', ev: 'Texto “Intervalo mín. lances” em renderDetail.' });
-  F('ocultar-painel', AR.pain, 1, 'remover', 'Tirar pregão do Painel (ocultar)',
-    `O botão “×” só existia no cartão antigo do Painel (que não é mais desenhado). Ficaram os controles “mostrar ocultos / concluídos” sem botão e o campo ocultoPainel, que só ainda esconde da agenda do celular.`,
-    { probe: 'ocultoPainel', ev: 'Ações mostrar-painel, painel-ocultos, painel-concluidos e ocultar-painel sem botão que as chame.' });
-  F('painel-card-antigo', AR.cod, 1, 'remover', 'Cartão antigo do Painel (painelCard e valorPainel)',
-    `Funções que desenhavam o cartão do Painel antes da versão 98. Ninguém chama mais, mas o CSS correspondente continua no arquivo.`, { ev: 'Nenhuma chamada a painelCard/valorPainel.' });
-  F('agenda-desktop-antiga', AR.pain, 1, 'revisar', 'Agenda dos pregões no PC (removida na v1.98)',
-    `O bloco “Agenda” do Painel no PC saiu quando o Painel virou dashboard; sobraram cerca de 28 classes de CSS (ag-*). A raia “Atenção agora” e as Pendências cobrem o mesmo.`, { para: 'Decidir: não restaurar (recomendado, já há Atenção agora) ou restaurar uma agenda curta. Em qualquer caso apagar o CSS sobrando.', ev: 'Classes .ag-* sem uso no HTML ou JS.' });
-  F('destaque-antigo', AR.cod, 1, 'remover', 'Faixa antiga “se ganhar só este” e destaque antigo',
-    `As funções soloHtml, destaqueHtml e destaqueInfo (e viabLinha, foraNoFim, copiarTexto) ficaram no arquivo, mas nenhuma tela as chama; o bloco de decisão novo as substituiu.`, { red: ['destaque-decisao', 'solo'], ev: 'Nenhuma chamada no código.' });
   F('status-legado', AR.preg, 1, 'remover', 'Status antigos “Ganhou” e “Em disputa”',
     `“Em disputa” já é convertido em Julgamento ao abrir; “Ganhou” ficou como leitura de dados antigos e aparece em listas de ordem e de cores.`, { probe: 'statusLegado', para: 'Converter e tirar das listas.', ev: 'migrate(), ORDEM_STATUS, COR_STATUS, DASH_PART.' });
-  F('resultado-legado', AR.item, 1, 'remover', 'Botões antigos Venci/“Não ganho” (item-venci, item-ganho)',
-    `Tratadores que ficaram para botões que não existem mais (o seletor Venci/Não ganhei/Desclassif. os substituiu). O campo naoGanhou segue sendo lido para dados antigos.`, { red: ['resultado-item'], ev: 'Ações sem botão: item-venci, item-ganho.' });
-  F('pdf-modelo-antigo', AR.cod, 1, 'remover', 'Escolha antiga de modelo de proposta (pdf-modelo)',
-    `Tratador de quando havia modelos “comercial” e “descritivo”. Hoje o modelo é único.`, { ev: 'Ação pdf-modelo sem botão; resolverPdfOpts força modelo = unico.' });
   F('sync-antigo', AR.cod, 1, 'remover', 'Caminho antigo de sincronização (pull/push) e flags nunca lidos',
     `A sincronização tem dois caminhos: o atômico (transação, o único usado) e um pull+push antigo que nenhum adaptador alimenta. Também sobram: lastSync/changedSince para o caminho antigo, a flag kmAuto (só gravada) e a constante OPCOES_SO_LINK.`, { ev: 'adaptadorFirebase só implementa sync().' });
-  F('demo-dados', AR.conf, 1, 'remover', 'Dados de exemplo e tela de boas-vindas',
-    `Cria pregões de mentira para testar. O app já está em uso real; os exemplos só ocupam código e confundem a tela vazia.`, { ev: 'demoState, mergeDemo, emptyWelcome.', sel: ['[data-act=demo]'] });
 
   /* ----- ordem final: importância (5→1), mantendo a ordem em que foram escritas; numeração F01… ----- */
   const ordem = L.map((x, i) => [x, i]).sort((a, b) => (b[0].imp - a[0].imp) || (a[1] - b[1])).map((p) => p[0]);

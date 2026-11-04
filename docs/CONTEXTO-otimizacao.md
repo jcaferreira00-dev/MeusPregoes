@@ -47,3 +47,14 @@ Sonda de uso por clique mais longa (guardar por dia), botão "gerar plano de mud
 - Botão novo na Config, "Apagar pregões Desisti" (decisão do João): apaga de vez os pregões Desisti e seus itens e encolhe as lápides antigas. Não desfaz; exportar backup antes.
 - Feito: passo 1 e parte do passo 2 do plano de espaço. Falta decidir: remover `onde`/`ondeLink`/`usar` (legado de compra).
 - FEITO na v1.112.0 (botão "Limpar desistências" na Config; decisão do João, 31/10/2026): apaga também os itens de desistência (`semLance: true`) dos pregões com proposta já enviada cuja sessão já passou, porque não dá mais para mudar de ideia. Mesmo molde do botão "Apagar pregões Desisti" (confirmação com contagem, lápide mínima). Não mexer nos pregões cuja sessão ainda não passou nem nos itens ganhos.
+
+## 8. Decisões do Depurador (04/11/2026) — ver `docs/decisoes-depurador-2026-11-04.md`
+Rodada 1 (v1.115.0) FEITA — removidos: F84 quadro "Dados do pregão" (com o "Intervalo mín. lances", F110); F104–F106 campos antigos de compra, compra dividida e imposto na compra (migração em `migrate()`/`migItem`: custo e frete congelados no valor que as contas usavam, link antigo vira opção 1; testado: lance mínimo, lucro e compra idênticos antes/depois); F111 ocultar do Painel; F112 painelCard/valorPainel; F113 CSS .ag-*; F114 destaque antigo; F116 item-venci/item-ganho; F117 pdf-modelo; F119 dados de exemplo (o botão "Limpar desistências" foi para o lado do "Apagar tudo").
+Ficaram para depois, de propósito:
+- F109 "Calcular cada ida separadamente": conflita com a nota do F64 ("se forem várias entregas, muda o piso do lance") → perguntar ao João antes.
+- F115 status "Ganhou"/"Em disputa": o app ainda precisa ler dados antigos com esses status (regra de item ganho "legado").
+- F118 caminho antigo de sincronização: mexe na sincronização (protegida); só com teste de duas fontes.
+- F107/F108 (tabela de especificações e 3 jeitos de declaração): vão na rodada 3, junto com F36/F50 (modelo padrão da proposta).
+Rodada 2: fundir/enxugar Painel e itens (só informativo pode agrupar sem perguntar; o que mexe em proposta, cálculo ou Config → o João avalia antes). Rodada 3: proposta (modelo padrão p/ todos, só a versão sem identificação muda; sem cláusulas; declarações em documento separado) + tela de login (entra sozinho com senha salva; sem "criar conta" até resolver o limite do Firebase).
+F28 "Posso baixar do teto" (nota do João, 04/11): o piso não é lucro zero. Considerar o custo do dinheiro parado (Selic/Tesouro no prazo em que o dinheiro fica fora, compra no cartão) e um lucro mínimo em R$ que compense (≈ R$ 400–500 numa compra maior), proporcional ao valor investido (gastar R$ 10 mil para lucrar R$ 400 não vale). "Nada engessado": propor a regra e mostrar prévia antes.
+F38: o selo SRP/Compra tampa a cidade e o número do pregão no cartão → corrigir com prévia.
