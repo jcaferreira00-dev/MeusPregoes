@@ -278,7 +278,7 @@
   F('pdf-compartilhar', AR.pdf, 2, 'revisar', 'Botão Compartilhar o PDF',
     `Usa a folha de compartilhamento do celular. Em PC não aparece.`, { sel: ['[data-act=pdf-compartilhar]'] });
   F('catalogo-dois-lugares', AR.item, 2, 'revisar', 'Descritivo/fotos no item E no catálogo da guia Proposta',
-    `É o mesmo dado (descritivo + fotos) editável em dois lugares, mais o atalho “Fotos e descrição para o catálogo”. Decisão de 30/10 foi manter as duas opções.`, { red: ['pdf-catalogo'], para: 'Se um dos lugares quase não for usado, tirar.', sel: ['[data-ir-catalogo]', '[data-cat-desc]'] });
+    `É o mesmo dado (descritivo + fotos) editável em dois lugares (janela do item e catálogo da guia Proposta). O atalho “Fotos e descrição para o catálogo”, que saía da janela do item, foi tirado em 04/11/2026 a pedido do João.`, { red: ['pdf-catalogo'], para: 'Se um dos lugares quase não for usado, tirar.', sel: ['[data-ir-catalogo]', '[data-cat-desc]'] });
   F('titulos-catalogo', AR.item, 2, 'fundir', 'Sugestões de título (MARCA, MODELO, DIMENSÕES…)',
     `Atalhos para inserir “TÍTULO:” no descritivo, que aprendem os mais usados. Existem duas implementações (janela do item e catálogo).`, { red: ['catalogo-dois-lugares'], para: 'Uma implementação só.', sel: ['[data-ftit]', '[data-cat-tit]'] });
   F('apagar-tudo', AR.conf, 2, 'enxugar', 'Apagar todos os dados',
