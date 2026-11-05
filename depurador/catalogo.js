@@ -76,7 +76,7 @@
     `Janela com número, órgão, status, plataforma, tipo de compra, cidade/UF, links (edital, enviar proposta, licitação, modelo), prazo de propostas, sessão, observações, entrega e pagamento, modelo próprio, entrega parcelada e entrega de carro (km, viagens, pedágio). Rascunho automático e trava de número (só dígitos e . - /).`,
     { sel: ['[data-act=editar-pregao]', '[data-act=novo-pregao]'] });
   F('cartao-quadro', AR.quad, 5, 'enxugar', 'Quadro de pregões por raias (guia Pregões)',
-    `É a tela principal de trabalho: colunas por importância — Atenção agora (vermelha), Julgamento, Venci 🏆, Enviadas, Analisando, Incompletos — com encerrados/concluídos num botão só. No celular uma coluna por vez; no PC as colunas cabem na tela e rolam por dentro.`,
+    `É a tela principal de trabalho: colunas por importância — Atenção agora (vermelha), Julgamento, Venci 🏆, Enviadas, Analisando, Incompletos — com encerrados/concluídos num botão só. No celular uma coluna por vez; no PC as colunas cabem na tela e rolam por dentro. v1.125.0 (05/11/2026): no PC, cartões compactos e todos do mesmo tamanho; 3 colunas por tela até 1600 px; cores novas dos status (enviada azul, falta dados vermelho, analisando roxo).`,
     { sel: ['.pq-board', '.pq-col'], para: 'Manter. A barra de filtros por status acima do quadro repete as raias (ver “Filtros por status”).' });
   F('atencao-agora', AR.quad, 5, 'manter', 'Raia “Atenção agora” e alertas do cartão',
     `Junta o que não pode esperar: pregão hoje, proposta vencendo em até 1 dia, entrega ou pagamento atrasado, sessão que passou sem resultado. Cada cartão ganha uma faixa de alerta colorida e a borda muda de cor conforme a urgência.`,

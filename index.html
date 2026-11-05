@@ -116,14 +116,18 @@ button.pill { border: 0; font: inherit; cursor: pointer; }
 
 .badge { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 99px; background: var(--blue-soft); color: var(--blue); white-space: nowrap; }
 .st-Concluído { background: color-mix(in srgb, #607d8b 16%, transparent); color: #455a64; }
-.badge.ok, .st-Faturado, .st-Ganhou { background: var(--green-soft); color: var(--green); }
-.st-Aguardando-empenho { background: color-mix(in srgb, #8e44ad 16%, transparent); color: #7b3a99; }
-.badge.warn, .st-Julgamento, .st-Proposta-enviada { background: var(--amber-soft); color: var(--amber); }
-.badge.bad, .st-Perdeu, .st-Desclassificado { background: var(--red-soft); color: var(--red); }
+.badge.ok, .st-Ganhou { background: var(--green-soft); color: var(--green); }
+.st-Aguardando-empenho { background: color-mix(in srgb, #0e8a8a 16%, transparent); color: #0b6e6e; }
+.badge.warn, .st-Julgamento { background: var(--amber-soft); color: var(--amber); }
+.badge.bad { background: var(--red-soft); color: var(--red); }
+.st-Proposta-enviada { background: color-mix(in srgb, #2e75b6 16%, transparent); color: #1f5f99; }
+.st-Perdeu { background: color-mix(in srgb, #8d6e63 18%, transparent); color: #6d4c41; }
+.st-Desclassificado { background: color-mix(in srgb, #ad1457 14%, transparent); color: #ad1457; }
+.st-Faturado { background: color-mix(in srgb, #3f51b5 14%, transparent); color: #3f51b5; }
 .st-Desisti { background: var(--line); color: var(--muted); }
-.st-Analisando { background: var(--blue-soft); color: var(--blue); }
-.st-Falta-dados { background: color-mix(in srgb, #f57c00 18%, var(--card)); color: #b85c00; }
-@media (prefers-color-scheme: dark) { .st-Falta-dados { color: #ffa94d; } }
+.st-Analisando { background: color-mix(in srgb, #7b3fbf 15%, transparent); color: #6a32a8; }
+.st-Falta-dados { background: color-mix(in srgb, #c0392b 15%, var(--card)); color: #b03024; }
+@media (prefers-color-scheme: dark) { .st-Falta-dados { color: #ff8a7a; } .st-Analisando { color: #c39bf0; } .st-Proposta-enviada { color: #7fb3e6; } .st-Aguardando-empenho { color: #5fd0d0; } }
 .chip { display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px; padding: 3px 9px; border-radius: 8px; background: var(--bg); color: var(--ink); border: 1px solid var(--line); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .chip.org { background: var(--blue-soft); color: var(--blue); border-color: transparent; font-weight: 600; }
 .chips { display: flex; flex-wrap: wrap; gap: 6px; }
@@ -335,7 +339,7 @@ input.input[type=datetime-local]::-webkit-date-and-time-value, input.input[type=
 .pcard { border: 2px solid var(--sc, var(--line)); }
 .pcard.prz-warn { border-color: var(--amber); background: color-mix(in srgb, var(--amber) 10%, var(--card)); box-shadow: 0 0 0 2px color-mix(in srgb, var(--amber) 35%, transparent), var(--shadow); }
 .pcard.prz-bad { border-color: var(--red); background: color-mix(in srgb, var(--red) 9%, var(--card)); box-shadow: 0 0 0 2px color-mix(in srgb, var(--red) 40%, transparent), var(--shadow); }
-.pcard.enviada { border: 2px solid var(--green); }
+.pcard.enviada { border: 2px solid var(--sc); }
 .pcard.falta-dados { border: 3px solid var(--red); }
 /* onde comprar: link vira botão */
 .comprar { display: flex; flex-wrap: wrap; gap: 6px; min-width: 0; }
@@ -761,9 +765,9 @@ input.input[type=datetime-local]::-webkit-date-and-time-value, input.input[type=
 .pq-stack > .pcard { flex: 0 0 auto; min-width: 0; }
 @media (min-width: 600px) { .pq-board { --nmax: 2; } }
 @media (min-width: 900px) { .pq-board { --nmax: 3; } }
-@media (min-width: 1300px) { .pq-board { --nmax: 4; } }
-@media (min-width: 1700px) { .pq-board { --nmax: 5; } }
-@media (min-width: 2100px) { .pq-board { --nmax: 6; } }
+@media (min-width: 1600px) { .pq-board { --nmax: 4; } }
+@media (min-width: 2000px) { .pq-board { --nmax: 5; } }
+@media (min-width: 2400px) { .pq-board { --nmax: 6; } }
 .st-strip { display: flex; gap: 10px; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; padding: 2px; }
 .st-strip::-webkit-scrollbar { display: none; }
 .st-chip { flex: 1 0 auto; min-width: 112px; display: flex; align-items: baseline; gap: 8px; padding: 10px 14px; border-radius: 12px; border: 1px solid var(--line); border-left: 4px solid var(--sc); background: var(--card); font: inherit; color: var(--ink); cursor: pointer; text-align: left; }
@@ -1167,7 +1171,7 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
 .selo-st { position: absolute; right: 10px; bottom: 8px; transform: rotate(-4deg); display: flex; flex-direction: column; align-items: center; line-height: 1.1; padding: 4px 12px 5px; border-radius: 10px; color: #fff; background: var(--sc-selo); border: 2px dashed rgba(255,255,255,.85); outline: 2px solid var(--sc-selo); box-shadow: 0 3px 8px rgba(0,0,0,.28); pointer-events: auto; z-index: 2; white-space: nowrap; }
 .selo-st b { font-size: 13px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
 .selo-st.sel-jul { --sc-selo: #d99a1c; }
-.selo-st.sel-emp { --sc-selo: #8e44ad; }
+.selo-st.sel-emp { --sc-selo: #0e8a8a; }
 .selo-st.sel-entregar { --sc-selo: #2e75b6; }
 .selo-st.sel-parcial { --sc-selo: #e67e22; }
 .selo-st.sel-receber { --sc-selo: #0f8b78; }
@@ -1203,6 +1207,10 @@ html .pq-grid > .pcard.p-venci { padding: 15px; }
 .pcard.al-gold { border: 3px solid #c98a12; background: color-mix(in srgb, #d99a1c 10%, var(--card)); box-shadow: 0 0 0 3px color-mix(in srgb, #d99a1c 22%, transparent), var(--shadow); }
 html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .pcard.al-gold { padding: 15px; }
 @media (max-width: 600px) { html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .pcard.al-gold { padding: 10px; } .p-alert { font-size: 11px; padding: 4px 8px; } }
+.pq-sec.env { color: #2e75b6; } .pq-sec.env b { background: #2e75b6; color: #fff; }
+.pq-sec.ana { color: #7b3fbf; } .pq-sec.ana b { background: #7b3fbf; color: #fff; }
+.pq-sec.inc { color: #c0392b; } .pq-sec.inc b { background: #c0392b; color: #fff; }
+.pq-sec.jul { color: #b7791f; } .pq-sec.jul b { background: #d99a1c; color: #fff; }
 .pq-sec.atn { color: var(--red); } .pq-sec.atn b { background: var(--red); color: #fff; }
 @media (prefers-reduced-motion: reduce) { .pcard.al-bad { animation: none !important; } }
 .dec { border-radius: 12px; border: 1.5px solid var(--line); background: var(--card); overflow: hidden; }
@@ -1326,6 +1334,29 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
 .btn.ibtn.altc[data-alt-go] { width: auto; max-width: 138px; min-width: 40px; padding: 0 10px; gap: 6px; }
 .altc .altc-t { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12.5px; font-weight: 700; position: static; }
 .altc[data-alt-go] .altc-n { position: static; }
+/* Guia Pregões no PC (pedido do João, 05/11/2026): cartões mais baixos — cabeçalho numa linha, órgão em 2 linhas no máximo,
+   cidade/data/itens numa linha, etiquetas numa linha cada (texto inteiro no balão), números e botões compactos */
+@media (min-width: 900px) {
+  .pq-grid > .pcard { padding: 12px 14px; gap: 6px; }
+  .pq-grid .pcard .p-hd { flex-wrap: nowrap; }
+  .pq-grid .pcard .p-hd .num { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: clip; font-size: 12px; }
+  .pq-grid .pcard .p-hd .badge { width: auto; font-size: 10.5px; padding: 2px 7px; }
+  .pq-grid .pcard .p-hd .tipo-chip { font-size: 10px; padding: 1px 6px; }
+  .pq-grid .pcard h4 { font-size: 14px; line-height: 1.25; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .pq-grid .pcard > .small.muted.row { flex-wrap: nowrap; overflow: hidden; white-space: nowrap; gap: 4px 10px !important; font-size: 12px; }
+  .pq-grid .pcard > .small.muted.row > .row { flex: none; }
+  .pq-grid .p-alert { font-size: 11px; padding: 4px 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
+  .pq-grid .p-alert svg { display: none; }
+  .pq-grid .p-tags { gap: 4px; }
+  .pq-grid .p-tags .prazo { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; font-size: 11px; padding: 2px 7px; line-height: 1.35; }
+  .pq-grid .p-tags .prazo svg { width: 11px; height: 11px; vertical-align: -2px; margin-right: 4px; }
+  .pq-grid .pcard .obsline { font-size: 11.5px; padding: 4px 8px; -webkit-line-clamp: 1; }
+  .pq-grid .pcard .nums { padding-top: 6px; gap: 6px; font-size: 10.5px; }
+  .pq-grid .pcard .nums b { font-size: 13.5px; }
+  .pq-grid .pcard .lkrow { padding-top: 6px; }
+  .pq-grid .pcard .lkrow-ic .ib { width: 28px; height: 28px; min-height: 28px; }
+  .pq-grid .pcard .lkrow-ic .ib svg { width: 14px; height: 14px; }
+}
 </style>
 </head>
 <body>
@@ -1338,7 +1369,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.124.1';
+  const APP_VERSION = '1.125.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Julgamento', 'Aguardando empenho', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -4652,7 +4683,8 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
   // ordem dos cards: Falta dados, Analisando, Proposta enviada, depois o resto
   const ORDEM_STATUS = ['Julgamento', 'Aguardando empenho', 'Falta dados', 'Analisando', 'Proposta enviada', 'Ganhou', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const rankStatus = (s) => { const i = ORDEM_STATUS.indexOf(s); return i < 0 ? ORDEM_STATUS.length : i; };
-  const COR_STATUS = { 'Concluído': '#607d8b', 'Falta dados': '#f57c00', 'Analisando': '#2e75b6', 'Proposta enviada': '#5c6bc0', 'Julgamento': '#d99a1c', 'Aguardando empenho': '#8e44ad', 'Ganhou': '#2f8f3a', 'Faturado': '#0f8b78', 'Perdeu': '#c0392b', 'Desclassificado': '#8e2a2a', 'Desisti': '#7b8798' };
+  // cores dos status (pedido do João, 05/11/2026): enviada = azul, falta dados = vermelho, analisando = roxo; julgamento e venci como estavam
+  const COR_STATUS = { 'Concluído': '#607d8b', 'Falta dados': '#c0392b', 'Analisando': '#7b3fbf', 'Proposta enviada': '#2e75b6', 'Julgamento': '#d99a1c', 'Aguardando empenho': '#0e8a8a', 'Ganhou': '#2f8f3a', 'Faturado': '#3f51b5', 'Perdeu': '#8d6e63', 'Desclassificado': '#ad1457', 'Desisti': '#7b8798' };
   /* ---------- datas "AAAA-MM-DD" (entrega, pagamento e validade das certidões) ---------- */
   const isoParts = (s) => { const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(s || ''); return m ? new Date(+m[1], +m[2] - 1, +m[3]) : null; };
   const isoDe = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -5212,7 +5244,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
           p.entregaParcelada ? `<span class="prazo warn">${icon('pin', 'sm')}Entrega parcelada</span>` : '',
           pst.nSoloPreju ? `<span class="prazo bad" title="Se você ganhar só ${pst.nSoloPreju === 1 ? 'esse item' : 'um desses itens'}, a viagem de entrega fica toda nele e dá prejuízo no ${pst.nSoloPreju === 1 ? 'lance' : 'lance'} atual. Veja o mínimo em cada item.">${icon('truck', 'sm')}${pst.nSoloPreju} ${pst.nSoloPreju === 1 ? 'item dá' : 'itens dão'} prejuízo se ganhar só ${pst.nSoloPreju === 1 ? 'ele' : 'eles'}</span>` : '',
           nObsIt ? `<span class="prazo info p-obsit" title="Observações nos itens: abra o pregão para ver">${icon('info', 'sm')}${nObsIt} ${nObsIt === 1 ? 'item com observação' : 'itens com observação'}</span>` : '',
-        ].filter(Boolean).join('');
+        ].filter(Boolean).map((t) => (/ title="/.test(t.slice(0, 80)) ? t : t.replace('<span class="prazo', '<span title="' + esc(t.replace(/<[^>]+>/g, '').trim()) + '" class="prazo'))).join('');
         return tags ? `<div class="p-tags">${tags}</div>` : '';
       })()}
       ${p.obs ? `<div class="obsline"><span class="obs-ic">${icon('alert', 'sm')}</span><span class="obs-tx">${esc(p.obs)}</span></div>` : ''}
@@ -5242,9 +5274,9 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     const lane = UI.lane ? cols.find((r) => r[0] === UI.lane) : null;
     if (lane) {
       const [, lt, lk, larr] = lane;
-      return `<div class="lane-head"><button type="button" class="btn sm" data-act="lane-fechar">${icon('back', 'sm')} Todos os grupos</button><div class="pq-sec ${lk === 'venci' ? 'venci' : lk === 'atn' ? 'atn' : ''}"><span>${lt}</span><b>${larr.length}</b></div></div><div class="pq-grid pq-full">${larr.map(pregaoCard).join('')}</div>`;
+      return `<div class="lane-head"><button type="button" class="btn sm" data-act="lane-fechar">${icon('back', 'sm')} Todos os grupos</button><div class="pq-sec ${lk}"><span>${lt}</span><b>${larr.length}</b></div></div><div class="pq-grid pq-full">${larr.map(pregaoCard).join('')}</div>`;
     }
-    const html = `<div class="board-nav"><button type="button" data-act="lane-prev" aria-label="Anterior">‹</button><button type="button" data-act="lane-next" aria-label="Próximo">›</button></div><div class="pq-board" style="--nl:${cols.length}">${cols.map(([key, t, k, arr]) => `<section class="pq-col"><div class="pq-sec pq-sec-bt ${k === 'venci' ? 'venci' : k === 'atn' ? 'atn' : ''}" data-act="lane-abrir" data-k="${esc(key)}" role="button" tabindex="0" title="Ver só este grupo na tela toda"><span>${t}</span><b>${arr.length}</b></div><div class="pq-grid pq-stack">${arr.map(pregaoCard).join('')}</div></section>`).join('')}</div>`;
+    const html = `<div class="board-nav"><button type="button" data-act="lane-prev" aria-label="Anterior">‹</button><button type="button" data-act="lane-next" aria-label="Próximo">›</button></div><div class="pq-board" style="--nl:${cols.length}">${cols.map(([key, t, k, arr]) => `<section class="pq-col"><div class="pq-sec pq-sec-bt ${k}" data-act="lane-abrir" data-k="${esc(key)}" role="button" tabindex="0" title="Ver só este grupo na tela toda"><span>${t}</span><b>${arr.length}</b></div><div class="pq-grid pq-stack">${arr.map(pregaoCard).join('')}</div></section>`).join('')}</div>`;
     const chip = (x) => `<button type="button" class="enc-chip${x.p.status === 'Concluído' ? ' conc' : ''}" data-act="abrir-pregao" data-id="${x.p.id}" title="${esc(x.p.orgao)} · ${esc(stTxt(x.p.status))}"><b>Nº ${esc(x.p.numero)}</b><span class="ell">${esc(x.p.orgao)}</span><i>${esc(stTxt(x.p.status))}</i></button>`;
     const fim = ina.length ? `<div class="enc-box"><button type="button" class="btn sm ghost enc-btn${UI.mostrarEnc ? ' on' : ''}" data-act="painel-encerrados" aria-expanded="${UI.mostrarEnc ? 'true' : 'false'}">${icon('archive', 'sm')} Encerrados e concluídos (${ina.length}) <span class="enc-seta">${UI.mostrarEnc ? '▴' : '▾'}</span></button>${UI.mostrarEnc ? `<div class="enc-chips">${ina.map(chip).join('')}</div>` : ''}</div>` : '';
     return html + fim;
@@ -6625,6 +6657,15 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
   }
 
   /* ---------- render geral ---------- */
+  // guia Pregões no PC (pedido do João, 05/11/2026): todos os cartões do mesmo tamanho (o do maior), sem cortar nenhum alerta
+  function igualarCartoes() {
+    const cs = $$('.pq-grid > .pcard');
+    cs.forEach((c) => { c.style.minHeight = ''; });
+    if (window.innerWidth < 900 || !cs.length) return;
+    const h = Math.max(...cs.map((c) => c.offsetHeight));
+    if (h > 0) cs.forEach((c) => { c.style.minHeight = h + 'px'; });
+  }
+  window.addEventListener('resize', () => { clearTimeout(igualarCartoes._t); igualarCartoes._t = setTimeout(() => { if (UI.tab === 'pregoes' && !UI.detailId) igualarCartoes(); }, 150); });
   function render() {
     const main = $('#main');
     const a = document.activeElement;
@@ -6643,6 +6684,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     const t = TABS.find((x) => x.id === UI.tab);
     $('#subt').textContent = UI.tab === 'pregoes' && UI.detailId ? 'Detalhe do pregão' : t.title;
     if (UI.keepScroll) { window.scrollTo(0, y); UI.keepScroll = false; }
+    if (UI.tab === 'pregoes' && !UI.detailId) igualarCartoes();
     // voltou do pregão aberto: vai direto para o cartão em que você estava (na tela cheia do grupo ou no quadro) e o destaca
     if (UI.tab === 'pregoes' && !UI.detailId && UI.lastCard) {
       const el = main.querySelector('.pcard[data-id="' + UI.lastCard + '"], .enc-chip[data-id="' + UI.lastCard + '"]'); UI.lastCard = null;
