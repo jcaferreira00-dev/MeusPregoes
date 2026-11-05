@@ -68,6 +68,7 @@ with sync_playwright() as p:
       const o=C.resolverPdfOpts(p,cfg,'inicial'), f=C.resolverPdfOpts(p,cfg,'final');
       return [o.pagamento,o.validade,o.prazoEntrega,o.desc.tabela,o.desc.tituloTexto,o.documentos.length,o.desc.blocos.map(b=>b.titulo).join('|'),o.anonima,f.anonima];}""")
     ok(rp == ['15 dias', 90, '5 dias', False, 'PROPOSTA DE PREÇOS', 0, 'Preços|Condições do edital|Produtos|Garantia|Entrega|Enquadramento|Representante legal', True, False], 'Proposta: modelo padrão para todos (só as condições do pregão valem; sem cláusulas/declarações do edital) %s' % rp)
+    ok('pdf-previa' in open(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'index.html'), encoding='utf-8').read(), 'Proposta: botão Visualizar (rascunho) existe')
     # sincronização com duas fontes: config mais nova com a empresa vazia não apaga os dados da empresa/bancários (05/11/2026)
     m = pg.evaluate("""()=>{const C=window.Core;
       const cheio={version:1,config:{updatedAt:1000,empresa:{nome:'EMPRESA TESTE',cnpj:'11.111.111/0001-11',banco:'208',conta:'123'}},pregoes:[],itens:[]};

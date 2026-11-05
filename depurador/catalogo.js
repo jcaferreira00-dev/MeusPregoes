@@ -291,6 +291,8 @@
     `Os dados pessoais (CPF, RG, estado civil, endereço, banco) ficam fechados num card da Config, com a contagem de preenchidos e o botão “Abrir meus dados”. O “Preencher” da guia Proposta abre direto esse card. Na Proposta ficam só as chavinhas de quais dados aparecem (fechadas por padrão).`, { sel: ['.cfg-dados', '[data-act=meus-dados]'] });
   F('painel-blocos', AR.painel, 3, 'manter', 'Painel no PC: blocos do mesmo tamanho',
     `A partir de 1200 px, os cards de baixo do Painel (pendências, entregas, certidões, resultados, limite do MEI, capital de giro, tributos, status) ficam em 3 colunas com a mesma altura; lista comprida rola por dentro do card, com o título fixo.`, { sel: ['.pn-main', '.pn-low'] });
+  F('pdf-previa', AR.pdf, 3, 'manter', 'Visualizar a proposta (rascunho)',
+    `v1.127.0 (05/11/2026): botão na guia Proposta que gera o PDF mesmo faltando marca, modelo, descritivo ou fotos, sem conferências e sem guardar os preços da proposta inicial. O arquivo sai com “VISUALIZACAO” no nome; serve só para ajustar o visual.`, { sel: ['[data-act=pdf-previa]'] });
   F('hook-app', AR.cod, 2, 'manter', 'Gancho de depuração (window.__app)',
     `O app expõe store, UI e render para testes e para este depurador.`, { ev: 'index.html, fim do script de interface.' });
 

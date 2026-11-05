@@ -1376,7 +1376,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.126.1';
+  const APP_VERSION = '1.127.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Julgamento', 'Aguardando empenho', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -6069,7 +6069,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
       ${faltaEmpresaHtml(opts, cfg.empresa)}
       <div class="${C.faltasOferta(st, UI.pdf.pregaoId, UI.pdf.tipo, UI.pdf.fonte).length ? '' : 'm-hide'}">${catalogoCardHtml(st, L)}</div>
       ${gerarCardHtml(st, L)}
-      ${r ? `<div class="card" id="pdfPronto"><h3>${r.docx ? 'Catálogo em Word pronto' : r.catalogo ? 'Catálogo pronto' : r.comCatalogo ? 'PDF pronto (proposta + catálogo)' : 'PDF pronto'}</h3><p class="small"><b>${esc(r.name)}</b><br><span class="muted">${r.docx ? 'Arquivo do Word, separado da proposta' : r.paginas + ' página(s)'}${r.catalogo ? '' : ' · total ' + C.brl(r.total)}</span>${r.anonima ? (r.identificacao && r.identificacao.length ? `<br><span style="color:var(--red);font-weight:700">Identifica a empresa: ${esc(r.identificacao.join(', '))}</span>` : '<br><span style="color:var(--green);font-weight:700">Sem identificação: nenhum dado da empresa no texto.</span>') : ''}</p>
+      ${r ? `<div class="card" id="pdfPronto"><h3>${r.docx ? 'Catálogo em Word pronto' : r.catalogo ? 'Catálogo pronto' : r.previa ? 'Visualização pronta (rascunho: não envie)' : r.comCatalogo ? 'PDF pronto (proposta + catálogo)' : 'PDF pronto'}</h3><p class="small"><b>${esc(r.name)}</b><br><span class="muted">${r.docx ? 'Arquivo do Word, separado da proposta' : r.paginas + ' página(s)'}${r.catalogo ? '' : ' · total ' + C.brl(r.total)}</span>${r.anonima ? (r.identificacao && r.identificacao.length ? `<br><span style="color:var(--red);font-weight:700">Identifica a empresa: ${esc(r.identificacao.join(', '))}</span>` : '<br><span style="color:var(--green);font-weight:700">Sem identificação: nenhum dado da empresa no texto.</span>') : ''}</p>
         ${r.semValor ? `<div class="alert warn" style="margin:10px 0">${icon('alert', 'sm')}<span>Gerado com ${r.semValor} item(ns) sem valor.</span></div>` : ''}
         <div class="grid2" style="margin-top:12px"><button class="btn" data-act="pdf-abrir">${icon('eye', 'sm')} Abrir</button><button class="btn" data-act="pdf-baixar">${icon('download', 'sm')} Baixar</button></div>
         ${navigator.canShare ? `<button class="btn block" style="margin-top:10px" data-act="pdf-compartilhar">${icon('share', 'sm')} Compartilhar</button>` : ''}</div>` : ''}
@@ -6141,6 +6141,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
       ${bloq}${aviso}
       ${L.linhas.length ? `<label class="switch m-hide" style="margin-bottom:10px"><span>Anexar o catálogo ao final da proposta<small class="hint" style="display:block;font-weight:500">Ligado: o botão “Gerar PDF da proposta” já sai com o catálogo nas últimas páginas, num arquivo só.</small></span><input type="checkbox" data-cfg="proposta.catalogoJunto" data-type="check" ${st.config.proposta.catalogoJunto ? 'checked' : ''}></label>` : ''}
       <button class="btn primary block" data-act="pdf-gerar" ${off}>${icon('pdf')} ${UI.pdf.busy ? 'Gerando…' : 'Gerar PDF da proposta'}</button>
+      <button class="btn block" style="margin-top:8px" data-act="pdf-previa" ${UI.pdf.busy ? 'disabled' : ''} title="Gera o PDF mesmo faltando marca, modelo, descritivo ou fotos, só para ver e ajustar o visual. Não guarda preços nem serve para enviar.">${icon('pdf', 'sm')} Visualizar (rascunho, mesmo com dados faltando)</button>
       ${L.linhas.length ? `<div class="grid2 m-hide" style="margin-top:10px">
         <button class="btn" data-act="cat-gerar" ${UI.pdf.busy ? 'disabled' : ''}>${icon('pdf', 'sm')} Só o catálogo (PDF)</button>
         <button class="btn" data-act="cat-docx" ${UI.pdf.busy ? 'disabled' : ''}>${icon('download', 'sm')} Catálogo em Word (.docx)</button>
@@ -6457,18 +6458,20 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     const pz = store.get().pregoes.find((x) => x.id === id), r = regraIdent(pz); if (!r) return;
     store.patchPregao(id, (p) => { p.pdfOpts = p.pdfOpts || {}; p.pdfOpts.anonima = r.semIdentificacao; }, true);
   }
-  async function gerarPDF() {
+  // previa = true (pedido do João, 05/11/2026): visualização para ajustar o visual — gera mesmo com marca/modelo/descritivo/fotos
+  // faltando, sem as conferências e SEM guardar os preços da proposta inicial; o arquivo sai com "VISUALIZACAO" no nome
+  async function gerarPDF(previa) {
     commitAllPending();
     const id = UI.pdf.pregaoId;
     if (!id) { toast('Escolha um pregão'); return; }
-    const falt = C.faltasOferta(store.get(), id, UI.pdf.tipo, UI.pdf.fonte);
+    const falt = previa ? [] : C.faltasOferta(store.get(), id, UI.pdf.tipo, UI.pdf.fonte);
     if (falt.length) {
       const v = await dialog({ title: 'Falta marca, modelo ou descritivo', text: 'Preencha, em cada item, a marca e o modelo (no item, iguais aos escritos no descritivo) e o descritivo do item ofertado (no catálogo da guia Proposta) antes de gerar a proposta:\n' + falt.map((x) => '• ' + x.rotulo + ' · ' + x.descricao + ' — falta ' + x.falta.join(' e ')).join('\n'), buttons: [{ label: 'Preencher o primeiro', value: true, cls: 'primary' }, { label: 'Fechar', value: false, cls: 'ghost' }] });
       if (v) { if (falt[0].falta.some((f) => f !== 'descritivo do item ofertado')) openItemForm(falt[0].id); else irCatalogoItem(falt[0].id); }
       return;
     }
-    if (UI.pdf.tipo === 'final' && !(await confirmarPrecosFinal(id))) return;
-    if (UI.pdf.tipo !== 'final') {
+    if (!previa && UI.pdf.tipo === 'final' && !(await confirmarPrecosFinal(id))) return;
+    if (!previa && UI.pdf.tipo !== 'final') {
       const pz = store.get().pregoes.find((x) => x.id === id), k = confereIdent(pz, C.resolverPdfOpts(pz, store.get().config, 'inicial'));
       if (k && !k.ok) {
         const v = await dialog({ title: 'Proposta diferente do edital', text: `O edital pede ${k.r.semIdentificacao ? 'a proposta inicial SEM identificação da empresa' : 'a proposta inicial COM identificação da empresa'}${k.r.referencia ? ' (' + k.r.referencia + ')' : ''}, mas a chavinha "sem identificação" está ${k.r.semIdentificacao ? 'desligada' : 'ligada'}.\nMandar diferente pode desclassificar.`,
@@ -6477,7 +6480,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
         if (v === 'ajustar') identConformeEdital(id);
       }
     }
-    const pend = C.pendenciasModelo(store.get(), id, UI.pdf.tipo, UI.pdf.fonte);
+    const pend = previa ? [] : C.pendenciasModelo(store.get(), id, UI.pdf.tipo, UI.pdf.fonte);
     if (pend.length) {
       const v = await dialog({ title: 'Confira antes de gerar', text: pend.map((x) => '• ' + x).join('\n'), buttons: [{ label: 'Corrigir', value: false, cls: 'primary' }, { label: 'Gerar mesmo assim', value: true, cls: 'ghost' }] });
       if (!v) return;
@@ -6491,15 +6494,15 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
       const tipo = UI.pdf.tipo;
       const res = await window.PropostaPDF.gerarProposta(store.get(), id, { fonte: UI.pdf.fonte, data: UI.pdf.data || C.hojeISO(), anexarCatalogo: junto, imagens, tipo });
       // proposta inicial: guarda os preços na 1ª geração (depois ela sai sempre igual)
-      if (tipo === 'inicial') {
+      if (tipo === 'inicial' && !previa) {
         let n = 0;
         (res.linhasRes || []).forEach((x) => { const it = store.get().itens.find((i) => i.id === x.id); if (it && (it.precoInicial === null || it.precoInicial === undefined || x.recongelar) && x.unit !== null) { store.patchItem(x.id, (i) => { i.precoInicial = x.unit; }); n += 1; } });
         if (n) store.patchPregao(id, (p) => { if (!p.precoInicialEm) p.precoInicialEm = C.hojeISO(); }, true);
       }
       if (UI.pdf.result) URL.revokeObjectURL(UI.pdf.result.url);
       const blob = new Blob([res.bytes], { type: 'application/pdf' });
-      UI.pdf.result = { blob, url: URL.createObjectURL(blob), name: res.filename, total: res.total, paginas: res.paginas, semValor: res.semValor, comCatalogo: junto, anonima: !!res.anonima, identificacao: res.identificacao || [] };
-      toast('PDF gerado');
+      UI.pdf.result = { previa: !!previa, blob, url: URL.createObjectURL(blob), name: (previa ? 'VISUALIZACAO - ' : '') + res.filename, total: res.total, paginas: res.paginas, semValor: res.semValor, comCatalogo: junto, anonima: !!res.anonima, identificacao: res.identificacao || [] };
+      toast(previa ? 'Visualização gerada (rascunho: não envie)' : 'PDF gerado');
       if (res.anonima && res.identificacao && res.identificacao.length) {
         setTimeout(() => dialog({ title: 'A proposta identifica a empresa', text: 'O edital pede proposta sem identificação, mas o PDF tem: ' + res.identificacao.join(', ') + '.\nProcure esse dado na descrição, na marca ou nas cláusulas e tire antes de enviar.', buttons: [{ label: 'Entendi', value: true, cls: 'primary' }] }), 300);
       }
@@ -6921,6 +6924,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
       case 'rascunho': openDraft(t.dataset.key); break;
       case 'pdf-pregao': UI.pdf.pregaoId = id; UI.pdf.fonte = 'auto'; UI.pdf.result = null; saveUI(); setTab('pdf'); break;
       case 'pdf-gerar': gerarPDF(); break;
+      case 'pdf-previa': gerarPDF(true); break;
       case 'ir-proposta-final': commitAllPending(); UI.pdf.pregaoId = id; UI.pdf.tipo = 'final'; UI.pdf.result = null; UI.tab = 'pdf'; UI.detailId = null; saveUI(); render(); window.scrollTo(0, 0); break;
       case 'pdf-ident-edital': commitAllPending(); identConformeEdital(UI.pdf.pregaoId); UI.pdf.result = null; UI.keepScroll = true; render(); toast('Ajustado conforme o edital'); break;
       case 'cat-gerar': gerarCatalogo(); break;
