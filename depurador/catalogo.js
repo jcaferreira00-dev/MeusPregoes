@@ -293,6 +293,8 @@
     `A partir de 1200 px, os cards de baixo do Painel (pendências, entregas, certidões, resultados, limite do MEI, capital de giro, tributos, status) ficam em 3 colunas com a mesma altura; lista comprida rola por dentro do card, com o título fixo.`, { sel: ['.pn-main', '.pn-low'] });
   F('pdf-previa', AR.pdf, 3, 'manter', 'Visualizar a proposta (rascunho)',
     `v1.127.0 (05/11/2026): botão na guia Proposta que gera o PDF mesmo faltando marca, modelo, descritivo ou fotos, sem conferências e sem guardar os preços da proposta inicial. O arquivo sai com “VISUALIZACAO” no nome; serve só para ajustar o visual.`, { sel: ['[data-act=pdf-previa]'] });
+  F('backup-pasta', AR.conf, 4, 'manter', 'Backup automático em pasta do PC (diário + semanal)',
+    `v1.128.0 (05/11/2026): Config › Backup automático. Com o app aberto no PC, todo dia num horário sorteado entre 12h e 20h grava sozinho, sem avisar, o backup do dia na pasta escolhida (ex.: D:) e, uma vez por semana, na pasta do Google Drive para computador. Mantém 30 diários e 12 semanais. Sem pasta (PC do trabalho) ou PC desligado: não faz nada. A pasta fica guardada no Chrome; se ele pedir a autorização de novo, o app pede no primeiro clique.`, { sel: ['[data-act=bk-pasta]', '[data-act=bk-agora]'] });
   F('hook-app', AR.cod, 2, 'manter', 'Gancho de depuração (window.__app)',
     `O app expõe store, UI e render para testes e para este depurador.`, { ev: 'index.html, fim do script de interface.' });
 

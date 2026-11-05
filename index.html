@@ -266,6 +266,7 @@ input[type=range] { width: 100%; accent-color: var(--blue); }
 .draftbar button { margin-left: auto; border: 0; background: transparent; color: inherit; font-weight: 800; text-decoration: underline; cursor: pointer; }
 
 /* diálogos e avisos */
+.bk-row { display: flex; align-items: center; gap: 12px; padding: 8px 0; border-top: 1px dashed var(--line); } .bk-row > .grow > * { display: block; } .bk-row b { font-size: 13.5px; }
 .gate { position: fixed; inset: 0; z-index: 200; display: grid; place-items: center; padding: 20px; background: linear-gradient(160deg, #1f3864, #10203d); }
 .gate[hidden] { display: none; }
 .gate form { width: min(380px, 100%); background: var(--card); border-radius: 16px; padding: 26px 24px; box-shadow: 0 20px 60px rgba(0,0,0,.35); display: grid; gap: 12px; }
@@ -1376,7 +1377,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.127.0';
+  const APP_VERSION = '1.128.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Julgamento', 'Aguardando empenho', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -6093,6 +6094,107 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
       keys: async () => { try { return (await tx('readonly', (st) => st.getAllKeys())) || []; } catch (e) { return []; } },
     };
   })();
+  /* ---------- backup automático em pasta do PC (pedido do João, 05/11/2026; v1.128.0) ----------
+   * Você escolhe as pastas uma vez (Config › Backup automático): uma diária (ex.: D:\Backups\MeusPregoes) e uma semanal
+   * (ex.: uma pasta do Google Drive para computador). Com o app aberto no PC, todo dia num horário sorteado entre 12h e 20h
+   * ele grava sozinho, sem avisar, um arquivo com a data. Mantém os 30 diários e os 12 semanais mais novos (apaga os mais
+   * antigos que ele mesmo criou). Se o app só abrir depois das 20h, grava na hora. Só funciona no Chrome/Edge do PC.
+   * O Chrome guarda a pasta; se ele pedir a autorização de novo, o app pede no primeiro clique (escolha "Permitir sempre"). */
+  const Backup = (() => {
+    const LS = 'mp.backup', PRE = 'meus-pregoes-', MANTER = { diaria: 30, semanal: 12 };
+    let dbp = null, timer = null, rodando = false;
+    const db = () => dbp || (dbp = new Promise((res, rej) => {
+      const r = indexedDB.open('mp.backup', 1);
+      r.onupgradeneeded = () => r.result.createObjectStore('pastas');
+      r.onsuccess = () => res(r.result); r.onerror = () => { dbp = null; rej(r.error); };
+    }));
+    const tx = async (mode, fn) => { const d = await db(); return new Promise((res, rej) => { const t = d.transaction('pastas', mode); const q = fn(t.objectStore('pastas')); t.oncomplete = () => res(q && q.result); t.onerror = () => rej(t.error); }); };
+    const ler = () => { try { return JSON.parse(localStorage.getItem(LS) || '{}'); } catch (e) { return {}; } };
+    const gravarEst = (o) => { try { localStorage.setItem(LS, JSON.stringify(Object.assign(ler(), o))); } catch (e) { /* ignora */ } };
+    const hoje = () => C.hojeISO();
+    // semana = data da segunda-feira
+    const semanaDe = (iso) => { const [y, m, d] = iso.split('-').map(Number); const dt = new Date(y, m - 1, d); const k = (dt.getDay() + 6) % 7; dt.setDate(dt.getDate() - k); return dt.getFullYear() + '-' + String(dt.getMonth() + 1).padStart(2, '0') + '-' + String(dt.getDate()).padStart(2, '0'); };
+    // horário do dia: sorteado uma vez por dia entre 12:00 e 19:59
+    function horaDoDia() {
+      const e = ler();
+      if (e.sorteioDia === hoje() && e.sorteioMin != null) return e.sorteioMin;
+      const min = 12 * 60 + Math.floor(Math.random() * 8 * 60);
+      gravarEst({ sorteioDia: hoje(), sorteioMin: min });
+      return min;
+    }
+    const suportado = () => typeof window.showDirectoryPicker === 'function';
+    const memPastas = {};   // só para os testes automáticos (pasta falsa, que não vai para o IndexedDB)
+    const pasta = async (tipo) => { if (memPastas[tipo]) return memPastas[tipo]; try { return (await tx('readonly', (st) => st.get(tipo))) || null; } catch (e) { return null; } };
+    async function permitido(h, pedir) {
+      if (!h) return false;
+      try {
+        if (h.queryPermission && (await h.queryPermission({ mode: 'readwrite' })) === 'granted') return true;
+        if (pedir && h.requestPermission) return (await h.requestPermission({ mode: 'readwrite' })) === 'granted';
+      } catch (e) { /* sem permissão */ }
+      return !h.queryPermission;   // pasta de teste (sem API de permissão)
+    }
+    async function escrever(dir, nome, txt) {
+      const fh = await dir.getFileHandle(nome, { create: true });
+      const w = await fh.createWritable(); await w.write(txt); await w.close();
+    }
+    // apaga só os arquivos que o próprio backup criou (mesmo prefixo), deixando os mais novos
+    async function limpar(dir, prefixo, manter) {
+      const nomes = [];
+      for await (const [nome, h] of dir.entries()) if (h.kind === 'file' && nome.startsWith(prefixo) && nome.endsWith('.json')) nomes.push(nome);
+      nomes.sort().reverse();
+      for (const n of nomes.slice(manter)) { try { await dir.removeEntry(n); } catch (e) { /* ignora */ } }
+    }
+    const conteudo = () => store.export();
+    // faz o que estiver devido agora (forcar = botão "Fazer agora")
+    async function rodar(forcar) {
+      if (rodando) return { ok: false, motivo: 'ocupado' };
+      rodando = true;
+      const out = { ok: true, feitos: [] };
+      try {
+        const e = ler(), d = hoje(), agoraMin = new Date().getHours() * 60 + new Date().getMinutes();
+        const devidoDia = forcar || (e.ultDiaria !== d && agoraMin >= horaDoDia());
+        if (!devidoDia) return out;
+        const txt = conteudo();
+        const hd = await pasta('diaria');
+        if (hd) {
+          if (await permitido(hd, false)) { await escrever(hd, PRE + d + '.json', txt); await limpar(hd, PRE + '2', MANTER.diaria); gravarEst({ ultDiaria: d, erroDiaria: '' }); out.feitos.push('diaria'); }
+          else { gravarEst({ erroDiaria: 'sem permissão' }); pendente = true; }
+        }
+        const hs = await pasta('semanal'), sem = semanaDe(d);
+        if (hs && (forcar || e.ultSemana !== sem)) {
+          if (await permitido(hs, false)) { await escrever(hs, PRE + 'semana-' + d + '.json', txt); await limpar(hs, PRE + 'semana-', MANTER.semanal); gravarEst({ ultSemana: sem, ultSemanalDia: d, erroSemanal: '' }); out.feitos.push('semanal'); }
+          else { gravarEst({ erroSemanal: 'sem permissão' }); pendente = true; }
+        }
+      } catch (err) { out.ok = false; out.erro = String(err && err.message || err); gravarEst({ erroDiaria: out.erro }); }
+      finally { rodando = false; }
+      return out;
+    }
+    let pendente = false;
+    // se o Chrome pediu a autorização de novo: no primeiro clique do usuário no app, pede e já faz o backup
+    document.addEventListener('pointerdown', async () => {
+      if (!pendente) return; pendente = false;
+      const ok1 = await permitido(await pasta('diaria'), true), ok2 = await permitido(await pasta('semanal'), true);
+      if (ok1 || ok2) rodar();
+    }, true);
+    function iniciar() {
+      if (!suportado() || window.innerWidth < 900) return;
+      clearInterval(timer);
+      const tic = () => { rodar().catch(() => {}); };
+      setTimeout(tic, 20000);              // logo depois de abrir (se já passou do horário do dia)
+      timer = setInterval(tic, 5 * 60000); // e a cada 5 minutos enquanto o app estiver aberto
+    }
+    async function escolher(tipo) {
+      if (!suportado()) { toast('Backup em pasta só funciona no Chrome ou Edge do PC'); return false; }
+      try {
+        const h = await window.showDirectoryPicker({ id: 'mp-backup-' + tipo, mode: 'readwrite', startIn: 'documents' });
+        await tx('readwrite', (st) => st.put(h, tipo));
+        gravarEst(tipo === 'diaria' ? { pastaDiaria: h.name, erroDiaria: '' } : { pastaSemanal: h.name, erroSemanal: '' });
+        return true;
+      } catch (e) { return false; }
+    }
+    async function remover(tipo) { await tx('readwrite', (st) => st.delete(tipo)); gravarEst(tipo === 'diaria' ? { pastaDiaria: '' } : { pastaSemanal: '' }); }
+    return { iniciar, rodar, escolher, remover, estado: ler, suportado, _setPasta: (tipo, h) => { memPastas[tipo] = h; }, semanaDe, horaDoDia };
+  })();
   // fotos: ficam no aparelho (rápido) e vão para a nuvem reduzidas; o item guarda só a data (fotosEm) para os outros aparelhos saberem que mudou
   const nuvemFotosOk = () => !!(window.CloudSync && Cloud.user && navigator.onLine);
   async function enviarFotos(id, rec) {
@@ -6530,6 +6632,20 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     const n = ks.filter((k) => String(e[k] || '').trim()).length;
     return `<b style="color:${n === ks.length ? 'var(--green)' : 'var(--amber)'}">${n} de ${ks.length} preenchidos</b>`;
   }
+  // Config › Backup automático (só PC)
+  function backupCard() {
+    const e = Backup.estado(), dt = (iso) => (iso ? iso.split('-').reverse().join('/') : '—');
+    const hm = (m) => String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0');
+    if (!Backup.suportado()) return `<div class="card m-hide"><h3>Backup automático</h3><p class="small muted">Só funciona no Chrome ou Edge do PC. Use o Exportar acima.</p></div>`;
+    const linha = (tipo, nome, ult, erro, dica) => `<div class="bk-row"><div class="grow"><b>${nome}</b><span class="tiny muted">${dica}</span>
+        <span class="small">${(tipo === 'diaria' ? e.pastaDiaria : e.pastaSemanal) ? '📁 ' + esc(tipo === 'diaria' ? e.pastaDiaria : e.pastaSemanal) : '<span class="muted">pasta não escolhida</span>'} · último: <b>${dt(ult)}</b>${erro ? ' · <span style="color:var(--red)">' + esc(erro) + ' (clique em qualquer lugar do app para autorizar)</span>' : ''}</span></div>
+        <div class="row" style="gap:6px"><button class="btn sm" data-act="bk-pasta" data-v="${tipo}">${(tipo === 'diaria' ? e.pastaDiaria : e.pastaSemanal) ? 'Trocar pasta' : 'Escolher pasta'}</button>${(tipo === 'diaria' ? e.pastaDiaria : e.pastaSemanal) ? `<button class="btn sm ghost" data-act="bk-tirar" data-v="${tipo}">Tirar</button>` : ''}</div></div>`;
+    return `<div class="card m-hide"><h3>Backup automático</h3>
+      <p class="tiny muted" style="margin:0 0 8px">Com o app aberto no PC, todo dia num horário sorteado entre 12h e 20h ele grava sozinho um arquivo com a data, sem avisar. Guarda os 30 diários e os 12 semanais mais novos. Para restaurar: Importar › Mesclar.</p>
+      ${linha('diaria', 'Diário', e.ultDiaria, e.erroDiaria, ' · ex.: D:\\Backups\\MeusPregoes')}
+      ${linha('semanal', 'Semanal (Google Drive)', e.ultSemanalDia, e.erroSemanal, ' · pasta do Google Drive para computador')}
+      <div class="row between" style="margin-top:8px"><span class="tiny muted">Horário de hoje: ${e.sorteioDia === C.hojeISO() && e.sorteioMin != null ? hm(e.sorteioMin) : '—'}</span><button class="btn sm" data-act="bk-agora">Fazer agora</button></div></div>`;
+  }
   function renderConfig() {
     const st = store.get(), c = st.config, e = c.empresa;
     const lim = C.limiteMEI(c);
@@ -6594,6 +6710,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
       <div class="card"><h3>Dados e backup</h3>
         <div class="grid2"><button class="btn" data-act="export">${icon('download', 'sm')} Exportar</button><label class="btn" style="cursor:pointer">${icon('plus', 'sm')} Importar<input type="file" accept="application/json,.json" data-import class="hidden"></label></div>
         <div class="grid2" style="margin-top:10px"><button class="btn danger" data-act="apagar-desisti">${icon('trash', 'sm')} Limpar desistências</button><button class="btn danger" data-act="apagar">${icon('trash', 'sm')} Apagar tudo</button></div></div>
+      ${backupCard()}
       ${cloudCard()}
       <div class="card"><h3>Aplicativo</h3><div class="kv-list">
         <div><span>Versão</span><b>${C.APP_VERSION}</b></div></div>
@@ -6949,6 +7066,9 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
       case 'hd-pos': store.setConfigPath('cabecalho.pos', t.dataset.v, { silent: true }); UI.keepScroll = true; render(); break;
       case 'hd-remover': store.setConfigPath('cabecalho.imagem', null, { silent: true }); imagemMudou('cabecalho'); UI.keepScroll = true; render(); break;
       case 'wm-remover': store.setConfigPath('marcaDagua.imagem', null, { silent: true }); imagemMudou('marcaDagua'); UI.keepScroll = true; render(); break;
+      case 'bk-pasta': Backup.escolher(t.dataset.v).then((ok) => { if (ok) { UI.keepScroll = true; render(); } }); break;
+      case 'bk-tirar': Backup.remover(t.dataset.v).then(() => { UI.keepScroll = true; render(); }); break;
+      case 'bk-agora': Backup.rodar(true).then((r) => { toast(r.feitos && r.feitos.length ? 'Backup gravado (' + r.feitos.join(' e ') + ')' : (r.erro ? 'Erro no backup: ' + r.erro : 'Escolha a pasta primeiro')); UI.keepScroll = true; render(); }); break;
       case 'export': {
         const blob = new Blob([store.export()], { type: 'application/json' });
         const el = document.createElement('a'); el.href = URL.createObjectURL(blob); el.download = `pregoes-mei-backup-${C.hojeISO()}.json`; document.body.appendChild(el); el.click(); el.remove();
@@ -7407,12 +7527,13 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     initSW();
     iniciarNuvem(false);                                   // carrega o Firebase sem travar a abertura
     atualizarSelic();                                      // Selic do Banco Central (meta Copom), uma vez por dia
+    Backup.iniciar();                                      // backup automático na pasta do PC (diário + semanal)
     window.addEventListener('online', () => { if (!Cloud.ligado) iniciarNuvem(false); else sincronizarImagens(); });
   }
 
   document.addEventListener('toggle', (e) => { const d = e.target; if (d && d.classList && d.classList.contains('pdf-avanc')) UI[d.dataset.k || 'pdfAvanc'] = d.open; }, true);
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
-  window.__app = { store, UI, render, openPregaoForm, openItemForm, Guard, Sheet, Draft, downscaleImage }; // facilita testes/depuração
+  window.__app = { store, UI, render, openPregaoForm, openItemForm, Guard, Sheet, Draft, downscaleImage, Backup }; // facilita testes/depuração
 })();
 
 </script>
