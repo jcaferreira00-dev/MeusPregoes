@@ -140,8 +140,13 @@ O João baixa os documentos da plataforma (BLL, Compras.gov etc.), que vêm em v
 - Pregão que compensa mas ficou com item de interesse SEM cotação (não consegui achar preço): status "Falta dados" (aparece em "Incompletos" no app), com "FALTA COTAR: ..." no início do `obs` (decisão de 29/10/2026). Item cortado por "não compensa" ou "Desisti" não conta como pendência; só o que o João quer e eu não consegui cotar. Pregão sem nenhuma pendência fica "Analisando".
 
 ### Checklist de regras do edital que mudam a proposta (conferir SEMPRE e colocar no JSON)
+
+**Regra do João (05/11/2026), na fase 2 (leitura do edital em PDF):**
+- **Declaração unificada:** avaliar SEMPRE se o edital pede declaração unificada/conjunta (ou declarações separadas por escrito: ME/EPP, fatos impeditivos, menor, habilitação etc.) e AVISAR o João na conferência e no LEIA-ME: se pede, qual anexo/modelo, em que momento (com a proposta, na habilitação ou só no sistema) e o prazo. Se pede por escrito, fazer o .docx (seção 8).
+- **Condições da proposta:** prazo de entrega, condição/prazo de pagamento, validade da proposta e local de entrega saem do edital/TR e vão no JSON daquele pregão, em `pdfOpts.prazoEntrega`, `pdfOpts.pagamento`, `pdfOpts.validade` e `pdfOpts.localEntrega` (mais `prazoEntregaDias` e `pagamentoDias` em número). Assim a proposta já sai com as condições certas daquele edital. Citar no LEIA-ME o item do edital de onde veio cada uma.
 | O que procurar no edital | Onde vai no JSON |
 |---|---|
+| Declaração unificada/conjunta ou declarações por escrito (anexo, momento, prazo) | aviso ao João + `obs` do pregão + .docx no Drive quando for por escrito |
 | Proposta inicial pode ou não identificar o licitante ("desclassificada a proposta que identifique") | `regrasEdital.semIdentificacao` + `referencia` |
 | Validade mínima da proposta (ex.: "não inferior a 90 dias") | `pdfOpts.validade` |
 | Condição/prazo de pagamento | `pdfOpts.pagamento` e `pagamentoDias` |
