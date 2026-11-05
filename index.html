@@ -1289,7 +1289,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.120.0';
+  const APP_VERSION = '1.120.1';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Julgamento', 'Aguardando empenho', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -2080,6 +2080,16 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
         marcaDagua: Object.assign({}, r.config.marcaDagua, { imagem: l.config.marcaDagua.imagem || r.config.marcaDagua.imagem, imagemEm: l.config.marcaDagua.imagemEm || r.config.marcaDagua.imagemEm || 0 }),
       });
     }
+    // dados da empresa e bancários (05/11/2026): campo vazio na config vencedora nunca apaga o que o outro lado tem preenchido
+    const perdedora = config === l.config ? r.config : l.config;
+    if (perdedora && perdedora.empresa) {
+      const emp = Object.assign({}, config.empresa);
+      Object.keys(perdedora.empresa).forEach((k) => {
+        const v = perdedora.empresa[k];
+        if ((emp[k] === undefined || emp[k] === null || String(emp[k]).trim() === '') && v !== undefined && v !== null && String(v).trim() !== '') emp[k] = v;
+      });
+      config = Object.assign({}, config, { empresa: emp });
+    }
     return { version: 1, config, pregoes: mergeById(l.pregoes, r.pregoes), itens: mergeById(l.itens, r.itens) };
   }
   // há alguma diferença relevante entre dois estados? (compara config.updatedAt e id/updatedAt/deleted de cada registro)
@@ -2210,7 +2220,9 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
           o = o[parts[i]];
         }
         o[parts[parts.length - 1]] = value;
-        state.config.updatedAt = now();
+        // semData: valor que cada aparelho calcula sozinho (ex.: Selic do BC) não muda a data da config,
+        // senão um aparelho com a config vazia/velha "ganha" da nuvem e apaga os dados da empresa (bug de 05/11/2026)
+        if (!(opts && opts.semData)) state.config.updatedAt = now();
         persist(opts && opts.silent);
       },
       replaceAll(next) { state = migrate(next); persist(); },
@@ -6852,8 +6864,8 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
       const r = await fetch('https://api.bcb.gov.br/dados/serie/bcdata.sgs.432/dados/ultimos/1?formato=json', { cache: 'no-store' });
       const v = parseFloat(((await r.json())[0] || {}).valor);
       if (!(v > 0 && v < 100)) return;
-      if (v !== Number(cfg.selicPct)) store.setConfigPath('selicPct', v, { silent: true });
-      store.setConfigPath('selicEm', hoje, { silent: true });
+      if (v !== Number(cfg.selicPct)) store.setConfigPath('selicPct', v, { silent: true, semData: true });
+      store.setConfigPath('selicEm', hoje, { silent: true, semData: true });
       if (UI.tab === 'config' || UI.detailId) render();
     } catch (e) { /* sem resposta do BC: mantém o valor salvo */ }
   }

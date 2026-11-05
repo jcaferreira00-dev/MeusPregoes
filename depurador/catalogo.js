@@ -174,7 +174,7 @@
     `Service worker “servidor primeiro” (sempre baixa a versão nova e só usa cópia guardada se estiver sem internet), faixa de “nova versão”, botão “Buscar atualização” e instalação na tela inicial.`,
     { ev: 'sw.js + checkUpdate/applyUpdate. Versão tem que subir nos 2 lugares a cada publicação.' });
   F('sync-seguranca', AR.sync, 4, 'manter', 'Segurança da sincronização: pílula, “Verificar com a nuvem”, relógio',
-    `A pílula do topo mostra se está tudo enviado; “Verificar” compara este aparelho com a nuvem lendo direto do servidor; o app mede o relógio contra a hora da internet porque a data de alteração decide quem vence.`,
+    `A pílula do topo mostra se está tudo enviado; “Verificar” compara este aparelho com a nuvem lendo direto do servidor; o app mede o relógio contra a hora da internet porque a data de alteração decide quem vence. Desde a v1.120.1, os dados da empresa e bancários nunca são apagados por um campo vazio da config que vence a mesclagem, e a Selic automática não muda a data da config.`,
     { sel: ['#pill', '[data-act=sync-verificar]'] });
   F('rascunho', AR.preg, 4, 'manter', 'Rascunho automático e “sair sem salvar?”',
     `Tudo o que você digita nas janelas é guardado como rascunho; se fechar sem salvar o app pergunta e o rascunho volta na próxima vez. Também mostra um aviso no Painel para continuar.`,

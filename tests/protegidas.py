@@ -58,6 +58,15 @@ with sync_playwright() as p:
     pg.click('button[type=submit]'); pg.wait_for_timeout(600)
     salvo = any(x['numero'] == '99/2026' for x in json.loads(pg.evaluate("()=>localStorage.getItem('mp.state.v1')"))['pregoes'])
     ok(not salvo, 'Cadastro do pregão: não salva sem km')
+    # sincronização com duas fontes: config mais nova com a empresa vazia não apaga os dados da empresa/bancários (05/11/2026)
+    m = pg.evaluate("""()=>{const C=window.Core;
+      const cheio={version:1,config:{updatedAt:1000,empresa:{nome:'EMPRESA TESTE',cnpj:'11.111.111/0001-11',banco:'208',conta:'123'}},pregoes:[],itens:[]};
+      const vazio={version:1,config:{updatedAt:2000,selicPct:15,empresa:{nome:'',cnpj:'',banco:'',conta:''}},pregoes:[],itens:[]};
+      const a=C.mergeState(cheio,vazio).config, b=C.mergeState(vazio,cheio).config;
+      return [a.empresa.nome,a.empresa.banco,b.empresa.cnpj,b.empresa.conta,a.selicPct];}""")
+    ok(m == ['EMPRESA TESTE', '208', '11.111.111/0001-11', '123', 15], 'Sincronização: dados da empresa e bancários não somem com config vazia mais nova')
+    u = pg.evaluate("""()=>{const s=window.__app.store; const d0=s.get().config.updatedAt; s.setConfigPath('selicEm','2099-01-01',{silent:true,semData:true}); return [d0, s.get().config.updatedAt];}""")
+    ok(u[0] == u[1], 'Selic automática não muda a data da config')
     b.close()
 ok(not erros, 'Sem erro de JavaScript em nenhuma guia (PC, tela dividida e celular)' + ('' if not erros else ': ' + erros[0][:120]))
 print('\n' + ('TUDO OK' if not falhas else str(len(falhas)) + ' FALHA(S): NÃO PUBLICAR'))
