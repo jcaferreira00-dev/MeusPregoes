@@ -1289,7 +1289,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.120.2';
+  const APP_VERSION = '1.121.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Julgamento', 'Aguardando empenho', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -2411,6 +2411,49 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     appId: '1:1084264963597:web:fbf369dfa8e5dcb1d1bf44',
   };
 
+  /* ---- v1.121.0 (05/11/2026): uma ficha por pregão (docs/PLANO-sync-por-pregao.md) ----
+   * pregoesmei_idx/{uid}        índice: {v:2, at, cfg:hash, pz:[{k, h}], legado:hash da ficha antiga}
+   * pregoesmei_cfg/{uid}        {config}
+   * pregoesmei_pz_<pregão>/{uid} {pregao, itens:[...]}  (itens sem pregão: pregoesmei_pz__sem)
+   * pregoesmei_usuarios/{uid}   ficha antiga: fica como cópia de segurança e não é mais gravada.
+   * Todo envio grava o índice na mesma transação; quem lê o índice na transação vê qualquer mudança
+   * de outro aparelho (a transação repete sozinha). A mesclagem continua a mesma (registro a registro). */
+  const COL_IDX = 'pregoesmei_idx', COL_CFG = 'pregoesmei_cfg', COL_PZ = 'pregoesmei_pz_', SEM = '_sem';
+  const LIMITE_PZ = 950000;
+  // JSON com as chaves em ordem: o mesmo conteúdo sempre dá o mesmo texto (e o mesmo hash), venha de onde vier
+  function estavel(v) {
+    if (v === null || typeof v !== 'object') return JSON.stringify(v === undefined ? null : v);
+    if (Array.isArray(v)) return '[' + v.map(estavel).join(',') + ']';
+    return '{' + Object.keys(v).filter((k) => v[k] !== undefined).sort().map((k) => JSON.stringify(k) + ':' + estavel(v[k])).join(',') + '}';
+  }
+  function hashTxt(t) { let a = 5381, b = 52711; for (let i = 0; i < t.length; i++) { const c = t.charCodeAt(i); a = (a * 33) ^ c; b = (b * 31) ^ c; } return (a >>> 0).toString(36) + (b >>> 0).toString(36) + '.' + t.length; }
+  const chave = (id) => String(id || SEM).replace(/\//g, '%2F');
+  // estado inteiro -> { config, pz: { chave: {pregao, itens} } }
+  function dividir(dados) {
+    const pz = {}, ids = new Set();
+    (dados.pregoes || []).forEach((p) => { const k = chave(p.id); ids.add(p.id); pz[k] = { pregao: p, itens: [] }; });
+    (dados.itens || []).forEach((i) => {
+      const k = ids.has(i.pregaoId) ? chave(i.pregaoId) : SEM;
+      if (!pz[k]) pz[k] = { pregao: null, itens: [] };
+      pz[k].itens.push(i);
+    });
+    return { config: dados.config || {}, pz };
+  }
+  // partes -> estado inteiro (o mesmo formato da ficha antiga)
+  function montar(config, pzMap, at) {
+    const pregoes = [], itens = [];
+    Object.keys(pzMap).sort().forEach((k) => { const d = pzMap[k] || {}; if (d.pregao) pregoes.push(d.pregao); (d.itens || []).forEach((i) => itens.push(i)); });
+    return { version: 1, config: config || {}, pregoes, itens, atualizadoEm: at || 0 };
+  }
+  // tamanho de cada ficha (para o aviso de limite: agora é por pregão)
+  function tamanhos(dados) {
+    const d = dividir(dados), out = [];
+    Object.keys(d.pz).forEach((k) => { const x = d.pz[k]; out.push({ k, numero: x.pregao ? (x.pregao.numero || '') + ' · ' + (x.pregao.orgao || '') : 'itens sem pregão', chars: estavel(x).length }); });
+    out.sort((a, b) => b.chars - a.chars);
+    return { maior: out[0] || null, lista: out, limite: LIMITE_PZ, config: estavel(d.config).length };
+  }
+  root.NuvemPartes = { estavel, hashTxt, dividir, montar, tamanhos, chave, LIMITE_PZ };
+
   let carregando = null;
 
   function carregarCloudSync() {
@@ -2437,6 +2480,87 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
       const referenciaDoUsuario = (uid) => mFs.doc(db, COLECAO, uid);
       const referenciaImagens = (uid) => mFs.doc(db, COLECAO_IMG, uid);
       let pararDeOuvirImagens = null;
+      let pararDeOuvirLegado = null;
+      const referenciaIdx = (uid) => mFs.doc(db, COL_IDX, uid);
+      const referenciaCfg = (uid) => mFs.doc(db, COL_CFG, uid);
+      const referenciaPz = (uid, k) => mFs.doc(db, COL_PZ + k, uid);
+
+      // cópia do que já foi lido do SERVIDOR (por hash): a transação só baixa as fichas que mudaram
+      const cache = { uid: null, idx: null, cfgH: null, cfg: null, pz: {}, legadoNovo: null };
+      function cacheDe(uid) { if (cache.uid !== uid) { cache.uid = uid; cache.idx = null; cache.cfgH = null; cache.cfg = null; cache.pz = {}; cache.legadoNovo = null; } return cache; }
+      const idxMapa = (idx) => { const m = {}; ((idx && idx.pz) || []).forEach((x) => { m[x.k] = x.h; }); return m; };
+
+      async function lerTx(tx, uid) {
+        const c = cacheDe(uid);
+        const si = await tx.get(referenciaIdx(uid));
+        const idx = si.exists() ? si.data() : null;
+        if (!idx || idx.v !== 2) return { idx: null, remoto: null };
+        if (idx.cfg !== c.cfgH) { const sc = await tx.get(referenciaCfg(uid)); c.cfg = sc.exists() ? (sc.data().config || {}) : {}; c.cfgH = idx.cfg; }
+        const m = idxMapa(idx);
+        for (const k of Object.keys(m)) {
+          if (c.pz[k] && c.pz[k].h === m[k]) continue;
+          const sp = await tx.get(referenciaPz(uid, k));
+          c.pz[k] = { h: m[k], d: sp.exists() ? sp.data() : { pregao: null, itens: [] } };
+        }
+        Object.keys(c.pz).forEach((k) => { if (!(k in m)) delete c.pz[k]; });
+        c.idx = idx;
+        const pzMap = {}; Object.keys(c.pz).forEach((k) => { pzMap[k] = c.pz[k].d; });
+        return { idx, remoto: montar(c.cfg, pzMap, idx.at) };
+      }
+
+      function gravarTx(tx, uid, dados, idxAntes, legado) {
+        const c = cacheDe(uid), partes = dividir(dados), antes = idxMapa(idxAntes);
+        const novoIdx = { v: 2, at: dados.atualizadoEm || Date.now(), cfg: hashTxt(estavel(partes.config)), pz: [], legado: legado || null };
+        const grandes = [];
+        Object.keys(partes.pz).sort().forEach((k) => {
+          const d = partes.pz[k], txt = estavel(d);
+          if (txt.length > LIMITE_PZ) grandes.push(d.pregao ? 'pregão ' + (d.pregao.numero || '') + ' · ' + (d.pregao.orgao || '') : 'itens sem pregão');
+          const h = hashTxt(txt);
+          novoIdx.pz.push({ k, h });
+          if (antes[k] !== h) tx.set(referenciaPz(uid, k), JSON.parse(txt));
+        });
+        if (grandes.length) throw new Error('Passou do limite de 1 MB da nuvem: ' + grandes.join(', ') + '. Exporte um backup e apague itens que ficaram de fora desse pregão.');
+        Object.keys(antes).forEach((k) => { if (!(k in partes.pz)) tx.delete(referenciaPz(uid, k)); });
+        if (!idxAntes || idxAntes.cfg !== novoIdx.cfg) tx.set(referenciaCfg(uid), { config: JSON.parse(estavel(partes.config)) });
+        tx.set(referenciaIdx(uid), novoIdx);
+        // a cache passa a refletir o que foi gravado (se a transação repetir, ela é relida pelo índice)
+        c.idx = novoIdx; c.cfgH = novoIdx.cfg; c.cfg = partes.config; c.pz = {};
+        novoIdx.pz.forEach((x) => { c.pz[x.k] = { h: x.h, d: partes.pz[x.k] }; });
+      }
+
+      // leitura fora da transação (escuta, "Verificar"): servidor=true atualiza a cache; confere o hash de cada ficha
+      async function montarDeLeituras(uid, idx, getFn, servidor) {
+        const c = cacheDe(uid), m = idxMapa(idx), pzMap = {};
+        let cfg = c.cfgH === idx.cfg ? c.cfg : null;
+        if (!cfg) { const sc = await getFn(referenciaCfg(uid)); cfg = sc.exists() ? (sc.data().config || {}) : {}; if (servidor && hashTxt(estavel(cfg)) === idx.cfg) { c.cfg = cfg; c.cfgH = idx.cfg; } }
+        await Promise.all(Object.keys(m).map(async (k) => {
+          if (c.pz[k] && c.pz[k].h === m[k]) { pzMap[k] = c.pz[k].d; return; }
+          const sp = await getFn(referenciaPz(uid, k));
+          const d = sp.exists() ? sp.data() : { pregao: null, itens: [] };
+          pzMap[k] = d;
+          if (servidor && hashTxt(estavel(d)) === m[k]) c.pz[k] = { h: m[k], d };
+        }));
+        return montar(cfg, pzMap, idx.at);
+      }
+      async function lerTudo(uid, servidor) {
+        const g = servidor ? mFs.getDocFromServer : mFs.getDoc;
+        const si = await g(referenciaIdx(uid));
+        if (!si.exists() || (si.data() || {}).v !== 2) { const so = await g(referenciaDoUsuario(uid)); return so.exists() ? so.data() : null; }
+        if (servidor) { const c = cacheDe(uid); c.cfgH = null; c.pz = {}; }   // "Verificar": baixa tudo de novo
+        return montarDeLeituras(uid, si.data(), g, servidor);
+      }
+      // aparelho com a versão antiga ainda gravando na ficha antiga: mescla a diferença uma vez e avisa
+      function ouvirLegado(uid, idx) {
+        if (pararDeOuvirLegado || !idx || !idx.legado) return;
+        pararDeOuvirLegado = mFs.onSnapshot(referenciaDoUsuario(uid), (so) => {
+          if (so.metadata.fromCache || !so.exists()) return;
+          const d = so.data(), h = hashTxt(estavel(d));
+          const atual = (cache.idx && cache.idx.legado) || idx.legado;
+          if (h === atual || h === cache.legadoNovo) return;
+          cache.legadoNovo = h;
+          if (root.onCloudLegado) root.onCloudLegado(d);
+        }, () => { /* sem permissão ou sem rede: ignora */ });
+      }
 
       root.CloudSync = {
         onAuthStateChanged(callback) { return mAuth.onAuthStateChanged(auth, callback); },
@@ -2444,27 +2568,29 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
         cadastrar(email, senha) { return mAuth.createUserWithEmailAndPassword(auth, email, senha); },
         logout() { return mAuth.signOut(auth); },
 
-        async salvarNaNuvem(uid, dados) { await mFs.setDoc(referenciaDoUsuario(uid), dados); },
-        async buscarDaNuvem(uid) {
-          const snap = await mFs.getDoc(referenciaDoUsuario(uid));
-          return snap.exists() ? snap.data() : null;
-        },
-        // lê direto do servidor (sem cópia local do navegador): usado em "Verificar sincronização"
-        async buscarDoServidor(uid) {
-          const snap = await mFs.getDocFromServer(referenciaDoUsuario(uid));
-          return snap.exists() ? snap.data() : null;
-        },
+        // ---- dados (estrutura nova, mesma API de antes) ----
+        // lê tudo (índice + fichas); servidor=true ignora a cópia do navegador ("Verificar com a nuvem")
+        async buscarDaNuvem(uid) { return lerTudo(uid, false); },
+        async buscarDoServidor(uid) { return lerTudo(uid, true); },
 
-        // lê o servidor, deixa o app mesclar e grava só se mudou — tudo numa transação
+        // lê o servidor, deixa o app mesclar e grava só o que mudou — tudo numa transação
         // mesclar(remoto|null) -> { gravar:boolean, dados:object, resultado:any }
         mesclarNaNuvem(uid, mesclar) {
-          const ref = referenciaDoUsuario(uid);
           return mFs.runTransaction(db, async (tx) => {
-            const snap = await tx.get(ref);
-            const r = mesclar(snap.exists() ? snap.data() : null);
-            if (r.gravar) tx.set(ref, r.dados);
+            const lido = await lerTx(tx, uid);
+            let remoto = lido.remoto, migrar = false, legado = lido.idx ? lido.idx.legado || null : null;
+            if (!lido.idx) {
+              // 1ª vez com a versão nova: parte da ficha antiga (que fica guardada, sem apagar)
+              const so = await tx.get(referenciaDoUsuario(uid));
+              remoto = so.exists() ? so.data() : null;
+              legado = remoto ? hashTxt(estavel(remoto)) : null;
+              migrar = true;
+            }
+            if (cache.legadoNovo) legado = cache.legadoNovo;
+            const r = mesclar(remoto);
+            if (r.gravar || migrar || (lido.idx && legado !== (lido.idx.legado || null))) gravarTx(tx, uid, r.dados, lido.idx, legado);
             return r.resultado;
-          });
+          }).then((res) => { if (cache.legadoNovo && cache.idx && cache.idx.legado === cache.legadoNovo) cache.legadoNovo = null; return res; });
         },
 
         // imagens: lê, deixa o app decidir qual é mais nova e grava só se preciso (transação)
@@ -2489,9 +2615,26 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
 
         ouvirMudancas(uid, callback) {
           if (pararDeOuvirSnapshot) pararDeOuvirSnapshot();
-          pararDeOuvirSnapshot = mFs.onSnapshot(referenciaDoUsuario(uid), { includeMetadataChanges: true }, (snap) => {
-            callback(snap.exists() ? snap.data() : null, snap.metadata.fromCache);
+          if (pararDeOuvirLegado) { pararDeOuvirLegado(); pararDeOuvirLegado = null; }
+          let fila = Promise.resolve();
+          const p1 = mFs.onSnapshot(referenciaIdx(uid), { includeMetadataChanges: true }, (snap) => {
+            fila = fila.then(async () => {
+              const doCache = snap.metadata.fromCache;
+              try {
+                if (!snap.exists() || (snap.data() || {}).v !== 2) {
+                  // ainda não migrou: mostra a ficha antiga (a 1ª sincronização faz a migração)
+                  const so = await (doCache ? mFs.getDoc : mFs.getDocFromServer)(referenciaDoUsuario(uid));
+                  callback(so.exists() ? so.data() : null, doCache);
+                  return;
+                }
+                const idx = snap.data();
+                if (doCache) { callback(await montarDeLeituras(uid, idx, mFs.getDoc, false), true); return; }
+                callback(await montarDeLeituras(uid, idx, mFs.getDocFromServer, true), false);
+                ouvirLegado(uid, idx);
+              } catch (e) { console.warn('[cloud] leitura das fichas falhou:', e && (e.code || e.message)); }
+            });
           }, (err) => { console.warn('[cloud] escuta interrompida:', err && err.code); if (root.onCloudEscutaErro) root.onCloudEscutaErro(err); });
+          pararDeOuvirSnapshot = () => { p1(); if (pararDeOuvirLegado) { pararDeOuvirLegado(); pararDeOuvirLegado = null; } };
         },
         pararDeOuvir() {
           if (pararDeOuvirSnapshot) { pararDeOuvirSnapshot(); pararDeOuvirSnapshot = null; }
@@ -6876,8 +7019,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
       sync: (local) => window.CloudSync.mesclarNaNuvem(uid, (remoto) => {
         const merged = C.mergeState(local, remoto || {});
         const dados = C.paraNuvem(merged);
-        const tam = JSON.stringify(dados).length;
-        if (tam > 950000) throw new Error('Dados passaram do limite de 1 MB do documento da nuvem. Exporte um backup e apague pregões antigos.');
+        // o limite de 1 MB agora é por pregão (cada um tem a sua ficha): a CloudSync confere ao gravar
         const gravar = !remoto || C.diffState(remoto, dados);
         dados.atualizadoEm = C.agora();
         return { gravar, dados, resultado: merged };
@@ -6916,6 +7058,11 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
       updateStatusPill();
     });
     window.onCloudEscutaErro = () => { Cloud.aoVivo = false; updateStatusPill(); };
+    // um aparelho com a versão antiga do app gravou na ficha antiga: mescla aqui e reenvia na estrutura nova
+    window.onCloudLegado = (dados) => {
+      store.mergeFrom(dados); S.schedule('versão antiga', 600);
+      toast('Um aparelho com a versão antiga do app gravou na nuvem. Juntei as mudanças; atualize o app nele.');
+    };
   }
   function aoSair() {
     if (window.CloudSync) window.CloudSync.pararDeOuvir();
@@ -6940,7 +7087,8 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     const pend = C.pendenciasNuvem(loc, rem || {}), novos = C.pendenciasNuvem(rem || {}, loc);
     const nome = (r) => r.numero ? 'Pregão ' + r.numero + ' · ' + (r.orgao || '') : 'Item ' + (r.itemEdital || '') + ' · ' + (r.descricao || '');
     const lista = (arr) => arr.slice(0, 12).map((r) => '<li>' + esc(nome(r)) + (r.deleted ? ' (excluído)' : '') + '</li>').join('') + (arr.length > 12 ? '<li>… e mais ' + (arr.length - 12) + '</li>' : '');
-    const tam = JSON.stringify(C.paraNuvem(loc)).length;
+    const tz = window.NuvemPartes ? window.NuvemPartes.tamanhos(C.paraNuvem(loc)) : null;
+    const espaco = tz && tz.maior ? `Maior pregão na nuvem: ${Math.round(tz.maior.chars / tz.limite * 100)}% do limite de 1 MB (${esc(tz.maior.numero)}). Cada pregão tem a sua ficha.` : '';
     const ok = !pend.n && !novos.n && !fotos;
     const w = document.createElement('div'); w.className = 'dlg-wrap';
     w.innerHTML = `<div class="dlg" role="dialog" aria-modal="true"><h3>${ok ? '✅ Tudo igual à nuvem' : '⚠️ Há diferenças'}</h3>
@@ -6951,7 +7099,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
       ${pend.n ? `<div class="vsync-dif"><b>Só neste aparelho (a nuvem não recebeu):</b><ul>${lista(pend.pregoes.concat(pend.itens))}${pend.config ? '<li>Configurações</li>' : ''}</ul></div>` : ''}
       ${novos.n ? `<div class="vsync-dif"><b>Na nuvem e ainda não aqui:</b><ul>${lista(novos.pregoes.concat(novos.itens))}</ul></div>` : ''}
       ${fotos ? `<div class="vsync-dif"><b>${fotos} item(ns) com fotos ainda só neste aparelho.</b></div>` : ''}
-      <p class="tiny muted" style="margin-top:8px">Espaço usado na nuvem: ${Math.round(tam / 10000)}% do limite de 1 MB.${Cloud.relogio && Math.abs(Cloud.relogio.off) > 60000 ? ' Relógio deste PC ' + fmtDif(Cloud.relogio.off) + ': acerte a hora do Windows.' : ''}</p>
+      <p class="tiny muted" style="margin-top:8px">${espaco}${Cloud.relogio && Math.abs(Cloud.relogio.off) > 60000 ? ' Relógio deste PC ' + fmtDif(Cloud.relogio.off) + ': acerte a hora do Windows.' : ''}</p>
       <div class="btns">${ok ? '' : '<button type="button" class="btn primary" data-v="enviar">Enviar / trazer agora</button>'}<button type="button" class="btn ghost" data-v="ok">Fechar</button></div></div>`;
     document.body.appendChild(w);
     w.addEventListener('click', async (e) => {

@@ -1,6 +1,7 @@
 # Plano: sincronização com uma ficha por pregão (para sábado, depois das 18h)
 
-> Planejado em 04/11/2026 com o João. **Não está feito.** No sábado, depois que o limite de uso reiniciar, abrir uma conversa e dizer: "vamos fazer o plano da sincronização por pregão".
+> Planejado em 04/11/2026 com o João. **FEITO em 05/11/2026 (v1.121.0)**, adiantado a pedido do João. Teste com dois aparelhos e Firebase falso: `python3 tests/sync_duas_fontes.py` (rodar sempre que mexer na sincronização). As regras do Firestore não precisaram mudar (regra curinga /{collection}/{userId}, a mesma das fotos).
+> No sábado, depois que o limite de uso reiniciar, abrir uma conversa e dizer: "vamos fazer o plano da sincronização por pregão".
 > Mexe na sincronização, que é uma função protegida: só publicar depois de passar em TODOS os testes da seção 5.
 
 ## 1. Por que

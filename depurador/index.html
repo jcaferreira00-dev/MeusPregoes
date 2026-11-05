@@ -136,8 +136,11 @@ function ctx() {
   const P = allP.filter((p) => !p.deleted), I = allI.filter((i) => !i.deleted);
   let nuvem = 0;
   try { const w = frWin(); nuvem = JSON.stringify(w && w.Core && w.Core.paraNuvem ? w.Core.paraNuvem(st) : st).length; } catch (e) { try { nuvem = JSON.stringify(st).length; } catch (e2) { nuvem = 0; } }
+  // v1.121.0: cada pregão tem a sua ficha na nuvem; o limite de 1 MB vale para a maior delas
+  let maior = null;
+  try { const w = frWin(); if (w && w.NuvemPartes) { const tz = w.NuvemPartes.tamanhos(w.Core && w.Core.paraNuvem ? w.Core.paraNuvem(st) : st); maior = tz.maior; } } catch (e) { maior = null; }
   const ui = lsGet('mp.ui', {});
-  return { P, I, allP, allI, cfg: st.config || {}, nuvemChars: nuvem, ui };
+  return { P, I, allP, allI, cfg: st.config || {}, nuvemChars: maior ? maior.chars : nuvem, nuvemTotal: nuvem, maiorPregao: maior ? maior.numero : '', ui };
 }
 async function lerCodigo() {
   try {
@@ -187,7 +190,7 @@ function renderResumo() {
     ['Funcionalidades catalogadas', total], ['Essenciais e importantes', porImp[0].q + porImp[1].q],
     ['Redundantes, mortas ou a decidir', LISTA.filter((x) => x.imp <= 2).length], ['Suas decisões até agora', dd + ' de ' + total],
   ].map((a) => '<div class="card kpi"><b>' + a[1] + '</b><span>' + a[0] + '</span></div>').join('') + '</div>';
-  h += bloco('Espaço do documento da nuvem', '<p>O Firestore guarda tudo num único documento de no máximo 1 MB; o app trava a sincronização acima de 950.000 caracteres. Hoje: <b class="' + (pct > 85 ? 'badb' : pct > 65 ? 'warnb' : 'okb') + '">' + fmt(c.nuvemChars) + ' caracteres (' + pct.toFixed(0) + '%)</b>.</p><div class="bar ' + (pct > 85 ? 'bad' : pct > 65 ? 'warn' : 'ok') + '"><i style="width:' + Math.min(100, pct) + '%"></i></div><p class="sm mut">Fonte: ' + esc(S.origem) + '. Detalhe e o que ocupa mais espaço: aba Saúde.</p>');
+  h += bloco('Espaço na nuvem (maior pregão)', '<p>Desde a v1.121.0 cada pregão tem a sua ficha no Firestore, e o limite de 1 MB (950.000 caracteres) vale para cada uma. Maior pregão' + (c.maiorPregao ? ' (' + esc(c.maiorPregao) + ')' : '') + ': <b class="' + (pct > 85 ? 'badb' : pct > 65 ? 'warnb' : 'okb') + '">' + fmt(c.nuvemChars) + ' caracteres (' + pct.toFixed(0) + '%)</b>. Soma de tudo: ' + fmt(c.nuvemTotal) + ' (sem limite).</p><div class="bar ' + (pct > 85 ? 'bad' : pct > 65 ? 'warn' : 'ok') + '"><i style="width:' + Math.min(100, pct) + '%"></i></div><p class="sm mut">Fonte: ' + esc(S.origem) + '. Detalhe e o que ocupa mais espaço: aba Saúde.</p>');
   h += bloco('Como ler o relatório', '<p class="sm">Cada função tem uma nota de <b>importância</b> (5 = sem ela o app não serve · 1 = repetida, antiga ou morta) e um <b>veredito</b>: Manter · Manter e enxugar · Fundir com outra · Decidir com dados · Remover. Quando uma função repete outra, o cartão aponta o número da função para onde ir (ex.: <i>F12</i>). Na aba Funcionalidades você marca a sua decisão em cada uma; tudo é guardado neste navegador e pode ser exportado.</p>');
   h += '<div class="grid"><div class="card"><h3>Por importância</h3>' + porImp.map((a) => '<div class="sm">' + C.NIVEIS[a.n] + ' <b>' + a.q + '</b><div class="bar"><i style="width:' + a.q / total * 100 + '%"></i></div></div>').join('') + '</div>' +
     '<div class="card"><h3>Por veredito</h3>' + porVer.map((a) => '<div class="sm">' + C.VEREDITOS[a.v] + ' <b>' + a.q + '</b><div class="bar"><i style="width:' + a.q / total * 100 + '%"></i></div></div>').join('') + '</div></div>';
@@ -297,7 +300,7 @@ function renderSaude() {
   const ok = (b, t, d) => L.push([b ? 'ok' : 'warn', t, d]);
   ok(S.appVersion === S.swVersion && S.appVersion !== '?', 'Versão do app = versão do service worker', 'app ' + S.appVersion + ' · sw ' + S.swVersion + '. Se forem diferentes, o celular pode ficar com a versão velha.');
   const pct = c.nuvemChars / 950000 * 100;
-  L.push([pct > 90 ? 'bad' : pct > 70 ? 'warn' : 'ok', 'Espaço do documento na nuvem', fmt(c.nuvemChars) + ' de 950.000 (' + pct.toFixed(0) + '%). Acima de 100% a sincronização para.']);
+  L.push([pct > 90 ? 'bad' : pct > 70 ? 'warn' : 'ok', 'Espaço na nuvem (maior pregão)', fmt(c.nuvemChars) + ' de 950.000 (' + pct.toFixed(0) + '%)' + (c.maiorPregao ? ' · ' + c.maiorPregao : '') + '. Cada pregão tem a sua ficha; acima de 100% só esse pregão para de sincronizar. Soma de tudo: ' + fmt(c.nuvemTotal) + '.']);
   ok(S.erros.length === 0, 'Erros no console do app (nesta sessão)', S.erros.length ? S.erros.slice(0, 3).join(' | ') : 'nenhum');
   const ativos = c.P.filter((p) => !['Desisti', 'Perdeu', 'Desclassificado', 'Concluído'].includes(p.status));
   const semKm = ativos.filter((p) => !(Number(p.km) > 0) && !p.entregaDiferente);

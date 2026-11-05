@@ -60,4 +60,4 @@ F28 "Posso baixar do teto" (nota do João, 04/11): o piso não é lucro zero. Co
 F38: o selo SRP/Compra tampa a cidade e o número do pregão no cartão → corrigir com prévia.
 
 ## 9. Próxima sessão grande (sábado, depois das 18h)
-Sincronização com uma ficha por pregão: ver `docs/PLANO-sync-por-pregao.md`. Planejado em 04/11, não feito.
+Sincronização com uma ficha por pregão: FEITA em 05/11/2026 (v1.121.0), ver `docs/PLANO-sync-por-pregao.md`.

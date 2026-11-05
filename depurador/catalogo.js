@@ -93,9 +93,9 @@
   F('nuvem-sync', AR.sync, 5, 'manter', 'Login e sincronização na nuvem (Firebase)',
     `Entra com e-mail e senha e mantém PC e celular iguais: sempre puxa o servidor primeiro, mescla por data de alteração (o registro mais novo vence; exclusões viram “lápides”) e só então envia, dentro de uma transação. Escuta mudanças ao vivo e tenta de novo sozinho se cair a internet.`,
     { sel: ['#pill'], ev: 'Sync.run + adaptadorFirebase.sync (mesclarNaNuvem).' });
-  F('espaco-nuvem', AR.sync, 5, 'revisar', 'Limite de 1 MB do documento da nuvem',
-    `Todos os pregões e itens vivem num único documento do Firestore, que aceita no máximo 1 MB. O app trava a sincronização com erro acima de 950 mil caracteres. Na sua cópia de 31/10 já estava em cerca de 86% desse limite, e quase metade do espaço são itens de pregões em que você desistiu. Veja o painel “Saúde › Espaço na nuvem”.`,
-    { probe: 'espaco', para: 'Antes de analisar mais editais: arquivar os itens dos pregões Desisti fora do documento sincronizado (ou limpar texto longo), apagar lápides antigas e remover campos legados duplicados (ondeLink).', ev: 'adaptadorFirebase.sync lança erro acima de 950.000 caracteres.' });
+  F('espaco-nuvem', AR.sync, 5, 'manter', 'Uma ficha por pregão na nuvem (limite de 1 MB por pregão)',
+    `Desde a v1.121.0 (05/11/2026) cada pregão, com os itens dele, tem a sua ficha no Firestore (pregoesmei_pz_<pregão>), mais uma ficha para a Config (pregoesmei_cfg) e um índice (pregoesmei_idx) com o hash de cada ficha. O limite de 1 MB (950 mil caracteres) passou a valer para cada pregão, e o erro diz qual pregão passou. Cada envio grava só a ficha do pregão que mudou e o índice, na mesma transação. A ficha antiga (pregoesmei_usuarios) ficou como cópia de segurança e não é mais gravada; se um aparelho com a versão antiga gravar nela, o app junta as mudanças e avisa.`,
+    { probe: 'espaco', para: 'Manter. Teste com dois aparelhos: tests/sync_duas_fontes.py.', ev: 'CloudSync.mesclarNaNuvem (lerTx + gravarTx); NuvemPartes.tamanhos.' });
 
   /* ================= 4 · IMPORTANTES ================= */
   F('posso-baixar', AR.calc, 4, 'manter', '“Posso baixar do teto até o mínimo” e “Lucro”',
@@ -332,7 +332,7 @@
     anonima: (c) => R(cnt(c.P, (p) => p.pdfOpts && p.pdfOpts.anonima === true), c.P.length, 'pregões com proposta sem identificação'),
     posVenda: (c) => R(cnt(c.P, (p) => has(p.empenhoNum) || has(p.empenhoData) || has(p.entregueEm) || has(p.pagoEm)), c.P.length, 'pregões com empenho/entrega/pagamento'),
     kmFalta: (c) => R(cnt(c.P, (p) => !['Desisti', 'Perdeu', 'Desclassificado', 'Concluído'].includes(p.status) && !(Number(p.km) > 0) && !p.entregaDiferente), cnt(c.P, (p) => !['Desisti', 'Perdeu', 'Desclassificado', 'Concluído'].includes(p.status)), 'pregões ativos SEM km (ruim: o ideal é zero)'),
-    espaco: (c) => R(c.nuvemChars || 0, 950000, 'caracteres do documento da nuvem (limite de segurança 950.000)'),
+    espaco: (c) => R(c.nuvemChars || 0, 950000, 'caracteres do maior pregão na nuvem (limite de 950.000 por pregão)'),
     emb: (c) => R(cnt(alts(c.I), (a) => Number(a.emb) > 1), alts(c.I).length, 'opções de compra com pacote'),
     opcoes: (c) => R(cnt(c.I, (i) => Array.isArray(i.alternativas) && i.alternativas.length), c.I.length, 'itens com ao menos uma opção de compra'),
     catalogoDesc: (c) => R(cnt(c.I, (i) => has(i.catalogoDesc)), c.I.length, 'itens com descritivo ofertado'),
