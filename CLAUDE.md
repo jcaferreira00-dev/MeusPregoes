@@ -53,6 +53,8 @@ sempre, acrescente aqui (seção certa) no mesmo commit da tarefa.
 - Lance acima do teto: o bloco de decisão do item fica vermelho ("ACIMA do teto: desclassifica") e o "Meu lance" também.
 - Colocação (`colocacao`, 1º, 2º…): digitável em qualquer item não ganho depois da sessão (perdido, pregão perdido/encerrado ou sem item ganho), no cartão do item e na janela de edição. No Dashboard, o botão "Colocações" lista esses itens do mais perto de ganhar para o mais longe (filtro "Até o 3º"), com valor do vencedor e diferença. Na guia Itens o bloco mostra o selo da colocação.
 - Celular (iPhone 13) = só o básico; PC = completo. Não criar guias novas no celular.
+- Tela de entrada (decisão F26 de 04/11/2026, v1.123.0): sem a conta conectada o app não abre; sessão guardada abre sozinho; sem internet abre com os dados do aparelho; não há "Criar conta" (limite do Firebase).
+- Nuvem (v1.121.0): uma ficha por pregão (`pregoesmei_idx`, `pregoesmei_cfg`, `pregoesmei_pz_<pregão>`); a ficha antiga `pregoesmei_usuarios` ficou só como cópia. Mexeu na sincronização ou na entrada: rodar `tests/sync_duas_fontes.py`.
 
 - Contexto da otimização (31/10/2026): leia `docs/CONTEXTO-otimizacao.md` (o que não mexer sem decisão, achados e plano). Nada do relatório é aplicado sem o João decidir.
 - Depurador (decisão de 31/10/2026): `depurador/` é um PWA que lê o app e mostra o catálogo de funcionalidades (`depurador/catalogo.js`). Ao criar, mudar ou tirar uma função do app, atualize a entrada dela no catálogo no mesmo commit. O relatório `docs/relatorio-funcionalidades.md` é gerado desse catálogo.

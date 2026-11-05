@@ -262,6 +262,13 @@ input[type=range] { width: 100%; accent-color: var(--blue); }
 .draftbar button { margin-left: auto; border: 0; background: transparent; color: inherit; font-weight: 800; text-decoration: underline; cursor: pointer; }
 
 /* diálogos e avisos */
+.gate { position: fixed; inset: 0; z-index: 200; display: grid; place-items: center; padding: 20px; background: linear-gradient(160deg, #1f3864, #10203d); }
+.gate[hidden] { display: none; }
+.gate form { width: min(380px, 100%); background: var(--card); border-radius: 16px; padding: 26px 24px; box-shadow: 0 20px 60px rgba(0,0,0,.35); display: grid; gap: 12px; }
+.gate .g-hd { display: flex; align-items: center; gap: 12px; margin-bottom: 4px; } .gate .g-hd img { width: 44px; height: 44px; border-radius: 10px; }
+.gate h2 { margin: 0; font-size: 20px; } .gate .g-sub { font-size: 12.5px; color: var(--muted); }
+.gate .g-msg { font-size: 12.5px; min-height: 16px; color: var(--red); font-weight: 600; } .gate .g-msg.info { color: var(--muted); font-weight: 500; }
+.gate button[type=submit] { width: 100%; }
 .dlg-wrap { position: fixed; inset: 0; z-index: 90; display: grid; place-items: center; padding: 20px; background: rgba(10,18,32,.6); animation: bd .15s ease; }
 .dlg { background: var(--card); border-radius: 20px; padding: 20px; width: 100%; max-width: 380px; box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 10px; }
 .dlg h3 { font-size: 17px; } .dlg p { color: var(--muted); font-size: 14px; }
@@ -1315,7 +1322,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.122.0';
+  const APP_VERSION = '1.123.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Julgamento', 'Aguardando empenho', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -6863,7 +6870,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
       case 'atualizar': checkUpdate(true); break;
       case 'nuvem-entrar': nuvemEntrar(false); break;
       case 'nuvem-criar': nuvemEntrar(true); break;
-      case 'nuvem-sair': confirmar('Sair da conta?', 'Os dados continuam neste aparelho, mas deixam de sincronizar até você entrar de novo.', 'Sair', false).then((ok) => { if (ok && window.CloudSync) window.CloudSync.logout(); }); break;
+      case 'nuvem-sair': confirmar('Sair da conta?', 'Você volta para a tela de entrada. Os dados continuam neste aparelho e voltam a sincronizar quando você entrar de novo.', 'Sair', false).then((ok) => { if (ok && window.CloudSync) window.CloudSync.logout(); }); break;
       case 'nuvem-tentar': iniciarNuvem(true); break;
       case 'sync-agora': sincronizarImagens(); S.run('manual').then((r) => { if (r && r.ok) toast(S.pendentes().n ? 'Ainda há alterações sem enviar' : 'Sincronizado'); updateStatusPill(); }); break;
       case 'sync-pill': case 'sync-verificar': if (S.enabled) verificarNuvem(); else setTab('config'); break;
@@ -7028,9 +7035,41 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     else corpo = `<p class="small muted" style="margin-bottom:12px">Entre com a mesma conta em todos os aparelhos para manter os dados iguais.</p>
       <div class="field"><label for="cEmail">E-mail</label><input class="input" id="cEmail" type="email" inputmode="email" autocomplete="username" autocapitalize="none"></div>
       <div class="field"><label for="cSenha">Senha</label><input class="input" id="cSenha" type="password" autocomplete="current-password"></div>
-      <div class="grid2"><button class="btn primary" data-act="nuvem-entrar">Entrar</button><button class="btn" data-act="nuvem-criar">Criar conta</button></div>`;
+      <button class="btn primary block" data-act="nuvem-entrar">Entrar</button>`;
     return `<div class="card"><h3>${icon('cloud', 'sm')} Conta e sincronização</h3>${corpo}</div>`;
   }
+
+  /* ---------- tela de entrada (F26, decisão de 04/11/2026; v1.123.0) ----------
+   * O app só abre com a conta conectada: a sincronização nunca fica desligada sem você perceber.
+   * - Já entrou antes neste aparelho: o Firebase guarda a sessão e o app abre sozinho.
+   * - Formulário de verdade (e-mail + senha): o navegador oferece salvar e preencher a senha.
+   * - Sem internet ou Firebase fora do ar: o app abre com os dados do aparelho (não dá para conferir a conta).
+   * - Sem botão "Criar conta" por enquanto (limite do Firebase). */
+  const Gate = {
+    el: null,
+    montar() {
+      if (this.el) return this.el;
+      const w = document.createElement('div'); w.className = 'gate'; w.id = 'gate'; w.hidden = true;
+      w.innerHTML = `<form autocomplete="on" novalidate><div class="g-hd"><img src="icons/icon-96.png" alt=""><div><h2>Meus Pregões</h2><div class="g-sub">Entre com a sua conta para abrir o app.</div></div></div>
+        <div class="field"><label for="gEmail">E-mail</label><input class="input" id="gEmail" name="email" type="email" inputmode="email" autocomplete="username" autocapitalize="none" required></div>
+        <div class="field"><label for="gSenha">Senha</label><input class="input" id="gSenha" name="senha" type="password" autocomplete="current-password" required></div>
+        <div class="g-msg info" aria-live="polite">Conectando…</div>
+        <button type="submit" class="btn primary">Entrar</button></form>`;
+      document.body.appendChild(w);
+      w.querySelector('form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const email = w.querySelector('#gEmail').value.trim(), senha = w.querySelector('#gSenha').value;
+        if (!email || !senha) { this.msg('Preencha e-mail e senha.'); return; }
+        if (!window.CloudSync) { this.msg('Ainda conectando ao servidor… tente de novo em instantes.'); return; }
+        const bt = w.querySelector('button'); bt.disabled = true; this.msg('Entrando…', true);
+        try { await window.CloudSync.login(email, senha); } catch (err) { this.msg(erroAuth(err)); } finally { bt.disabled = false; }
+      });
+      this.el = w; return w;
+    },
+    msg(t, info) { const m = this.el && this.el.querySelector('.g-msg'); if (m) { m.textContent = t || ''; m.classList.toggle('info', !!info); } },
+    mostrar(t) { this.montar(); this.el.hidden = false; this.msg(t || '', true); const e = this.el.querySelector('#gEmail'); if (e && !e.value) setTimeout(() => e.focus(), 50); },
+    esconder() { if (this.el) this.el.hidden = true; },
+  };
 
   async function nuvemEntrar(criar) {
     const email = ($('#cEmail') || {}).value, senha = ($('#cSenha') || {}).value;
@@ -7203,10 +7242,12 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
       Cloud.ligado = true; Cloud.estado = 'pronto';
       cs.onAuthStateChanged(async (user) => {
         Cloud.user = user || null;
+        if (user) Gate.esconder(); else Gate.mostrar();
         try { if (user) await aoEntrar(user); else aoSair(); } catch (e) { console.error(e); }
         updateStatusPill(); if (UI.tab === 'config') render();
       });
     } catch (e) {
+      Gate.esconder();   // sem internet / Firebase fora do ar: abre com os dados do aparelho
       Cloud.estado = 'erro';
       Cloud.erro = navigator.onLine ? 'Não consegui carregar o Firebase. Tente de novo em instantes.' : 'Sem internet: a conta e a sincronização voltam quando você estiver online.';
       if (manual) toast(Cloud.erro);
@@ -7246,6 +7287,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
 
   function boot() {
     buildShell();
+    try { if (!localStorage.getItem('mp.cloud.uid') && navigator.onLine) Gate.mostrar('Conectando…'); } catch (e) { /* ignora */ }
     store.on((kind) => {
       if (kind === 'error') { toast('Armazenamento do aparelho cheio. Exporte um backup e libere espaço.'); return; }
       if (kind !== 'remote') S.schedule('alteração');   // 'remote' = veio da nuvem: não reenvia (evita laço)

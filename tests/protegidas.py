@@ -55,7 +55,7 @@ with sync_playwright() as p:
     pg.evaluate("()=>localStorage.setItem('mp.ui',JSON.stringify({tab:'pregoes'}))"); pg.reload(); pg.wait_for_timeout(800)
     pg.click('[data-act=novo-pregao]'); pg.wait_for_timeout(700)
     pg.fill('[name=numero]', '99/2026'); pg.fill('[name=orgao]', 'Teste'); pg.fill('[name=km]', '')
-    pg.click('button[type=submit]'); pg.wait_for_timeout(600)
+    pg.click('.sheet button[type=submit]'); pg.wait_for_timeout(600)
     salvo = any(x['numero'] == '99/2026' for x in json.loads(pg.evaluate("()=>localStorage.getItem('mp.state.v1')"))['pregoes'])
     ok(not salvo, 'Cadastro do pregão: não salva sem km')
     ex = pg.evaluate("()=>{const p=window.__app.store.get().pregoes.find(x=>x.id==='p1');return [p.obs,p.exigencias]}")

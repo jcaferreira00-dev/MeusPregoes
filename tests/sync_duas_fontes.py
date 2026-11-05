@@ -39,8 +39,10 @@ URL = f'http://127.0.0.1:{PORT}'
 FAKE = {
  'firebase-app.js': "export function initializeApp(c){return {c};}",
  'firebase-auth.js': """export function getAuth(){return {};}
-export function onAuthStateChanged(a,cb){setTimeout(()=>cb({uid:'%s',email:'t@t.com'}),30);return ()=>{};}
-export async function signInWithEmailAndPassword(){} export async function createUserWithEmailAndPassword(){} export async function signOut(){}""" % UID,
+const U='%s'; let user = location.hash.includes('semlogin') ? null : {uid:U,email:'t@t.com'}; const cbs=[];
+export function onAuthStateChanged(a,cb){cbs.push(cb);setTimeout(()=>cb(user),30);return ()=>{};}
+export async function signInWithEmailAndPassword(a,e,senha){ if(senha!=='certa') throw Object.assign(new Error('x'),{code:'auth/wrong-password'}); user={uid:U,email:e}; cbs.forEach((c)=>c(user)); return {user}; }
+export async function createUserWithEmailAndPassword(){} export async function signOut(){ user=null; cbs.forEach((c)=>c(null)); }""" % UID,
  'firebase-firestore.js': """const U='%s';
 const off=()=>globalThis.__offline===true;
 async function get(path){ if(off()) throw Object.assign(new Error('offline'),{code:'unavailable'}); const r=await fetch(U+'/doc?p='+encodeURIComponent(path)); return r.json(); }
@@ -205,6 +207,19 @@ with sync_playwright() as p:
     ok(esperar(A, "()=>window.Sync.state==='erro'&&/pregão 10\\/2026/.test(window.Sync.message)"), 'Pregão acima de 1 MB: erro diz qual pregão')
     A.evaluate("()=>window.__app.store.upsertItem({id:'p10-i1',descEdital:'curto'})")
     ok(esperar(A, SYNC_OK, 40000), 'Corrigido o pregão grande, volta a sincronizar')
+    # ---- tela de entrada (F26): sem conta conectada o app não abre ----
+    ctxC = b.new_context(viewport={'width': 1500, 'height': 950}); ctxC.route(re.compile(r'gstatic\.com/'), rota)
+    for h in ['**/nominatim.openstreetmap.org/**', '**/router.project-osrm.org/**', '**/api.bcb.gov.br/**']: ctxC.route(h, lambda r: r.abort())
+    C3 = ctxC.new_page(); C3.on('pageerror', lambda e: erros.append('entrada: ' + str(e)))
+    C3.goto(APP + '#semlogin'); C3.wait_for_timeout(1200)
+    ok(C3.is_visible('#gate') and not C3.is_visible('text=Criar conta'), 'Entrada: sem conta conectada aparece a tela de entrada (sem "Criar conta")')
+    C3.fill('#gEmail', 't@t.com'); C3.fill('#gSenha', 'errada'); C3.click('#gate button[type=submit]'); C3.wait_for_timeout(600)
+    ok(C3.is_visible('#gate') and len(C3.inner_text('#gate .g-msg')) > 3, 'Entrada: senha errada mostra o aviso e não abre')
+    C3.fill('#gSenha', 'certa'); C3.click('#gate button[type=submit]')
+    ok(esperar(C3, "()=>document.getElementById('gate').hidden===true") and esperar(C3, SYNC_OK), 'Entrada: senha certa abre o app e sincroniza')
+    ok(esperar(C3, "()=>window.__app.store.get().pregoes.some(p=>p.id==='novo-cel')"), 'Entrada: depois de entrar, os pregões da conta chegam')
+    C3.evaluate("()=>window.CloudSync.logout()")
+    ok(esperar(C3, "()=>document.getElementById('gate').hidden===false"), 'Entrada: sair da conta volta para a tela de entrada')
     b.close()
 
 srv.shutdown()
