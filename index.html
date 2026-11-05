@@ -727,6 +727,17 @@ input.input[type=datetime-local]::-webkit-date-and-time-value, input.input[type=
 /* ---------- Pregões em raias deslizantes e Painel em linhas (v1.98) ---------- */
 .dash-top { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); align-items: start; }
 .dash-top > .card { border-radius: 14px; }
+/* Painel no PC (pedido do João, 05/11/2026): cada linha com cartões da mesma altura, nada esticando sozinho */
+@media (min-width: 760px) {
+  .dash-top, .dash .two-col { align-items: stretch; }
+  .pn-main { align-items: stretch; }
+}
+@media (min-width: 1200px) {
+  /* 4 cartões embaixo (pendências, entregas, certidões, capital de giro): 2 x 2 em vez de 3 + 1 esticado */
+  .pn-main:has(> .card:nth-child(4):last-child) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .pn-main:has(> .card:nth-child(4):last-child) > .card:last-child { grid-column: auto; }
+}
+@media (min-width: 1700px) { .pn-main:has(> .card:nth-child(4):last-child) { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 .dn-card .donut-wrap { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 14px; }
 .dn-card .donut-wrap svg { width: 168px; height: 168px; flex: none; }
 .dn-card .donut-leg { flex: 1 1 170px; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
@@ -1327,7 +1338,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.124.0';
+  const APP_VERSION = '1.124.1';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Julgamento', 'Aguardando empenho', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
