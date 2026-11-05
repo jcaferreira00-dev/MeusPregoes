@@ -648,6 +648,8 @@ input.input[type=datetime-local]::-webkit-date-and-time-value, input.input[type=
 @media (min-width: 1200px) {
   .pn-main, .pn-low { grid-template-columns: repeat(3, minmax(0, 1fr)); grid-auto-rows: 440px; align-items: stretch; }
   .pn-main > .card, .pn-low > .card { height: 100%; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
+  /* um bloco sozinho na última linha ocupa o resto da linha (sem buraco do lado) */
+  .pn-main > .card:last-child:nth-child(3n+1) { grid-column: 1 / -1; } .pn-main > .card:last-child:nth-child(3n+2) { grid-column: span 2; }
   .pn-main > .card > h3, .pn-low > .card > h3 { position: sticky; top: -16px; margin: -16px -16px 12px; padding: 16px 16px 10px; background: var(--card); z-index: 2; }
 }
 .enc-box { margin-top: 12px; padding-top: 10px; border-top: 1px dashed var(--line); }
@@ -1322,7 +1324,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.123.0';
+  const APP_VERSION = '1.123.1';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Julgamento', 'Aguardando empenho', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -5108,11 +5110,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
       ${painelTopoHtml(R, st)}
       ${painelStatusStrip(R)}
       ${painelDashboardHtml(R)}
-      <div class="pn-main">${painelPendenciasHtml(R)}${painelEntregasHtml(R) || `<div class="card m-hide"><h3>${icon('calendar', 'sm')}<span class="grow">Entregas e recebimentos</span></h3><p class="muted small">Nenhuma entrega ou recebimento pendente.</p></div>`}${painelCertidoesHtml(R)}</div>
-      <div class="pn-low">
-      ${painelVencedorHtml(R, st)}
-      ${painelCapitalHtml(R, st)}
-      </div>`;
+      <div class="pn-main">${painelPendenciasHtml(R)}${painelEntregasHtml(R) || `<div class="card m-hide"><h3>${icon('calendar', 'sm')}<span class="grow">Entregas e recebimentos</span></h3><p class="muted small">Nenhuma entrega ou recebimento pendente.</p></div>`}${painelCertidoesHtml(R)}${painelVencedorHtml(R, st)}${painelCapitalHtml(R, st)}</div>`;
   }
 
   // alerta do cartão (guia Pregões): o que está mais urgente neste pregão. lane = vai para a raia "Atenção agora"
