@@ -1289,7 +1289,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.120.1';
+  const APP_VERSION = '1.120.2';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Julgamento', 'Aguardando empenho', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -2084,11 +2084,13 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     const perdedora = config === l.config ? r.config : l.config;
     if (perdedora && perdedora.empresa) {
       const emp = Object.assign({}, config.empresa);
+      let recuperou = false;
       Object.keys(perdedora.empresa).forEach((k) => {
         const v = perdedora.empresa[k];
-        if ((emp[k] === undefined || emp[k] === null || String(emp[k]).trim() === '') && v !== undefined && v !== null && String(v).trim() !== '') emp[k] = v;
+        if ((emp[k] === undefined || emp[k] === null || String(emp[k]).trim() === '') && v !== undefined && v !== null && String(v).trim() !== '') { emp[k] = v; recuperou = true; }
       });
-      config = Object.assign({}, config, { empresa: emp });
+      // recuperou algum campo: a config fica "mais nova" que as duas, para gravar no aparelho e subir para a nuvem
+      if (recuperou) config = Object.assign({}, config, { empresa: emp, updatedAt: Math.max(l.config.updatedAt || 0, r.config.updatedAt || 0) + 1 });
     }
     return { version: 1, config, pregoes: mergeById(l.pregoes, r.pregoes), itens: mergeById(l.itens, r.itens) };
   }

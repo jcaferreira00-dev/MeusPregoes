@@ -63,8 +63,9 @@ with sync_playwright() as p:
       const cheio={version:1,config:{updatedAt:1000,empresa:{nome:'EMPRESA TESTE',cnpj:'11.111.111/0001-11',banco:'208',conta:'123'}},pregoes:[],itens:[]};
       const vazio={version:1,config:{updatedAt:2000,selicPct:15,empresa:{nome:'',cnpj:'',banco:'',conta:''}},pregoes:[],itens:[]};
       const a=C.mergeState(cheio,vazio).config, b=C.mergeState(vazio,cheio).config;
-      return [a.empresa.nome,a.empresa.banco,b.empresa.cnpj,b.empresa.conta,a.selicPct];}""")
-    ok(m == ['EMPRESA TESTE', '208', '11.111.111/0001-11', '123', 15], 'Sincronização: dados da empresa e bancários não somem com config vazia mais nova')
+      const st=C.createStore({getItem:()=>JSON.stringify(vazio),setItem:()=>{}},'x'); const gravou=st.mergeFrom(cheio);
+      return [a.empresa.nome,a.empresa.banco,b.empresa.cnpj,b.empresa.conta,a.selicPct,gravou&&st.get().config.empresa.nome];}""")
+    ok(m == ['EMPRESA TESTE', '208', '11.111.111/0001-11', '123', 15, 'EMPRESA TESTE'], 'Sincronização/importar backup: dados da empresa e bancários não somem e voltam de um backup antigo')
     u = pg.evaluate("""()=>{const s=window.__app.store; const d0=s.get().config.updatedAt; s.setConfigPath('selicEm','2099-01-01',{silent:true,semData:true}); return [d0, s.get().config.updatedAt];}""")
     ok(u[0] == u[1], 'Selic automática não muda a data da config')
     b.close()
