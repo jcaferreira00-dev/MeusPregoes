@@ -64,10 +64,10 @@ with sync_playwright() as p:
     pt = pg.inner_text('#main')
     ok(all(k.upper() in pt.upper() for k in ['LIMITE DO MEI', 'Saldo disponível', 'Comprometido', 'LUCRO PREVISTO', 'Lucro depois do DAS', 'DAS no ano', 'RESULTADO DAS PROPOSTAS', 'Margem dos ganhos', 'Em aberto', 'Encerrados', 'Livre']), 'Painel: limite do MEI, DAS, resultado e status continuam visíveis (Rodada 2)')
     rp = pg.evaluate("""()=>{const C=window.Core;const cfg={pdfPadrao:{desc:{tituloTexto:'ANEXO VELHO',blocos:[{titulo:'X',texto:'y'}]}},proposta:{},empresa:{}};
-      const p={id:'z',numero:'9/2026',pdfOpts:{validade:90,prazoEntrega:'5 dias',desc:{tabela:true,tituloTexto:'EDITAL',blocos:[{titulo:'CL',texto:'t'}]},documentos:[{titulo:'D'}],anonima:true}};
+      const p={id:'z',numero:'9/2026',pagamentoDias:15,pdfOpts:{validade:90,prazoEntrega:'5 dias',desc:{tabela:true,tituloTexto:'EDITAL',blocos:[{titulo:'CL',texto:'t'}]},documentos:[{titulo:'D'}],anonima:true}};
       const o=C.resolverPdfOpts(p,cfg,'inicial'), f=C.resolverPdfOpts(p,cfg,'final');
-      return [o.validade,o.prazoEntrega,o.desc.tabela,o.desc.tituloTexto,o.documentos.length,o.desc.blocos.map(b=>b.titulo).join('|'),o.anonima,f.anonima];}""")
-    ok(rp == [90, '5 dias', False, 'PROPOSTA DE PREÇOS', 0, 'Preços|Condições do edital|Produtos|Garantia|Entrega|Enquadramento|Representante legal', True, False], 'Proposta: modelo padrão para todos (só as condições do pregão valem; sem cláusulas/declarações do edital) %s' % rp)
+      return [o.pagamento,o.validade,o.prazoEntrega,o.desc.tabela,o.desc.tituloTexto,o.documentos.length,o.desc.blocos.map(b=>b.titulo).join('|'),o.anonima,f.anonima];}""")
+    ok(rp == ['15 dias', 90, '5 dias', False, 'PROPOSTA DE PREÇOS', 0, 'Preços|Condições do edital|Produtos|Garantia|Entrega|Enquadramento|Representante legal', True, False], 'Proposta: modelo padrão para todos (só as condições do pregão valem; sem cláusulas/declarações do edital) %s' % rp)
     # sincronização com duas fontes: config mais nova com a empresa vazia não apaga os dados da empresa/bancários (05/11/2026)
     m = pg.evaluate("""()=>{const C=window.Core;
       const cheio={version:1,config:{updatedAt:1000,empresa:{nome:'EMPRESA TESTE',cnpj:'11.111.111/0001-11',banco:'208',conta:'123'}},pregoes:[],itens:[]};

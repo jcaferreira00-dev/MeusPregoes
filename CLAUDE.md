@@ -158,7 +158,7 @@ O João baixa os documentos da plataforma (BLL, Compras.gov etc.), que vêm em v
 
 A tabela de especificações técnicas saiu da proposta (o detalhamento vai no catálogo).
 
-**Proposta = modelo padrão para todos (decisão do João, 05/11/2026, v1.124.0).** Do pregão, o PDF só usa `pdfOpts.validade`, `pagamento`, `prazoEntrega`, `localEntrega`, `observacoes` e `anonima` (sem identificação). Título, faixa, chavinhas e as frases fixas (“O que os pregões costumam pedir”: Preços, Condições do edital, Produtos, Garantia, Entrega, Enquadramento, Representante legal) vêm do padrão (Config). Sem cláusulas livres; as declarações do edital são feitas à parte (.docx no Drive), nunca dentro da proposta.
+**Proposta = modelo padrão para todos (decisão do João, 05/11/2026, v1.124.0).** Do pregão, o PDF só usa `pdfOpts.validade`, `pagamento`, `prazoEntrega`, `localEntrega`, `observacoes` e `anonima` (sem identificação). Essas condições são de cada edital e são respeitadas sempre (o padrão é só o desenho): em branco, prazo de entrega e pagamento saem de `prazoEntregaDias`/`pagamentoDias` do pregão; validade e pagamento de um pregão NÃO viram padrão dos outros (v1.126.1). Título, faixa, chavinhas e as frases fixas (“O que os pregões costumam pedir”: Preços, Condições do edital, Produtos, Garantia, Entrega, Enquadramento, Representante legal) vêm do padrão (Config). Sem cláusulas livres; as declarações do edital são feitas à parte (.docx no Drive), nunca dentro da proposta.
 
 Exemplo real: Imbaú PE 91/2026 — item 10.2.1 desclassifica proposta que identifique o licitante
 (inicial SEM identificação); item 9.5 exige validade ≥ 90 dias; a proposta final (Anexo III) é identificada.

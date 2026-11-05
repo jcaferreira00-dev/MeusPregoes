@@ -1376,7 +1376,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.126.0';
+  const APP_VERSION = '1.126.1';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Julgamento', 'Aguardando empenho', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -1936,7 +1936,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     delete p.documentos; delete p.anonima; delete p.icmsAliq;
     if (p.desc) { delete p.desc.blocos; delete p.desc.tabela; if (!p.v2) { delete p.desc.tituloTexto; delete p.desc.faixaTexto; delete p.desc.titulo1; delete p.desc.titulo2; } }
     if (p.com) { delete p.com.declaracao; delete p.com.documentos; }
-    PDF_DO_PREGAO.forEach((k) => { if (k !== 'validade' && k !== 'pagamento' && k !== 'prorrogacao') delete p[k]; });
+    PDF_DO_PREGAO.forEach((k) => { delete p[k]; });   // condições são de cada edital: o padrão salvo não leva validade/pagamento de outro pregão
     return p;
   }
   const clonarObj = (x) => JSON.parse(JSON.stringify(x || {}));
@@ -1951,6 +1951,9 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     m.com.declaracao = false;                    // a frase de preços agora é a declaração padrão "Preços" (F108)
     m.anonima = ov.anonima === true && tipo !== 'final';
     m.documentos = []; m.com.documentos = false; // declarações do edital: feitas à mão, fora da proposta
+    // condições do edital cadastradas no pregão entram sozinhas quando o campo da proposta está vazio (pedido do João, 05/11/2026)
+    if (!ov.pagamento && pregao && Number(pregao.pagamentoDias) > 0) m.pagamento = Number(pregao.pagamentoDias) + ' dias';
+    if (!ov.prazoEntrega && pregao && Number(pregao.prazoEntregaDias) > 0) m.prazoEntrega = Number(pregao.prazoEntregaDias) + ' dias';
     if (tipo === 'final') Object.assign(m, soDoPregao(pregao && pregao.pdfOptsFinal));
     m.anonima = m.anonima === true && tipo !== 'final';
     // representante legal: só os dados preenchidos em Config › Meus dados (o que estiver vazio não sai como lacuna)
@@ -5949,12 +5952,12 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
       <div class="card"><h3>3 · Condições deste pregão</h3>
         <div class="formgrid">
           ${fp(o, 'validade', 'Validade (dias)', { type: 'int', im: 'numeric' })}
-          ${fp(o, 'pagamento', 'Prazo de pagamento')}
+          ${fp(o, 'pagamento', 'Prazo de pagamento', { ph: pz.pagamentoDias ? pz.pagamentoDias + ' dias (do pregão)' : 'ex.: 30 dias' })}
           ${fp(o, 'prazoEntrega', 'Prazo de entrega', { ph: pz.prazoEntregaDias ? pz.prazoEntregaDias + ' dias (do pregão)' : 'ex.: 10 dias' })}
           ${fp(o, 'localEntrega', 'Local de entrega', { ph: C.localEntregaPadrao(pz, store.get().itens.filter((i) => i.pregaoId === pz.id && !i.deleted)) || 'local do pregão', hint: 'Em branco = usa o local do pregão. Escreva aqui só para mudar.' })}
         </div>
         ${fp(o, 'observacoes', 'Observações deste pregão (saem no PDF)', { area: true, rows: 2, full: true })}
-        <p class="tiny muted" style="margin:6px 0 0">Prazo, local e observações valem só para este pregão. Validade e pagamento também viram o padrão dos próximos.</p>
+        <p class="tiny muted" style="margin:6px 0 0">Tudo aqui vale só para este pregão (vem do edital). Em branco: prazo de entrega e pagamento saem do cadastro do pregão; validade, do padrão da Config.</p>
       </div>
       <div class="card"><h3>4 · O que os pregões costumam pedir</h3>
         <p class="tiny muted" style="margin:0 0 8px">Frases fixas que saem no fim da proposta, antes do local e da assinatura. Desligue a que não quiser; a escolha vira o padrão dos próximos pregões.</p>
@@ -6396,7 +6399,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     return el.value;
   }
   // o que for alterado na proposta vira o padrão dos próximos pregões (campos próprios de cada edital ficam só no pregão)
-  const PDF_SO_NO_PREGAO = ['prazoEntrega', 'localEntrega', 'observacoes', 'anonima'];
+  const PDF_SO_NO_PREGAO = ['validade', 'prorrogacao', 'pagamento', 'prazoEntrega', 'localEntrega', 'observacoes', 'anonima'];
   const clonar = (x) => JSON.parse(JSON.stringify(x));
   const OPK = () => (UI.pdf.tipo === 'final' ? 'pdfOptsFinal' : 'pdfOpts');   // a final guarda os seus ajustes à parte
   function lembrarPadraoPdf(path, v) {
