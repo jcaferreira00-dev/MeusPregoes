@@ -340,6 +340,8 @@ Tomazina 32 (volume); Piraí do Sul 45 (volume); Ponta Grossa 101, 110 e 144; UT
 Santo Antônio do Paraíso 38; Tibagi 64 e 65; Rosário do Ivaí 42 e 43.
 Conferido com o backup do app de 29/10/2026: Rio Branco do Ivaí 36 está como Desisti; Ortigueira 91 com a sessão ainda em andamento em 29/10; Imbaú 84 e Carambeí 54 em julgamento (confirmado); Imbaú 85 e EPR-UEL 146 em Julgamento no app (não confirmado).
 Conferido com o backup do app de 30/10/2026: Imbaú 91, Carambeí 55 e São Jerônimo da Serra 47 com proposta enviada; UTFPR 17 (sessão 09/11), Ortigueira 102 (10/11) e Ipiranga 78 (05/11) em Analisando, recotados pelo Chrome em 30/10 (Mercado Livre reconferido depois do captcha).
+Trazidos na busca PNCP de 05/11 (parcial, aguardando escolha): Telêmaco Borba 56 (= PCE 90); Cândido de Abreu 78; Ivaí 42; Tamarana 066; Carambeí PCE 62 e 63; Conselheiro Mairinck 068; UEPG 78 (= SEAP 1643); FAS Ponta Grossa 19; Câmara de Ponta Grossa 8.
+Vistos e descartados na busca de 05/11: Ortigueira 100 e 109; Mauá da Serra 65; Tamarana 059 e 060; Castro 156, 159, 160 e 162; Arapoti PCE 53; Faxinal 53; Ponta Grossa 117, 176 e 180; FAS Ponta Grossa 18; Cândido de Abreu 77 (prazo hoje); Imbaú 75, 93 e 95; Tibagi 66 a 69; demais serviços.
 (Quando o João mandar um backup do app ou os PDFs de um pregão, atualizar esta lista.)
 
 ### Orientações adicionais do João
@@ -359,7 +361,7 @@ ou na lista "Já no app ou já descartados" — comparar por órgão + nº do pr
 | 22/10/2026 | PNCP, pregões abertos até 21/12, faixas 1 e 2 (dispensas não) | 19 novos (ver buscas/2026-10-22-pncp.md) | buscas/2026-10-22-pncp.md |
 | 22/10/2026 | Ajuste: raio reduzido para ~120 km + Ponta Grossa; 17 pregões acima disso excluídos do app | — | (JSON pregoes-mei-120km-2026-10-22) |
 | 29/10/2026 | PNCP via Chrome do João, 35 municípios, pregões + dispensas com propostas abertas até 28/12 (201 compras) | 21 novos (+ Ipiranga 78 e Rio Branco do Ivaí 36 de novo) | buscas/2026-10-29.md + pregoes-busca-pncp-2026-10-29.json |
-| 05/11/2026 | NÃO REALIZADA: tarefa agendada rodou na nuvem sem o Chrome do João (sem ponte com o PC); PNCP bloqueado direto da sessão | — (refazer com o Chrome ligado) | — |
+| 05/11/2026 | PARCIAL: nuvem sem Chrome do João; PNCP lido via WebFetch (resumidor, pode errar), só pregões, sem dispensas, 7 municípios vieram vazios (conferir) | 10 novos: Telêmaco 56; Cândido de Abreu 78; Ivaí 42; Tamarana 066; Carambeí PCE 62 e 63; Conselheiro Mairinck 068; UEPG 78; FAS Ponta Grossa 19; Câmara de Ponta Grossa 8 | buscas/2026-11-05.md + pregoes-busca-pncp-2026-11-05.json |
 
 
 ---
