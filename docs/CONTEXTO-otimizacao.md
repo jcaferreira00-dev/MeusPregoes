@@ -61,3 +61,10 @@ F38: o selo SRP/Compra tampa a cidade e o número do pregão no cartão → corr
 
 ## 9. Próxima sessão grande (sábado, depois das 18h)
 Sincronização com uma ficha por pregão: FEITA em 05/11/2026 (v1.121.0), ver `docs/PLANO-sync-por-pregao.md`.
+
+## 10. Rodada 2 do Depurador (05/11/2026, v1.122.0) — FEITA em parte
+- Painel: linha do topo única (F16, F44, F58, F87, F88 fundidos: Limite do MEI com barra e alerta · Lucro previsto com DAS · Resultado das propostas). Cartões “Uso do limite”, “Tributos”, “Resultado” e “Pregões por status” saíram, com tudo o que mostravam levado para a linha do topo e para os botões de status (F89: valor em R$ + botão Encerrados).
+- F38: número do pregão inteiro (“Nº 83/2026”) no cartão; selos descem de linha se faltar espaço.
+- F30: até 4 opções de compra novas. F31: botão “Comprar” (loja no balão).
+- F82: Exigências juntadas às Observações (migração automática).
+- Ficaram para o João decidir (mexem em cálculo ou em função protegida): F57 (estrelas × semáforo), F61/F64 (entrega parcelada/por item: “várias entregas mudam o piso do lance”), F81 (“Posso ganhar” é função protegida), F86/F94 (tabelas do dashboard × guia Acompanhar/Pregões), F85 (um desenho só para encerrados), F90 (Certidões), F37 (enxugar observações: o quê?).

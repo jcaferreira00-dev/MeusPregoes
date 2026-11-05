@@ -7,7 +7,7 @@ t = int(time.time() * 1000)
 P = lambda **k: dict(dict(cidadeUf='Tibagi/PR', plataforma='BLL', status='Analisando', viagens=1, pedagio=0, createdAt=t, updatedAt=t, deleted=False), **k)
 I = lambda **k: dict(dict(unidade='Un', frete=0, margem=None, semLance=False, alternativas=[], createdAt=t, updatedAt=t, deleted=False), **k)
 st = {'version': 1, 'config': {'margemPadrao': 0.4, 'consumo': 10, 'combustivel': 6.5, 'desgaste': 0.3},
-      'pregoes': [P(id='p1', numero='1/2026', orgao='Prefeitura Municipal de Teste', km=200, sessao='2099-01-10T09:00', prazoPropostas='2099-01-10T08:00'),
+      'pregoes': [P(id='p1', numero='1/2026', orgao='Prefeitura Municipal de Teste', km=200, obs='Ligar antes', exigencias='SICAF e CND estadual', sessao='2099-01-10T09:00', prazoPropostas='2099-01-10T08:00'),
                   P(id='p2', numero='2/2026', orgao='Prefeitura Municipal de Semkm', km=None)],
       'itens': [I(id='a', pregaoId='p1', itemEdital='01', descricao='Item com lance', qtd=100, custo=5, teto=10, lanceFinal=8,
                   alternativas=[{'loja': 'Loja X', 'link': 'https://x.com/p', 'custo': 50, 'emb': 10, 'frete': 0, 'usar': False}]),
@@ -44,7 +44,7 @@ with sync_playwright() as p:
     ok('VALOR MÍNIMO P/ PROPOSTA' in bb.upper(), 'Item sem lance: destaque "Valor mínimo p/ proposta"')
     ok('REVISAR' in bb.upper() and pg.query_selector('article.icard[data-id=b] [data-act=item-revisado]') is not None, 'Item: alerta Revisar com botão Revisado')
     ok('ACIMA do teto' in c, 'Item: lance acima do teto em vermelho')
-    ok('Loja X' in a, 'Item: botão de compra com o nome da loja')
+    ok(pg.query_selector('article.icard[data-id=a] a.comprar-btn[aria-label*="Loja X"]') is not None and 'Comprar' in a, 'Item: botão Comprar (loja no balão; decisão F31 de 04/11/2026)')
     pg.evaluate("()=>document.querySelector('[data-act=editar-item][data-id=a]').click()"); pg.wait_for_timeout(900)
     f = pg.inner_text('.sheet')
     ok('MEU LUCRO NO LANCE' in f.upper() and 'sem prejuízo' in f and 'no total' in f, 'Janela do item: destaque + total se ganhar só este')
@@ -58,6 +58,11 @@ with sync_playwright() as p:
     pg.click('button[type=submit]'); pg.wait_for_timeout(600)
     salvo = any(x['numero'] == '99/2026' for x in json.loads(pg.evaluate("()=>localStorage.getItem('mp.state.v1')"))['pregoes'])
     ok(not salvo, 'Cadastro do pregão: não salva sem km')
+    ex = pg.evaluate("()=>{const p=window.__app.store.get().pregoes.find(x=>x.id==='p1');return [p.obs,p.exigencias]}")
+    ok(ex[0] == 'Ligar antes\nExigências: SICAF e CND estadual' and not ex[1], 'Exigências juntadas às Observações (F82), sem perder o texto')
+    pg.evaluate("()=>localStorage.setItem('mp.ui',JSON.stringify({tab:'painel'}))"); pg.reload(); pg.wait_for_timeout(800)
+    pt = pg.inner_text('#main')
+    ok(all(k.upper() in pt.upper() for k in ['LIMITE DO MEI', 'Saldo disponível', 'Comprometido', 'LUCRO PREVISTO', 'Lucro depois do DAS', 'DAS no ano', 'RESULTADO DAS PROPOSTAS', 'Margem dos ganhos', 'Em aberto', 'Encerrados', 'Livre']), 'Painel: limite do MEI, DAS, resultado e status continuam visíveis (Rodada 2)')
     # sincronização com duas fontes: config mais nova com a empresa vazia não apaga os dados da empresa/bancários (05/11/2026)
     m = pg.evaluate("""()=>{const C=window.Core;
       const cheio={version:1,config:{updatedAt:1000,empresa:{nome:'EMPRESA TESTE',cnpj:'11.111.111/0001-11',banco:'208',conta:'123'}},pregoes:[],itens:[]};

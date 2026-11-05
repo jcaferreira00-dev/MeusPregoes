@@ -60,9 +60,9 @@
   F('pdf-bloqueio-oferta', AR.pdf, 5, 'manter', 'Bloqueio: não gera proposta sem marca, modelo e descritivo',
     `A proposta não sai enquanto algum item estiver sem marca, sem modelo ou sem o descritivo do item ofertado, ou quando a marca/modelo do item diferir do que está escrito no descritivo (MARCA:/MODELO:). Protege contra desclassificação por proposta incompleta.`,
     { sel: ['#gerarCard .alert.bad'], ev: 'faltasOferta + pendenciasModelo.' });
-  F('limite-mei', AR.calc, 5, 'enxugar', 'Limite de faturamento do MEI',
-    `Compara o que já foi faturado e o que está ganho com o limite anual (cheio ou proporcional ao mês de abertura) e avisa se ganhar tudo estoura. Essencial para MEI. Hoje aparece em dois cartões do Painel: a linha de números do topo e o cartão “Uso do limite do MEI”.`,
-    { red: [], para: 'Manter o cálculo; mostrar uma vez só no Painel (veja “Uso do limite do MEI”).', sel: ['.p-kpis'] });
+  F('limite-mei', AR.calc, 5, 'manter', 'Limite de faturamento do MEI',
+    `Compara o que já foi faturado e o que está ganho com o limite anual (cheio ou proporcional ao mês de abertura) e avisa se ganhar tudo estoura. FEITO na v1.122.0 (05/11/2026, Rodada 2): aparece uma vez só, no cartão “Limite do MEI” do topo do Painel (números, barra de uso e alerta).`,
+    { red: [], para: 'Manter.', sel: ['.kpi-mei'] });
   F('pos-venda', AR.preg, 5, 'enxugar', 'Pós-venda: empenho → entrega → pagamento',
     `Depois de ganhar você registra o empenho, o prazo de entrega, a entrega e o recebimento. O app calcula prazos, avisa atraso, mostra o carimbo “Empenho / Entregar / Parcial / Receber / Pago” no cartão e lista “Entregas e recebimentos” no Painel. Ainda sem uso nos seus dados (você acabou de ganhar o primeiro), mas é o coração de depois da vitória.`,
     { probe: 'posVenda', sel: ['.psteps', '.selo-st'], para: 'Manter. Quando houver uso real, avaliar juntar “Entrega por item” (hoje em dois lugares) e o carimbo provisório com as etiquetas de texto.' });
@@ -105,11 +105,11 @@
     `Se o anúncio é de um pacote (ex.: 10 un.), o app compra em pacotes inteiros e calcula o custo por unidade (20 un. com anúncio de 10 = 2 anúncios). Avisa “o anúncio é de um pacote?” quando o preço passa do teto.`,
     { probe: 'emb', sel: ['[name$=Emb]', '.alt-pac'] });
   F('opcoes-compra', AR.item, 4, 'manter', 'Opções de compra (links de lojas)',
-    `Até 8 opções por item: link direto, loja, preço do anúncio e frete. São só links para você abrir quando quiser (cesta + lápis); não alteram custo nem frete. A prévia compara o total de cada uma e marca a mais barata.`,
+    `Até 4 opções por item (decisão de 04/11; FEITO na v1.122.0 (05/11/2026, Rodada 2): item antigo com mais continua mostrando todas): link direto, loja, preço do anúncio e frete. São só links para você abrir quando quiser (cesta + lápis); não alteram custo nem frete. A prévia compara o total de cada uma e marca a mais barata.`,
     { probe: 'opcoes', sel: ['.altpar', '.altplus', '.altcomp'] });
-  F('botao-comprar', AR.item, 4, 'enxugar', 'Botões de compra com o nome da loja',
-    `Mostra a cesta com o nome do site no cartão do item, no catálogo, no formulário, na tabela da guia Acompanhar (“$”) e na confirmação de preços. Feito em 4 lugares com código parecido.`,
-    { para: 'Manter a função; gerar o botão sempre pela mesma rotina (comprasDoItem) e padronizar o visual.', sel: ['.comprar-btn', '.buy', '.cat-buy'] });
+  F('botao-comprar', AR.item, 4, 'manter', 'Botões de compra (“Comprar”)',
+    `FEITO na v1.122.0 (05/11/2026, Rodada 2): o botão diz só “Comprar” (com várias opções, “Comprar 1”, “Comprar 2”…); o nome da loja fica no balão. Vale para o cartão do item, a guia Itens e o catálogo. A tabela da guia Acompanhar e a confirmação de preços continuam com o “$”. No formulário do item a lista de opções mostra a loja (é onde se edita).`,
+    { sel: ['.comprar-btn', '.buy', '.cat-buy', '.ib-buy'] });
   F('marca-modelo', AR.item, 4, 'enxugar', 'Marca, modelo e descritivo ofertado',
     `Campos digitados por você (o app nunca preenche). Se o descritivo traz “MARCA:” e “MODELO:”, o app copia para os campos marca/modelo para nunca sair diferente. O PDF mostra “Exigido no edital” e o “Descritivo do item ofertado” em texto corrido.`,
     { probe: 'catalogoDesc', sel: ['[name=marca]', '[name=catalogoDesc]'], ev: 'marcaModeloDoTexto + onInput do item.' });
@@ -129,8 +129,8 @@
     `Anotações livres (amostra, atestado, ligar para o pregoeiro). Aparecem em destaque no cartão, no topo do pregão e na guia Proposta.`,
     { probe: 'obsPregao', sel: ['.obsline', '.obstxt'] });
   F('tipo-compra', AR.preg, 4, 'revisar', 'Tipo de compra: Registro de preços (SRP) ou Aquisição',
-    `Selo no cartão e seletor no pregão. SRP gera ata e pedidos ao longo do tempo; Aquisição é compra direta. Se o campo está vazio, o app tenta adivinhar lendo “registro de preços/SRP” nas observações e exigências.`,
-    { probe: 'tipoCompra', para: 'Manter o campo. Decidir se a adivinhação por texto (tipoCompraDe) continua: ela pode contradizer o que você escolheu e a regra diz para não usar observações.', sel: ['.tipo-chip', '[name=tipoCompra]'] });
+    `Selo no cartão e seletor no pregão. SRP gera ata e pedidos ao longo do tempo; Aquisição é compra direta. Se o campo está vazio, o app tenta adivinhar lendo “registro de preços/SRP” nas observações. FEITO na v1.122.0 (05/11/2026, Rodada 2): no cartão o número do pregão aparece inteiro (“Nº 83/2026”) e nunca é cortado pelo selo; se faltar espaço, os selos descem para a linha de baixo.`,
+    { probe: 'tipoCompra', para: 'Ainda a decidir: a adivinhação por texto (tipoCompraDe) continua?', sel: ['.tipo-chip', '[name=tipoCompra]'] });
   F('sessao-passou', AR.quad, 4, 'manter', 'Sessão que passou de um dia para outro',
     `Pregão “Proposta enviada” cuja sessão já passou vai para Atenção agora com 3 botões: “Continua amanhã”, “Mais dias” e “Encerrou” (vira Julgamento). A pergunta some quando a data fica no futuro.`,
     { sel: ['.p-ask', '[data-act=sessao-continua]'] });
@@ -146,9 +146,9 @@
   F('detalhe-pregao', AR.quad, 4, 'enxugar', 'Tela de detalhe do pregão',
     `Cabeçalho com links, “Atenção neste edital”, status e tipo, cartão de pós-venda, itens ganhos, quatro números (venda, custo, lucro, margem real), lista de itens e dados do pregão. Os seletores de status e tipo repetem os campos do formulário e o quadro “Dados do pregão” repete o que está no formulário.`,
     { sel: ['.hero', '.st-tipo'], para: 'Manter. Tirar o quadro “Dados do pregão” (repete o formulário) ou deixar só o que não está no cabeçalho.' });
-  F('painel-kpis', AR.pain, 4, 'manter', 'Painel: quatro números do topo',
-    `Limite do MEI, comprometido, saldo disponível e lucro previsto (ganho e em disputa). Resposta rápida a “posso arriscar mais?”.`,
-    { sel: ['.p-kpis'] });
+  F('painel-kpis', AR.pain, 4, 'manter', 'Painel: linha do topo (Limite do MEI, Lucro previsto, Resultado das propostas)',
+    `FEITO na v1.122.0 (05/11/2026, Rodada 2): os quatro números do topo, o cartão “Uso do limite do MEI”, o cartão “Tributos do MEI” e o cartão “Resultado das propostas” viraram uma linha só: Limite do MEI (limite, comprometido, saldo, barra e alerta, em 2 colunas), Lucro previsto (ganho/em disputa + DAS mensal, DAS do ano, imposto e lucro depois do DAS) e Resultado das propostas (conversão, margem dos ganhos, em aberto e barra). Nada foi tirado. No celular aparecem só os números.`,
+    { sel: ['.p-top'] });
   F('painel-pendencias', AR.pain, 4, 'manter', 'Painel: Pendências',
     `Lista única do que pede ação: completar dados, enviar proposta, informar km, revisar itens, cadastrar itens, registrar resultado, completar catálogo e certidões vencendo. É a lista que deveria ser a “fonte única” do que fazer.`,
     { sel: ['.pend-lista', '.posrow'], ev: 'painelPendenciasHtml.' });
@@ -190,7 +190,7 @@
     `Dá uma nota ao item pela margem real (0% = 0,5; 15% = 2; 25% = 3; 35% = 4; 50% = 5) com bônus se o lucro em R$ já compensa. Aparece como estrelas no cartão, na guia Itens e na simulação. Hoje existem quatro formas de dizer “vale a pena”: nota/estrelas, selo OK/Abaixo da meta/Inviável, o semáforo Seguro/Atenção/Risco e a cor do bloco.`,
     { red: ['destaque-decisao'], para: 'Deixar o semáforo (Seguro/Atenção/Risco) como resposta oficial e as estrelas só como complemento visual.', sel: ['.stars', '.st-one'], ev: 'calcItem calcula nota/viab/situacao; decisao() calcula outra classificação.' });
   F('das-tributos', AR.pain, 3, 'manter', 'Tributos do MEI (DAS) no Painel e na Config',
-    `DAS mensal (5% do salário mínimo + R$ 1 ICMS e/ou R$ 5 ISS), DAS do ano, imposto sobre vendas e “lucro depois do DAS”.`, { sel: ['.trib'] });
+    `DAS mensal (5% do salário mínimo + R$ 1 ICMS e/ou R$ 5 ISS), DAS do ano, imposto sobre vendas e “lucro depois do DAS”. FEITO na v1.122.0 (05/11/2026, Rodada 2): no Painel ficam dentro do cartão “Lucro previsto” (a nota sobre retenção de IR fica no balão do cartão).`, { sel: ['.p-top .kv-mini'] });
   F('local-item', AR.item, 3, 'manter', 'Local de entrega próprio do item',
     `Item que vai para outro endereço tem km, viagens e pedágio próprios; itens com o mesmo local dividem aquela viagem entre si.`, { probe: 'localItem', sel: ['[name=localEntrega]', '#boxLocalItem'] });
   F('plataforma', AR.preg, 3, 'manter', 'Plataforma do pregão',
@@ -242,8 +242,8 @@
   F('posso-ganhar', AR.item, 2, 'fundir', 'Marcação “Posso ganhar”',
     `Estrela manual para itens em que você ficou perto do 1º lugar. Faz quase o mesmo que a Colocação (1º a 3º já leva o pregão para “perto de ganhar”) e é a base da guia Acompanhar.`,
     { red: ['colocacao'], probe: 'possoGanhar', para: 'Usar só a Colocação (1º–3º = posso ganhar) e remover a estrela.', sel: ['[name=possivelGanhar]', '[data-act=item-pode]'] });
-  F('exigencias', AR.preg, 2, 'fundir', 'Campo “Exigências (IE, certidões)” do pregão',
-    `Texto livre separado das Observações. Não aparece em nenhum cartão: só no formulário (e a leitura automática do tipo de compra o consulta).`, { red: ['obs-pregao'], probe: 'exigencias', para: 'Juntar às Observações do pregão.', sel: ['[name=exigencias]'] });
+  F('exigencias', AR.preg, 2, 'manter', 'Exigências (juntado às Observações)',
+    `FEITO na v1.122.0 (05/11/2026, Rodada 2): o campo saiu do formulário e virou parte das “Observações e exigências”. O texto antigo foi para o fim das observações com “Exigências:” na frente (migração automática, uma vez). JSON com \`exigencias\` continua aceito.`, { red: ['obs-pregao'], probe: 'exigencias', sel: ['[name=obs]'] });
   F('filtros-status', AR.quad, 2, 'remover', 'Barra de filtros por status (acima do quadro)',
     `Botões Todos/Incompleto/Analisando/Enviada/…/Desisti que filtram o quadro. As raias já agrupam por status e o grupo em tela cheia mostra um status só; o Painel também leva à guia já filtrada.`,
     { red: ['cartao-quadro', 'grupo-tela-cheia'], para: 'Remover a barra; manter o clique nos números do Painel (que filtra) ou trocar por abrir o grupo em tela cheia.', sel: ['.filters'] });
@@ -251,12 +251,12 @@
     `Há dois desenhos para o pregão encerrado: o cartão pequeno “mini” (guia Itens) e o chip “enc-chip” (guia Pregões, botão Encerrados e concluídos).`, { red: ['cartao-quadro'], para: 'Ficar com um só desenho.', sel: ['.mini-p', '.enc-chip'] });
   F('painel-itens', AR.pain, 2, 'fundir', 'Painel: tabelas “Itens que posso ganhar” e “Itens com colocação”',
     `Duas tabelas do dashboard (PC) com os mesmos itens da guia Acompanhar.`, { red: ['acompanhar'], para: 'Manter só em Acompanhar (ou só no Painel).', sel: ['.dtbl'] });
-  F('painel-resultados', AR.pain, 2, 'fundir', 'Painel: cartão “Resultado das propostas”',
-    `Conversão, margem dos ganhos, em aberto e barra ganhos/perdas/aberto. Repete o funil e a “Margem por pregão ganho”.`, { red: ['painel-funil'], para: 'Levar os três números para o funil e apagar o cartão.', sel: ['.kpis3'] });
-  F('painel-uso-limite', AR.pain, 2, 'fundir', 'Painel: cartão “Uso do limite do MEI”',
-    `Barra faturado / a faturar / em disputa / livre e duas barras de porcentagem. Repete Limite, Comprometido e Saldo da linha de números do topo.`, { red: ['limite-mei', 'painel-kpis'], para: 'Fundir com a linha de números do topo.', sel: ['.stack'] });
-  F('painel-por-status', AR.pain, 2, 'fundir', 'Painel: cartão “Pregões por status”',
-    `Barras com valor por status. Os mesmos números aparecem nos botões coloridos (um por status) e no funil.`, { red: ['painel-status-strip'], para: 'Apagar o cartão; manter os botões do topo.', sel: ['.strow'] });
+  F('painel-resultados', AR.pain, 2, 'manter', 'Painel: Resultado das propostas (fundido)',
+    `FEITO na v1.122.0 (05/11/2026, Rodada 2): o cartão separado saiu; conversão, margem dos ganhos, em aberto e a barra ganhos/perdas/aberto estão no 3º cartão da linha do topo.`, { sel: ['.p-top .res-bar'] });
+  F('painel-uso-limite', AR.pain, 2, 'manter', 'Painel: Uso do limite do MEI (fundido)',
+    `FEITO na v1.122.0 (05/11/2026, Rodada 2): o cartão separado saiu; a barra faturado / a faturar / em disputa / livre, o % comprometido, o “se ganhar tudo” e o alerta estão no cartão “Limite do MEI” do topo.`, { sel: ['.mei-bar'] });
+  F('painel-por-status', AR.pain, 2, 'manter', 'Painel: Pregões por status (fundido)',
+    `FEITO na v1.122.0 (05/11/2026, Rodada 2): o cartão saiu; o valor de cada status aparece embaixo do número nos botões coloridos, e um botão novo “Encerrados” soma Concluído, Perdeu, Desclassificado e Desisti (o detalhe fica no balão; clicar abre a guia Pregões com os encerrados).`, { sel: ['.st-chip em', '.st-enc'] });
   F('painel-status-strip', AR.pain, 3, 'manter', 'Painel: botões de status',
     `Faixa com o número de pregões por status; clicar abre a guia Pregões filtrada.`, { sel: ['.st-strip', '[data-act=ir-status]'] });
   F('painel-certidoes', AR.pain, 2, 'enxugar', 'Painel: cartão Certidões',
