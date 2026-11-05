@@ -2,7 +2,7 @@
 
 > A guia **Itens** (só PC) mostra os itens em blocos simétricos por pregão: nº do edital, nome abreviado, qtd, custo, lance, lance total, teto, lucro, estrelas e botão de compra. A guia Procedimento foi removida (o passo a passo fica aqui neste arquivo).
 > No celular o app é fixo (sem rolagem lateral) e só mostra o básico.
-> A guia Itens tem seletor "Todos os pregões" para filtrar por pregão. O Painel é um dashboard (tela toda no PC): números do topo, contadores por status (clicar abre a guia Pregões filtrada), rosca interativa no topo do dashboard (responde aos filtros e a cliques), funil, evolução, margem, órgãos e uma tabela única de pregões; depois pendências, entregas e certidões. A guia Pregões é um quadro de colunas por status: no celular uma coluna por vez, sem mostrar um pedaço da próxima, e puxar para a esquerda/direita troca de coluna (encaixa uma por vez); no PC as colunas cabem exatas na tela (3 a 6) e cada uma rola por dentro; encerrados e concluídos ficam num botão só. Rolagem sempre suave.
+> A guia Itens tem seletor "Todos os pregões" para filtrar por pregão. O Painel é um dashboard (tela toda no PC): números do topo, contadores por status (clicar abre a guia Pregões filtrada), rosca interativa no topo do dashboard (responde aos filtros e a cliques), funil, evolução, margem, órgãos e uma tabela única de pregões; depois pendências, entregas e certidões. A guia Pregões: no PC (a partir de 900 px) é uma grade única, preenchida linha por linha na ordem de importância, com a cor dizendo o status e o filtro colorido em cima (05/11/2026); no celular é um quadro de colunas por status, uma coluna por vez, e puxar para a esquerda/direita troca de coluna; encerrados e concluídos ficam num botão só. Rolagem sempre suave.
 
 ## 0. Regras de ouro (decisão de 31/10/2026 — valem para tudo)
 
@@ -382,6 +382,8 @@ ou na lista "Já no app ou já descartados" — comparar por órgão + nº do pr
 - Nos JSON de importação, `entregueEm` do item só vem no backup do app; análise nova não manda esse campo.
 
 ## 7. Guia Pregões: grupo em tela cheia (decisão de 29/10/2026)
+
+- Desde 05/11/2026 vale só no celular (no PC a guia é uma grade única, sem raias). O "voltar para o cartão em que estava" vale nos dois.
 
 - Clicar no título de um grupo do quadro (ex.: "Incompletos") abre só aquele grupo na tela toda, em grade de cartões, com o botão "Todos os grupos" para voltar ao quadro.
 - Abrir um pregão e voltar pelo "Pregões" de cima devolve a tela em que estava (grupo em tela cheia ou quadro), já rolada até o cartão clicado, com um destaque rápido nele. Não tirar isso: o João não quer rolar de novo para achar o pregão.
