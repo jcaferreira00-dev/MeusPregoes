@@ -157,6 +157,7 @@ button.pill { border: 0; font: inherit; cursor: pointer; }
 .meter.red > div { background: linear-gradient(90deg, #e07a5f, var(--red)); }
 .alert { display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; border-radius: 12px; font-weight: 700; font-size: 13.5px; }
 .avisos-i { display: grid; gap: 8px; margin-bottom: 12px; } .aviso-i { align-items: center; } .aviso-i > .btn { min-width: 150px; justify-content: center; } .aviso-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; font-weight: 500; } .aviso-chips .chip { cursor: pointer; }
+.cfg-dados.aberto { grid-column: 1 / -1; } .cfg-sub { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 16px 0 8px; }
 .alert.ok { background: var(--green-soft); color: var(--green); } .alert.warn { background: var(--amber-soft); color: var(--amber); } .alert.bad { background: var(--red-soft); color: var(--red); }
 .alert.info { background: var(--blue-soft); color: var(--blue); }
 .strow { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 10px; align-items: center; padding: 8px 0; border-bottom: 1px dashed var(--line); }
@@ -636,6 +637,12 @@ input.input[type=datetime-local]::-webkit-date-and-time-value, input.input[type=
 .pn-col > .card, .pn-low > .card { border-radius: 14px; }
 @media (min-width: 760px) { .pn-main { grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); } }
 @media (min-width: 760px) { .pn-low { grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); } }
+/* Painel no PC (pedido do João, 05/11/2026): blocos do mesmo tamanho, lado a lado; lista comprida rola por dentro do bloco em vez de esticar e empurrar o resto */
+@media (min-width: 1200px) {
+  .pn-main, .pn-low { grid-template-columns: repeat(3, minmax(0, 1fr)); grid-auto-rows: 440px; align-items: stretch; }
+  .pn-main > .card, .pn-low > .card { height: 100%; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
+  .pn-main > .card > h3, .pn-low > .card > h3 { position: sticky; top: -16px; margin: -16px -16px 12px; padding: 16px 16px 10px; background: var(--card); z-index: 2; }
+}
 .enc-box { margin-top: 12px; padding-top: 10px; border-top: 1px dashed var(--line); }
 .enc-btn { gap: 6px; } .enc-btn .enc-seta { opacity: .7; }
 .enc-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
@@ -3644,7 +3651,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
   const UI = {
     sim: {},   // lances simulados (só na memória; não entram na proposta)
     tab: 'painel', detailId: null, filtro: 'todos', busca: '', buscaI: '', fPregaoI: '', pendI: '', mostrarOcultos: false, mostrarEnc: false, mostrarConcl: false, dash: { periodo: 'tudo', etapa: null, orgao: null, mes: null, pode: null, todos: false },
-    acomp: { filtro: 'todos' }, pdf: { pregaoId: null, tipo: 'inicial', fonte: 'auto', data: C.hojeISO(), busy: false, result: null }, acc: new Set(['acc-forn']),
+    acomp: { filtro: 'todos' }, pdf: { pregaoId: null, tipo: 'inicial', fonte: 'auto', data: C.hojeISO(), busy: false, result: null }, acc: new Set(),
     ignorePop: 0, deferredPrompt: null, reloadPending: false, updateBanner: false,
   };
   try {
@@ -5835,7 +5842,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
   function faltaEmpresaHtml(o, emp) {
     const f = faltasEmpresa(o, emp);
     if (!f.length) return '';
-    return `<div class="alert warn">${icon('alert', 'sm')}<div class="grow">Faltam dados da empresa que este modelo usa: <b>${esc(f.join(', '))}</b>. Sem eles, os campos saem em branco no PDF.</div><button class="btn sm" data-act="tab" data-v="config">Preencher</button></div>`;
+    return `<div class="alert warn">${icon('alert', 'sm')}<div class="grow">Faltam dados da empresa que este modelo usa: <b>${esc(f.join(', '))}</b>. Sem eles, os campos saem em branco no PDF.</div><button class="btn sm" data-act="abrir-meus-dados">Preencher</button></div>`;
   }
 
   function pdfModelCards(o, cfg, pz) {
@@ -5872,7 +5879,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
           ${fp(o, 'prazoEntrega', 'Prazo de entrega', { ph: pz.prazoEntregaDias ? pz.prazoEntregaDias + ' dias (do pregão)' : 'ex.: 10 dias' })}
           ${fp(o, 'localEntrega', 'Local de entrega', { ph: C.localEntregaPadrao(pz, store.get().itens.filter((i) => i.pregaoId === pz.id && !i.deleted)) || 'local do pregão', hint: 'Em branco = usa o local do pregão. Escreva aqui só para mudar.' })}
         </div>`),
-      acc('acc-forn', 'Dados do fornecedor', `${swp(o, 'desc.fornecedor', 'Mostrar o quadro “Dados do fornecedor”')}<div class="swgrid">${campos}</div><p class="tiny muted">Os dados vêm de Config › Empresa. Campo desligado some do quadro.</p>`),
+      acc('acc-forn', 'Dados do fornecedor', `${swp(o, 'desc.fornecedor', 'Mostrar o quadro “Dados do fornecedor”')}<div class="swgrid">${campos}</div><p class="tiny muted">Aqui só escolhe o que aparece. Os dados ficam em Config › Meus dados. Campo desligado some do quadro.</p>`),
       acc('acc-banco', 'Dados bancários', `${swp(o, 'com.bancarios', 'Mostrar o quadro “Dados bancários”')}<div class="swgrid">${camposBanco}</div>`),
       acc('acc-itens', 'Itens da proposta (um bloco por item)', `${swp(o, 'com.itens', 'Mostrar os itens em blocos, com descrição e marca')}`),
       acc('acc-tab', 'Tabela de especificações', `${swp(o, 'desc.tabela', 'Mostrar a tabela', 'Desligada por padrão (o detalhamento vai no catálogo). Ligar vale só para este pregão.')}<div class="formgrid">${fp(o, 'desc.tabelaTitulo', 'Título da tabela')}${fp(o, 'desc.rotuloItem', 'Nome da coluna do item', { hint: 'Lote, Item…' })}${fp(o, 'icmsAliq', 'Alíquota ICMS padrão (%)', { type: 'pct', im: 'decimal', hint: 'MEI: 0. Por item, edite o item.' })}</div>
@@ -6428,6 +6435,12 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
   }
 
   /* ---------- config ---------- */
+  // Config › Meus dados: os dados pessoais ficam fechados atrás de um botão (pedido do João, 05/11/2026)
+  function dadosResumo(e) {
+    const ks = ['nome', 'cnpj', 'cpf', 'responsavel', 'rg', 'rgOrgao', 'estadoCivil', 'endereco', 'cidade', 'uf', 'telefone', 'email', 'banco', 'agencia', 'conta'];
+    const n = ks.filter((k) => String(e[k] || '').trim()).length;
+    return `<b style="color:${n === ks.length ? 'var(--green)' : 'var(--amber)'}">${n} de ${ks.length} preenchidos</b>`;
+  }
   function renderConfig() {
     const st = store.get(), c = st.config, e = c.empresa;
     const lim = C.limiteMEI(c);
@@ -6462,7 +6475,10 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
         ${fld('Imposto sobre a venda (%)', 'impostoPct', 'pct', C.numBR(c.impostoPct * 100, 2), { im: 'decimal', hint: 'MEI: deixe 0. Use só se sair do MEI (alíquota do Simples).' })}</div>
         <div class="alert info" style="margin-top:6px">${icon('info', 'sm')}<span id="dasInfo">DAS mensal: <b>${C.brl(C.dasMensal(c))}</b> (5% do salário mínimo + ICMS/ISS)</span></div>
         <p class="tiny muted" style="margin-top:8px">Em 2026: INSS R$ 81,05 + ICMS R$ 1,00 (comércio) e/ou ISS R$ 5,00 (serviços). Com o imposto sobre a venda acima de 0, o valor mínimo da proposta já o considera. O DAS é fixo e aparece no Painel.</p></div>
-      <div class="card"><h3>Empresa (cabeçalho da proposta)</h3><div class="formgrid">
+      <div class="card cfg-dados${UI.meusDados ? ' aberto' : ''}"><h3><span class="grow">Meus dados</span></h3>
+        <div class="row between wrap" style="gap:10px"><span class="small muted">Empresa, titular (CPF, RG, estado civil) e banco. Vão na proposta e nas declarações. ${dadosResumo(e)}</span>
+        <button class="btn${UI.meusDados ? '' : ' primary'}" data-act="meus-dados">${UI.meusDados ? 'Fechar meus dados' : 'Abrir meus dados'}</button></div>
+        ${UI.meusDados ? `<h4 class="cfg-sub">Empresa e titular</h4><div class="formgrid">
         ${fld('Nome / razão social', 'empresa.nome', 'text', e.nome, { full: true, ph: 'ex.: JOÃO DA SILVA 00000000000' })}
         ${fld('CNPJ', 'empresa.cnpj', 'text', e.cnpj, { im: 'numeric', ph: '00.000.000/0001-00' })}
         ${fld('CPF do titular (assinatura)', 'empresa.cpf', 'text', e.cpf, { im: 'numeric', ph: '000.000.000-00' })}
@@ -6479,13 +6495,13 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
         ${fld('Cidade', 'empresa.cidade', 'text', e.cidade)}
         ${fld('UF (Estado)', 'empresa.uf', 'text', e.uf, { ph: 'PR' })}
         ${fld('Telefone', 'empresa.telefone', 'text', e.telefone, { im: 'tel' })}
-        ${fld('E-mail', 'empresa.email', 'text', e.email, { full: true, im: 'email' })}</div></div>
-      <div class="card"><h3>Dados bancários (na proposta)</h3><div class="formgrid">
+        ${fld('E-mail', 'empresa.email', 'text', e.email, { full: true, im: 'email' })}</div>
+        <h4 class="cfg-sub">Dados bancários</h4><div class="formgrid">
         ${fld('Banco', 'empresa.banco', 'text', e.banco, { ph: '077 - INTER' })}
         ${fld('Agência', 'empresa.agencia', 'text', e.agencia, { im: 'numeric' })}
         ${fld('Conta', 'empresa.conta', 'text', e.conta)}
         ${fld('PIX', 'empresa.pix', 'text', e.pix)}
-        ${fld('Favorecido', 'empresa.favorecido', 'text', e.favorecido, { full: true, hint: 'Vazio = usa o nome da empresa.' })}</div></div>
+        ${fld('Favorecido', 'empresa.favorecido', 'text', e.favorecido, { full: true, hint: 'Vazio = usa o nome da empresa.' })}</div>` : ''}</div>
       <div class="card"><h3>Dados e backup</h3>
         <div class="grid2"><button class="btn" data-act="export">${icon('download', 'sm')} Exportar</button><label class="btn" style="cursor:pointer">${icon('plus', 'sm')} Importar<input type="file" accept="application/json,.json" data-import class="hidden"></label></div>
         <div class="grid2" style="margin-top:10px"><button class="btn danger" data-act="apagar-desisti">${icon('trash', 'sm')} Limpar desistências</button><button class="btn danger" data-act="apagar">${icon('trash', 'sm')} Apagar tudo</button></div></div>
@@ -6751,6 +6767,8 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
       case 'sim-limpar': { delete UI.sim[id]; const inp = document.querySelector('[data-sim="' + id + '"]'); if (inp) { inp.value = ''; inp.dispatchEvent(new Event('input', { bubbles: true })); inp.focus(); } break; }
       case 'sim-gravar': gravarLanceSimulado(id); break;
       case 'tab': setTab(t.dataset.v); break;
+      case 'meus-dados': UI.meusDados = !UI.meusDados; UI.keepScroll = true; render(); break;
+      case 'abrir-meus-dados': UI.meusDados = true; setTab('config'); setTimeout(() => { const el = document.querySelector('.cfg-dados'); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 60); break;
       case 'itens-ganhos': openGanhosForm(id); break;
       case 'item-res': { UI.keepScroll = true; const c = Rc().iMap.get(id); const v = t.dataset.v; definirResultado(id, c && c.resultado === v ? '' : v); break; }
       case 'aviso-pend-i': UI.pendI = UI.pendI === t.dataset.v ? '' : t.dataset.v; UI.keepScroll = true; render(); break;
