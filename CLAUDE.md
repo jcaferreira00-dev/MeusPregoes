@@ -359,6 +359,7 @@ ou na lista "Já no app ou já descartados" — comparar por órgão + nº do pr
 | 22/10/2026 | PNCP, pregões abertos até 21/12, faixas 1 e 2 (dispensas não) | 19 novos (ver buscas/2026-10-22-pncp.md) | buscas/2026-10-22-pncp.md |
 | 22/10/2026 | Ajuste: raio reduzido para ~120 km + Ponta Grossa; 17 pregões acima disso excluídos do app | — | (JSON pregoes-mei-120km-2026-10-22) |
 | 29/10/2026 | PNCP via Chrome do João, 35 municípios, pregões + dispensas com propostas abertas até 28/12 (201 compras) | 21 novos (+ Ipiranga 78 e Rio Branco do Ivaí 36 de novo) | buscas/2026-10-29.md + pregoes-busca-pncp-2026-10-29.json |
+| 05/11/2026 | NÃO REALIZADA: tarefa agendada rodou na nuvem sem o Chrome do João (sem ponte com o PC); PNCP bloqueado direto da sessão | — (refazer com o Chrome ligado) | — |
 
 
 ---
