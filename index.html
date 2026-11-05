@@ -827,6 +827,9 @@ input.input[type=datetime-local]::-webkit-date-and-time-value, input.input[type=
 .acc-body { padding: 12px 14px 14px; }
 .swgrid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0 18px; margin-bottom: 8px; }
 .swgrid .switch { padding: 7px 0; font-size: 13.5px; }
+.swgrid.sw1 { grid-template-columns: minmax(0, 1fr); }
+.pdf-avanc-vis > summary.card { margin-bottom: 0; } .pdf-avanc-vis[open] > summary.card { margin-bottom: 14px; }
+.pdf-avanc > summary { cursor: pointer; list-style: none; } .pdf-avanc > summary::-webkit-details-marker { display: none; } .pdf-avanc > summary h3::before { content: '▸ '; } .pdf-avanc[open] > summary h3::before { content: '▾ '; } .pdf-avanc[open] > summary { margin-bottom: 10px; }
 .clause { border: 1px dashed var(--line); border-radius: 12px; padding: 8px 10px 10px; margin-bottom: 10px; display: flex; flex-direction: column; gap: 6px; }
 .clause .switch { padding: 4px 0; }
 .clause textarea.input { font-size: 14px; min-height: 70px; }
@@ -1324,7 +1327,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.123.1';
+  const APP_VERSION = '1.124.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Julgamento', 'Aguardando empenho', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -1828,6 +1831,18 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
   ];
   const CAMPOS_BANCO = [['banco', 'Banco', true], ['agencia', 'Agência', true], ['conta', 'Conta-corrente', true], ['pix', 'PIX', true], ['favorecido', 'Favorecido', true], ['cnpj', 'CNPJ da empresa', true]];
 
+  // Rodada 3 (decisão do João, 05/11/2026): proposta no modelo padrão para todos os pregões; sem cláusulas livres e sem
+  // declarações do edital dentro dela (as declarações são feitas à mão, conforme cada pregão pede). O que os pregões
+  // costumam pedir no texto da proposta vira estas frases fixas, cada uma com chavinha. [chave, título, texto, ligada]
+  const DECL_PROPOSTA = [
+    ['precos', 'Preços', 'Nos preços ofertados estão incluídas todas as despesas com tributos, fretes, embalagens, seguros, encargos e demais custos necessários ao fornecimento, nada mais podendo ser cobrado além do valor proposto.', true],
+    ['edital', 'Condições do edital', 'Declaramos que conhecemos e aceitamos todas as condições do edital do Pregão Eletrônico nº {numero} e de seus anexos, e que os produtos ofertados atendem a todas as especificações exigidas no Termo de Referência.', true],
+    ['produtos', 'Produtos', 'Os produtos ofertados são novos, de primeira qualidade, sem uso e serão entregues em suas embalagens originais, nas quantidades, prazos e locais definidos no edital.', true],
+    ['garantia', 'Garantia', 'Os produtos têm garantia conforme o edital e, no mínimo, a garantia legal do Código de Defesa do Consumidor, contada do recebimento definitivo; substituiremos sem custo o que apresentar defeito ou estiver fora da especificação.', true],
+    ['entrega', 'Entrega', 'A entrega será feita por conta e risco do fornecedor, sem custo adicional para o órgão, mediante a emissão da ordem de fornecimento ou nota de empenho.', true],
+    ['enquadramento', 'Enquadramento', 'A licitante é Microempreendedor Individual (MEI), enquadrada como microempresa para os fins da Lei Complementar nº 123/2006.', true],
+    ['representante', 'Representante legal', 'Representante legal para assinatura da ata ou do contrato: {responsavel}, {nacionalidade}, {estadoCivil}, {profissao}, CPF {cpf}, RG {rg} {rgOrgao}, e-mail {email}, telefone {telefone}.', true],
+  ];
   function pdfOptsBase(cfg) {
     const p = cfg.proposta || {};
     const colunas = {}; COLUNAS_DESC.forEach(([id, , , on]) => { colunas[id] = on; });
@@ -1835,6 +1850,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     const bancoCampos = {}; CAMPOS_BANCO.forEach(([id, , on]) => { bancoCampos[id] = on; });
     return {
       modelo: 'unico',              // modelo único: tudo ligado por padrão, cada bloco tem uma chavinha
+      decl: Object.fromEntries(DECL_PROPOSTA.map(([k, , , on]) => [k, on])),   // o que os pregões costumam pedir (v1.124.0)
       cabecalho: null, marca: null, // null = padrão do modelo (comercial usa, descritivo não)
       validade: p.validadeDias || 60, prorrogacao: 30, pagamento: p.condPagamento || 'Conforme edital',
       prazoEntrega: '', localEntrega: '', observacoes: '', icmsAliq: 0, bancoCampos,
@@ -1843,7 +1859,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
         observacoes: true, declaracao: true, localData: true, assinatura: true, assinaturaNome: true, assinaturaDoc: true,
       },
       desc: {
-        titulo: true, tituloTexto: 'ANEXO III\nMODELO DE DESCRITIVO DA PROPOSTA DE PREÇOS',
+        titulo: true, tituloTexto: 'PROPOSTA DE PREÇOS',
         faixa: true, faixaTexto: 'PREGÃO ELETRÔNICO - EDITAL nº {numero}',
         fornecedor: true, campos,
         tabela: false, tabelaTitulo: '1. Especificações técnicas:', rotuloItem: 'Lote', colunas,
@@ -1862,28 +1878,37 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     return out;
   }
   // opções efetivas de um pregão: padrões do app <- padrão do usuário (config) <- ajustes deste pregão
+  // o que vale por pregão (o edital decide): o resto é o modelo padrão de todos (Rodada 3, 05/11/2026)
+  const PDF_DO_PREGAO = ['validade', 'prorrogacao', 'pagamento', 'prazoEntrega', 'localEntrega', 'observacoes', 'anonima'];
+  const soDoPregao = (o) => { const r = {}; if (o && typeof o === 'object') PDF_DO_PREGAO.forEach((k) => { if (o[k] !== undefined && o[k] !== null && o[k] !== '') r[k] = o[k]; }); return r; };
+  // padrão salvo antes da v1.124.0 pode ter título/cláusulas copiados de um edital: só vale o que foi salvo depois (pad.v2)
+  function padraoLimpo(pad) {
+    const p = clonarObj(pad || {});
+    delete p.documentos; delete p.anonima; delete p.icmsAliq;
+    if (p.desc) { delete p.desc.blocos; delete p.desc.tabela; if (!p.v2) { delete p.desc.tituloTexto; delete p.desc.faixaTexto; delete p.desc.titulo1; delete p.desc.titulo2; } }
+    if (p.com) { delete p.com.declaracao; delete p.com.documentos; }
+    PDF_DO_PREGAO.forEach((k) => { if (k !== 'validade' && k !== 'pagamento' && k !== 'prorrogacao') delete p[k]; });
+    return p;
+  }
+  const clonarObj = (x) => JSON.parse(JSON.stringify(x || {}));
+  // opções efetivas de um pregão: modelo padrão do app <- seu padrão (Config) <- só as condições deste pregão
   function resolverPdfOpts(pregao, cfg, tipo) {
-    const pad = cfg.pdfPadrao || {}, ov = (pregao && pregao.pdfOpts) || {};
-    const m = deepMerge(deepMerge(pdfOptsBase(cfg), pad), ov);
+    const ov = soDoPregao(pregao && pregao.pdfOpts);
+    const m = deepMerge(deepMerge(pdfOptsBase(cfg), padraoLimpo(cfg.pdfPadrao)), ov);
     m.modelo = 'unico';
     if (m.cabecalho === null || m.cabecalho === undefined) m.cabecalho = true;
     if (m.marca === null || m.marca === undefined) m.marca = true;
-    { const antigo = [ov, pad].map((x) => x && x.desc).find((d) => d && d.tituloTexto === undefined && (d.titulo1 !== undefined || d.titulo2 !== undefined));
-      if (antigo) m.desc.tituloTexto = [antigo.titulo1, antigo.titulo2].filter(Boolean).join('\n'); }
-    // tabela de especificações técnicas: sempre desligada por padrão (o detalhamento vai no catálogo); só liga no pregão que pedir
-    m.desc.tabela = !!(ov.desc && ov.desc.tabela === true);
-    // proposta inicial sem identificação (edital que proíbe identificar o licitante): só deste pregão e nunca na final
+    m.desc.tabela = false;                       // tabela de especificações saiu (F107): o detalhamento vai no catálogo
+    m.com.declaracao = false;                    // a frase de preços agora é a declaração padrão "Preços" (F108)
     m.anonima = ov.anonima === true && tipo !== 'final';
-    m.desc.blocos = Array.isArray(ov.desc && ov.desc.blocos) ? ov.desc.blocos : (Array.isArray(pad.desc && pad.desc.blocos) ? pad.desc.blocos : []);
-    m.documentos = Array.isArray(ov.documentos) ? ov.documentos : [];   // declarações do edital: só deste pregão (nunca viram padrão)
-    if (m.com.documentos === undefined) m.com.documentos = true;
-    // proposta final: parte da inicial deste pregão + ajustes próprios (não viram padrão e não mexem na inicial)
-    if (tipo === 'final') {
-      const f = (pregao && pregao.pdfOptsFinal) || {};
-      const blocos = Array.isArray(f.desc && f.desc.blocos) ? f.desc.blocos : m.desc.blocos;
-      const mf = deepMerge(m, f); mf.desc.blocos = blocos; mf.modelo = 'unico';
-      return mf;
-    }
+    m.documentos = []; m.com.documentos = false; // declarações do edital: feitas à mão, fora da proposta
+    if (tipo === 'final') Object.assign(m, soDoPregao(pregao && pregao.pdfOptsFinal));
+    m.anonima = m.anonima === true && tipo !== 'final';
+    // representante legal: só os dados preenchidos em Config › Meus dados (o que estiver vazio não sai como lacuna)
+    const e = cfg.empresa || {}, tem = (k) => String(e[k] || '').trim();
+    const rep = ['{responsavel}', tem('nacionalidade') && '{nacionalidade}', tem('estadoCivil') && '{estadoCivil}', tem('profissao') && '{profissao}', tem('cpf') && 'CPF {cpf}',
+      tem('rg') && ('RG {rg}' + (tem('rgOrgao') ? ' {rgOrgao}' : '')), tem('email') && 'e-mail {email}', tem('telefone') && 'telefone {telefone}'].filter(Boolean).join(', ');
+    m.desc.blocos = DECL_PROPOSTA.filter(([k]) => m.decl[k] !== false).map(([k, t, x]) => ({ titulo: t, texto: k === 'representante' ? 'Representante legal para assinatura da ata ou do contrato: ' + rep + '.' : x, antes: false }));
     return m;
   }
   /* ---------- valor unitário da proposta: a mesma regra para o PDF e para o painel ---------- */
@@ -2303,7 +2328,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
   /* ---------- dados de exemplo (os mesmos da planilha) ---------- */
 
   const api = {
-    APP_VERSION, STATUS, INATIVOS, DECL_PADRAO, uid, n0, round2, ceil2, parseBR, brl, brl0, pct, numBR, qtdBR,
+    APP_VERSION, STATUS, INATIVOS, DECL_PADRAO, DECL_PROPOSTA, uid, n0, round2, ceil2, parseBR, brl, brl0, pct, numBR, qtdBR,
     fmtSessao, dataExtensa, hojeISO, defaultConfig, emptyState, migrate, custoViagem, localEntregaPadrao, calcItem, limiteMEI,
     custoUnitOpc, embDe, tesouro, corTesouro, agora, setClockOffset, getClockOffset, pendenciasNuvem, computeAll, custoCompra, freteCompra, ordemLoteItem, padLE, dasMensal, mesesAtivos, previewItem, linhasProposta, faltasOferta, marcaModeloDoTexto, normMM, horizontal, capitalizarTitulos, unitProposta, resolverPdfOpts, camposModelo, pendenciasModelo, CAMPOS_MODELO, identificaEmpresa, COLUNAS_DESC, CAMPOS_FORNECEDOR, CAMPOS_BANCO, mergeState, diffState, paraNuvem, createStore, };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
@@ -5851,60 +5876,54 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
   }
 
   function pdfModelCards(o, cfg, pz) {
+    // Rodada 3 (decisão do João, 05/11/2026): modelo padrão para todos; por pregão só as condições do edital e a versão sem identificação
     const D = o.desc;
     const campos = C.CAMPOS_FORNECEDOR.map(([id, nome]) => swp(o, 'desc.campos.' + id, nome)).join('');
     const camposBanco = C.CAMPOS_BANCO.map(([id, nome]) => swp(o, 'bancoCampos.' + id, nome)).join('');
-    const colunas = C.COLUNAS_DESC.map(([id, nome]) => swp(o, 'desc.colunas.' + id, nome)).join('');
-    const blocosUi = (D.blocos || []).map((b, n) => `<div class="clause">
-        <input class="input" data-bloco="${n}" data-field="titulo" data-type="text" placeholder="Título da cláusula (sai em caixa alta e negrito)" value="${esc(b.titulo || '')}">
-        <textarea class="input" rows="4" data-bloco="${n}" data-field="texto" data-type="text" placeholder="Descrição (sai justificada, abaixo do título)" style="margin-top:6px">${esc(b.texto || '')}</textarea>
-        <button type="button" class="btn sm danger" data-act="bloco-del" data-id="${n}">${icon('trash', 'sm')} Remover</button>
-      </div>`).join('');
+    const decl = C.DECL_PROPOSTA.map(([k, t, x]) => swp(o, 'decl.' + k, t, k === 'representante' ? 'Nome, CPF, RG, estado civil, e-mail e telefone do titular (só o que estiver preenchido em Config › Meus dados). Sai fora da proposta sem identificação.' : esc(x.replace('{numero}', pz.numero || '…')))).join('');
     const cab = `
       <div class="card"><h3>2 · Documento da proposta <span class="grow"></span><span class="saved-ind" id="savedInd">Salvo</span></h3>
-        <p class="tiny muted" style="margin:0 0 8px">Um único modelo, com tudo ligado por padrão. Desligue na chavinha o que não quiser na proposta. O que você mudar aqui (chavinhas e textos) vira o padrão dos próximos pregões; prazo e local de entrega, observações e ICMS valem só para o pregão.</p>
+        <p class="tiny muted" style="margin:0 0 8px">Todos os pregões saem no seu modelo padrão. Aqui você só ajusta as condições deste edital e, se ele pedir, a versão sem identificação. As declarações do edital são feitas à parte, conforme cada pregão pede.</p>
         ${(() => { if (UI.pdf.tipo === 'final') return ''; const pz = store.get().pregoes.find((x) => x.id === UI.pdf.pregaoId), k = confereIdent(pz, o); if (!k) return '';
           return `<div class="alert ${k.ok ? 'ok' : 'bad'}" style="margin:0 0 10px">${icon(k.ok ? 'check' : 'alert', 'sm')}<div class="grow">Edital: ${regraIdentTxt(k.r)}. ${k.ok ? 'A proposta está configurada assim.' : '<b>A chavinha abaixo está diferente do edital.</b> O app não gera assim sem você confirmar.'}${k.r.observacoes ? '<br><span class="tiny">' + esc(k.r.observacoes) + '</span>' : ''}</div>${k.ok ? '' : '<button type="button" class="btn sm" data-act="pdf-ident-edital">Ajustar</button>'}</div>`; })()}
         ${UI.pdf.tipo === 'final' ? '' : swp(o, 'anonima', 'Proposta inicial sem identificação da empresa', 'Para o edital que proíbe identificar o licitante. Sai sem nome, CNPJ, cabeçalho, dados bancários, local, assinatura, declarações e cláusulas com dados da empresa. Vale só para este pregão; a proposta final sai identificada.')}
         ${o.anonima ? `<div class="alert warn" style="margin:4px 0 10px">${icon('alert', 'sm')}<div class="grow">Sem identificação: ao gerar, o app confere se o nome, CNPJ, CPF, e-mail ou telefone aparecem no PDF. Confira também as fotos do catálogo (logo ou etiqueta da empresa).</div></div>` : ''}
-        ${swp(o, 'cabecalho', 'Cabeçalho (nome e imagem)', 'Aparece em todas as páginas')}
-        ${swp(o, 'marca', 'Marca d’água')}
-        <div class="field full" style="margin-top:8px"><label>Cor do documento (rótulos, faixas e bordas)</label><input class="input" type="color" data-cfg="proposta.cor" data-type="text" value="${esc(cfg.proposta.cor)}"></div>
-        <div class="grid2" style="margin-top:6px"><button type="button" class="btn sm" data-act="pdf-padrao">Usar como padrão</button><button type="button" class="btn sm" data-act="pdf-reset">Voltar ao padrão</button></div>
-      </div>`;
-    const corpo = [
-      acc('acc-tit', 'Títulos e faixa do edital',
-        `${swp(o, 'desc.titulo', 'Título do documento')}${fp(o, 'desc.tituloTexto', 'Título', { area: true, rows: 2, full: true, hint: 'Sai em caixa alta e negrito, ajustado às margens. Enter = nova linha.' })}
-         ${swp(o, 'desc.faixa', 'Faixa com o número do edital')}${fp(o, 'desc.faixaTexto', 'Texto da faixa', { hint: '{numero} vira o “Nº do pregão”' })}`),
-      acc('acc-grade', 'Dados do órgão e do processo', `${swp(o, 'com.grade', 'Mostrar órgão, processo, validade, pagamento e entrega')}
-        <div class="formgrid" style="margin-top:8px">
+      </div>
+      <div class="card"><h3>3 · Condições deste pregão</h3>
+        <div class="formgrid">
           ${fp(o, 'validade', 'Validade (dias)', { type: 'int', im: 'numeric' })}
           ${fp(o, 'pagamento', 'Prazo de pagamento')}
-          ${fp(o, 'prorrogacao', 'Prorrogação (dias)', { type: 'int', im: 'numeric', hint: 'Entra no texto {prorrogacao}.' })}
           ${fp(o, 'prazoEntrega', 'Prazo de entrega', { ph: pz.prazoEntregaDias ? pz.prazoEntregaDias + ' dias (do pregão)' : 'ex.: 10 dias' })}
           ${fp(o, 'localEntrega', 'Local de entrega', { ph: C.localEntregaPadrao(pz, store.get().itens.filter((i) => i.pregaoId === pz.id && !i.deleted)) || 'local do pregão', hint: 'Em branco = usa o local do pregão. Escreva aqui só para mudar.' })}
-        </div>`),
+        </div>
+        ${fp(o, 'observacoes', 'Observações deste pregão (saem no PDF)', { area: true, rows: 2, full: true })}
+        <p class="tiny muted" style="margin:6px 0 0">Prazo, local e observações valem só para este pregão. Validade e pagamento também viram o padrão dos próximos.</p>
+      </div>
+      <div class="card"><h3>4 · O que os pregões costumam pedir</h3>
+        <p class="tiny muted" style="margin:0 0 8px">Frases fixas que saem no fim da proposta, antes do local e da assinatura. Desligue a que não quiser; a escolha vira o padrão dos próximos pregões.</p>
+        <div class="swgrid sw1">${decl}</div>
+      </div>`;
+    const corpo = [
+      acc('acc-tit', 'Títulos e faixa',
+        `${swp(o, 'desc.titulo', 'Título do documento')}${fp(o, 'desc.tituloTexto', 'Título', { area: true, rows: 2, full: true, hint: 'Sai em caixa alta e negrito, ajustado às margens. Enter = nova linha.' })}
+         ${swp(o, 'desc.faixa', 'Faixa com o número do edital')}${fp(o, 'desc.faixaTexto', 'Texto da faixa', { hint: '{numero} vira o “Nº do pregão”' })}`),
+      acc('acc-grade', 'Dados do órgão e do processo', `${swp(o, 'com.grade', 'Mostrar órgão, processo, validade, pagamento e entrega')}${fp(o, 'prorrogacao', 'Prorrogação (dias)', { type: 'int', im: 'numeric' })}`),
       acc('acc-forn', 'Dados do fornecedor', `${swp(o, 'desc.fornecedor', 'Mostrar o quadro “Dados do fornecedor”')}<div class="swgrid">${campos}</div><p class="tiny muted">Aqui só escolhe o que aparece. Os dados ficam em Config › Meus dados. Campo desligado some do quadro.</p>`),
       acc('acc-banco', 'Dados bancários', `${swp(o, 'com.bancarios', 'Mostrar o quadro “Dados bancários”')}<div class="swgrid">${camposBanco}</div>`),
       acc('acc-itens', 'Itens da proposta (um bloco por item)', `${swp(o, 'com.itens', 'Mostrar os itens em blocos, com descrição e marca')}`),
-      acc('acc-tab', 'Tabela de especificações', `${swp(o, 'desc.tabela', 'Mostrar a tabela', 'Desligada por padrão (o detalhamento vai no catálogo). Ligar vale só para este pregão.')}<div class="formgrid">${fp(o, 'desc.tabelaTitulo', 'Título da tabela')}${fp(o, 'desc.rotuloItem', 'Nome da coluna do item', { hint: 'Lote, Item…' })}${fp(o, 'icmsAliq', 'Alíquota ICMS padrão (%)', { type: 'pct', im: 'decimal', hint: 'MEI: 0. Por item, edite o item.' })}</div>
-         <div class="lbl" style="margin:6px 0">Colunas</div><div class="swgrid">${colunas}</div>`),
-      acc('acc-resumo', 'Valor total', `${swp(o, 'com.resumo', 'Resumo comercial (valor global)', 'Com a coluna “Valor total s/ ICMS” ligada, mostra também esse total')}${swp(o, 'com.extenso', 'Valor por extenso')}`),
-      acc('acc-obs', 'Observações e declaração', `${swp(o, 'com.observacoes', 'Observações')}${fp(o, 'observacoes', 'Texto das observações (saem no PDF)', { area: true, rows: 2, full: true })}
-         ${swp(o, 'com.declaracao', 'Declaração de preços')}<div class="field full"><label>Texto da declaração</label><textarea class="input" rows="3" data-cfg="proposta.textoDeclaracao" data-type="text">${esc(cfg.proposta.textoDeclaracao)}</textarea></div>`),
-      acc('acc-bl', 'Cláusulas', `<p class="tiny muted">Cada cláusula tem título (caixa alta e negrito) e descrição justificada. Use {validade}, {prorrogacao}, {numero}, {orgao}, {razao}, {cnpj}, {ie}, {enderecoCompleto}, {responsavel}, {cpf}, {rg}, {rgOrgao}, {estadoCivil}, {banco}, {agencia}, {conta}, {total} ou {totalExtenso}: viram os dados de Config.</p>${blocosUi}<button type="button" class="btn sm block" data-act="bloco-add">${icon('plus', 'sm')} Incluir cláusula</button>`),
-      acc('acc-docs', `Declarações do edital (${(o.documentos || []).length})`, (o.documentos || []).length
-        ? `${swp(o, 'com.documentos', 'Incluir as declarações do edital no PDF', 'Cada uma sai numa página própria, com local, data e assinatura')}
-           <ul class="small" style="margin:6px 0 4px 18px">${o.documentos.map((d) => `<li>${esc(String(d.titulo || 'Declaração').split('\n').map((x) => x.trim()).filter(Boolean).join(' — '))}</li>`).join('')}</ul>
-           <p class="tiny muted">Vieram com o arquivo de importação do pregão, no texto do modelo do edital. Os dados ({rg}, {cpf}, {estadoCivil}…) saem de Config › Empresa.</p>`
-        : '<p class="tiny muted">Este pregão não tem declarações do edital. Elas vêm no arquivo de importação quando o edital tem modelo próprio.</p>'),
+      acc('acc-resumo', 'Valor total', `${swp(o, 'com.resumo', 'Resumo comercial (valor global)')}${swp(o, 'com.extenso', 'Valor por extenso')}${swp(o, 'com.observacoes', 'Observações deste pregão no PDF')}`),
       acc('acc-fim', 'Local, data e assinatura',
         `${swp(o, 'desc.localData', 'Local e data')}<div class="seg-ctl" style="margin:4px 0 10px">${[['preenchido', 'Preenchido'], ['branco', 'Em branco']].map(([v, l]) => `<button type="button" data-act="pdf-datamodo" data-v="${v}" class="${D.localDataModo === v ? 'on' : ''}">${l}</button>`).join('')}</div>
          <div class="field"><label>Data do documento</label><input class="input" type="date" data-ui="data" value="${esc(UI.pdf.data)}"></div>
          ${swp(o, 'desc.assinatura', 'Linha de assinatura')}${fp(o, 'desc.assinaturaRotulo', 'Texto abaixo da linha')}${swp(o, 'desc.assinaturaNome', '↳ nome do titular')}${swp(o, 'desc.assinaturaDoc', '↳ CPF ou CNPJ')}`),
+      acc('acc-visual', 'Cabeçalho, marca d’água e cor',
+        `${swp(o, 'cabecalho', 'Cabeçalho (nome e imagem)', 'Aparece em todas as páginas')}${swp(o, 'marca', 'Marca d’água')}
+         <div class="field full" style="margin-top:8px"><label>Cor do documento (rótulos, faixas e bordas)</label><input class="input" type="color" data-cfg="proposta.cor" data-type="text" value="${esc(cfg.proposta.cor)}"></div>`),
     ].join('');
-    return cab + `<div class="card"><h3>3 · O que aparece na proposta</h3>${corpo}</div>`;
+    return cab + `<details class="card pdf-avanc"${UI.pdfAvanc ? ' open' : ''}><summary><h3 style="display:inline">Avançado · o que aparece na proposta</h3><span class="tiny muted" style="display:block;margin-top:2px">Chavinhas do modelo padrão, cabeçalho e marca d’água. Fechado por padrão.</span></summary>${corpo}
+      <div class="grid2" style="margin-top:10px"><button type="button" class="btn sm" data-act="pdf-reset">Voltar ao padrão (este pregão)</button></div></details>`;
   }
+
 
   // celular: itens da proposta com o lance editável (sem lance, vale o teto do edital); o resto do app segue igual
   function pdfItensMobile(L) {
@@ -5961,7 +5980,8 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
         ${L.semValor ? `<div class="alert warn" style="margin-top:10px">${icon('alert', 'sm')}<span>${L.semValor} item(ns) sem valor nesta opção. Preencha o teto ou o lance final, ou troque a opção acima.</span></div>` : ''}
       </div>
       <div class="m-hide">${pdfModelCards(opts, cfg, pz)}</div>
-      <div class="card m-hide"><h3>4 · Cabeçalho (imagem e nome) <span class="grow"></span><span class="saved-ind" id="savedInd">Salvo</span></h3>
+      <details class="pdf-avanc pdf-avanc-vis m-hide" data-k="pdfVis"${UI.pdfVis ? ' open' : ''}><summary class="card"><h3 style="display:inline">Avançado · cabeçalho e marca d’água</h3><span class="tiny muted" style="display:block;margin-top:2px">Imagem do cabeçalho e marca d’água das propostas. Fechado por padrão.</span></summary>
+      <div class="card"><h3>Cabeçalho (imagem e nome)</h3>
         <div class="wm-prev" id="hdPrev" style="height:auto;padding:10px 12px;margin-bottom:12px;display:block">${hdPreviewHtml(hd, cfg.empresa)}</div>
         <label class="switch"><span>Nome e dados da empresa escritos</span><input type="checkbox" data-cfg="cabecalho.mostrarNome" data-type="check" ${hd.mostrarNome ? 'checked' : ''}></label>
         <div class="row" style="margin:6px 0 12px"><label class="btn sm grow" style="cursor:pointer">${icon('image', 'sm')} ${hd.imagem ? 'Trocar imagem' : 'Escolher imagem (logo)'}<input type="file" accept="image/png,image/jpeg" data-hd-file class="hidden"></label>${hd.imagem ? `<button type="button" class="btn sm danger" data-act="hd-remover">${icon('trash', 'sm')}</button>` : ''}</div>
@@ -5973,7 +5993,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
         <div class="field"><label>Ajuste horizontal: <span id="lbHx">${hd.offX}</span></label><input type="range" min="-150" max="150" step="2" data-cfg="cabecalho.offX" data-type="range" data-lb="lbHx" value="${hd.offX}"></div>
         <div class="field"><label>Ajuste vertical: <span id="lbHy">${hd.offY}</span></label><input type="range" min="-40" max="40" step="1" data-cfg="cabecalho.offY" data-type="range" data-lb="lbHy" value="${hd.offY}"></div>` : `<p class="small muted">Sem imagem, o cabeçalho sai só com o nome e os dados da empresa.</p>`}
       </div>
-      <div class="card m-hide"><h3>5 · Marca d’água</h3>
+      <div class="card"><h3>Marca d’água</h3>
         <div class="seg-ctl" role="tablist">${[['nenhuma', 'Nenhuma'], ['texto', 'Texto'], ['imagem', 'Imagem']].map(([v, l]) => `<button type="button" data-act="wm-tipo" data-v="${v}" class="${w.tipo === v ? 'on' : ''}">${l}</button>`).join('')}</div>
         <div style="height:12px"></div>
         <div class="wm-prev" id="wmPrev">${w.tipo === 'imagem' && w.imagem ? `<img alt="" src="${w.imagem}" style="opacity:${Math.max(.15, w.opacidade * 3)};transform:rotate(${-w.angulo}deg)">` : w.tipo === 'texto' ? `<span style="font-size:${wmPrevSize(w)}px;opacity:${Math.max(.15, w.opacidade * 3)};transform:rotate(${-w.angulo}deg)">${wmTexto(w)}</span>` : '<span class="small muted" style="font-weight:600">Sem marca d’água</span>'}</div>
@@ -5985,7 +6005,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
         <div class="field"><label>Tamanho: <span id="lbTm">${w.tamanho}</span></label><input type="range" min="20" max="140" step="2" data-cfg="marcaDagua.tamanho" data-type="range" data-lb="lbTm" value="${w.tamanho}"></div>
         <div class="field"><label>Ajuste horizontal: <span id="lbWx">${w.offX || 0}</span></label><input type="range" min="-150" max="150" step="2" data-cfg="marcaDagua.offX" data-type="range" data-lb="lbWx" value="${w.offX || 0}"></div>
         <div class="field"><label>Ajuste vertical: <span id="lbWy">${w.offY || 0}</span></label><input type="range" min="-200" max="200" step="2" data-cfg="marcaDagua.offY" data-type="range" data-lb="lbWy" value="${w.offY || 0}"></div>` : ''}
-      </div>
+      </div></details>
       ${faltaEmpresaHtml(opts, cfg.empresa)}
       <div class="${C.faltasOferta(st, UI.pdf.pregaoId, UI.pdf.tipo, UI.pdf.fonte).length ? '' : 'm-hide'}">${catalogoCardHtml(st, L)}</div>
       ${gerarCardHtml(st, L)}
@@ -6319,13 +6339,14 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     return el.value;
   }
   // o que for alterado na proposta vira o padrão dos próximos pregões (campos próprios de cada edital ficam só no pregão)
-  const PDF_SO_NO_PREGAO = ['prazoEntrega', 'localEntrega', 'observacoes', 'icmsAliq', 'desc.tabela', 'anonima'];
+  const PDF_SO_NO_PREGAO = ['prazoEntrega', 'localEntrega', 'observacoes', 'anonima'];
   const clonar = (x) => JSON.parse(JSON.stringify(x));
   const OPK = () => (UI.pdf.tipo === 'final' ? 'pdfOptsFinal' : 'pdfOpts');   // a final guarda os seus ajustes à parte
   function lembrarPadraoPdf(path, v) {
     if (UI.pdf.tipo === 'final') return;   // ajustes da proposta final não viram padrão
     if (PDF_SO_NO_PREGAO.includes(path)) return;
     const pad = clonar(store.get().config.pdfPadrao || {});
+    if (!pad.v2) { if (pad.desc) { delete pad.desc.tituloTexto; delete pad.desc.faixaTexto; delete pad.desc.blocos; delete pad.desc.tabela; } delete pad.documentos; pad.v2 = true; }
     setPathObj(pad, path, v);
     store.setConfigPath('pdfPadrao', pad, { silent: true });
   }
@@ -7311,6 +7332,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     window.addEventListener('online', () => { if (!Cloud.ligado) iniciarNuvem(false); else sincronizarImagens(); });
   }
 
+  document.addEventListener('toggle', (e) => { const d = e.target; if (d && d.classList && d.classList.contains('pdf-avanc')) UI[d.dataset.k || 'pdfAvanc'] = d.open; }, true);
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
   window.__app = { store, UI, render, openPregaoForm, openItemForm, Guard, Sheet, Draft, downscaleImage }; // facilita testes/depuração
 })();

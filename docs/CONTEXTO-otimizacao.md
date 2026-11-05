@@ -68,3 +68,7 @@ Sincronização com uma ficha por pregão: FEITA em 05/11/2026 (v1.121.0), ver `
 - F30: até 4 opções de compra novas. F31: botão “Comprar” (loja no balão).
 - F82: Exigências juntadas às Observações (migração automática).
 - Ficaram para o João decidir (mexem em cálculo ou em função protegida): F57 (estrelas × semáforo), F61/F64 (entrega parcelada/por item: “várias entregas mudam o piso do lance”), F81 (“Posso ganhar” é função protegida), F86/F94 (tabelas do dashboard × guia Acompanhar/Pregões), F85 (um desenho só para encerrados), F90 (Certidões), F37 (enxugar observações: o quê?).
+
+## 11. Rodada 3 do Depurador (05/11/2026) — FEITA
+- v1.123.0: tela de entrada (F26). v1.124.0: proposta no modelo padrão para todos (F36, F50, F107, F108): do pregão só validade, pagamento, prazo, local, observações e sem identificação; título padrão “PROPOSTA DE PREÇOS”; cláusulas e declarações do edital fora do PDF (declarações feitas à mão por pregão); 7 frases fixas com chavinha (“O que os pregões costumam pedir”); chavinhas, cabeçalho e marca d’água dentro de “Avançado” (F72, F73).
+- Ficou para depois: F99/F100 (descritivo no item e no catálogo; duas sugestões de título) — ainda convivem, como manda o CLAUDE.md.

@@ -122,9 +122,8 @@
   F('simulador-lance', AR.item, 4, 'manter', 'Simulador de lance',
     `Caixa no item de pregão em disputa: digite um valor e veja na hora total, lucro, margem, nota e se fica abaixo do mínimo ou acima do teto, sem salvar nada. Só grava com 2 confirmações. Útil durante a sessão.`,
     { sel: ['.sim', '[data-sim]'], ev: 'simCalc/simResHtml/gravarLanceSimulado.' });
-  F('modelo-proprio', AR.preg, 4, 'manter', 'Edital com modelo próprio de proposta',
-    `Chavinha + link do modelo no pregão. Avisa no cartão, no topo do pregão e na guia Proposta que o órgão exige formato próprio, para você não usar o modelo padrão por engano.`,
-    { probe: 'modeloProprio', sel: ['[name=modeloProprio]'] });
+  F('modelo-proprio', AR.preg, 3, 'manter', 'Edital com modelo próprio de proposta (só aviso)',
+    `FEITO na v1.124.0 (05/11/2026, Rodada 3): o aviso “Modelo próprio de proposta” continua no cartão, mas a proposta sai sempre no modelo padrão (os órgãos aceitam desde que tenha todas as informações). Os títulos, cláusulas e declarações de edital salvos nos pregões ficam guardados e não entram no PDF.`, { sel: ['[name=modeloProprio]'] });
   F('obs-pregao', AR.preg, 4, 'manter', 'Observações do pregão',
     `Anotações livres (amostra, atestado, ligar para o pregoeiro). Aparecem em destaque no cartão, no topo do pregão e na guia Proposta.`,
     { probe: 'obsPregao', sel: ['.obsline', '.obstxt'] });
@@ -164,9 +163,8 @@
   F('proposta-mobile', AR.pdf, 4, 'manter', 'Proposta no celular (modo rápido)',
     `Escolhe o pregão, mostra inicial/final e os itens como cartões com “Meu lance” (vazio = teto) e o botão Gerar PDF; esconde as opções do documento. O PDF sai com as configurações feitas no PC.`,
     { sel: ['.pdfm', '[data-pm-lance]'] });
-  F('pdf-modelo-campos', AR.pdf, 4, 'enxugar', 'Cláusulas, {campos} e declarações do edital',
-    `Textos com {razao}, {cnpj}, {rg}… são preenchidos com os dados da Config; falta algum, o app avisa onde preencher. Há cláusulas livres e “declarações do edital” (cada uma em página própria, com data e assinatura).`,
-    { probe: 'docsEdital', sel: ['#acc-bl', '#acc-docs'], red: [] });
+  F('pdf-modelo-campos', AR.pdf, 4, 'manter', 'O que os pregões costumam pedir (frases fixas com chavinha)',
+    `FEITO na v1.124.0 (05/11/2026, Rodada 3): as cláusulas livres e as declarações do edital saíram da proposta. No lugar, sete frases fixas, cada uma com chavinha (vira o padrão): Preços, Condições do edital, Produtos, Garantia, Entrega, Enquadramento (MEI) e Representante legal (só com os dados preenchidos em Meus dados; fora da proposta sem identificação). As declarações do edital são feitas à mão, conforme cada pregão pede.`, { sel: ['[data-pdf^="decl."]'] });
   F('pdf-catalogo', AR.pdf, 4, 'enxugar', 'Catálogo dos produtos (fotos + descrição)',
     `Para o pregoeiro confrontar o edital com o que você oferece: por item, o que o edital exige, marca/modelo, sua descrição detalhada e até 4 fotos. As fotos ficam no aparelho (IndexedDB) e vão reduzidas para a nuvem, uma coleção por item.`,
     { probe: 'fotos', sel: ['#catCard', '.cat-item'], ev: 'CatImg/enviarFotos/preencherFotosCatalogo.' });
@@ -220,12 +218,10 @@
     `Rosca interativa: custo dos produtos, frete, entrega de carro, impostos e lucro dos pregões ativos. Responde aos filtros e a cliques.`, { sel: ['.dash svg circle'] });
   F('painel-vencedor', AR.pain, 3, 'manter', 'Painel: preço de quem ganhou',
     `Mostra, nos itens em que você anotou o valor do vencedor, quantos ficariam abaixo do seu custo, com margem menor ou com sua margem.`, { probe: 'vencedor', sel: ['.vstats'] });
-  F('pdf-chavinhas', AR.pdf, 3, 'enxugar', 'Chavinhas do documento (11 grupos, cerca de 40 opções)',
-    `Cada bloco do PDF liga/desliga (cabeçalho, fornecedor, banco, itens, resumo, extenso, observações, declaração, cláusulas, local e data, assinatura), com “Usar como padrão” e “Voltar ao padrão”. Os valores seguem uma cascata de 4 níveis: padrão do app ← padrão seu ← ajuste do pregão ← ajuste da proposta final.`,
-    { probe: 'pdfOpts', sel: ['#acc-forn', '.swgrid'], para: 'Manter, mas esconder em “Avançado” o que você nunca desliga (veja o uso real em “Uso”).' });
-  F('pdf-cabecalho-marca', AR.pdf, 3, 'enxugar', 'Cabeçalho (imagem/nome) e marca d’água (texto/imagem)',
-    `Escolhe imagem e posição, tamanho, opacidade e ajuste fino do cabeçalho; marca d’água de texto ou imagem com opacidade, ângulo, tamanho e posição. São 10 controles deslizantes.`,
-    { sel: ['#hdPrev', '#wmPrev'], para: 'Manter; reduzir controles de ajuste fino (deslocamento horizontal/vertical) se você quase não os usa.' });
+  F('pdf-chavinhas', AR.pdf, 3, 'manter', 'Chavinhas do documento (dentro de “Avançado”)',
+    `FEITO na v1.124.0 (05/11/2026, Rodada 3): ficam dentro de “Avançado · o que aparece na proposta”, fechado por padrão. Na guia Proposta ficam à vista só: sem identificação, condições deste pregão (validade, pagamento, prazo, local, observações) e as frases que os pregões costumam pedir. Tudo o que muda nas chavinhas vira o padrão de todos os pregões.`, { sel: ['.pdf-avanc'] });
+  F('pdf-cabecalho-marca', AR.pdf, 3, 'manter', 'Cabeçalho (imagem/nome) e marca d’água (dentro de “Avançado”)',
+    `FEITO na v1.124.0 (05/11/2026, Rodada 3): os dois cartões ficam dentro de “Avançado · cabeçalho e marca d’água”, fechado por padrão.`, { sel: ['.pdf-avanc-vis'] });
   F('pdf-extenso', AR.pdf, 3, 'manter', 'Valor por extenso',
     `Escreve o valor total em palavras (reais e centavos) no resumo comercial.`, { sel: ['[data-pdf="com.extenso"]'] });
   F('pdf-recalcular', AR.pdf, 3, 'manter', 'Recalcular preços da proposta inicial',
@@ -299,12 +295,10 @@
     `O app expõe store, UI e render para testes e para este depurador.`, { ev: 'index.html, fim do script de interface.' });
 
   /* ================= 1 · REDUNDANTES, LEGADAS E MORTAS ================= */
-  F('pdf-tabela-espec', AR.pdf, 1, 'remover', 'Tabela de especificações técnicas do PDF (11 colunas)',
-    `Tabela alternativa à lista de itens, com colunas opcionais (código, marca, ICMS…). É sempre desligada por padrão (o detalhamento vai no catálogo) e o campo “código do produto” não tem onde ser digitado.`,
-    { red: ['pdf-catalogo'], probe: 'tabelaEspec', para: 'Remover tabela, colunas, código e especificações.', ev: 'resolverPdfOpts força tabela=false.', sel: ['#acc-tab'] });
-  F('pdf-declaracao-3', AR.pdf, 1, 'fundir', 'Três jeitos de escrever declaração na proposta',
-    `Declaração de preços (texto único da Config), cláusulas livres e declarações do edital (documentos). Mais quatro opções antigas em Config.proposta (incluir extenso/banco/declaração/local) que o PDF não lê mais.`,
-    { red: ['pdf-modelo-campos'], para: 'Ficar com cláusulas + declarações do edital e apagar o texto único e os 4 interruptores da Config.', sel: ['#acc-obs'] });
+  F('pdf-tabela-espec', AR.pdf, 1, 'manter', 'Tabela de especificações técnicas do PDF (removida)',
+    `FEITO na v1.124.0 (05/11/2026, Rodada 3): a tabela não sai mais (nem por pregão); o detalhamento vai no catálogo.`, {});
+  F('pdf-declaracao-3', AR.pdf, 1, 'manter', 'Declaração na proposta (um jeito só)',
+    `FEITO na v1.124.0 (05/11/2026, Rodada 3): ficou só a lista de frases fixas com chavinha (“O que os pregões costumam pedir”). O texto livre da declaração e as declarações do edital dentro do PDF saíram.`, {});
   F('entrega-separada', AR.preg, 1, 'fundir', '“Calcular cada ida separadamente” (entregas do pregão)',
     `Divide o pregão em várias entregas, cada uma com km/viagens/pedágio e itens próprios. Faz o mesmo que o local de entrega do item, de outra forma. Nenhum dos seus pregões usa.`,
     { red: ['local-item'], probe: 'entregaDiferente', para: 'Ficar com o local do item.', sel: ['[name=entregaDiferente]', '#egList'] });

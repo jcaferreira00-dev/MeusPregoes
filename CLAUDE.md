@@ -145,11 +145,13 @@ O João baixa os documentos da plataforma (BLL, Compras.gov etc.), que vêm em v
 | Condição/prazo de pagamento | `pdfOpts.pagamento` e `pagamentoDias` |
 | Prazo de entrega | `prazoEntregaDias` e `pdfOpts.prazoEntrega` |
 | Local de entrega | `pdfOpts.localEntrega` |
-| Modelo de proposta próprio do edital (anexo) e título dele | `modeloProprio`, `pdfOpts.desc.tituloTexto` |
+| Modelo de proposta próprio do edital (anexo) | `modeloProprio` (só aviso: desde a v1.124.0 a proposta sai sempre no modelo padrão; não mandar `pdfOpts.desc`, `documentos` nem `pdfOptsFinal` com modelo do edital) |
 | Exigências (marca, catálogo, amostra, Inmetro, declarações) | `obs` (desde a v1.122.0 o campo Exigências foi juntado às Observações; `exigencias` ainda é aceito e o app põe no fim do `obs` com "Exigências:") |
 | Entrega parcelada | `entregaParcelada`, `entregaParceladaObs` |
 
-A tabela de especificações técnicas da proposta fica sempre DESLIGADA (o detalhamento vai no catálogo).
+A tabela de especificações técnicas saiu da proposta (o detalhamento vai no catálogo).
+
+**Proposta = modelo padrão para todos (decisão do João, 05/11/2026, v1.124.0).** Do pregão, o PDF só usa `pdfOpts.validade`, `pagamento`, `prazoEntrega`, `localEntrega`, `observacoes` e `anonima` (sem identificação). Título, faixa, chavinhas e as frases fixas (“O que os pregões costumam pedir”: Preços, Condições do edital, Produtos, Garantia, Entrega, Enquadramento, Representante legal) vêm do padrão (Config). Sem cláusulas livres; as declarações do edital são feitas à parte (.docx no Drive), nunca dentro da proposta.
 
 Exemplo real: Imbaú PE 91/2026 — item 10.2.1 desclassifica proposta que identifique o licitante
 (inicial SEM identificação); item 9.5 exige validade ≥ 90 dias; a proposta final (Anexo III) é identificada.
