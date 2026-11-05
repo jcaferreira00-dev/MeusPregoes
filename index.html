@@ -1357,6 +1357,13 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
   .pq-grid .pcard .lkrow-ic .ib { width: 28px; height: 28px; min-height: 28px; }
   .pq-grid .pcard .lkrow-ic .ib svg { width: 14px; height: 14px; }
 }
+/* guia Pregões no PC: grade única (05/11/2026) e filtro com a cor de cada status */
+.pq-flow { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; align-items: stretch; margin-top: 4px; }
+.filters button .f-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--fc); display: inline-block; margin-right: 6px; vertical-align: 0; }
+.filters button .f-n { margin-left: 6px; font-size: 11px; font-weight: 800; color: var(--fc, var(--muted)); }
+.filters button.on .f-n { color: inherit; }
+.filters button[style].on { background: var(--fc); border-color: var(--fc); color: #fff; }
+.filters button.f-zero { opacity: .5; }
 </style>
 </head>
 <body>
@@ -1369,7 +1376,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.125.0';
+  const APP_VERSION = '1.126.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Julgamento', 'Aguardando empenho', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -5271,14 +5278,21 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     raias[1][3].sort((a, b) => (alertaPregao(b) ? 1 : 0) - (alertaPregao(a) ? 1 : 0));   // Julgamento: os perto de ganhar primeiro
     const cols = raias.filter((r) => r[3].length);
     if (UI.lane && !cols.some((r) => r[0] === UI.lane)) UI.lane = null;
+    const chip = (x) => `<button type="button" class="enc-chip${x.p.status === 'Concluído' ? ' conc' : ''}" data-act="abrir-pregao" data-id="${x.p.id}" title="${esc(x.p.orgao)} · ${esc(stTxt(x.p.status))}"><b>Nº ${esc(x.p.numero)}</b><span class="ell">${esc(x.p.orgao)}</span><i>${esc(stTxt(x.p.status))}</i></button>`;
+    const fim = ina.length ? `<div class="enc-box"><button type="button" class="btn sm ghost enc-btn${UI.mostrarEnc ? ' on' : ''}" data-act="painel-encerrados" aria-expanded="${UI.mostrarEnc ? 'true' : 'false'}">${icon('archive', 'sm')} Encerrados e concluídos (${ina.length}) <span class="enc-seta">${UI.mostrarEnc ? '▴' : '▾'}</span></button>${UI.mostrarEnc ? `<div class="enc-chips">${ina.map(chip).join('')}</div>` : ''}</div>` : '';
+    // PC (pedido do João, 05/11/2026): uma grade só, preenchida da esquerda para a direita e de cima para baixo, na ordem de
+    // importância das raias (Atenção agora → Julgamento → Venci → Enviadas → Analisando → Incompletos). A cor diz o status; o filtro de cima separa.
+    if (window.innerWidth >= 900) {
+      const ordem = cols.flatMap((r) => r[3]);
+      if (!ordem.length) return (ina.length ? '' : `<div class="card empty"><p class="muted">Nenhum pregão neste filtro.</p></div>`) + fim;
+      return `<div class="pq-grid pq-flow">${ordem.map(pregaoCard).join('')}</div>` + fim;
+    }
     const lane = UI.lane ? cols.find((r) => r[0] === UI.lane) : null;
     if (lane) {
       const [, lt, lk, larr] = lane;
       return `<div class="lane-head"><button type="button" class="btn sm" data-act="lane-fechar">${icon('back', 'sm')} Todos os grupos</button><div class="pq-sec ${lk}"><span>${lt}</span><b>${larr.length}</b></div></div><div class="pq-grid pq-full">${larr.map(pregaoCard).join('')}</div>`;
     }
     const html = `<div class="board-nav"><button type="button" data-act="lane-prev" aria-label="Anterior">‹</button><button type="button" data-act="lane-next" aria-label="Próximo">›</button></div><div class="pq-board" style="--nl:${cols.length}">${cols.map(([key, t, k, arr]) => `<section class="pq-col"><div class="pq-sec pq-sec-bt ${k}" data-act="lane-abrir" data-k="${esc(key)}" role="button" tabindex="0" title="Ver só este grupo na tela toda"><span>${t}</span><b>${arr.length}</b></div><div class="pq-grid pq-stack">${arr.map(pregaoCard).join('')}</div></section>`).join('')}</div>`;
-    const chip = (x) => `<button type="button" class="enc-chip${x.p.status === 'Concluído' ? ' conc' : ''}" data-act="abrir-pregao" data-id="${x.p.id}" title="${esc(x.p.orgao)} · ${esc(stTxt(x.p.status))}"><b>Nº ${esc(x.p.numero)}</b><span class="ell">${esc(x.p.orgao)}</span><i>${esc(stTxt(x.p.status))}</i></button>`;
-    const fim = ina.length ? `<div class="enc-box"><button type="button" class="btn sm ghost enc-btn${UI.mostrarEnc ? ' on' : ''}" data-act="painel-encerrados" aria-expanded="${UI.mostrarEnc ? 'true' : 'false'}">${icon('archive', 'sm')} Encerrados e concluídos (${ina.length}) <span class="enc-seta">${UI.mostrarEnc ? '▴' : '▾'}</span></button>${UI.mostrarEnc ? `<div class="enc-chips">${ina.map(chip).join('')}</div>` : ''}</div>` : '';
     return html + fim;
   }
 
@@ -5296,7 +5310,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     const fl = ['todos', ...C.STATUS];
     return `<div class="page">
       <div class="search">${icon('search')}<input class="input" id="busca" type="search" placeholder="Buscar por número, órgão ou item" value="${esc(UI.busca)}"></div>
-      <div class="filters">${fl.map((s) => `<button data-act="filtro" data-v="${esc(s)}" class="${UI.filtro === s ? 'on' : ''}">${s === 'todos' ? 'Todos' : esc(stTxt(s))}</button>`).join('')}</div>
+      <div class="filters">${fl.map((s) => { const n = s === 'todos' ? st.pregoes.filter((p) => !p.deleted).length : st.pregoes.filter((p) => !p.deleted && p.status === s).length; return `<button data-act="filtro" data-v="${esc(s)}" class="${UI.filtro === s ? 'on' : ''}${n ? '' : ' f-zero'}"${s === 'todos' ? '' : ` style="--fc:${COR_STATUS[s] || '#7b8798'}"`}>${s === 'todos' ? '' : '<i class="f-dot"></i>'}${s === 'todos' ? 'Todos' : esc(stTxt(s))}<b class="f-n">${n}</b></button>`; }).join('')}</div>
       <div id="plist">${pregoesListHtml()}</div></div>
       <button class="fab" data-act="novo-pregao" aria-label="Novo pregão">${icon('plus')}</button>`;
   }
@@ -6665,7 +6679,11 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     const h = Math.max(...cs.map((c) => c.offsetHeight));
     if (h > 0) cs.forEach((c) => { c.style.minHeight = h + 'px'; });
   }
-  window.addEventListener('resize', () => { clearTimeout(igualarCartoes._t); igualarCartoes._t = setTimeout(() => { if (UI.tab === 'pregoes' && !UI.detailId) igualarCartoes(); }, 150); });
+  let ultLarg = window.innerWidth >= 900;
+  window.addEventListener('resize', () => { clearTimeout(igualarCartoes._t); igualarCartoes._t = setTimeout(() => {
+    if (UI.tab !== 'pregoes' || UI.detailId) return;
+    const lg = window.innerWidth >= 900; if (lg !== ultLarg) { ultLarg = lg; UI.keepScroll = true; render(); } else igualarCartoes();
+  }, 150); });
   function render() {
     const main = $('#main');
     const a = document.activeElement;
