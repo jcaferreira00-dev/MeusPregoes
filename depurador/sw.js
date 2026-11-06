@@ -1,5 +1,5 @@
 /* Service worker do Depurador: servidor primeiro; cópia guardada só offline. Não mexe nas caches do app (pregoes-mei-*). */
-const VERSION = 'dep-3';
+const VERSION = 'dep-4';
 const CACHE = 'depurador-' + VERSION;
 self.addEventListener('install', (e) => { self.skipWaiting(); });
 self.addEventListener('activate', (e) => { e.waitUntil(caches.keys().then((ks) => Promise.all(ks.filter((k) => k.startsWith('depurador-') && k !== CACHE).map((k) => caches.delete(k)))).then(() => self.clients.claim())); });
