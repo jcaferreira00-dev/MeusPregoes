@@ -1114,6 +1114,9 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
 .icard .i-meta { display: flex; align-items: center; gap: 10px; }
 .icard .i-meta .i-meta-tx { flex: 1; min-width: 0; }
 .icard .i-meta .foto-tag { margin-left: auto; flex: none; width: 96px; justify-content: center; white-space: nowrap; }
+.foto-tag.falta { background: var(--red-soft); color: var(--red); border: 1px solid color-mix(in srgb, var(--red) 35%, transparent); }
+.icard .i-meta .mm-tag { margin-left: auto; width: auto; padding: 1px 10px; }
+.icard .i-meta .mm-tag + .foto-tag { margin-left: 6px; }
 
 /* catálogo: títulos das especificações (v1.70) */
 .cat-tits { margin-top: 10px; display: flex; flex-direction: column; gap: 6px; }
@@ -1378,7 +1381,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.128.1';
+  const APP_VERSION = '1.128.2';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Julgamento', 'Aguardando empenho', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -5439,7 +5442,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
       ${desc}
       ${revHtml(it)}
       ${opt.showOrg && p ? `<div class="chips"><span class="chip org">#${esc(p.numero)} · ${esc(p.orgao)}</span></div>` : ''}
-      <div class="small muted i-meta"><span class="i-meta-tx">${C.qtdBR(it.qtd)} ${esc(it.unidade || 'Un')} · custo ${C.brl(it.custo)}<span class="i-teto"> · teto ${C.brl(c.teto)}</span>${it.marca ? ' · ' + esc(it.marca) : ''}</span>${(() => { const nf = Number(it.fotosN) || 0; return `<button type="button" class="foto-tag hide-m ${nf ? 'tem' : 'sem'}" data-act="cat-ir" data-id="${it.id}" title="${nf ? 'Tem foto no catálogo. Clique para ver.' : 'Sem foto no catálogo. Clique para incluir.'}">${icon('image', 'sm')}${nf ? nf + (nf === 1 ? ' foto' : ' fotos') : 'Sem foto'}</button>`; })()}</div>
+      <div class="small muted i-meta"><span class="i-meta-tx">${C.qtdBR(it.qtd)} ${esc(it.unidade || 'Un')} · custo ${C.brl(it.custo)}<span class="i-teto"> · teto ${C.brl(c.teto)}</span>${it.marca ? ' · ' + esc(it.marca) : ''}</span>${(!c.fora && !it.semLance && !(String(it.marca || '').trim() && String(it.modelo || '').trim())) ? `<button type="button" class="foto-tag falta mm-tag hide-m" data-act="editar-item" data-id="${it.id}" title="${!String(it.marca || '').trim() && !String(it.modelo || '').trim() ? 'Falta a marca e o modelo' : !String(it.marca || '').trim() ? 'Falta a marca' : 'Falta o modelo'} (a proposta não é gerada sem eles). Clique para preencher.">${icon('alert', 'sm')}${!String(it.marca || '').trim() && !String(it.modelo || '').trim() ? 'Sem marca/modelo' : !String(it.marca || '').trim() ? 'Sem marca' : 'Sem modelo'}</button>` : ''}${(() => { const nf = Number(it.fotosN) || 0; return `<button type="button" class="foto-tag hide-m ${nf ? 'tem' : 'sem'}" data-act="cat-ir" data-id="${it.id}" title="${nf ? 'Tem foto no catálogo. Clique para ver.' : 'Sem foto no catálogo. Clique para incluir.'}">${icon('image', 'sm')}${nf ? nf + (nf === 1 ? ' foto' : ' fotos') : 'Sem foto'}</button>`; })()}</div>
       ${vals}
       ${obs}
       ${descLinha}
@@ -5691,7 +5694,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     const lucroCor = c.lucro == null ? '' : c.lucro < 0 ? 'var(--red)' : 'var(--green)';
     const kv = (l, v, cls) => `<div class="ib-kv${cls ? ' ' + cls : ''}"><span>${l}</span><b>${v}</b></div>`;
     return `<article class="ibox${c.fora || (c.naoGanhou && !it.possivelGanhar) ? ' apagado' : ''}${temRevisar(it) ? ' revisar' : ''}" data-id="${it.id}">
-      <div class="ib-hd"><span class="ib-num">${num}</span>${colocTag}${tag}${temRevisar(it) ? `<span class="badge warn" title="${esc('Revisar: ' + it.revisar)}">Revisar</span>` : ''}${!c.fora && !it.semLance && !(Number(it.fotosN) > 0) ? '<span class="badge bad" title="Sem foto no catálogo">Sem foto</span>' : ''}<button type="button" class="ic-btn" data-act="editar-item" data-id="${it.id}" title="Editar item" aria-label="Editar item">${icon('edit', 'sm')}</button></div>
+      <div class="ib-hd"><span class="ib-num">${num}</span>${colocTag}${tag}${temRevisar(it) ? `<span class="badge warn" title="${esc('Revisar: ' + it.revisar)}">Revisar</span>` : ''}${!c.fora && !it.semLance && !(String(it.marca || '').trim() && String(it.modelo || '').trim()) ? '<span class="badge bad" title="Falta marca e/ou modelo: a proposta não é gerada sem eles">' + (!String(it.marca || '').trim() && !String(it.modelo || '').trim() ? 'Sem marca/modelo' : !String(it.marca || '').trim() ? 'Sem marca' : 'Sem modelo') + '</span>' : ''}${!c.fora && !it.semLance && !(Number(it.fotosN) > 0) ? '<span class="badge bad" title="Sem foto no catálogo">Sem foto</span>' : ''}<button type="button" class="ic-btn" data-act="editar-item" data-id="${it.id}" title="Editar item" aria-label="Editar item">${icon('edit', 'sm')}</button></div>
       <h4 class="ib-nome" title="${esc(it.descricao)}">${esc(nomeCurto(it.descricao, 38))}</h4>
       <div class="ib-grid">
         ${kv('Qtd', C.qtdBR(it.qtd) + (it.unidade ? ' <em>' + esc(String(it.unidade).toLowerCase()) + '</em>' : ''))}
