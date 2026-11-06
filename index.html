@@ -591,7 +591,8 @@ input.input[type=datetime-local]::-webkit-date-and-time-value, input.input[type=
 .egstat { margin: 0 0 8px; overflow-wrap: anywhere; }
 .prazo { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 8px; background: var(--blue-soft); color: var(--blue); max-width: 100%; }
 .prazo.warn { background: var(--amber-soft); color: var(--amber); } .prazo.bad { background: var(--red-soft); color: var(--red); } .prazo.off { background: var(--line); color: var(--muted); }
-.dlg.dlg-precos { width: min(1040px, 96vw); max-width: 96vw; }
+.dlg.dlg-precos { width: min(1040px, 96vw); max-width: 96vw; max-height: calc(100vh - 40px); max-height: calc(100dvh - 40px); overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
+.dlg-precos > * { flex-shrink: 0; }
 .dlg.dlg-precos .tbl { min-width: 900px; }
 /* confirmação da proposta final: colunas alinhadas (v1.69) */
 .dlg-precos .tbl th, .dlg-precos .tbl td { vertical-align: middle; white-space: nowrap; }
@@ -1377,7 +1378,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.128.0';
+  const APP_VERSION = '1.128.1';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Julgamento', 'Aguardando empenho', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
