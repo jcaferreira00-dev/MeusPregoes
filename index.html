@@ -1381,7 +1381,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.128.2';
+  const APP_VERSION = '1.129.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Julgamento', 'Aguardando empenho', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -5230,7 +5230,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     const url = (u) => { u = String(u || '').trim(); return u ? (/^https?:\/\//i.test(u) ? u : 'https://' + u) : ''; };
     // PC: só ícones, sempre nas mesmas posições (edital · modelo · proposta · licitação); o que não tem link fica apagado
     const ib = (u, ic, tip) => u ? `<a class="ib" href="${esc(u)}" target="_blank" rel="noopener noreferrer" data-act="link-externo" title="${tip}" aria-label="${tip}">${icon(ic)}</a>` : `<span class="ib off" title="${tip}: não cadastrado" aria-label="${tip}: não cadastrado">${icon(ic)}</span>`;
-    const botoes = ib(url(p.link), 'pdf', 'Abrir o edital') + (p.linkModelo ? ib(url(p.linkModelo), 'copy', 'Modelo de proposta do órgão') : '') + ib(url(p.linkProposta), 'send', 'Enviar proposta e dar lances') + ib(url(p.linkLicitacao), 'globo', 'Ver a licitação no site');
+    const botoes = ib(url(p.link), 'pdf', 'Abrir o edital') + (p.linkModelo ? ib(url(p.linkModelo), 'copy', 'Modelo de proposta do órgão') : '') + ib(url(p.linkProposta), 'send', 'Enviar proposta e dar lances') + ib(url(p.linkLicitacao), 'globo', 'Ver a licitação no site') + `<button type="button" class="ib" data-act="export-pregao" data-id="${p.id}" title="Exportar o JSON só deste pregão" aria-label="Exportar o JSON só deste pregão">${icon('download')}</button>`;
     const emSelo = pst.ganho || p.status === 'Aguardando empenho';
     // etapa depois de ganhar, numa palavra só: Julgamento → Empenho → Entregar → Receber → Pago
     const selK = p.pagoEm ? 'pago' : p.entregueEm ? 'receber' : (po && po.etapa === 'parcial') ? 'parcial' : (p.empenhoData || p.entregaPrazo) ? 'entregar' : p.status === 'Julgamento' ? 'jul' : 'emp';
@@ -7013,7 +7013,19 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
       case 'sessao-continua': { e.stopPropagation(); UI.keepScroll = true; const p = store.get().pregoes.find((x) => x.id === id); if (p) { store.upsertPregao({ id, sessao: sessaoNova(p, 1) }); toast('Sessão continua amanhã'); } break; }
       case 'sessao-mais': e.stopPropagation(); abrirMaisDias(id); break;
       case 'sessao-fim': { e.stopPropagation(); UI.keepScroll = true; store.upsertPregao({ id, status: 'Julgamento' }); toast('Sessão encerrada · pregão em Julgamento'); break; }
-      case 'link-externo': e.stopPropagation(); break;   // deixa o link abrir sem abrir o cartão
+      case 'link-externo': e.stopPropagation(); break;
+      case 'export-pregao': {   // JSON só deste pregão (mesmo formato do backup, serve para revisar/importar com "Mesclar"); sem dados pessoais da Config
+        e.stopPropagation();
+        const st = store.get(), pz = st.pregoes.find((x) => x.id === id);
+        if (!pz) break;
+        const cfg = st.config || {}, ref = {};
+        ['margemPadrao', 'selicPct', 'consumo', 'combustivel', 'limiteCheio', 'atividadeMei', 'impostoPct'].forEach((k) => { if (cfg[k] !== undefined) ref[k] = cfg[k]; });
+        const out = { version: st.version, exportadoEm: new Date().toISOString(), referencia: ref, pregoes: [pz], itens: st.itens.filter((i) => i.pregaoId === id && !i.deleted) };
+        const nome = String(pz.orgao || 'pregao').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/^(Prefeitura Municipal de|Prefeitura de|Municipio de)\s+/i, '').replace(/[^A-Za-z0-9]+/g, '-').replace(/^-|-$/g, '').toLowerCase();
+        const blob = new Blob([JSON.stringify(out, null, 1)], { type: 'application/json' });
+        const el = document.createElement('a'); el.href = URL.createObjectURL(blob); el.download = `pregao-${nome}-${String(pz.numero || '').replace(/[^0-9A-Za-z]+/g, '-')}-${C.hojeISO()}.json`; document.body.appendChild(el); el.click(); el.remove();
+        setTimeout(() => URL.revokeObjectURL(el.href), 4000); toast('JSON do pregão exportado (' + out.itens.length + ' itens)'); break;
+      }   // deixa o link abrir sem abrir o cartão
       case 'novo-pregao': openPregaoForm(); break;
       case 'editar-pregao': openPregaoForm(id); break;
       case 'lane-abrir': UI.lane = t.dataset.k; render(); window.scrollTo(0, 0); break;
