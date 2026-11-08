@@ -94,7 +94,7 @@ with sync_playwright() as p:
         ok(w.query_selector('#ca button[data-v]') is not None and w.query_selector('#ca button[data-f]') is not None, 'Modo pregão: botões Venci e Já foi em cada item')
         # caixa já preenchida (sem lance no cadastro = teto cortado em centavos) e triângulo só com muitas unidades
         ok(w.input_value('#ia') not in ('', None), 'Modo pregão: caixa do lance já vem preenchida (lance do cadastro ou teto)')
-        ok(w.query_selector('#ca .rk') is None, 'Modo pregão: sem triângulo de risco em item de poucas unidades')
+        ok(w.query_selector('#ca .rk') is not None, 'Modo pregão: triângulo de risco em item com 30 unidades ou mais (item a tem 100)')
         w.close()
     # fila da janela -> app: Venci grava o lance final e marca vencido; Já foi marca não ganho; '' reabre
     pg.evaluate("()=>{localStorage.setItem('mp.modo.fila',JSON.stringify([{k:'1',id:'a',res:'venci',lance:9.5},{k:'2',id:'b',res:'perdi',lance:null}]));window.dispatchEvent(new Event('focus'))}"); pg.wait_for_timeout(500)
