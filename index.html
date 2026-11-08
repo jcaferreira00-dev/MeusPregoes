@@ -1382,7 +1382,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.133.0';
+  const APP_VERSION = '1.134.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Julgamento', 'Aguardando empenho', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -5520,9 +5520,16 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
       const s = c.solo;
       const piso = s && s.empate != null ? s.empate : (impPct < 1 && c.custoUnit != null && c.custoUnit > 0 ? C.ceil2(c.custoUnit / (1 - impPct)) : null);
       const meta = s && s.minimo != null ? s.minimo : c.minimo;
-      itens.push({ id: it.id, n: C.padLE(it.itemEdital) || '', lote: C.padLE(it.loteEdital) || '', nome: nomeCurto(it.descricao, 34), qtd: C.n0(it.qtd), teto: c.teto, piso, meta, custoSolo: s ? s.custoTotal : c.custoTotal, custoJunto: c.custoTotal, res: c.resultado === 'desc' ? 'desc' : (c.resultado === 'venci' || c.resultado === 'perdi' ? c.resultado : ''), lanceApp: c.lance });
+      const riscos = [], q = C.n0(it.qtd), txt = (String(it.descricao || '') + ' ' + String(it.descEdital || '')).toLowerCase();
+      if (q >= 30) riscos.push(q + ' unidades: logística (estoque, frete e entrega).');
+      if (c.custoTotal >= 3000) riscos.push('Alto valor: ' + C.brl(c.custoTotal) + ' para comprar (capital parado e prejuízo se algo der errado).');
+      if (/\b(sof[aá]|arm[aá]rio|mesa|cadeira|geladeira|freezer|fog[aã]o|bicicleta|barra de|tubo|telha|port[aã]o|estante|colch[aã]o|bebedouro|ventilador|ar[- ]condicionado|saco de|tonel|cimento)\b/.test(txt)) riscos.push('Item grande/pesado ou volumoso: confira transporte e espaço.');
+      if (/\b(vidro|cer[aâ]mica|porcelana|espelho|fr[aá]gil|l[aâ]mpada|monitor|televis)/.test(txt)) riscos.push('Item frágil: risco de quebra no transporte.');
+      if (/\b(inmetro|anvisa|anatel|ibama|marinha)\b|\bCA\b/i.test(String(it.obs || '') + ' ' + String(it.descEdital || ''))) riscos.push('Pode exigir registro/selo (Inmetro, CA, Anatel...): confira antes de ofertar.');
+      if (it.revisar) riscos.push('Marcado para revisar: ' + String(it.revisar).slice(0, 90));
+      itens.push({ riscos, id: it.id, n: C.padLE(it.itemEdital) || '', lote: C.padLE(it.loteEdital) || '', nome: nomeCurto(it.descricao, 34), qtd: C.n0(it.qtd), teto: c.teto, piso, meta, custoSolo: s ? s.custoTotal : c.custoTotal, custoJunto: c.custoTotal, res: c.resultado === 'desc' ? 'desc' : (c.resultado === 'venci' || c.resultado === 'perdi' ? c.resultado : ''), lanceApp: c.lance });
     }
-    return { pid: pst.p.id, titulo: (/^preg/i.test(String(pst.p.numero).trim()) ? '' : 'Pregão ') + pst.p.numero, orgao: String(pst.p.orgao || '').toLocaleUpperCase('pt-BR'), imp: impPct, fila: FILA_MODO, qtdRisco: 30, itens };
+    return { pid: pst.p.id, titulo: (/^preg/i.test(String(pst.p.numero).trim()) ? '' : 'Pregão ') + pst.p.numero, orgao: String(pst.p.orgao || '').toLocaleUpperCase('pt-BR'), imp: impPct, fila: FILA_MODO, itens };
   }
   // código que roda DENTRO da janela (sem usar nada do app): vira texto com toString()
   function modoPregaoJanela(D) {
@@ -5540,6 +5547,15 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     function esc(t) { return String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;'); }
     function calc(it, v) { var b = it.qtd * v * (1 - D.imp); return { solo: b - it.custoSolo, junto: b - it.custoJunto, m: it.qtd * v > 0 ? (b - it.custoSolo) / (it.qtd * v) : 0 }; }
     function est(it, v) { if (!(v > 0)) return 'vz'; if (it.teto != null && v > it.teto + 0.004) return 'bad'; if (it.piso != null && v < it.piso - 0.004) return 'bad'; if (it.piso == null) return 'vz'; if (it.meta != null && v < it.meta - 0.004) return 'warn'; return 'ok'; }
+    var avT = null;
+    function aviso(card, lista) {
+      var old = document.getElementById('av'); if (old) old.remove(); clearTimeout(avT);
+      var d = document.createElement('div'); d.id = 'av'; d.className = 'av'; d.innerHTML = lista.map(function (x) { return '<div>' + esc(x) + '</div>'; }).join('');
+      card.style.position = 'relative'; card.appendChild(d);
+      var ms = Math.max(3000, lista.join(' ').length * 35);
+      avT = setTimeout(function () { d.classList.add('sai'); setTimeout(function () { d.remove(); }, 300); }, ms);
+      d.onclick = function () { d.remove(); };
+    }
     function def(it) { return it.lanceApp > 0 ? it.lanceApp : (it.teto != null ? fl2(it.teto) : null); }   // sem nada digitado: o lance do cadastro; sem lance, o teto
     function ef(it) { return V[it.id] > 0 ? V[it.id] : def(it); }
     function res(it) { return S[it.id] !== undefined ? S[it.id] : it.res; }   // o que foi marcado aqui vale; senão, o que já estava no app
@@ -5594,7 +5610,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     function reabre(it) { if (!confirm('Item ' + (it.n || '?') + ': reabrir (voltar para aguardando resultado)?')) return; S[it.id] = ''; delete W[it.id]; sv(); envia(it, '', null); tudo(); }
     function box(it) {
       var s = document.createElement('section'); s.id = 'c' + it.id; s.dataset.n = (it.n || '').replace(/^0+/, '');
-      s.innerHTML = '<div class=top><div class=num><small>' + (it.lote ? 'LOTE ' + it.lote + ' · ITEM' : 'ITEM') + '</small>' + (it.n || '?') + '</div><div class=nm>' + esc(it.nome) + ' · ' + it.qtd + ' un.</div>' + (it.qtd >= D.qtdRisco ? '<button type=button class=rk data-k=1 title="' + it.qtd + ' unidades: risco de logística" aria-label="Risco de logística"><svg viewBox="0 0 24 24" width="22" height="22"><path d="M12 3 2 21h20z" fill="#f3b73b" stroke="#b7791f" stroke-width="1.6" stroke-linejoin="round"/><path d="M12 10v5M12 17.6v.2" stroke="#5c3d00" stroke-width="2" stroke-linecap="round"/></svg></button>' : '') + '<div class=fim></div></div>' + (it.qtd >= D.qtdRisco ? '<div class="rkn cx" hidden>' + it.qtd + ' unidades: item de risco de logística (estoque, frete e entrega). Confira antes de baixar o lance.</div>' : '')
+      s.innerHTML = '<div class=top><div class=num><small>' + (it.lote ? 'LOTE ' + it.lote + ' · ITEM' : 'ITEM') + '</small>' + (it.n || '?') + '</div><div class=nm>' + esc(it.nome) + ' · ' + it.qtd + ' un.</div>' + (it.riscos && it.riscos.length ? '<button type=button class=rk data-k=1 aria-label="Alertas do item"><svg viewBox="0 0 24 24" width="22" height="22"><path d="M12 3 2 21h20z" fill="#f3b73b" stroke="#b7791f" stroke-width="1.6" stroke-linejoin="round"/><path d="M12 10v5M12 17.6v.2" stroke="#5c3d00" stroke-width="2" stroke-linecap="round"/></svg></button>' : '') + '<div class=fim></div></div>'
         + '<div class="ref cx"><div><span>Teto</span><b>' + T(it.teto) + '</b></div><div class=piso><span>Piso (mínimo)</span><b>' + R(it.piso) + '</b></div><div><span>Posso baixar</span><b>' + (it.teto != null && it.piso != null && it.piso <= it.teto + 0.004 ? R(C2(fl2(it.teto) - it.piso)) : '—') + '</b></div></div>'
         + '<div class="in cx" id=w' + it.id + '><button type=button data-s=-1>−</button><input id=i' + it.id + ' inputmode=decimal autocomplete=off placeholder="Meu lance (unit.)"><button type=button data-s=1>+</button></div>'
         + '<div class="st cx"><button type=button data-d=-0.01>−0,01</button><button type=button data-d=-0.1>−0,10</button><button type=button data-d=-1>−1,00</button><button class=pz type=button data-p=1>Piso</button></div><div class="res cx" id=r' + it.id + '></div>'
@@ -5606,7 +5622,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
       s.addEventListener('click', function (e) {
         var b = e.target.closest('button'); if (!b) return;
         if (b.dataset.d) step(it, Number(b.dataset.d)); else if (b.dataset.s) step(it, Number(b.dataset.s) * 0.01);
-        else if (b.dataset.k) { var n = s.querySelector('.rkn'); if (n) n.hidden = !n.hidden; } else if (b.dataset.p && it.piso != null) set(it, it.piso, true); else if (b.dataset.v) venci(it); else if (b.dataset.f) foi(it); else if (b.dataset.o) reabre(it);
+        else if (b.dataset.k) { aviso(s, it.riscos); } else if (b.dataset.p && it.piso != null) set(it, it.piso, true); else if (b.dataset.v) venci(it); else if (b.dataset.f) foi(it); else if (b.dataset.o) reabre(it);
       });
       return s;
     }
@@ -5641,7 +5657,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
 + '.fx button{flex:1;font:inherit;font-size:15px;font-weight:700;border-radius:12px;padding:11px 4px;border:2px solid}.fx .gv{background:var(--okb);color:var(--ok);border-color:var(--ok)}.fx .gp{background:#f1f3f6;color:var(--mut);border-color:var(--line)}'
 + '.res{border-radius:12px;padding:9px 10px;font-size:14px}.res b{font-size:20px}.res.ok{background:var(--okb)}.res.warn{background:var(--warnb)}.res.bad{background:var(--badb);color:var(--bad);font-weight:700}.res.vz{background:#f5f7fa;color:var(--mut)}'
 + '.res .l{display:flex;justify-content:space-between;align-items:baseline;gap:8px}.res .s{font-size:12px;color:var(--mut);margin-top:2px}.res.bad .s{color:var(--bad)}'
-+ '.rk{flex:none;border:0;background:none;padding:0;line-height:0;cursor:pointer}.c.enc .rk,.c.enc .rkn{display:none}.rkn{background:var(--warnb);color:#6b4a00;border-radius:10px;padding:7px 10px;font-size:13px}.rkn[hidden]{display:none}'
++ '.rk{flex:none;border:0;background:none;padding:0;line-height:0;cursor:pointer}.c.enc .rk{display:none}.c.enc .av{display:none}.av{position:absolute;right:10px;top:44px;z-index:5;max-width:min(300px,86%);background:rgba(40,32,10,.93);color:#fff;border-radius:10px;padding:8px 11px;font-size:13px;line-height:1.35;box-shadow:0 4px 14px rgba(0,0,0,.28);display:grid;gap:5px;transition:opacity .3s}.av.sai{opacity:0}'
 + '.fim{display:none}.c.enc{grid-column:1/-1;padding:8px 12px;gap:0;border-width:1px;background:#f6f8fb;opacity:.85}.c.enc .cx,.c.enc .nm{display:none}.c.enc .num{font-size:22px;min-width:52px}.c.enc .num small{font-size:9px}'
 + '.c.enc .fim{display:flex;align-items:center;gap:10px;margin-left:auto}.c.enc .fim b{font-size:16px}.c.enc .fim button{font:inherit;font-size:13px;border:1px solid var(--line);background:#fff;border-radius:10px;padding:6px 10px}'
 + '.bd{font-size:12px;font-weight:700;border-radius:999px;padding:3px 10px}.bd.v{background:var(--okb);color:var(--ok)}.bd.p{background:#e4e9f0;color:var(--mut)}.c.enc.v{border-color:var(--ok)}'
