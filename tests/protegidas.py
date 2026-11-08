@@ -79,6 +79,22 @@ with sync_playwright() as p:
     ok(m == ['EMPRESA TESTE', '208', '11.111.111/0001-11', '123', 15, 'EMPRESA TESTE'], 'Sincronização/importar backup: dados da empresa e bancários não somem e voltam de um backup antigo')
     u = pg.evaluate("""()=>{const s=window.__app.store; const d0=s.get().config.updatedAt; s.setConfigPath('selicEm','2099-01-01',{silent:true,semData:true}); return [d0, s.get().config.updatedAt];}""")
     ok(u[0] == u[1], 'Selic automática não muda a data da config')
+    # Modo pregão (07/11/2026): botão só com status "Proposta enviada"; abre janela com piso e trava abaixo do piso
+    stm = json.loads(json.dumps(st)); stm['pregoes'][0]['status'] = 'Proposta enviada'
+    pg.evaluate("(s)=>{localStorage.setItem('mp.state.v1',s);localStorage.setItem('mp.ui',JSON.stringify({tab:'pregoes'}))}", json.dumps(stm)); pg.reload(); pg.wait_for_timeout(800)
+    pg.evaluate("()=>document.querySelector('[data-act=abrir-pregao][data-id=p1]').click()"); pg.wait_for_timeout(700)
+    btn = pg.query_selector('[data-act=modo-pregao]'); ok(btn is not None, 'Modo pregão: botão aparece com o pregão em Proposta enviada')
+    if btn:
+        with pg.expect_popup() as pi: btn.click()
+        w = pi.value; w.wait_for_load_state(); w.wait_for_timeout(300)
+        ok('Piso' in w.inner_text('#ca') and 'Teto' in w.inner_text('#ca'), 'Modo pregão: mostra teto e piso do item')
+        w.fill('#ia', '0,50'); w.wait_for_timeout(100)
+        ok('ABAIXO DO PISO' in w.inner_text('#ra').upper(), 'Modo pregão: lance abaixo do piso é recusado (prejuízo)')
+        w.dispatch_event('#ia', 'change'); ok(w.input_value('#ia') != '0,5' and w.input_value('#ia') != '0,50', 'Modo pregão: ao sair do campo volta para o piso')
+        w.close()
+    pg.evaluate("(s)=>{localStorage.setItem('mp.state.v1',s)}", json.dumps(st)); pg.reload(); pg.wait_for_timeout(500)
+    pg.evaluate("()=>document.querySelector('[data-act=abrir-pregao][data-id=p1]').click()"); pg.wait_for_timeout(600)
+    ok(pg.query_selector('[data-act=modo-pregao]') is None, 'Modo pregão: botão não aparece fora de Proposta enviada')
     b.close()
 ok(not erros, 'Sem erro de JavaScript em nenhuma guia (PC, tela dividida e celular)' + ('' if not erros else ': ' + erros[0][:120]))
 print('\n' + ('TUDO OK' if not falhas else str(len(falhas)) + ' FALHA(S): NÃO PUBLICAR'))

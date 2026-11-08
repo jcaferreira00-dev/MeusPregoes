@@ -122,6 +122,9 @@
   F('simulador-lance', AR.item, 4, 'manter', 'Simulador de lance',
     `Caixa no item de pregão em disputa: digite um valor e veja na hora total, lucro, margem, nota e se fica abaixo do mínimo ou acima do teto, sem salvar nada. Só grava com 2 confirmações. Útil durante a sessão.`,
     { sel: ['.sim', '[data-sim]'], ev: 'simCalc/simResHtml/gravarLanceSimulado.' });
+  F('modo-pregao', AR.item, 4, 'manter', 'Modo pregão (janela só com o lance)',
+    `Botão na página do pregão quando o status é “Proposta enviada” (PC e celular). Abre uma janela separada, só com o nº do item, o teto, o PISO (menor lance sem prejuízo ganhando só este item) e o lucro do lance que você digita. Abaixo do piso o campo fica vermelho, não mostra lucro e volta para o piso ao sair; acima do teto é cortado no teto. Tem botões −0,01/−0,10/−1,00, busca pelo nº do item e soma do lucro no conjunto. Não grava nada no app (simulação, como o simulador de lance); os valores digitados ficam guardados no navegador.`,
+    { sel: ['.modo-pz', '[data-act=modo-pregao]'], ev: 'modoPregaoDados/modoPregaoHtml/abrirModoPregao (piso = c.solo.empate).' });
   F('modelo-proprio', AR.preg, 3, 'manter', 'Edital com modelo próprio de proposta (só aviso)',
     `FEITO na v1.124.0 (05/11/2026, Rodada 3): o aviso “Modelo próprio de proposta” continua no cartão, mas a proposta sai sempre no modelo padrão (os órgãos aceitam desde que tenha todas as informações). Os títulos, cláusulas e declarações de edital salvos nos pregões ficam guardados e não entram no PDF.`, { sel: ['[name=modeloProprio]'] });
   F('obs-pregao', AR.preg, 4, 'manter', 'Observações do pregão',

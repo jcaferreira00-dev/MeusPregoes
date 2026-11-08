@@ -144,6 +144,7 @@ button.pill { border: 0; font: inherit; cursor: pointer; }
 .btn.ghost { background: transparent; }
 .btn.sm { padding: 7px 12px; min-height: 36px; font-size: 13px; border-radius: 10px; }
 .btn.block { width: 100%; }
+.modo-pz { margin-bottom: 12px; }
 .btn[disabled] { opacity: .55; pointer-events: none; }
 .icon-btn { width: 40px; height: 40px; border-radius: 12px; border: 0; background: transparent; display: grid; place-items: center; cursor: pointer; color: inherit; }
 .fab { position: fixed; right: 16px; bottom: calc(var(--nav-h) + var(--safe-b) + 18px); z-index: 25; width: 56px; height: 56px; border-radius: 18px; border: 0; background: var(--blue); color: #fff; display: grid; place-items: center; box-shadow: 0 10px 24px rgba(46,117,182,.45); cursor: pointer; }
@@ -1381,7 +1382,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.130.0';
+  const APP_VERSION = '1.131.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Julgamento', 'Aguardando empenho', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -5504,6 +5505,84 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     toast('Lance gravado: ' + C.brl(v));
   }
 
+  /* ---------- Modo pregão (pedido do João, 07/11/2026): janela separada, só o lance ---------- */
+  // Mostra, por item, o número do edital, o teto e o PISO (menor lance sem prejuízo ganhando só este item). Abaixo do piso o campo não aceita:
+  // fica vermelho, não mostra lucro e, ao sair do campo, volta para o piso. Nada é gravado no app (é só simulação, como o "Simular lance").
+  function modoPregaoDados(pst, R) {
+    const impPct = Math.max(0, C.n0(store.get().config.impostoPct));
+    const itens = [];
+    for (const it of pst.itens) {
+      const c = R.iMap.get(it.id); if (!c) continue;
+      const s = c.solo;
+      const piso = s && s.empate != null ? s.empate : (impPct < 1 && c.custoUnit != null && c.custoUnit > 0 ? C.ceil2(c.custoUnit / (1 - impPct)) : null);
+      const meta = s && s.minimo != null ? s.minimo : c.minimo;
+      itens.push({ id: it.id, n: C.padLE(it.itemEdital) || '', lote: C.padLE(it.loteEdital) || '', nome: nomeCurto(it.descricao, 34), qtd: C.n0(it.qtd), teto: c.teto, piso, meta, custoSolo: s ? s.custoTotal : c.custoTotal, custoJunto: c.custoTotal });
+    }
+    return { pid: pst.p.id, titulo: (/^preg/i.test(String(pst.p.numero).trim()) ? '' : 'Pregão ') + pst.p.numero, orgao: String(pst.p.orgao || '').toLocaleUpperCase('pt-BR'), imp: impPct, itens };
+  }
+  function modoPregaoHtml(D) {
+    const dados = JSON.stringify(D).replace(/</g, '\\u003c');
+    return '<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Modo pregão · ' + esc(D.titulo) + '</title><style>'
++ ':root{--bg:#eef1f5;--card:#fff;--ink:#17202e;--mut:#667489;--line:#d9dfe8;--ok:#2f7d3a;--okb:#e5f4e7;--warn:#b7791f;--warnb:#fdf3df;--bad:#c0392b;--badb:#fbe6e3;--navy:#1f3a5f}'
++ '*{box-sizing:border-box}html,body{margin:0}body{background:var(--bg);color:var(--ink);font:16px/1.35 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;-webkit-text-size-adjust:100%;padding-bottom:calc(76px + env(safe-area-inset-bottom))}'
++ 'header{position:sticky;top:0;z-index:5;background:var(--navy);color:#fff;padding:10px 14px calc(10px)}header b{display:block;font-size:17px}header span{font-size:12px;opacity:.8}'
++ '.bar{display:flex;gap:8px;margin-top:8px}.bar input{flex:1;min-width:0;font:inherit;font-size:17px;padding:9px 12px;border-radius:10px;border:0}.bar button{font:inherit;font-size:14px;border:0;border-radius:10px;padding:0 12px;background:rgba(255,255,255,.18);color:#fff}'
++ 'main{display:grid;gap:12px;padding:12px;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));max-width:1500px;margin:0 auto}'
++ '.c{background:var(--card);border:2px solid var(--line);border-radius:14px;padding:12px;display:grid;gap:10px}.c.ok{border-color:var(--ok)}.c.warn{border-color:var(--warn)}.c.bad{border-color:var(--bad)}'
++ '.top{display:flex;align-items:center;gap:10px}.num{font-size:34px;font-weight:800;line-height:1;min-width:64px}.num small{display:block;font-size:11px;font-weight:600;color:var(--mut);letter-spacing:.04em}.nm{flex:1;min-width:0;color:var(--mut);font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}'
++ '.ref{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.ref div{background:#f5f7fa;border-radius:10px;padding:6px 8px;text-align:center}.ref span{display:block;font-size:11px;color:var(--mut)}.ref b{font-size:clamp(14px,4.3vw,17px);white-space:nowrap}.ref .piso{background:var(--badb)}.ref .piso b{color:var(--bad)}'
++ '.in{display:grid;grid-template-columns:52px 1fr 52px;gap:6px}.in input{font:inherit;font-size:26px;font-weight:700;text-align:center;border:2px solid var(--line);border-radius:12px;padding:8px 4px;width:100%;min-width:0}.in input:focus{outline:0;border-color:var(--navy)}.in.bad input{border-color:var(--bad);background:var(--badb)}'
++ '.in button{font:inherit;font-size:22px;font-weight:700;border:0;border-radius:12px;background:#e4e9f0;color:var(--ink)}.in button:active{background:#cfd7e3}'
++ '.st{display:flex;gap:6px}.st button{flex:1;font:inherit;font-size:13px;border:1px solid var(--line);background:#fff;border-radius:10px;padding:7px 2px}.st .pz{background:var(--navy);color:#fff;border-color:var(--navy)}'
++ '.res{border-radius:12px;padding:9px 10px;font-size:14px}.res b{font-size:20px}.res.ok{background:var(--okb)}.res.warn{background:var(--warnb)}.res.bad{background:var(--badb);color:var(--bad);font-weight:700}.res.vz{background:#f5f7fa;color:var(--mut)}'
++ '.res .l{display:flex;justify-content:space-between;align-items:baseline;gap:8px}.res .s{font-size:12px;color:var(--mut);margin-top:2px}.res.bad .s{color:var(--bad)}'
++ 'footer{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--line);padding:10px 14px calc(10px + env(safe-area-inset-bottom));display:flex;justify-content:space-between;gap:10px;font-size:14px}footer b{font-size:18px}'
++ '.vazio{grid-column:1/-1;text-align:center;color:var(--mut);padding:30px}'
++ '</style></head><body><header><b>' + esc(D.titulo) + ' · ' + esc(D.orgao) + '</b><span id="hora"></span><div class="bar"><input id="q" inputmode="numeric" placeholder="Ir para o item nº" autocomplete="off"><button id="lt" type="button">Limpar tudo</button></div></header><main id="m"></main>'
++ '<footer><span>Com lance: <b id="fn">0</b></span><span>Lucro no conjunto: <b id="fl">R$ 0,00</b></span></footer><script>'
++ 'var D=' + dados + ';var KEY="modoPregao."+D.pid;var V={};try{V=JSON.parse(localStorage.getItem(KEY)||"{}")||{}}catch(e){}'
++ 'function sv(){try{localStorage.setItem(KEY,JSON.stringify(V))}catch(e){}}'
++ 'var F=new Intl.NumberFormat("pt-BR",{style:"currency",currency:"BRL"});function R(n){return n==null||!isFinite(n)?"—":F.format(n)}'
++ 'function T(n){return n==null?"—":(Math.abs(n*100-Math.round(n*100))>1e-7?"R$ "+n.toLocaleString("pt-BR",{minimumFractionDigits:3,maximumFractionDigits:3}):R(n))}'
++ 'function P(s){s=String(s==null?"":s).replace(/[R$\\s]/g,"");if(!s)return null;if(s.indexOf(",")>=0)s=s.replace(/\\./g,"").replace(",",".");var n=Number(s);return isFinite(n)?n:null}'
++ 'function N(n){return String(Math.round(n*100)/100).replace(".",",")}function C2(n){return Math.round(n*100)/100}'
++ 'function pct(x){return (x*100).toFixed(1).replace(".",",")+"%"}'
++ 'function calc(it,v){var f=1-D.imp,q=it.qtd,b=q*v*f;return{solo:b-it.custoSolo,junto:b-it.custoJunto,m:q*v>0?(b-it.custoSolo)/(q*v):0}}'
++ 'function est(it,v){if(v==null||!(v>0))return "vz";if(it.teto!=null&&v>it.teto+0.004)return "bad";if(it.piso!=null&&v<it.piso-0.004)return "bad";if(it.piso==null)return "vz";if(it.meta!=null&&v<it.meta-0.004)return "warn";return "ok"}'
++ 'function R1(it){var v=V[it.id];var e=est(it,v),h="";var d=document.getElementById("r"+it.id),c=document.getElementById("c"+it.id),w=document.getElementById("w"+it.id);'
++ 'if(e=="vz"){h=it.piso==null?"<div class=l>Sem custo cadastrado no app: não dá para calcular o piso.</div>":"<div class=l>Digite o lance para ver o lucro.</div>";if(it.piso!=null&&it.teto!=null&&it.piso>it.teto+0.004)h="<div class=l><b>Não compensa:</b> o piso é maior que o teto.</div>"}'
++ 'else if(v>it.teto+0.004){h="<div class=l>ACIMA DO TETO</div><div class=s>Teto "+T(it.teto)+": desclassifica. Digite um valor igual ou menor.</div>"}'
++ 'else if(e=="bad"){h="<div class=l>ABAIXO DO PISO: dá prejuízo</div><div class=s>Não baixe de "+R(it.piso)+" (ganhando só este item).</div>"}'
++ 'else{var k=calc(it,v);h="<div class=l><span>Lucro (só este)</span><b>"+R(k.solo)+"</b></div><div class=s>"+pct(k.m)+" · no conjunto "+R(k.junto)+" · ainda posso baixar "+R(C2(v-it.piso))+(e=="warn"?" · abaixo da meta "+R(it.meta):"")+"</div>"}'
++ 'd.className="res "+e;d.innerHTML=h;c.className="c "+(e=="vz"?"":e);w.className="in"+(e=="bad"?" bad":"")}'
++ 'function tot(){var n=0,l=0;D.itens.forEach(function(it){var v=V[it.id];if(v>0&&est(it,v)!="bad"&&est(it,v)!="vz"){n++;l+=calc(it,v).junto}});document.getElementById("fn").textContent=n;var el=document.getElementById("fl");el.textContent=R(l);el.style.color=l<0?"#c0392b":""}'
++ 'function set(it,v,fix){if(fix&&v!=null&&it.piso!=null&&v<it.piso)v=it.piso;if(fix&&v!=null&&it.teto!=null&&v>it.teto)v=Math.floor(it.teto*100+1e-6)/100;if(v==null||!(v>0))delete V[it.id];else V[it.id]=C2(v);sv();var i=document.getElementById("i"+it.id);if(fix&&i)i.value=V[it.id]==null?"":N(V[it.id]);R1(it);tot()}'
++ 'function step(it,d){var v=V[it.id];var base=v>0?v:(it.teto!=null?Math.floor(it.teto*100+1e-6)/100:null);if(base==null)return;var n=C2(base+d);if(it.piso!=null&&n<it.piso)n=it.piso;if(it.teto!=null&&n>it.teto)n=Math.floor(it.teto*100+1e-6)/100;set(it,n,true)}'
++ 'function box(it){var s=document.createElement("section");s.className="c";s.id="c"+it.id;s.dataset.n=(it.n||"").replace(/^0+/,"");'
++ 'var teto=it.teto!=null&&(it.piso==null||it.teto>=it.piso-0.004);'
++ 's.innerHTML="<div class=top><div class=num><small>"+(it.lote?"LOTE "+it.lote+" · ITEM":"ITEM")+"</small>"+(it.n||"?")+"</div><div class=nm>"+it.nome.replace(/&/g,"&amp;").replace(/</g,"&lt;")+" · "+it.qtd+" un.</div></div>"'
++ '+"<div class=ref><div><span>Teto</span><b>"+T(it.teto)+"</b></div><div class=piso><span>Piso (mínimo)</span><b>"+R(it.piso)+"</b></div><div><span>Posso baixar</span><b>"+(it.teto!=null&&it.piso!=null&&it.piso<=it.teto+0.004?R(C2(Math.floor(it.teto*100+1e-6)/100-it.piso)):"—")+"</b></div></div>"'
++ '+"<div class=in id=w"+it.id+"><button type=button data-s=-1>−</button><input id=i"+it.id+" inputmode=decimal autocomplete=off placeholder=\\"Meu lance (unit.)\\"><button type=button data-s=1>+</button></div>"'
++ '+"<div class=st><button type=button data-d=-0.01>−0,01</button><button type=button data-d=-0.1>−0,10</button><button type=button data-d=-1>−1,00</button><button class=pz type=button data-p=1>Piso</button></div><div class=res id=r"+it.id+"></div>";'
++ 'var i=s.querySelector("input");i.value=V[it.id]==null?"":N(V[it.id]);'
++ 'i.addEventListener("input",function(){var v=P(i.value);if(v>0)V[it.id]=v;else delete V[it.id];R1(it);tot()});'
++ 'i.addEventListener("change",function(){set(it,P(i.value),true)});i.addEventListener("keydown",function(e){if(e.key=="Enter"){set(it,P(i.value),true);i.blur()}});'
++ 's.addEventListener("click",function(e){var b=e.target.closest("button");if(!b)return;if(b.dataset.d)step(it,Number(b.dataset.d));else if(b.dataset.s)step(it,Number(b.dataset.s)*0.01);else if(b.dataset.p&&it.piso!=null)set(it,it.piso,true)});'
++ 'return s}'
++ 'var M=document.getElementById("m");D.itens.forEach(function(it){M.appendChild(box(it));R1(it)});if(!D.itens.length)M.innerHTML="<div class=vazio>Este pregão não tem itens na disputa.</div>";tot();'
++ 'document.getElementById("hora").textContent="Dados do app de "+new Date().toLocaleString("pt-BR",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"})+" · nada é gravado no app";'
++ 'document.getElementById("q").addEventListener("input",function(e){var q=e.target.value.replace(/\\D/g,"").replace(/^0+/,"");D.itens.forEach(function(it){var el=document.getElementById("c"+it.id);el.style.display=!q||el.dataset.n==q||(it.lote&&it.lote.replace(/^0+/,"")==q)?"":"none"})});'
++ 'document.getElementById("lt").addEventListener("click",function(){if(!confirm("Apagar todos os lances digitados aqui?"))return;V={};sv();D.itens.forEach(function(it){document.getElementById("i"+it.id).value="";R1(it)});tot()});'
++ '<\/script></body></html>';
+  }
+  function abrirModoPregao(id) {
+    const st = store.get(); const R = C.computeAll(st); const pst = R.pMap.get(id);
+    if (!pst) return;
+    const url = URL.createObjectURL(new Blob([modoPregaoHtml(modoPregaoDados(pst, R))], { type: 'text/html;charset=utf-8' }));
+    const w = window.open(url, 'modoPregao_' + id, 'popup=yes,width=560,height=900');
+    if (!w) toast('Libere os pop-ups deste site para abrir o Modo pregão');
+  }
+
   function ganhosCardHtml(pst) {
     const p = pst.p;
     if (!pst.itens.length || (!pst.ganho && !['Faturado', 'Concluído'].includes(p.status))) return '';
@@ -5659,6 +5738,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
         <select class="input" id="stsel" data-status-pregao="${p.id}">${C.STATUS.map((s) => `<option value="${esc(s)}"${s === p.status ? ' selected' : ''}>${esc(stTxt(s))}</option>`).join('')}</select></div>
         <div class="field" style="margin:0"><label for="tcsel">Tipo de compra</label>
         <select class="input" id="tcsel" data-tipo-pregao="${p.id}">${TIPO_COMPRA.map((o) => `<option value="${esc(o.v)}"${o.v === tipoCompraDe(p) ? ' selected' : ''}>${esc(o.l)}</option>`).join('')}</select></div></div>
+      ${p.status === 'Proposta enviada' && pst.itens.length ? `<button type="button" class="btn block navy modo-pz" data-act="modo-pregao" data-id="${p.id}" title="Abre uma janela só com o nº do item, o piso sem prejuízo e o lucro do lance">${icon('acomp', 'sm')} Modo pregão</button>` : ''}
       ${posCardHtml(pst)}
       ${ganhosCardHtml(pst)}
       <div class="kpis">
@@ -7060,6 +7140,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
       }
       case 'filtro': UI.filtro = t.dataset.v; UI.keepScroll = true; render(); break;
       case 'rascunho': openDraft(t.dataset.key); break;
+      case 'modo-pregao': abrirModoPregao(id); break;
       case 'pdf-pregao': UI.pdf.pregaoId = id; UI.pdf.fonte = 'auto'; UI.pdf.result = null; saveUI(); setTab('pdf'); break;
       case 'pdf-gerar': gerarPDF(); break;
       case 'pdf-previa': gerarPDF(true); break;
