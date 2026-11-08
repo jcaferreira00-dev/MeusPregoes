@@ -5570,7 +5570,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
       else if (v > it.teto + 0.004) h = '<div class=l>ACIMA DO TETO</div><div class=s>Teto ' + T(it.teto) + ': desclassifica. Digite um valor igual ou menor.</div>';
       else if (e === 'bad') h = '<div class=l>ABAIXO DO PISO: dá prejuízo</div><div class=s>Não baixe de ' + R(it.piso) + ' (ganhando só este item).</div>';
       else { var k = calc(it, v); h = '<div class=l><span>Lucro (só este)</span><b>' + R(k.solo) + '</b></div><div class=s>' + pct(k.m) + ' · no conjunto ' + R(k.junto) + ' · ainda posso baixar ' + R(C2(v - it.piso)) + (e === 'warn' ? ' · abaixo da meta ' + R(it.meta) : '') + '</div>'; }
-      d.className = 'res ' + e; d.innerHTML = h; el.className = 'c ' + (e === 'vz' ? '' : e); w.className = 'in' + (e === 'bad' ? ' bad' : '');
+      d.className = 'res cx ' + e; d.innerHTML = h; el.className = 'c ' + (e === 'vz' ? '' : e); w.className = 'in cx' + (e === 'bad' ? ' bad' : '');
     }
     function tudo() { D.itens.forEach(pinta); rodape(); var n = D.itens.filter(res).length; var t = document.getElementById('encT'); t.style.display = n ? '' : 'none'; t.textContent = 'Encerrados (' + n + ')'; }
     function set(it, v, fix) {
