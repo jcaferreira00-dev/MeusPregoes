@@ -1352,6 +1352,8 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
   .sheet-wide .dec-big em, .sheet-wide .dec-cols em { display: none; }
   .sheet-wide .formgrid .hint:not(#rotaItem), .sheet-wide .linkrow ~ .hint, .sheet-wide #linkBox .hint { display: none; }
   .sheet-wide .linkrow { gap: 8px; }
+  .sheet-wide .formgrid > .field:not(.full) > label, .sheet-wide .formgrid > div:not(.full) > .field > label { min-height: 2.5em; display: flex; align-items: flex-end; line-height: 1.25; }
+  .sheet-wide .formgrid { align-items: start; }
   .sheet-wide .btn.ibtn.altc[data-alt-go] { width: 42px; max-width: 42px; min-width: 42px; padding: 0; gap: 0; justify-content: center; }
   .sheet-wide .altc .altc-t { display: none; }
   .sheet-wide .altc[data-alt-go] .altc-n { position: absolute; bottom: 2px; right: 4px; }
@@ -1398,7 +1400,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.135.0';
+  const APP_VERSION = '1.135.1';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Julgamento', 'Aguardando empenho', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
