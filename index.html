@@ -1346,6 +1346,9 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
   .icard .dec-cols .dec-solo em, .sheet-wide .dec-cols .dec-solo em { display: none !important; }
   .icard .tes, .kpis .s-tes, .kpis .s-viag { display: none; }
   .icard .sim-ajuda { display: none; }
+  .icard .i-fin2 > span:nth-child(2) { display: none; }   /* o lucro já está no destaque */
+  .icard:has(.dec:not(.com-lance)) .i-mvals .v-min { display: none; }   /* sem lance: o mínimo já está no destaque */
+  .icard:has(.dec:not(.com-lance)) .i-mvals .v-lance { grid-column: 1 / -1; }
 }
 /* Janela de editar item no celular (pedido do João, 08/11/2026): rolagem normal, menos informação, carrinho só com o ícone.
    As prévias deixam de grudar no topo (com muitas opções de compra tomavam a tela e travavam a rolagem). */
@@ -1355,7 +1358,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
   .sheet-wide .side-col { display: block; }
   .sheet-wide .preview, .sheet-wide .preview.prev-ops { position: static; top: auto; margin: 0 0 10px; padding: 0 0 10px; }
   .sheet-wide .prev-ops { display: none; }
-  .sheet-wide .preview .kv > span:not(.kv-keep), .sheet-wide .preview .prev-sit { display: none; }
+  .sheet-wide .preview .kv > .kv-lucro, .sheet-wide .preview .kv > span:not(.kv-keep), .sheet-wide .preview .prev-sit { display: none; }
   .sheet-wide .dec-big em, .sheet-wide .dec-cols em { display: none; }
   .sheet-wide .formgrid .hint:not(#rotaItem), .sheet-wide .linkrow ~ .hint, .sheet-wide #linkBox .hint { display: none; }
   .sheet-wide .linkrow { gap: 8px; }
@@ -1407,7 +1410,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.136.0';
+  const APP_VERSION = '1.136.1';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Julgamento', 'Aguardando empenho', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -4641,7 +4644,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
         const bad = c.sitTipo === 'bad';
         el.innerHTML = `${avisoKm}${decisaoHtml(c)}
           <div class="kv"><span>Custo unit. final <b>${C.brl(c.custoUnit)}</b></span><span>Entrega rateada <b>${C.brl(c.entrega)}</b></span>
-          ${(() => { const d = decisao(c); return (d.min != null && c.teto ? `<span class="kv-keep">Posso baixar do teto até o mínimo <b>${C.brl(c.teto - d.min)} (${C.pct(1 - d.min / c.teto, 0)})</b></span>` : '') + `<span class="kv-keep">Lucro ${c.lance !== null ? 'no lance' : 'pelo teto'} <b style="color:${c.lucro != null && c.lucro < 0 ? 'var(--red)' : 'var(--ink)'}">${C.brl(c.lucro)}</b></span>` + tesouroTxt(c.tesouro); })()}
+          ${(() => { const d = decisao(c); return (d.min != null && c.teto ? `<span class="kv-keep">Posso baixar do teto até o mínimo <b>${C.brl(c.teto - d.min)} (${C.pct(1 - d.min / c.teto, 0)})</b></span>` : '') + `<span class="kv-keep kv-lucro">Lucro ${c.lance !== null ? 'no lance' : 'pelo teto'} <b style="color:${c.lucro != null && c.lucro < 0 ? 'var(--red)' : 'var(--ink)'}">${C.brl(c.lucro)}</b></span>` + tesouroTxt(c.tesouro); })()}
           ${c.impostoTotal > 0 ? `<span>Impostos <b>${C.brl(c.impostoTotal)}</b></span>` : ''}</div>
           ${c.situacao ? `<div class="prev-sit"><span class="badge ${c.sitTipo}">${esc(c.situacao)}</span> ${estrelasHtml(c)} <span class="tiny muted">Lucro previsto ${C.brl(c.lucro)}</span></div>` : ''}${elOps ? '' : dica}`;
       },
