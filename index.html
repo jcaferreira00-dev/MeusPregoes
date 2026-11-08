@@ -1381,7 +1381,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.129.0';
+  const APP_VERSION = '1.130.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Julgamento', 'Aguardando empenho', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -1399,6 +1399,8 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
   const round2 = (x) => Math.round((x + Number.EPSILON) * 100) / 100;
   // equivalente ao ROUNDUP(x, 2) da planilha (sempre para cima, em centavos)
   const ceil2 = (x) => Math.ceil(Math.round(x * 100 * 1e6) / 1e6 - 1e-9) / 100;
+  // sempre para baixo, em centavos: teto do edital com 3 casas (ex.: 56,445) vira 56,44 e nunca passa do teto
+  const floor2 = (x) => Math.floor(Math.round(x * 100 * 1e6) / 1e6 + 1e-9) / 100;
 
   // "1.234,56" | "19,5" | "19.50" | "R$ 20" | "20%" -> número (ou null)
   function parseBR(v) {
@@ -1973,14 +1975,15 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
   // nos demais casos, o que passar do teto do edital é limitado ao teto (para não desclassificar)
   function unitProposta(c, fonte) {
     let unit;
+    const tetoU = c.teto !== null ? floor2(c.teto) : null;   // teto com 3 casas (56,445) sai em centavos para baixo (56,44)
     if (fonte === 'minimo') unit = c.minimo;
-    else if (fonte === 'teto') unit = c.teto;
+    else if (fonte === 'teto') unit = tetoU;
     else if (fonte === 'lance') unit = c.lance;
-    else unit = c.lance !== null ? c.lance : (c.teto !== null ? c.teto : c.minimo);   // sem lance final: teto do edital (sem teto, o mínimo)
+    else unit = c.lance !== null ? c.lance : (tetoU !== null ? tetoU : c.minimo);   // sem lance final: teto do edital (sem teto, o mínimo)
     const doLance = c.lance !== null && fonte !== 'minimo' && fonte !== 'teto';
     const original = unit;
     let limitado = false;
-    if (!doLance && unit !== null && c.teto !== null && unit > c.teto + 1e-9) { unit = c.teto; limitado = true; }
+    if (!doLance && unit !== null && c.teto !== null && unit > c.teto + 1e-9) { unit = tetoU; limitado = true; }
     const acima = doLance && unit !== null && c.teto !== null && unit > c.teto + 1e-9;
     return { unit, original, limitado, doLance, acima };
   }
@@ -2113,6 +2116,8 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
       // preço guardado pela regra antiga (= valor mínimo, abaixo do teto): não vale mais, refaz pela regra atual (teto)
       let velho = temIni(it) && c && c.minimo !== null && c.teto !== null && c.minimo < c.teto - 0.005 && Math.abs(it.precoInicial - c.minimo) < 0.006;
       // lance final preenchido prevalece também na inicial (enquanto o pregão não tem itens ganhos: depois disso o lance é ajuste da final e não mexe na inicial)
+      // preço guardado acima do teto (ex.: arredondado para cima antes da v1.130.0): refaz pelo teto em centavos para baixo, enquanto não há item ganho
+      if (tipo === 'inicial' && !pst.ganho && temIni(it) && c && c.teto !== null && c.lance === null && it.precoInicial > c.teto + 1e-9) velho = true;
       const lanceIni = tipo === 'inicial' && !pst.ganho && c && c.lance !== null && fonte !== 'minimo' && fonte !== 'teto';
       if (lanceIni && temIni(it) && Math.abs(it.precoInicial - c.lance) >= 0.005) velho = true;   // preço guardado diferente do lance: regrava com o lance
       if (tipo === 'inicial') {
@@ -2385,7 +2390,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
   /* ---------- dados de exemplo (os mesmos da planilha) ---------- */
 
   const api = {
-    APP_VERSION, STATUS, INATIVOS, DECL_PADRAO, DECL_PROPOSTA, uid, n0, round2, ceil2, parseBR, brl, brl0, pct, numBR, qtdBR,
+    APP_VERSION, STATUS, INATIVOS, DECL_PADRAO, DECL_PROPOSTA, uid, n0, round2, ceil2, floor2, parseBR, brl, brl0, pct, numBR, qtdBR,
     fmtSessao, dataExtensa, hojeISO, defaultConfig, emptyState, migrate, custoViagem, localEntregaPadrao, calcItem, limiteMEI,
     custoUnitOpc, embDe, tesouro, corTesouro, agora, setClockOffset, getClockOffset, pendenciasNuvem, computeAll, custoCompra, freteCompra, ordemLoteItem, padLE, dasMensal, mesesAtivos, previewItem, linhasProposta, faltasOferta, marcaModeloDoTexto, normMM, horizontal, capitalizarTitulos, unitProposta, resolverPdfOpts, camposModelo, pendenciasModelo, CAMPOS_MODELO, identificaEmpresa, COLUNAS_DESC, CAMPOS_FORNECEDOR, CAMPOS_BANCO, mergeState, diffState, paraNuvem, createStore, };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
@@ -4317,7 +4322,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
       qtd: it.qtd == null ? '' : C.numBR(it.qtd, 3), obs: it.obs || '', possivelGanhar: !!it.possivelGanhar, vencedor: it.vencedor == null ? '' : C.numBR(it.vencedor),
       ...(() => { const o = {}; const L = opcoesParaForm(it); ALTS.forEach((n) => { const a = L[n] || {}; o['alt' + n + 'Usar'] = !!a.usar; o['alt' + n + 'Loja'] = a.loja || ''; o['alt' + n + 'Link'] = a.link || ''; o['alt' + n + 'Custo'] = a.custo == null ? '' : C.numBR(a.custo); o['alt' + n + 'Emb'] = a.emb > 1 ? C.numBR(a.emb, 0) : ''; o['alt' + n + 'Frete'] = a.frete ? C.numBR(a.frete) : ''; o['alt' + n + 'Qtd'] = a.qtd ? C.numBR(a.qtd, 3) : ''; }); return o; })(),
       // custo/frete efetivos (item antigo com opções marcadas: o calculado delas), para o campo abrir com o valor que vale nas contas
-      custo: it.custo == null ? '' : C.numBR(Math.round(Number(it.custo) * 10000) / 10000, 4), teto: it.teto == null ? '' : C.numBR(it.teto), frete: Number(it.frete) ? C.numBR(Number(it.frete)) : '',
+      custo: it.custo == null ? '' : C.numBR(Math.round(Number(it.custo) * 10000) / 10000, 4), teto: it.teto == null ? '' : C.numBR(it.teto, 4), frete: Number(it.frete) ? C.numBR(Number(it.frete)) : '',
       margem: it.margem == null ? '' : C.numBR(it.margem * 100, 2), lanceFinal: it.lanceFinal == null ? '' : C.numBR(it.lanceFinal), colocacao: it.colocacao == null ? '' : String(it.colocacao),
       entregaId: it.entregaId || '',
       localEntrega: it.localEntrega || '', kmEntrega: it.kmEntrega ? C.numBR(it.kmEntrega, 1) : '',
@@ -6001,7 +6006,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
       const msg = x.unit == null ? '<span class="pm-st bad">sem valor</span>' : x.acimaTeto ? '<span class="pm-st warn">acima do teto</span>' : abaixo ? '<span class="pm-st bad">abaixo do mínimo (' + C.brl(x.minimo) + ')</span>' : '<span class="pm-st ok">ok</span>';
       return `<div class="pm-it${abaixo ? ' bad' : ''}"><div class="pm-n">${esc(C.padLE(x.numeroItem) ? 'Item ' + esc(x.numeroItem) + ' · ' : '')}${esc(x.descricao)}</div>
         <div class="pm-sub">${C.qtdBR(x.qtd)} ${esc(x.un)} · custo ${c.custoUnit != null ? C.brl(c.custoUnit) : '—'} · teto ${x.teto != null ? C.brl(x.teto) : '—'}</div>
-        <label class="pm-in"><span>Meu lance (un.)</span><input class="input" inputmode="decimal" autocomplete="off" data-pm-lance="${esc(x.id)}" value="${x.lance != null ? C.numBR(x.lance, 2) : ''}" placeholder="${x.teto != null ? C.numBR(x.teto, 2) : ''}"></label>
+        <label class="pm-in"><span>Meu lance (un.)</span><input class="input" inputmode="decimal" autocomplete="off" data-pm-lance="${esc(x.id)}" value="${x.lance != null ? C.numBR(x.lance, 2) : ''}" placeholder="${x.teto != null ? C.numBR(C.floor2(x.teto), 2) : ''}"></label>
         <div class="pm-tot"><span>Total ${x.total != null ? C.brl(x.total) : '—'}${lucro != null ? ' · lucro ' + C.pct(lucro, 0) : ''}</span>${msg}</div></div>`;
     }).join('')}<div class="pm-sum"><span>Total da proposta</span><b>${C.brl(L.total)}</b></div></div>`;
   }
