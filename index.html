@@ -1340,6 +1340,22 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
 .btn.ibtn.altc[data-alt-go] { width: auto; max-width: 138px; min-width: 40px; padding: 0 10px; gap: 6px; }
 .altc .altc-t { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12.5px; font-weight: 700; position: static; }
 .altc[data-alt-go] .altc-n { position: static; }
+/* Janela de editar item no celular (pedido do João, 08/11/2026): rolagem normal, menos informação, carrinho só com o ícone.
+   As prévias deixam de grudar no topo (com muitas opções de compra tomavam a tela e travavam a rolagem). */
+@media (max-width: 899px) {
+  .sheet-wrap.sheet-wide .sheet { max-height: 96vh; max-height: 96dvh; }
+  .sheet-wide .sheet-body { overflow-y: auto; overscroll-behavior: contain; touch-action: pan-y; -webkit-overflow-scrolling: touch; min-height: 0; }
+  .sheet-wide .side-col { display: block; }
+  .sheet-wide .preview, .sheet-wide .preview.prev-ops { position: static; top: auto; margin: 0 0 10px; padding: 0 0 10px; }
+  .sheet-wide .prev-ops { display: none; }
+  .sheet-wide .preview .kv > span:not(.kv-keep), .sheet-wide .preview .prev-sit { display: none; }
+  .sheet-wide .dec-big em, .sheet-wide .dec-cols em { display: none; }
+  .sheet-wide .formgrid .hint:not(#rotaItem), .sheet-wide .linkrow ~ .hint, .sheet-wide #linkBox .hint { display: none; }
+  .sheet-wide .linkrow { gap: 8px; }
+  .sheet-wide .btn.ibtn.altc[data-alt-go] { width: 42px; max-width: 42px; min-width: 42px; padding: 0; gap: 0; justify-content: center; }
+  .sheet-wide .altc .altc-t { display: none; }
+  .sheet-wide .altc[data-alt-go] .altc-n { position: absolute; bottom: 2px; right: 4px; }
+}
 /* Guia Pregões no PC (pedido do João, 05/11/2026): cartões mais baixos — cabeçalho numa linha, órgão em 2 linhas no máximo,
    cidade/data/itens numa linha, etiquetas numa linha cada (texto inteiro no balão), números e botões compactos */
 @media (min-width: 900px) {
@@ -1382,7 +1398,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.134.0';
+  const APP_VERSION = '1.135.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Julgamento', 'Aguardando empenho', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -4616,9 +4632,9 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
         const bad = c.sitTipo === 'bad';
         el.innerHTML = `${avisoKm}${decisaoHtml(c)}
           <div class="kv"><span>Custo unit. final <b>${C.brl(c.custoUnit)}</b></span><span>Entrega rateada <b>${C.brl(c.entrega)}</b></span>
-          ${(() => { const d = decisao(c); return (d.min != null && c.teto ? `<span>Posso baixar do teto até o mínimo <b>${C.brl(c.teto - d.min)} (${C.pct(1 - d.min / c.teto, 0)})</b></span>` : '') + `<span>Lucro ${c.lance !== null ? 'no lance' : 'pelo teto'} <b style="color:${c.lucro != null && c.lucro < 0 ? 'var(--red)' : 'var(--ink)'}">${C.brl(c.lucro)}</b></span>` + tesouroTxt(c.tesouro); })()}
+          ${(() => { const d = decisao(c); return (d.min != null && c.teto ? `<span class="kv-keep">Posso baixar do teto até o mínimo <b>${C.brl(c.teto - d.min)} (${C.pct(1 - d.min / c.teto, 0)})</b></span>` : '') + `<span class="kv-keep">Lucro ${c.lance !== null ? 'no lance' : 'pelo teto'} <b style="color:${c.lucro != null && c.lucro < 0 ? 'var(--red)' : 'var(--ink)'}">${C.brl(c.lucro)}</b></span>` + tesouroTxt(c.tesouro); })()}
           ${c.impostoTotal > 0 ? `<span>Impostos <b>${C.brl(c.impostoTotal)}</b></span>` : ''}</div>
-          ${c.situacao ? `<div><span class="badge ${c.sitTipo}">${esc(c.situacao)}</span> ${estrelasHtml(c)} <span class="tiny muted">Lucro previsto ${C.brl(c.lucro)}</span></div>` : ''}${elOps ? '' : dica}`;
+          ${c.situacao ? `<div class="prev-sit"><span class="badge ${c.sitTipo}">${esc(c.situacao)}</span> ${estrelasHtml(c)} <span class="tiny muted">Lucro previsto ${C.brl(c.lucro)}</span></div>` : ''}${elOps ? '' : dica}`;
       },
       onSave: (x, form) => {
         $$('.input.err', form).forEach((e) => e.classList.remove('err'));
