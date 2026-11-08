@@ -1340,6 +1340,13 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
 .btn.ibtn.altc[data-alt-go] { width: auto; max-width: 138px; min-width: 40px; padding: 0 10px; gap: 6px; }
 .altc .altc-t { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12.5px; font-weight: 700; position: static; }
 .altc[data-alt-go] .altc-n { position: static; }
+/* Cartões do pregão no celular (pedido do João, 08/11/2026): só o que diz se dá lucro. Sem totais do edital/custo, Tesouro, viagem e textos de ajuda. O PC não mudou. */
+@media (max-width: 699px) {
+  .icard .i-vals > div:not(.v-lance-pc) { display: none; }
+  .icard .dec-cols .dec-solo em, .sheet-wide .dec-cols .dec-solo em { display: none !important; }
+  .icard .tes, .kpis .s-tes, .kpis .s-viag { display: none; }
+  .icard .sim-ajuda { display: none; }
+}
 /* Janela de editar item no celular (pedido do João, 08/11/2026): rolagem normal, menos informação, carrinho só com o ícone.
    As prévias deixam de grudar no topo (com muitas opções de compra tomavam a tela e travavam a rolagem). */
 @media (max-width: 899px) {
@@ -1400,7 +1407,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.135.1';
+  const APP_VERSION = '1.136.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Julgamento', 'Aguardando empenho', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -5485,7 +5492,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
   }
   function simResHtml(it, v) {
     const c = simCalc(it, v);
-    if (!c) return '<span class="tiny muted">Digite um valor unitário para ver lucro, margem e viabilidade. Nada é salvo.</span>';
+    if (!c) return '<span class="tiny muted sim-ajuda">Digite um valor unitário para ver lucro, margem e viabilidade. Nada é salvo.</span>';
     const nota = c.nota != null ? String(c.nota.toFixed(1)).replace('.', ',') : '—';
     const fill = c.nota != null ? Math.max(0, Math.min(100, c.nota / 5 * 100)).toFixed(0) : 0;
     const dm = decisao(c).min;
@@ -5502,7 +5509,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     const v = UI.sim[it.id] || '';
     const atual = c.lance !== null ? 'lance gravado ' + C.brl(c.lance) : 'sem lance gravado (vale o teto ' + C.brl(meuLance) + ')';
     return `<div class="sim" data-act="noop">
-      <div class="sim-hd"><b>${icon('acomp', 'sm')} Simular lance</b><span class="tiny muted">${atual} · simulação não altera a proposta</span></div>
+      <div class="sim-hd"><b>${icon('acomp', 'sm')} Simular lance</b><span class="tiny muted sim-ajuda">${atual} · simulação não altera a proposta</span></div>
       <div class="sim-row"><span class="sim-rs">R$</span><input class="input${v && abaixoSolo(simCalc(it, C.parseBR(v)), C.parseBR(v)) ? ' solo-baixo' : ''}" inputmode="decimal" autocomplete="off" data-sim="${it.id}" value="${esc(v)}" placeholder="valor unitário">
         <button type="button" class="btn sm ghost" data-act="sim-limpar" data-id="${it.id}" title="Limpar simulação">${icon('x', 'sm')}</button>
         <button type="button" class="btn sm primary" data-act="sim-gravar" data-id="${it.id}" ${C.parseBR(v) > 0 ? '' : 'disabled'}>Gravar lance</button></div>
@@ -5869,8 +5876,8 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
       ${ganhosCardHtml(pst)}
       <div class="kpis">
         <div class="kpi"><div class="l">Total de venda</div><div class="v">${C.brl0(pst.venda)}</div></div>
-        <div class="kpi" style="--c:#667489"><div class="l">Custo total</div><div class="v" style="color:var(--ink)">${C.brl0(pst.custo)}</div><div class="s">entrega ${C.brl0(pst.viagem)}${pst.imposto > 0 ? ' · impostos ' + C.brl0(pst.imposto) : ''}</div></div>
-        <div class="kpi" style="--c:#2f7d3a"><div class="l">Lucro</div><div class="v">${C.brl0(pst.lucro)}</div>${pst.tesouro && pst.tesouro.vezes != null ? `<div class="s">${tesouroTxt(pst.tesouro, true)} em ~${pst.tesouro.dias} dias</div>` : ''}</div>
+        <div class="kpi" style="--c:#667489"><div class="l">Custo total</div><div class="v" style="color:var(--ink)">${C.brl0(pst.custo)}</div><div class="s s-viag">entrega ${C.brl0(pst.viagem)}${pst.imposto > 0 ? ' · impostos ' + C.brl0(pst.imposto) : ''}</div></div>
+        <div class="kpi" style="--c:#2f7d3a"><div class="l">Lucro</div><div class="v">${C.brl0(pst.lucro)}</div>${pst.tesouro && pst.tesouro.vezes != null ? `<div class="s s-tes">${tesouroTxt(pst.tesouro, true)} em ~${pst.tesouro.dias} dias</div>` : ''}</div>
         <div class="kpi" style="--c:#b7791f"><div class="l">Margem real</div><div class="v">${C.pct(pst.margem, 1)}</div></div>
       </div>
       <div class="card"><h3><span class="grow">Itens deste pregão (${pst.nItens})</span><button class="btn sm primary" data-act="novo-item" data-pid="${p.id}">${icon('plus', 'sm')} Item</button></h3>
@@ -5893,7 +5900,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     if (!t || t.vezes == null) return '';
     const vz = t.vezes <= 0 ? 'não rende' : C.numBR(t.vezes, 1) + '×';
     const tip = `Comprando por ${C.brl(t.rend / (Math.pow(1 + t.selic, t.dias / 365) - 1))}, o dinheiro fica fora ~${t.dias} dias${t.diasEst ? ' (prazo estimado: o pregão não tem prazo de entrega/pagamento)' : ''}. Na Selic (${C.pct(t.selic, 2)} a.a., bruto) renderia ${C.brl(t.rend)}. Seu lucro equivale a ${t.anual != null ? C.pct(t.anual, 0) : '—'} ao ano.`;
-    return `<span title="${esc(tip)}">vs Tesouro <b style="color:${C.corTesouro(t)}">${vz}</b>${!curto && t.anual != null && t.vezes > 0 ? ` (≈ ${C.pct(t.anual, 0)} a.a.)` : ''}${!curto && t.pisoUnit != null ? ` · empata em ${C.brl(t.pisoUnit)}/un` : ''}</span>`;
+    return `<span class="tes" title="${esc(tip)}">vs Tesouro <b style="color:${C.corTesouro(t)}">${vz}</b>${!curto && t.anual != null && t.vezes > 0 ? ` (≈ ${C.pct(t.anual, 0)} a.a.)` : ''}${!curto && t.pisoUnit != null ? ` · empata em ${C.brl(t.pisoUnit)}/un` : ''}</span>`;
   }
   function itemBloco(it, c) {
     const lt = C.padLE(it.loteEdital), ie = C.padLE(it.itemEdital);
