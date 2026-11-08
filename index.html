@@ -1382,7 +1382,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.132.0';
+  const APP_VERSION = '1.133.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Julgamento', 'Aguardando empenho', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -5522,7 +5522,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
       const meta = s && s.minimo != null ? s.minimo : c.minimo;
       itens.push({ id: it.id, n: C.padLE(it.itemEdital) || '', lote: C.padLE(it.loteEdital) || '', nome: nomeCurto(it.descricao, 34), qtd: C.n0(it.qtd), teto: c.teto, piso, meta, custoSolo: s ? s.custoTotal : c.custoTotal, custoJunto: c.custoTotal, res: c.resultado === 'desc' ? 'desc' : (c.resultado === 'venci' || c.resultado === 'perdi' ? c.resultado : ''), lanceApp: c.lance });
     }
-    return { pid: pst.p.id, titulo: (/^preg/i.test(String(pst.p.numero).trim()) ? '' : 'Pregão ') + pst.p.numero, orgao: String(pst.p.orgao || '').toLocaleUpperCase('pt-BR'), imp: impPct, fila: FILA_MODO, itens };
+    return { pid: pst.p.id, titulo: (/^preg/i.test(String(pst.p.numero).trim()) ? '' : 'Pregão ') + pst.p.numero, orgao: String(pst.p.orgao || '').toLocaleUpperCase('pt-BR'), imp: impPct, fila: FILA_MODO, qtdRisco: 30, itens };
   }
   // código que roda DENTRO da janela (sem usar nada do app): vira texto com toString()
   function modoPregaoJanela(D) {
@@ -5540,6 +5540,8 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     function esc(t) { return String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;'); }
     function calc(it, v) { var b = it.qtd * v * (1 - D.imp); return { solo: b - it.custoSolo, junto: b - it.custoJunto, m: it.qtd * v > 0 ? (b - it.custoSolo) / (it.qtd * v) : 0 }; }
     function est(it, v) { if (!(v > 0)) return 'vz'; if (it.teto != null && v > it.teto + 0.004) return 'bad'; if (it.piso != null && v < it.piso - 0.004) return 'bad'; if (it.piso == null) return 'vz'; if (it.meta != null && v < it.meta - 0.004) return 'warn'; return 'ok'; }
+    function def(it) { return it.lanceApp > 0 ? it.lanceApp : (it.teto != null ? fl2(it.teto) : null); }   // sem nada digitado: o lance do cadastro; sem lance, o teto
+    function ef(it) { return V[it.id] > 0 ? V[it.id] : def(it); }
     function res(it) { return S[it.id] !== undefined ? S[it.id] : it.res; }   // o que foi marcado aqui vale; senão, o que já estava no app
     function envia(it, r, lance) {
       var q = []; try { q = JSON.parse(localStorage.getItem(D.fila) || '[]') || []; } catch (e) {}
@@ -5549,15 +5551,15 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     function rodape() {
       var nv = 0, lv = 0, na = 0, la = 0;
       D.itens.forEach(function (it) {
-        var r = res(it), v = V[it.id];
+        var r = res(it), v = ef(it);
         if (r === 'venci') { var w = W[it.id] != null ? W[it.id] : it.lanceApp; if (w > 0) { nv++; lv += calc(it, w).junto; } else nv++; }
         else if (!r && v > 0 && est(it, v) !== 'bad' && est(it, v) !== 'vz') { na++; la += calc(it, v).junto; }
       });
       document.getElementById('fn').textContent = nv; var a = document.getElementById('fl'); a.textContent = R(lv); a.style.color = lv < 0 ? '#c0392b' : '';
-      document.getElementById('fa').textContent = na ? 'Em disputa com lance: ' + na + ' · lucro ' + R(la) : '';
+      document.getElementById('fa').textContent = na ? 'Em disputa (pelo lance mostrado): ' + na + ' · lucro ' + R(la) : '';
     }
     function pinta(it) {
-      var r = res(it), el = document.getElementById('c' + it.id), v = V[it.id];
+      var r = res(it), el = document.getElementById('c' + it.id), v = ef(it);
       if (r) {   // encerrado: linha pequena, vai para o fim
         var lance = r === 'venci' ? (W[it.id] != null ? W[it.id] : it.lanceApp) : null;
         el.className = 'c enc ' + (r === 'venci' ? 'v' : 'p');
@@ -5577,13 +5579,13 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
       if (fix && v != null && it.piso != null && v < it.piso) v = it.piso;
       if (fix && v != null && it.teto != null && v > it.teto) v = fl2(it.teto);
       if (v == null || !(v > 0)) delete V[it.id]; else V[it.id] = C2(v);
-      sv(); var i = document.getElementById('i' + it.id); if (fix && i) i.value = V[it.id] == null ? '' : N(V[it.id]); pinta(it); rodape();
+      sv(); var i = document.getElementById('i' + it.id); if (fix && i) i.value = ef(it) == null ? '' : N(ef(it)); pinta(it); rodape();
     }
-    function step(it, d) { var v = V[it.id], base = v > 0 ? v : (it.teto != null ? fl2(it.teto) : null); if (base == null) return; var n = C2(base + d); if (it.piso != null && n < it.piso) n = it.piso; if (it.teto != null && n > it.teto) n = fl2(it.teto); set(it, n, true); }
+    function step(it, d) { var base = ef(it); if (base == null) return; var n = C2(base + d); if (it.piso != null && n < it.piso) n = it.piso; if (it.teto != null && n > it.teto) n = fl2(it.teto); set(it, n, true); }
     function venci(it) {
-      var v = V[it.id], e = est(it, v), nome = 'Item ' + (it.n || '?');
+      var v = ef(it), e = est(it, v), nome = 'Item ' + (it.n || '?');
       if (v > 0 && e === 'bad') { alert('O lance digitado está fora dos limites (piso ' + R(it.piso) + ', teto ' + T(it.teto) + '). Corrija antes de marcar Venci.'); return; }
-      var msg = v > 0 ? nome + ': venci por ' + R(v) + '?\n\nIsso grava ' + R(v) + ' como lance final no app e leva o item para a proposta final.'
+      var msg = v > 0 ? nome + ': venci por '  + R(v) + '?\n\nIsso grava ' + R(v) + ' como lance final no app e leva o item para a proposta final.'
         : nome + ': venci sem lance digitado aqui?\n\nO item vai para a proposta final pelo valor que já está no app (' + (it.lanceApp != null ? 'lance gravado ' + R(it.lanceApp) : 'o teto ' + T(it.teto)) + ').';
       if (!confirm(msg)) return;
       S[it.id] = 'venci'; if (v > 0) W[it.id] = v; sv(); envia(it, 'venci', v > 0 ? v : null); tudo();
@@ -5592,19 +5594,19 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     function reabre(it) { if (!confirm('Item ' + (it.n || '?') + ': reabrir (voltar para aguardando resultado)?')) return; S[it.id] = ''; delete W[it.id]; sv(); envia(it, '', null); tudo(); }
     function box(it) {
       var s = document.createElement('section'); s.id = 'c' + it.id; s.dataset.n = (it.n || '').replace(/^0+/, '');
-      s.innerHTML = '<div class=top><div class=num><small>' + (it.lote ? 'LOTE ' + it.lote + ' · ITEM' : 'ITEM') + '</small>' + (it.n || '?') + '</div><div class=nm>' + esc(it.nome) + ' · ' + it.qtd + ' un.</div><div class=fim></div></div>'
+      s.innerHTML = '<div class=top><div class=num><small>' + (it.lote ? 'LOTE ' + it.lote + ' · ITEM' : 'ITEM') + '</small>' + (it.n || '?') + '</div><div class=nm>' + esc(it.nome) + ' · ' + it.qtd + ' un.</div>' + (it.qtd >= D.qtdRisco ? '<button type=button class=rk data-k=1 title="' + it.qtd + ' unidades: risco de logística" aria-label="Risco de logística"><svg viewBox="0 0 24 24" width="22" height="22"><path d="M12 3 2 21h20z" fill="#f3b73b" stroke="#b7791f" stroke-width="1.6" stroke-linejoin="round"/><path d="M12 10v5M12 17.6v.2" stroke="#5c3d00" stroke-width="2" stroke-linecap="round"/></svg></button>' : '') + '<div class=fim></div></div>' + (it.qtd >= D.qtdRisco ? '<div class="rkn cx" hidden>' + it.qtd + ' unidades: item de risco de logística (estoque, frete e entrega). Confira antes de baixar o lance.</div>' : '')
         + '<div class="ref cx"><div><span>Teto</span><b>' + T(it.teto) + '</b></div><div class=piso><span>Piso (mínimo)</span><b>' + R(it.piso) + '</b></div><div><span>Posso baixar</span><b>' + (it.teto != null && it.piso != null && it.piso <= it.teto + 0.004 ? R(C2(fl2(it.teto) - it.piso)) : '—') + '</b></div></div>'
         + '<div class="in cx" id=w' + it.id + '><button type=button data-s=-1>−</button><input id=i' + it.id + ' inputmode=decimal autocomplete=off placeholder="Meu lance (unit.)"><button type=button data-s=1>+</button></div>'
         + '<div class="st cx"><button type=button data-d=-0.01>−0,01</button><button type=button data-d=-0.1>−0,10</button><button type=button data-d=-1>−1,00</button><button class=pz type=button data-p=1>Piso</button></div><div class="res cx" id=r' + it.id + '></div>'
         + '<div class="fx cx"><button class=gv type=button data-v=1>🏆 Venci</button><button class=gp type=button data-f=1>Já foi</button></div>';
-      var i = s.querySelector('input'); i.value = V[it.id] == null ? '' : N(V[it.id]);
+      var i = s.querySelector('input'); i.value = ef(it) == null ? '' : N(ef(it));
       i.addEventListener('input', function () { var v = P(i.value); if (v > 0) V[it.id] = v; else delete V[it.id]; sv(); pinta(it); rodape(); });
       i.addEventListener('change', function () { set(it, P(i.value), true); });
       i.addEventListener('keydown', function (e) { if (e.key === 'Enter') { set(it, P(i.value), true); i.blur(); } });
       s.addEventListener('click', function (e) {
         var b = e.target.closest('button'); if (!b) return;
         if (b.dataset.d) step(it, Number(b.dataset.d)); else if (b.dataset.s) step(it, Number(b.dataset.s) * 0.01);
-        else if (b.dataset.p && it.piso != null) set(it, it.piso, true); else if (b.dataset.v) venci(it); else if (b.dataset.f) foi(it); else if (b.dataset.o) reabre(it);
+        else if (b.dataset.k) { var n = s.querySelector('.rkn'); if (n) n.hidden = !n.hidden; } else if (b.dataset.p && it.piso != null) set(it, it.piso, true); else if (b.dataset.v) venci(it); else if (b.dataset.f) foi(it); else if (b.dataset.o) reabre(it);
       });
       return s;
     }
@@ -5618,8 +5620,8 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
       D.itens.forEach(function (it) { var el = document.getElementById('c' + it.id); el.style.display = !q || el.dataset.n === q || (it.lote && it.lote.replace(/^0+/, '') === q) ? '' : 'none'; });
     });
     document.getElementById('lt').addEventListener('click', function () {
-      if (!confirm('Apagar todos os lances digitados aqui? (Venci / Já foi já enviados ao app não mudam.)')) return;
-      V = {}; sv(); D.itens.forEach(function (it) { document.getElementById('i' + it.id).value = ''; }); tudo();
+      if (!confirm('Voltar todos os lances ao valor do cadastro (ou ao teto)? (Venci / Já foi já enviados ao app não mudam.)')) return;
+      V = {}; sv(); D.itens.forEach(function (it) { document.getElementById('i' + it.id).value = ef(it) == null ? '' : N(ef(it)); }); tudo();
     });
   }
   function modoPregaoHtml(D) {
@@ -5630,7 +5632,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
 + 'header{position:sticky;top:0;z-index:5;background:var(--navy);color:#fff;padding:10px 14px}header b{display:block;font-size:17px}header span{font-size:12px;opacity:.8}'
 + '.bar{display:flex;gap:8px;margin-top:8px}.bar input{flex:1;min-width:0;font:inherit;font-size:17px;padding:9px 12px;border-radius:10px;border:0}.bar button{font:inherit;font-size:14px;border:0;border-radius:10px;padding:0 12px;background:rgba(255,255,255,.18);color:#fff}'
 + 'main{display:grid;gap:12px;padding:12px;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));max-width:1500px;margin:0 auto}'
-+ '.c{background:var(--card);border:2px solid var(--line);border-radius:14px;padding:12px;display:grid;gap:10px}.c.ok{border-color:var(--ok)}.c.warn{border-color:var(--warn)}.c.bad{border-color:var(--bad)}'
++ '.c{background:var(--card);border:2px solid var(--line);border-radius:14px;padding:12px;display:grid;grid-template-columns:minmax(0,1fr);gap:10px}.c.ok{border-color:var(--ok)}.c.warn{border-color:var(--warn)}.c.bad{border-color:var(--bad)}'
 + '.top{display:flex;align-items:center;gap:10px}.num{font-size:34px;font-weight:800;line-height:1;min-width:64px}.num small{display:block;font-size:11px;font-weight:600;color:var(--mut);letter-spacing:.04em}.nm{flex:1;min-width:0;color:var(--mut);font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}'
 + '.ref{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.ref div{background:#f5f7fa;border-radius:10px;padding:6px 8px;text-align:center}.ref span{display:block;font-size:11px;color:var(--mut)}.ref b{font-size:clamp(14px,4.3vw,17px);white-space:nowrap}.ref .piso{background:var(--badb)}.ref .piso b{color:var(--bad)}'
 + '.in{display:grid;grid-template-columns:52px 1fr 52px;gap:6px}.in input{font:inherit;font-size:26px;font-weight:700;text-align:center;border:2px solid var(--line);border-radius:12px;padding:8px 4px;width:100%;min-width:0}.in input:focus{outline:0;border-color:var(--navy)}.in.bad input{border-color:var(--bad);background:var(--badb)}'
@@ -5639,13 +5641,14 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
 + '.fx button{flex:1;font:inherit;font-size:15px;font-weight:700;border-radius:12px;padding:11px 4px;border:2px solid}.fx .gv{background:var(--okb);color:var(--ok);border-color:var(--ok)}.fx .gp{background:#f1f3f6;color:var(--mut);border-color:var(--line)}'
 + '.res{border-radius:12px;padding:9px 10px;font-size:14px}.res b{font-size:20px}.res.ok{background:var(--okb)}.res.warn{background:var(--warnb)}.res.bad{background:var(--badb);color:var(--bad);font-weight:700}.res.vz{background:#f5f7fa;color:var(--mut)}'
 + '.res .l{display:flex;justify-content:space-between;align-items:baseline;gap:8px}.res .s{font-size:12px;color:var(--mut);margin-top:2px}.res.bad .s{color:var(--bad)}'
++ '.rk{flex:none;border:0;background:none;padding:0;line-height:0;cursor:pointer}.c.enc .rk,.c.enc .rkn{display:none}.rkn{background:var(--warnb);color:#6b4a00;border-radius:10px;padding:7px 10px;font-size:13px}.rkn[hidden]{display:none}'
 + '.fim{display:none}.c.enc{grid-column:1/-1;padding:8px 12px;gap:0;border-width:1px;background:#f6f8fb;opacity:.85}.c.enc .cx,.c.enc .nm{display:none}.c.enc .num{font-size:22px;min-width:52px}.c.enc .num small{font-size:9px}'
 + '.c.enc .fim{display:flex;align-items:center;gap:10px;margin-left:auto}.c.enc .fim b{font-size:16px}.c.enc .fim button{font:inherit;font-size:13px;border:1px solid var(--line);background:#fff;border-radius:10px;padding:6px 10px}'
 + '.bd{font-size:12px;font-weight:700;border-radius:999px;padding:3px 10px}.bd.v{background:var(--okb);color:var(--ok)}.bd.p{background:#e4e9f0;color:var(--mut)}.c.enc.v{border-color:var(--ok)}'
 + '#encT{grid-column:1/-1;order:999;margin:6px 2px 0;font-size:13px;font-weight:700;color:var(--mut);text-transform:uppercase;letter-spacing:.05em}'
 + 'footer{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--line);padding:8px 14px calc(8px + env(safe-area-inset-bottom));font-size:14px}footer .a{display:flex;justify-content:space-between;gap:10px}footer b{font-size:18px}footer small{display:block;color:var(--mut);min-height:14px}'
 + '.vazio{grid-column:1/-1;text-align:center;color:var(--mut);padding:30px}'
-+ '</style></head><body><header><b>' + esc(D.titulo) + ' · ' + esc(D.orgao) + '</b><span id="hora"></span><div class="bar"><input id="q" inputmode="numeric" placeholder="Ir para o item nº" autocomplete="off"><button id="lt" type="button">Limpar lances</button></div></header><main id="m"><div id="encT" style="display:none"></div></main>'
++ '</style></head><body><header><b>' + esc(D.titulo) + ' · ' + esc(D.orgao) + '</b><span id="hora"></span><div class="bar"><input id="q" inputmode="numeric" placeholder="Ir para o item nº" autocomplete="off"><button id="lt" type="button">Restaurar lances</button></div></header><main id="m"><div id="encT" style="display:none"></div></main>'
 + '<footer><div class="a"><span>Venci: <b id="fn">0</b></span><span>Lucro dos vencidos: <b id="fl">R$ 0,00</b></span></div><small id="fa"></small></footer><script>('
 + modoPregaoJanela.toString() + ')(' + dados + ');<\/script></body></html>';
   }
