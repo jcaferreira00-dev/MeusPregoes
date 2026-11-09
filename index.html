@@ -1458,6 +1458,9 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
   .sheet-wide .cat-img-row > label.btn { width: 42px; min-height: 42px; padding: 0; justify-content: center; }
   .sheet-wide .cat-tit-sug { display: none; }
   .sheet-wide .lf-x { display: none; }
+  .sheet-wide [name=vencedor] { background: var(--red-soft); border: 2px solid var(--red); }
+  .sheet-wide .formgrid .input:not(textarea), .sheet-wide .formgrid select.input { height: 42px; min-height: 42px; box-sizing: border-box; padding-top: 0; padding-bottom: 0; font-size: 15px; }
+  .sheet-wide .formgrid .mny .input, .sheet-wide .formgrid .input { max-width: none; }
   .sheet-wide .field.destaque:has([name=lanceFinal]) { background: none; border: 0; padding: 0; border-radius: 0; }
   .sheet-wide .field.destaque:has([name=lanceFinal]) label { color: inherit; font-weight: inherit; }
   .sheet-wide .field.destaque [name=lanceFinal] { background: var(--amber-soft); border: 2px solid var(--amber); }
@@ -1506,7 +1509,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.141.0';
+  const APP_VERSION = '1.142.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Julgamento', 'Aguardando empenho', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -4613,7 +4616,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
         <input type="hidden" name="margem" value="${esc(v.margem)}">
         ${field({ label: 'Minha colocação na disputa', name: 'colocacao', value: v.colocacao, inputmode: 'numeric', ph: 'ex.: 3', hint: 'Em que lugar você ficou neste item (1 = primeiro).' })}
         <span hidden data-mv-home="venc"></span><div data-mv="venc">
-        ${field({ label: 'Valor do vencedor (R$ unit., se perdi)', name: 'vencedor', value: v.vencedor, inputmode: 'decimal', hint: 'Quanto quem ganhou ofertou. Alimenta a análise “Preço de quem ganhou” no Painel.' })}
+        ${field({ label: 'Valor do vencedor (R$ unit., se perdi)', labelHtml: 'Lance vencedor<span class="lf-x"> (R$ unit., se perdi)</span>', name: 'vencedor', value: v.vencedor, inputmode: 'decimal', hint: 'Quanto quem ganhou ofertou. Alimenta a análise “Preço de quem ganhou” no Painel.' })}
         </div>
       </div>`;
         openForm({ wide: true,
