@@ -16,7 +16,7 @@
 
   /* ================= 5 · ESSENCIAIS (sem isto o app não serve) ================= */
   F('lance-minimo', AR.calc, 5, 'manter', 'Lance mínimo do item',
-    `É o menor preço unitário que ainda dá a sua margem. O app soma o custo de compra, o frete do fornecedor e a parte da viagem que cabe ao item, divide pela quantidade e aplica a margem alvo (padrão da Config): mínimo = custo unitário ÷ (1 − margem − imposto), sempre arredondado para cima em centavos. Aparece no cartão, na janela do item, na guia Itens e na simulação.`,
+    `Na janela do item (v1.135.0) o lance mínimo sugerido é o do LUCRO IDEAL ganhando só este item (R$ 300 a R$ 500 conforme o tempo de estrada, ou 2× o rendimento da Selic, o que for maior); só alerta, a trava continua sendo teto e prejuízo. Antes era o menor preço que dá a margem: o app soma o custo de compra, o frete do fornecedor e a parte da viagem que cabe ao item, divide pela quantidade e aplica a margem alvo (padrão da Config): mínimo = custo unitário ÷ (1 − margem − imposto), sempre arredondado para cima em centavos. Aparece no cartão, na janela do item, na guia Itens e na simulação.`,
     { prot: true, sel: ['.dec-min', '.v-min', '.dec-big'], ev: 'Função calcItem (núcleo). Tudo o que fala de “mínimo” nasce aqui.' });
   F('rateio-viagem', AR.calc, 5, 'manter', 'Custo da viagem e rateio entre os itens',
     `Calcula a viagem (km ÷ consumo × combustível + km × desgaste + pedágio) × número de viagens e reparte entre os itens do pregão na proporção do valor da compra de cada um. Quando já existe item ganho, só os ganhos entram no rateio: perdidos e “aguardando” saem da conta, para a viagem não ficar barata demais ou o orçamento inflado.`,

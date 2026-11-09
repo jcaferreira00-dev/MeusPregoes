@@ -725,8 +725,11 @@ input.input[type=datetime-local]::-webkit-date-and-time-value, input.input[type=
   .sheet-wide textarea.input { min-height: 90px; }
   .sheet-wide .desc-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 0 20px; align-items: start; }
   .sheet-wide .desc-left > .field { display: flex; flex-direction: column; }
-  .sheet-wide #uqSlot { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 16px; }
-  .sheet-wide #uqSlot [data-mv] { min-width: 0; }
+  .sheet-wide #uqSlot { display: flex; flex-wrap: wrap; gap: 0 14px; align-items: flex-end; }
+  .sheet-wide #uqSlot [data-mv] { min-width: 0; flex: 0 0 auto; }
+  .sheet-wide #uqSlot [data-mv=un] .input, .sheet-wide #uqSlot [data-mv=qt] .input { width: 110px; }
+  .sheet-wide #uqSlot [data-mv=custo] .input, .sheet-wide #uqSlot [data-mv=frete] .input { width: 140px; }
+  .sheet-wide #uqSlot .hint { display: none; }
   .sheet-wide .desc-left > .field > textarea.input { flex: none; height: 260px; min-height: 260px; }
   .sheet-wide .cat-form { display: flex; flex-direction: column; }
   .sheet-wide .cat-form > textarea.input { margin-top: 5px; flex: none; height: 260px; min-height: 260px; }
@@ -1270,6 +1273,20 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
 .i-vals .v-lance-pc.solo-baixo, .i-mvals .v-lance.solo-baixo { background: var(--red-soft) !important; box-shadow: inset 0 0 0 1.5px var(--red); }
 .i-vals .v-lance-pc.solo-baixo b, .i-mvals .v-lance.solo-baixo b, .icard.res-venci .solo-baixo b { color: var(--red) !important; }
 .input.solo-baixo { border-color: var(--red) !important; color: var(--red); font-weight: 800; background: var(--red-soft); }
+.input.ideal-baixo { border-color: var(--amber) !important; color: #8a5a00; font-weight: 800; background: var(--amber-soft, #fff4d6); }
+.calc-det { margin: 6px 0 2px; font-size: 11.5px; color: var(--muted); }
+.calc-det > summary { cursor: pointer; list-style: none; width: max-content; padding: 2px 8px; border-radius: 999px; background: var(--card, #f1f3f6); font-weight: 700; }
+.calc-det > summary::-webkit-details-marker { display: none; }
+.pg-row { display: flex; gap: 8px; align-items: flex-end; }
+.pg-row > .field { flex: 1; min-width: 0; margin-bottom: 0; }
+.loc-btn { flex: none; width: 44px; height: 44px; padding: 0; justify-content: center; }
+.loc-btn.on { background: var(--blue-soft, #e3edfb); color: var(--blue, #1d5fbf); box-shadow: inset 0 0 0 1.5px var(--blue, #1d5fbf); }
+.mny .input { max-width: 150px; }
+.teto-slot { flex: none; display: flex; align-items: center; margin-left: 4px; }
+.teto-slot .mny, .teto-slot .field { display: flex; align-items: center; gap: 8px; margin: 0; }
+.teto-slot label { white-space: nowrap; margin: 0; min-height: 0 !important; font-weight: 700; }
+.teto-slot .input { width: 130px; }
+.teto-slot .hint { display: none; }
 @media (max-width: 600px) {
   .solo { padding: 5px 8px; font-size: 11.5px; gap: 4px 8px; flex-wrap: nowrap; }
   .solo .solo-t { font-size: 9.5px; white-space: nowrap; }
@@ -1360,6 +1377,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
   .sheet-wide .prev-ops { display: none; }
   .sheet-wide .preview .kv > .kv-lucro, .sheet-wide .preview .kv > span:not(.kv-keep), .sheet-wide .preview .prev-sit { display: none; }
   .sheet-wide .dec-big em, .sheet-wide .dec-cols em { display: none; }
+  .sheet-wide .calc-det > summary { display: none; }   /* celular: os cálculos já vêm abertos (só o que o João manteve) */
   .sheet-wide .formgrid .hint:not(#rotaItem), .sheet-wide .linkrow ~ .hint, .sheet-wide #linkBox .hint { display: none; }
   .sheet-wide .linkrow { gap: 8px; }
   .sheet-wide .formgrid > .field:not(.full) > label, .sheet-wide .formgrid > div:not(.full) > .field > label { min-height: 2.5em; display: flex; align-items: flex-end; line-height: 1.25; }
@@ -1410,7 +1428,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.136.2';
+  const APP_VERSION = '1.137.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Julgamento', 'Aguardando empenho', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -1724,8 +1742,15 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     const lucro = ref !== null ? qtd * ref * (1 - impPct) - custoTotal : null;
     const margemReal = ref ? lucro / (qtd * ref) : null;
     const lucroTeto = c.teto !== null ? qtd * c.teto * (1 - impPct) - custoTotal : null;
-    const risco = lucro === null ? '' : lucro <= 0 ? 'bad' : (minimo !== null && ref < minimo) ? 'warn' : 'ok';
-    return { entrega, extra, custoTotal, empate, minimo, lucro, lucroTeto, margemReal, risco, relevante: extra > 0.5 };
+    // lucro ideal (v1.135.0, pedido do João): só ALERTA, não trava. Vale o maior entre (a) um piso em R$ que cresce com o tempo de estrada
+    // (até 2 h: R$ 300; até 4 h: R$ 400; mais: R$ 500; ~60 km/h, km é ida e volta) e (b) 2× o que o capital renderia na Selic no prazo (o "verde" do Tesouro).
+    const kmTot = (lp && lp !== normLocal(p.cidadeUf)) ? (n0(it.kmEntrega) || n0(p.km)) * Math.max(1, it.viagensEntrega == null || it.viagensEntrega === '' ? n0(p.viagens) : n0(it.viagensEntrega)) : n0(p.km) * Math.max(1, n0(p.viagens));
+    const horas = kmTot / 60;
+    const tes = tesouro(custoTotal, null, qtd, p, cfg, impPct);
+    const lucroIdeal = Math.max(horas <= 2 ? 300 : horas <= 4 ? 400 : 500, tes ? 2 * tes.rend : 0);
+    const idealUnit = impPct < 1 ? ceil2((custoTotal + lucroIdeal) / (qtd * (1 - impPct))) : null;
+    const risco = lucro === null ? '' : lucro <= 0 ? 'bad' : (idealUnit !== null && ref < idealUnit - 0.004) ? 'warn' : 'ok';
+    return { entrega, extra, custoTotal, empate, minimo, lucro, lucroTeto, margemReal, risco, relevante: extra > 0.5, lucroIdeal, idealUnit, horas };
   }
 
   function limiteMEI(cfg) {
@@ -4440,15 +4465,19 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     const body = `
       <div class="side-col"><div id="boxLinksPreg" data-pid="${esc(v.pregaoId)}">${pregLinksHtml(v.pregaoId)}</div><div class="preview" id="prev"></div><div id="lanceSlot"></div><div class="preview prev-ops" id="prevOps"></div></div>
       <div class="formgrid">
-      ${field({ label: 'Pregão / órgão *', name: 'pregaoId', type: 'select', full: true, value: v.pregaoId, options: list.map((p) => ({ v: p.id, l: pregaoLabel(p) })) })}
+      <div class="full pg-row">${field({ label: 'Pregão / órgão *', name: 'pregaoId', type: 'select', full: true, value: v.pregaoId, options: list.map((p) => ({ v: p.id, l: pregaoLabel(p) })) })}
+        <button type="button" class="btn ibtn loc-btn${String(v.localEntrega || '').trim() ? ' on' : ''}" data-loc="abrir" id="locBtn" title="${esc(String(v.localEntrega || '').trim() ? 'Local de entrega deste item: ' + v.localEntrega : 'Local de entrega: vazio = o do edital. Toque para informar outro local só deste item')}" aria-label="Local de entrega deste item">${icon('pin')}</button></div>
       <div id="boxEntrega" class="full" data-pid="${esc(v.pregaoId)}">${entregaSelectHtml(v.pregaoId, v.entregaId)}</div>
-      ${field({ label: 'Local de entrega deste item', name: 'localEntrega', full: true, value: v.localEntrega, ph: 'vazio = local do pregão', hint: 'Por padrão o custo da entrega usa o local do pregão. Preencha só se este item for para outro local (cidade/UF ou endereço).' })}
-      <div id="boxLocalItem" class="hidden full"><div class="formgrid">
-        ${field({ label: 'Km (ida e volta)', name: 'kmEntrega', value: v.kmEntrega, inputmode: 'decimal' })}
-        ${field({ label: 'Nº de viagens', name: 'viagensEntrega', value: v.viagensEntrega, inputmode: 'numeric', ph: '1' })}
-        ${field({ label: 'Pedágio por viagem (R$)', name: 'pedagioEntrega', value: v.pedagioEntrega, inputmode: 'decimal' })}
-        <div class="field"><div class="hint" id="rotaItem" role="status" aria-live="polite"></div><button type="button" class="btn sm" data-rota-item="calc" style="margin-top:6px">Recalcular trajeto</button></div>
-      </div><div class="hint" style="margin:-4px 0 12px">Itens com o mesmo local de entrega dividem o custo desta viagem entre si.</div></div>
+      <div class="altpop" id="locPop" hidden role="dialog" aria-modal="true" aria-label="Local de entrega deste item"><div class="altpop-box">
+        <div class="altpop-hd"><b>Local de entrega deste item</b><button type="button" class="btn ghost sm" data-loc="fechar" aria-label="Fechar">✕</button></div>
+        ${field({ label: 'Endereço ou cidade/UF', name: 'localEntrega', full: true, value: v.localEntrega, ph: 'vazio = local de entrega do edital', hint: 'Normalmente fica vazio e vale o local do edital. Preencha só se este item for para outro local.' })}
+        <div id="boxLocalItem" class="hidden full"><div class="formgrid">
+          ${field({ label: 'Km (ida e volta)', name: 'kmEntrega', value: v.kmEntrega, inputmode: 'decimal' })}
+          ${field({ label: 'Nº de viagens', name: 'viagensEntrega', value: v.viagensEntrega, inputmode: 'numeric', ph: '1' })}
+          ${field({ label: 'Pedágio por viagem (R$)', name: 'pedagioEntrega', value: v.pedagioEntrega, inputmode: 'decimal' })}
+          <div class="field"><div class="hint" id="rotaItem" role="status" aria-live="polite"></div><button type="button" class="btn sm" data-rota-item="calc" style="margin-top:6px">Recalcular trajeto</button></div>
+        </div><div class="hint" style="margin:-4px 0 12px">Itens com o mesmo local de entrega dividem o custo desta viagem entre si.</div></div>
+        <button type="button" class="btn primary block" data-loc="fechar">OK</button></div></div>
       ${field({ label: 'Item que vou comprar *', name: 'descricao', full: true, value: v.descricao, ph: 'ex.: Caixa organizadora plástica 30 L' })}
         ${field({ label: 'Nº do lote', name: 'loteEdital', value: v.loteEdital, ph: 'ex.: 1', hint: 'Vazio = sai só o item' })}
         ${field({ label: 'Nº do item', name: 'itemEdital', value: v.itemEdital, ph: 'ex.: 04', hint: 'Sai “LOTE 01 - ITEM 04” no PDF (1 vira 01 sozinho)' })}
@@ -4465,7 +4494,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
         <div class="cat-form">
           <label class="lbl">Descritivo do item ofertado * <span class="tiny muted" style="font-weight:600">· é o mesmo do catálogo (também dá para editar lá)</span></label>
           <textarea class="input" name="catalogoDesc" rows="5" spellcheck="true" lang="pt-BR" autocorrect="on" placeholder="Descrição pormenorizada do produto (características técnicas, medidas, material, composição, normas, garantia…)">${esc(v.catalogoDesc)}</textarea>
-          <div class="cat-tits"><div class="cat-tit-add"><input class="input" data-ftit-in placeholder="Título (ex.: Marca, Modelo, Voltagem)" autocapitalize="characters" enterkeyhint="done"><button type="button" class="btn sm primary" data-ftit-add title="Incluir título na descrição" aria-label="Incluir título">${icon('plus', 'sm')}</button></div>
+          <div class="cat-tits"><div class="cat-tit-add"><input class="input" data-ftit-in placeholder="Título (ex.: Marca, Modelo, Voltagem)" autocapitalize="characters" enterkeyhint="done"><button type="button" class="btn sm primary" data-ftit-add title="Incluir título na descrição" aria-label="Incluir título">${icon('plus', 'sm')}</button><div id="tetoSlot" class="teto-slot"></div></div>
             <div class="cat-tit-sug" data-ftit-sug></div></div>
           <div class="cat-img-row">${id ? `<label class="btn sm" style="cursor:pointer">${icon('image', 'sm')} Incluir imagem<input type="file" accept="image/png,image/jpeg,image/webp" multiple data-foto-form="${esc(id)}" class="sr-only" style="position:absolute;width:1px;height:1px;opacity:0;overflow:hidden"></label>` : '<span class="tiny muted">Salve o item uma vez para poder incluir imagens.</span>'}${id ? `<div class="cat-thumbs" data-cat-thumbs="${esc(id)}"></div>` : ''}</div>
                   </div>
@@ -4476,9 +4505,15 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
         <span hidden data-mv-home="qt"></span><div data-mv="qt">
         ${field({ label: 'Quantidade *', name: 'qtd', value: v.qtd, inputmode: 'decimal' })}
         </div>
-        ${field({ label: 'Custo unit. (R$) *', name: 'custo', value: v.custo, inputmode: 'decimal', hint: 'O que eu vou pagar' })}
-        ${field({ label: 'Frete do fornecedor (R$, total do item)', name: 'frete', value: v.frete, inputmode: 'decimal' })}
-        ${field({ label: 'Valor unit. do edital (teto)', name: 'teto', value: v.teto, inputmode: 'decimal', hint: 'Máximo que o órgão aceita', full: true })}
+        <span hidden data-mv-home="custo"></span><div data-mv="custo" class="mny">
+        ${field({ label: 'Custo unit. (R$) *', name: 'custo', value: v.custo, inputmode: 'decimal' })}
+        </div>
+        <span hidden data-mv-home="frete"></span><div data-mv="frete" class="mny">
+        ${field({ label: 'Frete (R$, total)', name: 'frete', value: v.frete, inputmode: 'decimal' })}
+        </div>
+        <span hidden data-mv-home="teto"></span><div data-mv="teto" class="mny full">
+        ${field({ label: 'Teto do edital (R$ unit.)', name: 'teto', value: v.teto, inputmode: 'decimal' })}
+        </div>
         <span hidden data-mv-home="lance"></span><div class="full" data-mv="lance">
         ${field({ label: 'Lance final (R$ unit., opcional)', name: 'lanceFinal', value: v.lanceFinal, inputmode: 'decimal', full: true, cls: 'destaque', hint: 'Preenchido, é este o valor que sai na proposta em PDF. Vazio = sai o teto do edital.' })}
         </div>
@@ -4496,7 +4531,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
           <button type="button" class="btn primary block" data-alt="fechar">OK</button></div></div>
         ${field({ label: 'Observações do item', name: 'obs', type: 'textarea', value: v.obs, full: true, ph: 'Ex.: cotar o frete amanhã; não consegui cotar com o fornecedor Y', hint: 'Aparece no cartão do pregão (guia Pregões) e no cartão do item.' })}
         <div class="full"><label class="switch"><span>Posso ganhar<small class="hint" style="display:block;font-weight:500">Marque se ficou perto do 1º colocado neste item e ainda é possível ganhar. Dá para filtrar no Dashboard.</small></span><input type="checkbox" name="possivelGanhar"${v.possivelGanhar ? ' checked' : ''}></label></div>
-        ${field({ label: 'Minha margem (%)', name: 'margem', value: v.margem, inputmode: 'decimal', ph: 'padrão: ' + C.numBR(cfg.margemPadrao * 100, 2).replace(',00', '') + '%', hint: 'Vazio = margem padrão' })}
+        <input type="hidden" name="margem" value="${esc(v.margem)}">
         ${field({ label: 'Minha colocação na disputa', name: 'colocacao', value: v.colocacao, inputmode: 'numeric', ph: 'ex.: 3', hint: 'Em que lugar você ficou neste item (1 = primeiro).' })}
         <span hidden data-mv-home="venc"></span><div data-mv="venc">
         ${field({ label: 'Valor do vencedor (R$ unit., se perdi)', name: 'vencedor', value: v.vencedor, inputmode: 'decimal', hint: 'Quanto quem ganhou ofertou. Alimenta a análise “Preço de quem ganhou” no Painel.' })}
@@ -4506,9 +4541,14 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
       key: 'item:' + (id || 'novo'), title: id ? 'Editar item' : 'Novo item', body, values: v,
       onMount: (form) => {
         // PC: lance final e valor do vencedor ocupam a coluna da esquerda (abaixo do resumo); celular: ficam no lugar de sempre
-        { const slot = $('#lanceSlot', form), uq = $('#uqSlot', form), mq = window.matchMedia('(min-width: 900px)');
+        { const slot = $('#lanceSlot', form), uq = $('#uqSlot', form), tt = $('#tetoSlot', form), mq = window.matchMedia('(min-width: 900px)');
           const mqL = window.matchMedia('(min-width: 1200px)');   // tela dividida (900–1199 px): marca e modelo ficam no formulário
-          const coloca = () => { if (!form.isConnected) return; ['lance', 'venc', 'marca', 'modelo', 'un', 'qt'].forEach((k) => { const w = $('[data-mv="' + k + '"]', form), h = $('[data-mv-home="' + k + '"]', form); if (!w || !h) return; const vai = mq.matches && (k === 'marca' || k === 'modelo' ? mqL.matches : true); if (vai) (k === 'un' || k === 'qt' ? uq : slot).appendChild(w); else h.after(w); }); };
+          const coloca = () => { if (!form.isConnected) return; ['lance', 'venc', 'marca', 'modelo', 'un', 'qt', 'custo', 'frete', 'teto'].forEach((k) => { const w = $('[data-mv="' + k + '"]', form), h = $('[data-mv-home="' + k + '"]', form); if (!w || !h) return; const vai = mq.matches && (k === 'marca' || k === 'modelo' ? mqL.matches : true); if (vai) (k === 'teto' ? tt : k === 'un' || k === 'qt' || k === 'custo' || k === 'frete' ? uq : slot).appendChild(w); else h.after(w); }); };
+          // GPS do local de entrega: popup com o endereço; o botão acende quando há local próprio
+          const locP = $('#locPop', form), locB = $('#locBtn', form), locI = $('[name=localEntrega]', form);
+          const locPinta = () => { const t = String(locI.value || '').trim(); locB.classList.toggle('on', !!t); locB.title = t ? 'Local de entrega deste item: ' + t : 'Local de entrega: vazio = o do edital. Toque para informar outro local só deste item'; };
+          form.addEventListener('click', (e) => { const b = e.target.closest('[data-loc]'); if (!b) return; e.preventDefault(); if (b.dataset.loc === 'abrir') { locP.hidden = false; locI.focus(); } else { locP.hidden = true; locPinta(); } });
+          locI.addEventListener('input', locPinta);
           coloca(); [mq, mqL].forEach((m) => { if (m.addEventListener) m.addEventListener('change', coloca); else m.addListener(coloca); }); }
         // imagens e descritivo do catálogo dentro do item (a opção da guia Proposta continua existindo)
         const taC = $('[name=catalogoDesc]', form);
@@ -4627,8 +4667,8 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
         const bx = $('#boxEntrega', form);
         if (bx && bx.dataset.pid !== x.pregaoId) { bx.dataset.pid = x.pregaoId; bx.innerHTML = entregaSelectHtml(x.pregaoId, ''); x = readForm(form); }
         const c = C.previewItem(store.get(), itemFromForm(x, id));
-        { const lf = $('[name=lanceFinal]', form), lv = C.parseBR(x.lanceFinal), b = abaixoSolo(c, lv);
-          if (lf) { lf.classList.toggle('solo-baixo', b); lf.title = b ? 'Abaixo do mínimo se ganhar só este item: ' + C.brl(soloMin(c)) : ''; } }
+        { const lf = $('[name=lanceFinal]', form), lv = C.parseBR(x.lanceFinal), b = abaixoSolo(c, lv), bi = !b && abaixoIdeal(c, lv);
+          if (lf) { lf.classList.toggle('solo-baixo', b); lf.classList.toggle('ideal-baixo', bi); lf.title = b ? 'Abaixo do mínimo se ganhar só este item: ' + C.brl(soloMin(c)) : bi ? 'Com lucro, mas abaixo do ideal ganhando só este: ' + C.brl(idealDe(c).idealUnit) : ''; } }
         const el = $('#prev', form);
         const semKm = pregaoSemKm(ph) && !String(x.localEntrega || '').trim();
         const avisoKm = semKm ? `<div class="alert warn" style="margin-bottom:8px">${icon('alert', 'sm')}<div class="grow"><b>Pregão sem km da entrega:</b> o app não está contando a viagem (combustível e desgaste) nem o "se ganhar só este". Informe o km (ida e volta) e as viagens no cadastro do pregão.</div></div>` : '';
@@ -4643,10 +4683,10 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
         if (!c || c.minimo == null) { el.innerHTML = `<div class="small muted">Informe quantidade e custo para ver o valor mínimo da proposta.</div>${elOps ? '' : dica}`; return; }
         const bad = c.sitTipo === 'bad';
         el.innerHTML = `${avisoKm}${decisaoHtml(c)}
-          <div class="kv"><span>Custo unit. final <b>${C.brl(c.custoUnit)}</b></span><span>Entrega rateada <b>${C.brl(c.entrega)}</b></span>
+          <details class="calc-det"${window.matchMedia && window.matchMedia('(max-width: 899px)').matches ? ' open' : ''}><summary>Ver cálculos</summary><div class="kv"><span>Custo unit. final <b>${C.brl(c.custoUnit)}</b></span><span>Entrega rateada <b>${C.brl(c.entrega)}</b></span>
           ${(() => { const d = decisao(c); return (d.min != null && c.teto ? `<span class="kv-keep">Posso baixar do teto até o mínimo <b>${C.brl(c.teto - d.min)} (${C.pct(1 - d.min / c.teto, 0)})</b></span>` : '') + `<span class="kv-keep kv-lucro">Lucro ${c.lance !== null ? 'no lance' : 'pelo teto'} <b style="color:${c.lucro != null && c.lucro < 0 ? 'var(--red)' : 'var(--ink)'}">${C.brl(c.lucro)}</b></span>` + tesouroTxt(c.tesouro); })()}
-          ${c.impostoTotal > 0 ? `<span>Impostos <b>${C.brl(c.impostoTotal)}</b></span>` : ''}</div>
-          ${c.situacao ? `<div class="prev-sit"><span class="badge ${c.sitTipo}">${esc(c.situacao)}</span> ${estrelasHtml(c)} <span class="tiny muted">Lucro previsto ${C.brl(c.lucro)}</span></div>` : ''}${elOps ? '' : dica}`;
+          ${c.impostoTotal > 0 ? `<span>Impostos <b>${C.brl(c.impostoTotal)}</b></span>` : ''}</div></details>
+          ${c.situacao ? `<div class="prev-sit">${c.sitTipo === 'bad' ? `<span class="badge ${c.sitTipo}">${esc(c.situacao)}</span> ` : ''}${estrelasHtml(c)} <span class="tiny muted">Lucro previsto ${C.brl(c.lucro)}</span></div>` : ''}${elOps ? '' : dica}`;
       },
       onSave: (x, form) => {
         $$('.input.err', form).forEach((e) => e.classList.remove('err'));
@@ -4668,6 +4708,14 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
           if (abaixoSolo(cs, it.lanceFinal)) {
             confirmar('Lance abaixo do mínimo', avisoSoloTxt(cs, it.lanceFinal) + '\nSalvar mesmo assim?', 'Salvar mesmo assim', true)
               .then((ok) => { if (ok) { form.dataset.okSolo = String(it.lanceFinal); form.requestSubmit(); } else { const f = $('[name=lanceFinal]', form); if (f) { f.focus(); f.select(); } } });
+            return false;
+          }
+        }
+        if (it.lanceFinal != null && form.dataset.okIdeal !== String(it.lanceFinal)) {
+          const ci = C.previewItem(store.get(), it);
+          if (abaixoIdeal(ci, it.lanceFinal)) {
+            confirmar('Lucro abaixo do ideal', avisoIdealTxt(ci, it.lanceFinal) + '\nManter este lance?', 'Manter este lance', false)
+              .then((ok) => { if (ok) { form.dataset.okIdeal = String(it.lanceFinal); form.requestSubmit(); } else { const f = $('[name=lanceFinal]', form); if (f) { f.focus(); f.select(); } } });
             return false;
           }
         }
@@ -5385,14 +5433,20 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
   function decisao(c) {
     const cabe = (v) => v != null && (c.teto == null || v <= c.teto + 0.004);
     const s = soloMin(c) != null ? c.solo : null;
+    const s0 = c.solo && c.solo.idealUnit != null && !c.ganhou && !c.desclass && c.resultado !== 'perdi' ? c.solo : null;   // lucro ideal vale mesmo quando a viagem não pesa mais num item só
     const comLance = c.lance !== null, ref = comLance ? 'no lance' : 'pelo teto';
     let tipo, txt, min, minSub;
-    if (!s) {
+    if (!s && s0) {
+      if (cabe(s0.idealUnit)) { tipo = 'ok'; min = s0.idealUnit; minSub = 'lucro ideal ' + C.brl(s0.lucroIdeal); txt = 'Seguro: cobre o lucro ideal'; }
+      else if (cabe(s0.empate)) { tipo = 'warn'; min = s0.empate; minSub = 'só evita prejuízo'; txt = 'Atenção: o teto não alcança o lucro ideal de ' + C.brl(s0.lucroIdeal) + '; este valor só evita o prejuízo'; }
+      else { tipo = 'bad'; min = null; minSub = 'nem o teto cobre'; txt = 'Risco: dá prejuízo mesmo vendendo pelo teto'; }
+    }
+    else if (!s) {
       min = c.minimo; minSub = 'meta ' + C.pct(c.margem, 0); tipo = min == null || c.teto == null ? '' : min > c.teto ? 'warn' : 'ok'; txt = tipo === 'warn' ? 'Atenção: a meta de ' + C.pct(c.margem, 0) + ' não cabe no teto' : tipo === 'ok' ? 'Seguro: cobre a meta' : '';
       if (tipo === 'warn') { const emp = c.custoUnit != null ? Math.ceil(c.custoUnit * 100 - 1e-6) / 100 : null; if (cabe(emp)) { min = emp; minSub = 'sem prejuízo (a meta não cabe no teto)'; } else { min = null; tipo = 'bad'; txt = 'Risco: dá prejuízo mesmo vendendo pelo teto'; } }
     }
-    else if (cabe(s.minimo)) { tipo = 'ok'; min = s.minimo; minSub = 'meta ' + C.pct(c.margem, 0) + ', mesmo ganhando só este'; txt = 'Seguro: mesmo ganhando só este item, cobre a viagem e a meta'; }
-    else if (cabe(s.empate)) { tipo = 'warn'; min = s.empate; minSub = 'sem prejuízo ganhando só este'; txt = 'Atenção: ganhando só este, não dá prejuízo, mas fica abaixo da meta de ' + C.pct(c.margem, 0); }
+    else if (cabe(s.idealUnit)) { tipo = 'ok'; min = s.idealUnit; minSub = 'lucro ideal ' + C.brl(s.lucroIdeal) + ', mesmo ganhando só este'; txt = 'Seguro: mesmo ganhando só este item, cobre a viagem e o lucro ideal'; }
+    else if (cabe(s.empate)) { tipo = 'warn'; min = s.empate; minSub = 'só evita prejuízo ganhando só este'; txt = 'Atenção: o teto não alcança o lucro ideal de ' + C.brl(s.lucroIdeal) + ' ganhando só este; este valor só evita o prejuízo'; }
     else { tipo = 'bad'; min = null; minSub = 'nem o teto cobre se ganhar só este'; txt = 'Risco: se ganhar só este item, dá prejuízo mesmo vendendo pelo teto'; }
     const q = c.qtd || 0;
     const solo = s ? (comLance ? s.lucro : s.lucroTeto) : null;
@@ -5402,9 +5456,10 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     // com lance, a conclusão é pelo lance (não pelo teto)
     else if (comLance && s) {
       if (s.lucro <= 0) { tipo = 'bad'; txt = 'Risco: com este lance, se ganhar só este item, dá prejuízo'; }
-      else if (s.margemReal < c.margem - 0.0005) { tipo = 'warn'; txt = 'Atenção: com este lance, ganhando só este, tem lucro, mas abaixo da meta de ' + C.pct(c.margem, 0); }
-      else { tipo = 'ok'; txt = 'Seguro: com este lance, mesmo ganhando só este, cobre a viagem e a meta'; }
-    } else if (comLance) { tipo = c.lucro == null ? '' : c.lucro <= 0 ? 'bad' : c.margemReal < c.margem - 0.0005 ? 'warn' : 'ok'; txt = tipo === 'bad' ? 'Risco: este lance dá prejuízo' : tipo === 'warn' ? 'Atenção: este lance fica abaixo da meta de ' + C.pct(c.margem, 0) : tipo === 'ok' ? 'Seguro: este lance cobre a meta' : ''; }
+      else if (s.idealUnit != null && s.lucro < s.lucroIdeal - 0.5) { tipo = 'warn'; txt = 'Atenção: ganhando só este, o lucro (' + C.brl(s.lucro) + ') fica abaixo do ideal de ' + C.brl(s.lucroIdeal); }
+      else { tipo = 'ok'; txt = 'Seguro: com este lance, mesmo ganhando só este, cobre a viagem e o lucro ideal'; }
+    } else if (comLance && s0) { tipo = c.lucro == null ? '' : c.lucro <= 0 ? 'bad' : c.lucro < s0.lucroIdeal - 0.5 ? 'warn' : 'ok'; txt = tipo === 'bad' ? 'Risco: este lance dá prejuízo' : tipo === 'warn' ? 'Atenção: o lucro deste lance (' + C.brl(c.lucro) + ') fica abaixo do ideal de ' + C.brl(s0.lucroIdeal) : tipo === 'ok' ? 'Seguro: este lance cobre o lucro ideal' : ''; }
+    else if (comLance) { tipo = c.lucro == null ? '' : c.lucro <= 0 ? 'bad' : c.margemReal < c.margem - 0.0005 ? 'warn' : 'ok'; txt = tipo === 'bad' ? 'Risco: este lance dá prejuízo' : tipo === 'warn' ? 'Atenção: este lance fica abaixo da meta de ' + C.pct(c.margem, 0) : tipo === 'ok' ? 'Seguro: este lance cobre a meta' : ''; }
     return { tipo, txt, min, minSub, minTot: min != null ? Math.round(min * q * 100) / 100 : null, ref, comLance, solo, junto, s };
   }
   // lance mínimo seguro (nunca acima do teto) para tabelas e listas
@@ -5430,6 +5485,10 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
   // lance abaixo do mínimo "se ganhar só este" (sem prejuízo): pede confirmação e fica vermelho
   const soloMin = (c) => (c && c.solo && c.solo.relevante && c.solo.empate != null && !c.ganhou && !c.desclass && c.resultado !== 'perdi') ? c.solo.empate : null;
   const abaixoSolo = (c, v) => { const m = soloMin(c); return m != null && v != null && v > 0 && v < m - 0.004; };
+  // lance com lucro, mas abaixo do lucro ideal ganhando só este (só aviso: cor âmbar + pergunta ao salvar)
+  const idealDe = (c) => (c && c.solo && c.solo.idealUnit != null && !c.ganhou && !c.desclass && c.resultado !== 'perdi') ? c.solo : null;
+  const abaixoIdeal = (c, v) => { const m = idealDe(c); return m != null && v != null && v > 0 && v >= m.empate - 0.004 && v < m.idealUnit - 0.004 && !(c.teto != null && v > c.teto + 0.004); };
+  const avisoIdealTxt = (c, v) => { const m = idealDe(c); return `Com o lance de ${C.brl(v)}, ganhando só este item, o lucro fica abaixo do ideal (${C.brl(m.lucroIdeal)}, pelo tempo de estrada e pelo rendimento da Selic). O lance que alcança o ideal é ${C.brl(m.idealUnit)}.`; };
   const avisoSoloTxt = (c, v) => `O lance de ${C.brl(v)} está abaixo do mínimo para ganhar só este item (${C.brl(soloMin(c))}). Se for o único item ganho, a entrega de carro fica toda nele e dá prejuízo, e você pode ter que pedir desclassificação.`;
 
   // se ganhar só este item, ele paga a viagem inteira: lance mínimo sem prejuízo e com a margem
@@ -5553,7 +5612,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
       const c = R.iMap.get(it.id); if (!c) continue;
       const s = c.solo;
       const piso = s && s.empate != null ? s.empate : (impPct < 1 && c.custoUnit != null && c.custoUnit > 0 ? C.ceil2(c.custoUnit / (1 - impPct)) : null);
-      const meta = s && s.minimo != null ? s.minimo : c.minimo;
+      const meta = s && s.idealUnit != null ? s.idealUnit : (s && s.minimo != null ? s.minimo : c.minimo);
       const riscos = [], q = C.n0(it.qtd), txt = (String(it.descricao || '') + ' ' + String(it.descEdital || '')).toLowerCase();
       if (q >= 30) riscos.push(q + ' unidades: logística (estoque, frete e entrega).');
       if (c.custoTotal >= 3000) riscos.push('Alto valor: ' + C.brl(c.custoTotal) + ' para comprar (capital parado e prejuízo se algo der errado).');
