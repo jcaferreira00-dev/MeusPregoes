@@ -260,6 +260,16 @@ input[type=range] { width: 100%; accent-color: var(--blue); }
 .side-col { display: contents; }
 .pv-lks { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 12px; }
 .pv-lks:empty, #boxLinksPreg:empty { display: none; }
+#boxLinksPreg { display: contents; }
+.loc-btn.lk-ic { color: var(--blue, #1d5fbf); }
+/* seletor de pregão: setinha própria (botão azul no fim da caixa), no lugar da seta pequena do navegador */
+.pg-row select.input { -webkit-appearance: none; appearance: none; cursor: pointer; padding-right: 52px !important;
+  background-color: var(--card, #fff);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%231d5fbf' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"), linear-gradient(var(--line, #dfe3ea), var(--line, #dfe3ea));
+  background-repeat: no-repeat, no-repeat; background-position: right 14px center, right 44px center; background-size: 20px 20px, 1px 55%; }
+.pg-row select.input:hover { background-color: var(--blue-soft, #e3edfb); }
+@media (max-width: 899px) { .pg-row select.input { padding-right: 40px !important; background-position: right 9px center, right 34px center; } }
+@media (max-width: 899px) { .pg-row { gap: 6px; } .pg-row .loc-btn { width: 36px; height: 36px; min-height: 36px; } }
 .sheet-wide .pv-lks { margin: 0 0 10px; }
 .preview { position: sticky; top: -14px; z-index: 2; margin: -14px -16px 14px; padding: 12px 16px; background: var(--bg); border-bottom: 1px solid var(--line); display: flex; flex-direction: column; gap: 8px; }
 .preview .kv { display: flex; gap: 14px; font-size: 12px; color: var(--muted); flex-wrap: wrap; } .preview .kv b { color: var(--ink); font-variant-numeric: tabular-nums; }
@@ -691,7 +701,6 @@ input.input[type=datetime-local]::-webkit-date-and-time-value, input.input[type=
   .sheet-wide #lanceSlot [data-mv] .field > label { min-height: 0 !important; font-size: 11px; }
   .sheet-wide #lanceSlot [data-mv] .field .hint { display: none; }
   .sheet-wide #lanceSlot [data-mv] .input { min-height: 36px; padding: 6px 9px; font-size: 15px; }
-  .sheet-wide #boxLinksPreg .btn { padding: 4px 8px; font-size: 12px; min-height: 30px; }
   .sheet-wide #lanceSlot { margin-bottom: 10px; }
   .sheet-wide .prev-ops .altrow { flex-wrap: wrap; gap: 4px 8px; padding: 6px 8px; }
   .sheet-wide .prev-ops .altrow > .grow { flex: 1 1 100%; font-size: 13px; }
@@ -1289,13 +1298,41 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
 .calc-det { margin: 6px 0 2px; font-size: 11.5px; color: var(--muted); }
 .calc-det > summary { cursor: pointer; list-style: none; width: max-content; padding: 2px 8px; border-radius: 999px; background: var(--card, #f1f3f6); font-weight: 700; }
 .calc-det > summary::-webkit-details-marker { display: none; }
-.pg-row { display: flex; gap: 8px; align-items: flex-end; }
+.pg-row { display: flex; gap: 8px; align-items: flex-end; margin-bottom: 12px; }
 .pg-row > .field { flex: 1; min-width: 0; margin-bottom: 0; }
 .loc-btn { flex: none; width: 44px; height: 44px; padding: 0; justify-content: center; }
 .loc-btn.on { background: var(--blue-soft, #e3edfb); color: var(--blue, #1d5fbf); box-shadow: inset 0 0 0 1.5px var(--blue, #1d5fbf); }
 .mny .input { max-width: 150px; }
+/* tela dividida no PC (900–1199 px): caixas menores, 4 colunas, sem dicas, sem rolar à toa */
+@media (min-width: 900px) and (max-width: 1199px) {
+  .sheet-wide .formgrid { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; gap: 0 10px; }
+  .sheet-wide .formgrid .field.full:has([name=descricao]), .sheet-wide .formgrid .field.full:has([name=pregaoId]) { grid-column: 1 / -1; }
+  .sheet-wide .formgrid > .field:not(.full) { grid-column: span 1; }
+  .sheet-wide .formgrid .hint:not(#rotaItem) { display: none; }
+  .sheet-wide .formgrid .input, .sheet-wide .formgrid select.input { min-height: 36px; padding: 6px 10px; font-size: 14px; }
+  .sheet-wide .formgrid .field { margin-bottom: 8px; }
+  .sheet-wide .formgrid .field > label { min-height: 0 !important; font-size: 11.5px; }
+  .sheet-wide .pg-row { margin-bottom: 8px; }
+  .sheet-wide .loc-btn { width: 38px; height: 38px; min-height: 38px; }
+  .sheet-wide #uqSlot [data-mv=un] .input, .sheet-wide #uqSlot [data-mv=qt] .input { width: 80px; }
+  .sheet-wide #uqSlot [data-mv=custo] .input { width: 100px; }
+  .sheet-wide #uqSlot [data-mv=frete] .input { width: 90px; }
+  .sheet-wide #uqSlot { gap: 0 8px; }
+  .opc-slot #linkBox > label { display: none; }
+  .opc-slot .altc-t { display: none; }
+  .sheet-wide .opc-slot .btn.ibtn.altc[data-alt-go] { width: 40px !important; max-width: 40px !important; min-width: 40px !important; padding: 0 !important; gap: 0; justify-content: center; }
+  .sheet-wide .cat-img-row { flex-wrap: wrap; }
+  .sheet-wide .desc-left > .field > textarea.input { height: 200px; min-height: 200px; }
+}
+.opc-slot { margin-left: auto; flex: none; display: none; }
+.sheet-wide .opc-slot { display: block; }
+.opc-slot #linkBox { display: flex !important; flex-direction: row !important; align-items: center; gap: 10px; margin: 0; padding: 0; }
+.opc-slot #linkBox .hint { display: none !important; }
+.opc-slot #linkBox > label { margin: 0; white-space: nowrap; min-height: 0 !important; }
+.opc-slot .linkrow { flex-wrap: nowrap; }
+.sheet-wide .formgrid .field:has([name=descricao]) > label { min-height: 2.5em; display: flex; align-items: flex-end; line-height: 1.25; }
 .teto-slot { flex: none; display: flex; align-items: center; margin-left: 4px; }
-.teto-slot .mny, .teto-slot .field { display: flex; align-items: center; gap: 8px; margin: 0; }
+.teto-slot .mny, .teto-slot .field { display: flex; flex-direction: row !important; align-items: center; gap: 8px; margin: 0; }
 .teto-slot label { white-space: nowrap; margin: 0; min-height: 0 !important; font-weight: 700; }
 .teto-slot .input { width: 130px; }
 .teto-slot .hint { display: none; }
@@ -1440,7 +1477,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.138.0';
+  const APP_VERSION = '1.139.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Julgamento', 'Aguardando empenho', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -4456,9 +4493,9 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     const p = store.get().pregoes.find((q) => q.id === pid);
     if (!p) return '';
     const u = (v) => { v = String(v || '').trim(); return v ? (/^https?:\/\//i.test(v) ? v : 'https://' + v) : ''; };
-    const bt = (href, ic, txt, tip) => href ? `<a class="btn sm" href="${esc(href)}" target="_blank" rel="noopener noreferrer" data-act="link-externo" title="${tip}">${icon(ic, 'sm')} ${txt}</a>` : '';
+    const bt = (href, ic, txt, tip) => href ? `<a class="btn ibtn loc-btn lk-ic" href="${esc(href)}" target="_blank" rel="noopener noreferrer" data-act="link-externo" title="${tip}" aria-label="${tip}">${icon(ic)}</a>` : '';
     const h = bt(u(p.link), 'pdf', 'Edital', 'Abrir o edital') + bt(u(p.linkProposta), 'link', 'Proposta / lances', 'Site para enviar a proposta e dar lances') + bt(u(p.linkLicitacao), 'web', 'Site do pregão', 'Página do pregão (BLL, gov.br, PNCP…)');
-    return h ? `<div class="pv-lks">${h}</div>` : '';
+    return h;
   }
   function openItemForm(id, pregaoId) {
     const list = activePregoes();
@@ -4475,9 +4512,10 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
           <div class="full"><button type="button" class="btn ghost sm" data-alt="limpar" data-alt-n="${n}">${icon('trash', 'sm')} Remover esta opção</button></div></div>`;
     const altQtd = ALTS.filter((n) => v['alt' + n + 'Loja'] || v['alt' + n + 'Link'] || v['alt' + n + 'Custo'] || v['alt' + n + 'Frete']).length;
     const body = `
-      <div class="side-col"><div id="boxLinksPreg" data-pid="${esc(v.pregaoId)}">${pregLinksHtml(v.pregaoId)}</div><div class="preview" id="prev"></div><div id="lanceSlot"></div><div class="preview prev-ops" id="prevOps"></div></div>
+      <div class="side-col"><div class="preview" id="prev"></div><div id="lanceSlot"></div><div class="preview prev-ops" id="prevOps"></div></div>
       <div class="formgrid">
       <div class="full pg-row">${field({ label: 'Pregão / órgão *', name: 'pregaoId', type: 'select', full: true, value: v.pregaoId, options: list.map((p) => ({ v: p.id, l: pregaoLabel(p) })) })}
+        <div id="boxLinksPreg" data-pid="${esc(v.pregaoId)}">${pregLinksHtml(v.pregaoId)}</div>
         <button type="button" class="btn ibtn loc-btn${String(v.localEntrega || '').trim() ? ' on' : ''}" data-loc="abrir" id="locBtn" title="${esc(String(v.localEntrega || '').trim() ? 'Local de entrega deste item: ' + v.localEntrega : 'Local de entrega: vazio = o do edital. Toque para informar outro local só deste item')}" aria-label="Local de entrega deste item">${icon('pin')}</button></div>
       <div id="boxEntrega" class="full" data-pid="${esc(v.pregaoId)}">${entregaSelectHtml(v.pregaoId, v.entregaId)}</div>
       <div class="altpop" id="locPop" hidden role="dialog" aria-modal="true" aria-label="Local de entrega deste item"><div class="altpop-box">
@@ -4508,7 +4546,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
           <textarea class="input" name="catalogoDesc" rows="5" spellcheck="true" lang="pt-BR" autocorrect="on" placeholder="Descrição pormenorizada do produto (características técnicas, medidas, material, composição, normas, garantia…)">${esc(v.catalogoDesc)}</textarea>
           <div class="cat-tits"><div class="cat-tit-add"><input class="input" data-ftit-in placeholder="Título (ex.: Marca, Modelo, Voltagem)" autocapitalize="characters" enterkeyhint="done"><button type="button" class="btn sm primary" data-ftit-add title="Incluir título na descrição" aria-label="Incluir título">${icon('plus', 'sm')}</button><div id="tetoSlot" class="teto-slot"></div></div>
             <div class="cat-tit-sug" data-ftit-sug></div></div>
-          <div class="cat-img-row">${id ? `<label class="btn sm" style="cursor:pointer">${icon('image', 'sm')} Incluir imagem<input type="file" accept="image/png,image/jpeg,image/webp" multiple data-foto-form="${esc(id)}" class="sr-only" style="position:absolute;width:1px;height:1px;opacity:0;overflow:hidden"></label>` : '<span class="tiny muted">Salve o item uma vez para poder incluir imagens.</span>'}${id ? `<div class="cat-thumbs" data-cat-thumbs="${esc(id)}"></div>` : ''}</div>
+          <div class="cat-img-row"><span class="opc-home" hidden></span>${id ? `<label class="btn sm" style="cursor:pointer">${icon('image', 'sm')} Incluir imagem<input type="file" accept="image/png,image/jpeg,image/webp" multiple data-foto-form="${esc(id)}" class="sr-only" style="position:absolute;width:1px;height:1px;opacity:0;overflow:hidden"></label>` : '<span class="tiny muted">Salve o item uma vez para poder incluir imagens.</span>'}<div id="opcSlot" class="opc-slot"></div>${id ? `<div class="cat-thumbs" data-cat-thumbs="${esc(id)}"></div>` : ''}</div>
                   </div>
         </div>
         <span hidden data-mv-home="un"></span><div data-mv="un">
@@ -4524,7 +4562,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
         ${field({ label: 'Frete (R$, total)', name: 'frete', value: v.frete, inputmode: 'decimal' })}
         </div>
         <span hidden data-mv-home="teto"></span><div data-mv="teto" class="mny full">
-        ${field({ label: 'Teto do edital (R$ unit.)', name: 'teto', value: v.teto, inputmode: 'decimal' })}
+        ${field({ label: 'Teto', name: 'teto', value: v.teto, inputmode: 'decimal' })}
         </div>
         <span hidden data-mv-home="lance"></span><div class="full" data-mv="lance">
         ${field({ label: 'Lance final (R$ unit., opcional)', name: 'lanceFinal', value: v.lanceFinal, inputmode: 'decimal', full: true, cls: 'destaque', hint: 'Preenchido, é este o valor que sai na proposta em PDF. Vazio = sai o teto do edital.' })}
@@ -4556,6 +4594,9 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
         { const slot = $('#lanceSlot', form), uq = $('#uqSlot', form), tt = $('#tetoSlot', form), mq = window.matchMedia('(min-width: 900px)');
           const mqL = window.matchMedia('(min-width: 1200px)');   // tela dividida (900–1199 px): marca e modelo ficam no formulário
           const coloca = () => { if (!form.isConnected) return; ['lance', 'venc', 'marca', 'modelo', 'un', 'qt', 'custo', 'frete', 'teto'].forEach((k) => { const w = $('[data-mv="' + k + '"]', form), h = $('[data-mv-home="' + k + '"]', form); if (!w || !h) return; const vai = mq.matches && (k === 'marca' || k === 'modelo' ? mqL.matches : true); if (vai) (k === 'teto' ? tt : k === 'un' || k === 'qt' || k === 'custo' || k === 'frete' ? uq : slot).appendChild(w); else h.after(w); }); };
+          // PC: "Opções de compra" sobe para a linha do "Incluir imagem"
+          { const lb = $('#linkBox', form), oh = document.createElement('span'), os = $('#opcSlot', form); oh.hidden = true; lb.before(oh);
+            const mvO = () => { if (!form.isConnected) return; if (mq.matches) os.appendChild(lb); else oh.after(lb); }; mvO(); if (mq.addEventListener) mq.addEventListener('change', mvO); else mq.addListener(mvO); }
           // GPS do local de entrega: popup com o endereço; o botão acende quando há local próprio
           const locP = $('#locPop', form), locB = $('#locBtn', form), locI = $('[name=localEntrega]', form);
           const locPinta = () => { const t = String(locI.value || '').trim(); locB.classList.toggle('on', !!t); locB.title = t ? 'Local de entrega deste item: ' + t : 'Local de entrega: vazio = o do edital. Toque para informar outro local só deste item'; };
