@@ -1,0 +1,30 @@
+{
+ "pregoes": [
+  {
+   "id": "pz_ortigueira_104_2026",
+   "numero": "104/2026",
+   "orgao": "Prefeitura Municipal de Ortigueira",
+   "plataforma": "BLL",
+   "cidadeUf": "Ortigueira/PR",
+   "prazoPropostas": "2026-11-11T23:59",
+   "sessao": "2026-11-12T09:30",
+   "status": "Desisti",
+   "tipoCompra": "SRP",
+   "km": 112,
+   "viagens": 1,
+   "exigencias": "",
+   "obs": "DESISTI (analisado em 09/11/2026 com o edital completo, cotação em varejo): objeto = materiais descartáveis para acondicionar refeições do Centro de Saúde 24h (marmitas, copos, colheres, sacos), Registro de Preços, exclusivo ME/EPP/MEI, menor preço por item. Não compensa no varejo: colher/copo dão prejuízo, marmita fica em ~0–5% e o saco em ~18% (não confirmado); o item 4 não foi cotado. Só reavaliar com orçamento de ATACADO (distribuidor de descartáveis). Propostas até 11/11/2026 23:59; lances 12/11/2026 09:30 (BLL). Processo 162/2026. Validade da proposta ≥ 60 dias (6.7). km ESTIMADO (ida e volta): conferir.",
+   "link": "",
+   "linkProposta": "",
+   "linkLicitacao": "",
+   "modeloProprio": false,
+   "linkModelo": "",
+   "entregaParcelada": false,
+   "entregaParceladaObs": "",
+   "createdAt": 1794235294889,
+   "updatedAt": 1794235294889,
+   "deleted": false
+  }
+ ],
+ "itens": []
+}
