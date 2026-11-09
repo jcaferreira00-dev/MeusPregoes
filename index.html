@@ -1448,7 +1448,6 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
   .sheet-wide .pg-row .loc-btn svg { width: 16px; height: 16px; }
   .sheet-wide .formgrid > [data-mv=teto], .sheet-wide .formgrid > [data-mv=lance] { grid-column: span 1; }
   .sheet-wide [data-mv=teto] .input, .sheet-wide [data-mv=lance] .input { width: 100%; max-width: none; }
-  .sheet-wide [data-mv=lance] .field > label { min-height: 2.5em; display: flex; align-items: flex-end; line-height: 1.25; }
   .sheet-wide .switch { padding: 4px 0; }
   .sheet-wide .switch small { display: none !important; }
   .sheet-wide .switch input { width: 36px; height: 22px; }
@@ -1462,7 +1461,9 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
   .sheet-wide .formgrid .input:not(textarea), .sheet-wide .formgrid select.input { height: 42px; min-height: 42px; box-sizing: border-box; padding-top: 0; padding-bottom: 0; font-size: 15px; }
   .sheet-wide .formgrid .mny .input, .sheet-wide .formgrid .input { max-width: none; }
   .sheet-wide .field.destaque:has([name=lanceFinal]) { background: none; border: 0; padding: 0; border-radius: 0; }
-  .sheet-wide .field.destaque:has([name=lanceFinal]) label { color: inherit; font-weight: inherit; }
+  .sheet-wide [data-mv=venc] .field { border: 0; border-radius: 0; padding: 0; }
+  .sheet-wide [data-mv=lance] .field > label, .sheet-wide [data-mv=venc] .field > label { min-height: 0; color: var(--muted); font-size: 12px; font-weight: 700; line-height: 1.25; }
+  .sheet-wide [data-mv=venc] .field > label { min-height: 2.5em; display: flex; align-items: flex-end; }
   .sheet-wide .field.destaque [name=lanceFinal] { background: var(--amber-soft); border: 2px solid var(--amber); }
   .icard .i-fin2 { display: none; }   /* sem a linha "Posso baixar do teto até o mínimo" no cartão (pedido de 09/11/2026) */
   .icard .comprar { display: grid; grid-template-columns: repeat(2, 40px); gap: 6px; align-content: start; }
@@ -1509,7 +1510,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.142.0';
+  const APP_VERSION = '1.142.1';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Julgamento', 'Aguardando empenho', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
