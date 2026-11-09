@@ -1435,6 +1435,29 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
   .sheet-wide .altc .altc-t { display: none; }
   .sheet-wide .altc[data-alt-go] .altc-n { position: absolute; bottom: 2px; right: 4px; }
 }
+/* Celular (pedido do João, 09/11/2026, v1.140.0): só o celular; PC e tela dividida não mudam.
+   Cartão do item: etiqueta do teto legível no tema escuro e Comprar só com o ícone do carrinho.
+   Janela do item: botões do pregão menores, Teto e Lance final lado a lado, "Posso ganhar" compacto sem o texto,
+   "Incluir imagem" só com o ícone e sem as sugestões de título (Marca, Modelo, Dimensões…). */
+@media (max-width: 699px) {
+  .i-tetotag { color: var(--ink); background: color-mix(in srgb, var(--ink) 9%, var(--card)); border-color: color-mix(in srgb, var(--ink) 30%, var(--line)); }
+  .icard .comprar-btn { width: 40px; min-width: 40px; padding: 0; justify-content: center; }
+  .icard .comprar-btn .ell { display: none; }
+  .sheet-wide .pg-row { gap: 5px; }
+  .sheet-wide .pg-row .loc-btn { width: 30px; min-width: 30px; height: 30px; min-height: 30px; }
+  .sheet-wide .pg-row .loc-btn svg { width: 16px; height: 16px; }
+  .sheet-wide .formgrid > [data-mv=teto], .sheet-wide .formgrid > [data-mv=lance] { grid-column: span 1; }
+  .sheet-wide [data-mv=teto] .input, .sheet-wide [data-mv=lance] .input { width: 100%; max-width: none; }
+  .sheet-wide [data-mv=lance] .field > label { min-height: 2.5em; display: flex; align-items: flex-end; line-height: 1.25; }
+  .sheet-wide .switch { padding: 4px 0; }
+  .sheet-wide .switch small { display: none !important; }
+  .sheet-wide .switch input { width: 36px; height: 22px; }
+  .sheet-wide .switch input::after { width: 16px; height: 16px; top: 3px; left: 3px; }
+  .sheet-wide .switch input:checked::after { transform: translateX(14px); }
+  .sheet-wide .cat-img-row .img-t { display: none; }
+  .sheet-wide .cat-img-row > label.btn { width: 42px; min-height: 42px; padding: 0; justify-content: center; }
+  .sheet-wide .cat-tit-sug { display: none; }
+}
 /* Guia Pregões no PC (pedido do João, 05/11/2026): cartões mais baixos — cabeçalho numa linha, órgão em 2 linhas no máximo,
    cidade/data/itens numa linha, etiquetas numa linha cada (texto inteiro no balão), números e botões compactos */
 @media (min-width: 900px) {
@@ -1477,7 +1500,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.139.0';
+  const APP_VERSION = '1.140.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Julgamento', 'Aguardando empenho', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -4546,7 +4569,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
           <textarea class="input" name="catalogoDesc" rows="5" spellcheck="true" lang="pt-BR" autocorrect="on" placeholder="Descrição pormenorizada do produto (características técnicas, medidas, material, composição, normas, garantia…)">${esc(v.catalogoDesc)}</textarea>
           <div class="cat-tits"><div class="cat-tit-add"><input class="input" data-ftit-in placeholder="Título (ex.: Marca, Modelo, Voltagem)" autocapitalize="characters" enterkeyhint="done"><button type="button" class="btn sm primary" data-ftit-add title="Incluir título na descrição" aria-label="Incluir título">${icon('plus', 'sm')}</button><div id="tetoSlot" class="teto-slot"></div></div>
             <div class="cat-tit-sug" data-ftit-sug></div></div>
-          <div class="cat-img-row"><span class="opc-home" hidden></span>${id ? `<label class="btn sm" style="cursor:pointer">${icon('image', 'sm')} Incluir imagem<input type="file" accept="image/png,image/jpeg,image/webp" multiple data-foto-form="${esc(id)}" class="sr-only" style="position:absolute;width:1px;height:1px;opacity:0;overflow:hidden"></label>` : '<span class="tiny muted">Salve o item uma vez para poder incluir imagens.</span>'}<div id="opcSlot" class="opc-slot"></div>${id ? `<div class="cat-thumbs" data-cat-thumbs="${esc(id)}"></div>` : ''}</div>
+          <div class="cat-img-row"><span class="opc-home" hidden></span>${id ? `<label class="btn sm" style="cursor:pointer" title="Incluir imagem" aria-label="Incluir imagem">${icon('image', 'sm')}<span class="img-t"> Incluir imagem</span><input type="file" accept="image/png,image/jpeg,image/webp" multiple data-foto-form="${esc(id)}" class="sr-only" style="position:absolute;width:1px;height:1px;opacity:0;overflow:hidden"></label>` : '<span class="tiny muted">Salve o item uma vez para poder incluir imagens.</span>'}<div id="opcSlot" class="opc-slot"></div>${id ? `<div class="cat-thumbs" data-cat-thumbs="${esc(id)}"></div>` : ''}</div>
                   </div>
         </div>
         <span hidden data-mv-home="un"></span><div data-mv="un">
