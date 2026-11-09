@@ -1457,6 +1457,12 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
   .sheet-wide .cat-img-row .img-t { display: none; }
   .sheet-wide .cat-img-row > label.btn { width: 42px; min-height: 42px; padding: 0; justify-content: center; }
   .sheet-wide .cat-tit-sug { display: none; }
+  .sheet-wide .lf-x { display: none; }
+  .sheet-wide .field.destaque:has([name=lanceFinal]) { background: none; border: 0; padding: 0; border-radius: 0; }
+  .sheet-wide .field.destaque:has([name=lanceFinal]) label { color: inherit; font-weight: inherit; }
+  .sheet-wide .field.destaque [name=lanceFinal] { background: var(--amber-soft); border: 2px solid var(--amber); }
+  .icard .i-fin2 { display: none; }   /* sem a linha "Posso baixar do teto até o mínimo" no cartão (pedido de 09/11/2026) */
+  .icard .comprar { display: grid; grid-template-columns: repeat(2, 40px); gap: 6px; align-content: start; }
 }
 /* Guia Pregões no PC (pedido do João, 05/11/2026): cartões mais baixos — cabeçalho numa linha, órgão em 2 linhas no máximo,
    cidade/data/itens numa linha, etiquetas numa linha cada (texto inteiro no balão), números e botões compactos */
@@ -1500,7 +1506,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.140.0';
+  const APP_VERSION = '1.141.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Julgamento', 'Aguardando empenho', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -3964,7 +3970,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     if (o.type === 'textarea') ctl = `<textarea class="input" id="${id}" name="${o.name}" placeholder="${esc(o.ph || '')}" rows="${o.rows || 2}">${esc(o.value)}</textarea>`;
     else if (o.type === 'select') ctl = `<select class="input" id="${id}" name="${o.name}">${o.options.map((x) => `<option value="${esc(x.v)}"${String(x.v) === String(o.value) ? ' selected' : ''}>${esc(x.l)}</option>`).join('')}</select>`;
     else ctl = `<input class="input" id="${id}" name="${o.name}" type="${o.type || 'text'}" value="${esc(o.value)}" placeholder="${esc(o.ph || '')}"${o.inputmode ? ` inputmode="${o.inputmode}"` : ''} autocomplete="off"${o.list ? ` list="${id}_dl"` : ''}${o.type === 'datetime-local' || o.type === 'date' ? '' : ' autocapitalize="sentences"'}>${o.list ? `<datalist id="${id}_dl">${o.list.map((x) => `<option value="${esc(x)}"></option>`).join('')}</datalist>` : ''}`;
-    return `<div class="${cls}"><label for="${id}">${esc(o.label)}</label>${ctl}${o.hint ? `<div class="hint">${esc(o.hint)}</div>` : ''}</div>`;
+    return `<div class="${cls}"><label for="${id}">${o.labelHtml || esc(o.label)}</label>${ctl}${o.hint ? `<div class="hint">${esc(o.hint)}</div>` : ''}</div>`;
   }
 
   function openForm(o) {
@@ -4588,7 +4594,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
         ${field({ label: 'Teto', name: 'teto', value: v.teto, inputmode: 'decimal' })}
         </div>
         <span hidden data-mv-home="lance"></span><div class="full" data-mv="lance">
-        ${field({ label: 'Lance final (R$ unit., opcional)', name: 'lanceFinal', value: v.lanceFinal, inputmode: 'decimal', full: true, cls: 'destaque', hint: 'Preenchido, é este o valor que sai na proposta em PDF. Vazio = sai o teto do edital.' })}
+        ${field({ label: 'Lance final (R$ unit., opcional)', labelHtml: 'Lance final<span class="lf-x"> (R$ unit., opcional)</span>', name: 'lanceFinal', value: v.lanceFinal, inputmode: 'decimal', full: true, cls: 'destaque', hint: 'Preenchido, é este o valor que sai na proposta em PDF. Vazio = sai o teto do edital.' })}
         </div>
         <div class="field full" id="linkBox"><label>Opções de compra</label>
           <div class="linkrow">
