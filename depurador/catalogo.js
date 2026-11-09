@@ -15,6 +15,8 @@
   };
 
   /* ================= 5 · ESSENCIAIS (sem isto o app não serve) ================= */
+  F('item-detalhes', AR.calc, 5, 'manter', 'Detalhes dos custos e lucros do item',
+    `Botão ⓘ no cartão do item (ao lado do Venci) abre o popup com preços, custos e lucros sem repetição (edital total, mínimo total, sem prejuízo, viagem, lucro ideal, Tesouro). O cartão mostra só os valores grandes; teto em etiqueta ao lado do nº do item; clicar em qualquer lugar do cartão abre a edição (v1.138.0).`),
   F('lance-minimo', AR.calc, 5, 'manter', 'Lance mínimo do item',
     `Na janela do item (v1.135.0) o lance mínimo sugerido é o do LUCRO IDEAL ganhando só este item (R$ 300 a R$ 500 conforme o tempo de estrada, ou 2× o rendimento da Selic, o que for maior); só alerta, a trava continua sendo teto e prejuízo. Antes era o menor preço que dá a margem: o app soma o custo de compra, o frete do fornecedor e a parte da viagem que cabe ao item, divide pela quantidade e aplica a margem alvo (padrão da Config): mínimo = custo unitário ÷ (1 − margem − imposto), sempre arredondado para cima em centavos. Aparece no cartão, na janela do item, na guia Itens e na simulação.`,
     { prot: true, sel: ['.dec-min', '.v-min', '.dec-big'], ev: 'Função calcItem (núcleo). Tudo o que fala de “mínimo” nasce aqui.' });

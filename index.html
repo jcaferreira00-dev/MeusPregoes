@@ -1139,7 +1139,11 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
 @keyframes agBorda { from { background-position: 0 0, 0% 0; } to { background-position: 0 0, 150% 0; } }
 
 /* cartão do item: lápis para editar (o cartão não abre mais a edição ao clicar) (v1.76) */
-.icard { cursor: default; }
+/* v1.138: borda bem visível entre os cartões e clique em qualquer lugar do cartão abre a edição */
+.icard { cursor: pointer; border: 2px solid color-mix(in srgb, var(--ink) 30%, var(--line)); }
+.icard:hover { border-color: var(--blue, #2c6fb7); }
+.i-tags { display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; min-width: 0; }
+.i-tetotag { font-size: 12px; font-weight: 700; color: var(--ink); background: var(--card-2, #f1f3f6); border: 1px solid var(--line); border-radius: 999px; padding: 2px 9px; white-space: nowrap; }
 .icard .i-edit { width: 28px; height: 28px; flex: none; }
 /* simulador de lance */
 .sim { border: 1.5px dashed color-mix(in srgb, var(--blue) 55%, var(--line)); border-radius: 12px; padding: 10px 12px; background: color-mix(in srgb, var(--blue) 5%, var(--card)); display: flex; flex-direction: column; gap: 8px; cursor: default; }
@@ -1162,6 +1166,14 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
 /* resultado do item (v1.77): seletor Venci / Não ganhei / Desclassif. e cor do valor */
 .res-sel { display: inline-flex; gap: 0; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
 .res-sel .btn { min-width: 38px; justify-content: center; gap: 5px; }
+.det-dlg { max-width: 460px; max-height: 86vh; overflow: auto; }
+.det-sub { font-size: 12.5px; color: var(--muted); margin: -4px 0 8px; }
+.det-g { margin: 8px 0; }
+.det-g h5 { margin: 0 0 3px; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+.det-l { display: flex; justify-content: space-between; gap: 12px; padding: 3px 0; border-bottom: 1px dashed var(--line); font-size: 13px; }
+.det-l b { white-space: nowrap; }
+.det-tes { margin-top: 8px; font-size: 12.5px; }
+.res-sel.det-sel .btn { min-width: 34px; }
 .res-sel .btn.pode-on { color: var(--green); background: var(--green-soft); }
 .icard-actions { gap: 8px; align-items: center; }
 .icard-actions > .comprar { margin-right: auto; }
@@ -1428,7 +1440,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.137.0';
+  const APP_VERSION = '1.138.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Julgamento', 'Aguardando empenho', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -5464,21 +5476,22 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
   }
   // lance mínimo seguro (nunca acima do teto) para tabelas e listas
   const minSegTxt = (c) => { if (!c) return '—'; const d = decisao(c); return d.min != null ? C.brl(d.min) : '<span class="neg-tx">Não compensa</span>'; };
-  function decisaoHtml(c) {
+  function decisaoHtml(c, compacto) {
     const d = decisao(c);
+    const E = (h) => compacto ? '' : h;   // cartão do item: só os valores grandes (os detalhes ficam no botão de detalhes)
     const ic = d.tipo === 'ok' ? 'check' : 'alert';
     const val = (v) => v == null ? '—' : v <= 0 ? '<span class="neg">prejuízo ' + C.brl(-v) + '</span>' : C.brl(v);
     const tip = d.s ? `Ganhando só este, a entrega de carro fica toda nele: ${C.brl(d.s.entrega)} (no rateio: ${C.brl(d.s.entrega - d.s.extra)}).` : '';
     const big = d.comLance
-      ? `<div class="dec-big"><div><small>Meu lucro no lance</small><em>lance ${C.brl(c.lance)} · ${C.pct(c.margemReal, 1)} sobre a venda${c.viab ? ' · ' + esc(c.viab) : ''} · custo final ${C.brl(c.custoUnit)}</em></div><b class="${d.junto != null && d.junto <= 0 ? 'neg' : ''}">${d.junto != null ? C.brl(d.junto) : '—'}</b></div>`
-      : `<div class="dec-big"><div><small>Valor mínimo p/ proposta (unit.)</small><em>${esc(d.minSub)} · custo final ${C.brl(c.custoUnit)}</em></div><b class="${d.min == null ? 'neg' : ''}">${d.min != null ? C.brl(d.min) : 'Não compensa'}</b></div>`;
+      ? `<div class="dec-big"><div><small>Meu lucro no lance</small>${E(`<em>lance ${C.brl(c.lance)} · ${C.pct(c.margemReal, 1)} sobre a venda${c.viab ? ' · ' + esc(c.viab) : ''} · custo final ${C.brl(c.custoUnit)}</em>`)}</div><b class="${d.junto != null && d.junto <= 0 ? 'neg' : ''}">${d.junto != null ? C.brl(d.junto) : '—'}</b></div>`
+      : `<div class="dec-big"><div><small>Valor mínimo p/ proposta (unit.)</small>${E(`<em>${esc(d.minSub)} · custo final ${C.brl(c.custoUnit)}</em>`)}</div><b class="${d.min == null ? 'neg' : ''}">${d.min != null ? C.brl(d.min) : 'Não compensa'}</b></div>`;
     return `<div class="dec ${d.tipo}${d.comLance ? ' com-lance' : ''}" title="${esc(tip)}">
       ${d.txt ? `<div class="dec-hd">${icon(ic, 'sm')}<span>${d.txt}</span></div>` : ''}
       ${big}
       <div class="dec-cols">
-        <div class="dec-min${d.comLance ? '' : ' dup'}"><small>Lance mínimo (unit.)</small><b>${d.min != null ? C.brl(d.min) : '<span class="neg">Não compensa</span>'}</b><em>${esc(d.minSub)}</em></div>
-        ${d.s ? `<div class="dec-l dec-solo"><small>Lucro ${d.ref}, ganhando só este</small><b>${val(d.solo)}</b><em>sem prejuízo: <b class="sm">${C.brl(d.s.empate * (c.qtd || 0))}</b> no total (${C.brl(d.s.empate)}/un.) · viagem ${C.brl(d.s.entrega)}</em></div>` : ''}
-        <div class="dec-l${d.comLance ? ' dup' : ''}"><small>Lucro ${d.ref}${d.s ? ', junto com os outros' : ''}</small><b>${val(d.junto)}</b><em>${d.comLance ? C.pct(c.margemReal, 0) + ' sobre a venda' : c.margemReal != null ? C.pct(c.margemReal, 0) + ' sobre a venda' : ''}${c.impostoTotal > 0 ? ' · impostos ' + C.brl(c.impostoTotal) : ''}</em></div>
+        <div class="dec-min${d.comLance ? '' : ' dup'}"><small>Lance mínimo (unit.)</small><b>${d.min != null ? C.brl(d.min) : '<span class="neg">Não compensa</span>'}</b>${E(`<em>${esc(d.minSub)}</em>`)}</div>
+        ${d.s ? `<div class="dec-l dec-solo"><small>Lucro ${d.ref}, ganhando só este</small><b>${val(d.solo)}</b>${E(`<em>sem prejuízo: <b class="sm">${C.brl(d.s.empate * (c.qtd || 0))}</b> no total (${C.brl(d.s.empate)}/un.) · viagem ${C.brl(d.s.entrega)}</em>`)}</div>` : ''}
+        <div class="dec-l${d.comLance ? ' dup' : ''}"><small>Lucro ${d.ref}${d.s ? ', junto com os outros' : ''}</small><b>${val(d.junto)}</b>${E(`<em>${d.comLance ? C.pct(c.margemReal, 0) + ' sobre a venda' : c.margemReal != null ? C.pct(c.margemReal, 0) + ' sobre a venda' : ''}${c.impostoTotal > 0 ? ' · impostos ' + C.brl(c.impostoTotal) : ''}</em>`)}</div>
       </div></div>`;
   }
 
@@ -5496,11 +5509,42 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
   // alerta "Revisar" (campo revisar = motivo); some com o botão "Revisado"
   const temRevisar = (it) => !!String((it && it.revisar) || '').trim();
   const revHtml = (it) => temRevisar(it) ? `<div class="rev-item">${icon('alert', 'sm')}<span class="grow"><b>REVISAR:</b> ${esc(it.revisar)}</span><button type="button" class="btn sm" data-act="item-revisado" data-id="${it.id}" title="Já conferi: tirar o alerta">${icon('check', 'sm')} Revisado</button></div>` : '';
+  // detalhamento de custos e lucros do item (botão ao lado do "Venci"): tudo o que saiu do cartão, sem repetir
+  function detalhesItemHtml(it, c) {
+    const d = decisao(c), s = d.s, q = c.qtd || 0;
+    const L = (k, v, cls) => `<div class="det-l${cls ? ' ' + cls : ''}"><span>${k}</span><b>${v}</b></div>`;
+    const val = (v) => v == null ? '—' : v <= 0 ? '<span class="neg">prejuízo ' + C.brl(-v) + '</span>' : C.brl(v);
+    const g = [];
+    g.push(['Preços', [
+      c.lance !== null ? L('Meu lance (unit.)', C.brl(c.lance)) + L('Total do lance', C.brl(c.totalVenda)) : L('Valor mínimo p/ proposta (unit.)', d.min != null ? C.brl(d.min) : 'Não compensa'),
+      L('Teto do edital (unit.)', c.teto != null ? C.brl(c.teto) : '—'), L('Edital total', c.tetoTotal != null ? C.brl(c.tetoTotal) : '—'),
+      L('Lance mínimo (unit.)', d.min != null ? C.brl(d.min) : 'Não compensa'), L('Mínimo total', d.minTot != null ? C.brl(d.minTot) : '—'),
+      L('Posso baixar do teto', d.min != null && c.teto ? C.brl(c.teto - d.min) + ' (' + C.pct(1 - d.min / c.teto, 0) + ')' : '—')].join('')]);
+    g.push(['Custos', [
+      L('Custo total (produtos)', it.custo > 0 && q > 0 ? C.brl(c.produtos) : '—'), L('Custo unit. final', C.brl(c.custoUnit)), L('Entrega rateada (unit.)', C.brl(c.entrega)),
+      c.impostoTotal > 0 ? L('Impostos', C.brl(c.impostoTotal)) : ''].join('')]);
+    g.push(['Lucros', [
+      L('Lucro ' + (c.lance !== null ? 'no lance' : d.ref) + ', junto com os outros', val(d.junto)), L('Margem sobre a venda', c.margemReal != null ? C.pct(c.margemReal, 1) : '—'),
+      s ? L('Lucro ganhando só este', val(d.solo)) + L('Sem prejuízo (total)', C.brl(s.empate * q)) + L('Sem prejuízo (unit.)', C.brl(s.empate)) + L('Viagem de entrega', C.brl(s.entrega)) : '',
+      s && s.lucroIdeal != null ? L('Lucro ideal (estrada + Selic)', C.brl(s.lucroIdeal)) + L('Lance que dá o lucro ideal', C.brl(s.idealUnit)) : '',
+      c.viab ? L('Avaliação', esc(c.viab)) : ''].join('')]);
+    const tes = tesouroTxt(c.tesouro, false);
+    return `<div class="dlg det-dlg" role="dialog" aria-modal="true"><h3>Detalhes dos custos e lucros</h3><div class="det-sub">${esc((C.padLE(it.itemEdital) ? 'Item ' + C.padLE(it.itemEdital) + ' · ' : '') + it.descricao)} · ${C.qtdBR(it.qtd)} ${esc(it.unidade || 'Un')}</div>${g.map(([t, h]) => `<div class="det-g"><h5>${t}</h5>${h}</div>`).join('')}${tes ? `<div class="det-tes">${tes}</div>` : ''}<div class="btns"><button type="button" class="btn primary" data-det-fechar>Fechar</button></div></div>`;
+  }
+  function abrirDetalhesItem(id) {
+    const st = store.get(), it = st.itens.find((i) => i.id === id && !i.deleted), c = it && Rc().iMap.get(id); if (!c) return;
+    const w = document.createElement('div'); w.className = 'dlg-wrap'; w.innerHTML = detalhesItemHtml(it, c); document.body.appendChild(w);
+    const fim = () => { w.remove(); document.removeEventListener('keydown', esc1); };
+    const esc1 = (e) => { if (e.key === 'Escape') fim(); };
+    document.addEventListener('keydown', esc1);
+    w.addEventListener('click', (e) => { if (e.target === w || e.target.closest('[data-det-fechar]')) fim(); });
+  }
   function itemCard(it, c, opt) {
     const p = opt.pst && opt.pst.p;
     const _lt = C.padLE(it.loteEdital), _it = C.padLE(it.itemEdital);
     const tag = (_lt || _it) ? `<span class="itag">${_lt ? 'Lote ' + esc(_lt) + (_it ? ' · ' : '') : ''}${_it ? 'Item ' + esc(_it) : ''}</span>` : '<span class="itag vazio">Item s/nº</span>';
     // descrição numa linha própria, logo abaixo do nº do item; longa termina com "…" (o texto todo aparece ao passar o dedo/mouse)
+    const tetoTag = !c.fora && c.teto != null ? `<span class="i-tetotag">Teto ${C.brl(c.teto)}</span>` : '';
     const desc = `<h4 class="i-desc" title="${esc(it.descricao)}">${esc(it.descricao)}</h4>`;
     // editar só pelo lápis (clicar no cartão não abre mais a edição)
     const btnEditar = `<button type="button" class="ic-btn i-edit" data-act="editar-item" data-id="${it.id}" title="Editar item" aria-label="Editar item">${icon('edit', 'sm')}</button>`;
@@ -5527,26 +5571,27 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     const baixo = acimaT || abaixoSolo(c, meuLance) ? ' solo-baixo' : '', baixoTip = acimaT ? ` title="${esc('Acima do teto ' + C.brl(c.teto) + ': desclassifica')}"` : baixo ? ` title="${esc('Abaixo do mínimo se ganhar só este item: ' + C.brl(soloMin(c)))}"` : '';
     const dc = decisao(c);
     const mVals = `<div class="i-mvals"><div class="v-lance${baixo}"${baixoTip}><span>${c.lance !== null ? 'Meu lance' : 'Meu lance (teto)'}</span><b>${meuLance != null ? C.brl(meuLance) : '—'}</b></div><div class="v-min ${dc.tipo}"><span>Lance mínimo</span><b>${dc.min != null ? C.brl(dc.min) : 'Não compensa'}</b></div></div>`;
-    const vals = mVals + `<div class="i-vals"><div class="v-lance-pc ${viabCls(c)}${baixo}"${baixoTip}><span>${c.lance !== null ? 'Meu lance (unit.)' : 'Meu lance (teto)'}</span><b>${meuLance != null ? C.brl(meuLance) : '—'}</b></div><div><span>Custo total</span><b>${it.custo > 0 && it.qtd > 0 ? C.brl(c.produtos) : '—'}</b></div><div class="v-mintot"><span>Mín. total</span><b>${dc.minTot != null ? C.brl(dc.minTot) : '—'}</b></div><div><span>Edital total</span><b>${c.tetoTotal != null ? C.brl(c.tetoTotal) : '—'}</b></div></div>`;
+    const vals = mVals + `<div class="i-vals"><div class="v-lance-pc ${viabCls(c)}${baixo}"${baixoTip}><span>${c.lance !== null ? 'Meu lance (unit.)' : 'Meu lance (teto)'}</span><b>${meuLance != null ? C.brl(meuLance) : '—'}</b></div><div><span>Custo total</span><b>${it.custo > 0 && it.qtd > 0 ? C.brl(c.produtos) : '—'}</b></div></div>`;
     // resultado do item: seletor (toque de novo no mesmo volta para "aguardando")
     const RES = [['venci', 'Venci', 'acomp'], ['perdi', 'Não ganhei', 'x'], ['desc', 'Desclassif.', 'alert']];
     const acao = `<div class="res-sel" role="group" aria-label="Resultado do item">${RES.map(([v, l, ic]) => `<button type="button" class="btn sm res-${v}${c.resultado === v ? ' on' : ''}" data-act="item-res" data-v="${v}" data-id="${it.id}" title="${c.resultado === v ? 'Desmarcar ' + l : l}" aria-label="${l}">${icon(ic, 'sm')}${c.resultado === v ? '<span>' + l + '</span>' : ''}</button>`).join('')}</div>`
+      + `<div class="res-sel det-sel"><button type="button" class="btn sm" data-act="item-det" data-id="${it.id}" title="Detalhes dos custos e lucros" aria-label="Detalhes dos custos e lucros">${icon('info', 'sm')}</button></div>`
       + (c.ganhou || c.resultado === 'perdi' || c.desclass ? '' : `<div class="res-sel"><button type="button" class="btn sm${it.possivelGanhar ? ' pode-on' : ''}" data-act="item-pode" data-id="${it.id}" title="${it.possivelGanhar ? 'Desmarcar Posso ganhar' : 'Posso ganhar'}" aria-label="Posso ganhar">${icon('star', 'sm')}${it.possivelGanhar ? '<span>Posso ganhar</span>' : ''}</button><button type="button" class="btn sm" data-act="item-fora" data-id="${it.id}" title="Deixar de fora da disputa" aria-label="Deixar de fora">${icon('fora', 'sm')}</button></div>`);
     const dEnt = p && (p.entregueEm || it.entregueEm);
     const acaoEnt = c.ganhou && p && !p.pagoEm ? `<div class="res-sel"><button type="button" class="btn sm${dEnt ? ' res-venci on' : ''}" data-act="item-entregue" data-id="${it.id}" title="${dEnt ? 'Desmarcar entrega' : 'Marcar este item como entregue'}">${icon('truck', 'sm')}<span>${dEnt ? 'Entregue ' + esc(fmtDM(dEnt)) : 'Marcar entregue'}</span></button></div>` : '';
     const resBadge = c.resultado === 'venci' ? '<span class="badge ok">Venci</span>' : c.resultado === 'desc' ? `<span class="badge bad" title="${esc('Pedido em ' + C.fmtSessao(it.desclassEm || '') + (it.desclassMotivo ? ' · ' + it.desclassMotivo : ''))}">Desclassif.</span>` : c.resultado === 'perdi' ? '<span class="badge off">Não ganhei</span>' : c.resultado === 'aguard' ? '<span class="badge warn" title="Fora das contas até você marcar Venci">Aguardando</span>' : '';
     const descLinha = c.desclass ? `<div class="obsline desc-line">${icon('alert', 'sm')}<span>Desclassificação pedida em ${esc(C.fmtSessao(it.desclassEm || ''))}${it.desclassMotivo ? ' · ' + esc(it.desclassMotivo) : ''}</span></div>` : '';
     return `<article class="icard${c.naoGanhou && !it.possivelGanhar && !c.aguardando && !c.desclass ? ' nao-ganho' : ''}${c.ganhou ? ' venci' : ''}${c.resultado ? ' res-' + c.resultado : ''}${temRevisar(it) ? ' revisar' : ''}" data-id="${it.id}">
-      <div class="i-hd">${tag}<div class="rcol">${resBadge}${it.possivelGanhar && !ganhoMode ? '<span class="prazo good">★ Posso ganhar</span>' : ''}${c.situacao ? `<span class="badge ${c.sitTipo}" title="${esc(c.situacao)}"><span class="s-lg">${esc(c.situacao)}</span><span class="s-sm">${esc(c.sitCurta || c.situacao)}</span></span>` : ''}${estrelasHtml(c)}${btnEditar}</div></div>
+      <div class="i-hd"><span class="i-tags">${tag}${tetoTag}</span><div class="rcol">${resBadge}${it.possivelGanhar && !ganhoMode ? '<span class="prazo good">★ Posso ganhar</span>' : ''}${c.situacao ? `<span class="badge ${c.sitTipo}" title="${esc(c.situacao)}"><span class="s-lg">${esc(c.situacao)}</span><span class="s-sm">${esc(c.sitCurta || c.situacao)}</span></span>` : ''}${estrelasHtml(c)}${btnEditar}</div></div>
       ${desc}
       ${revHtml(it)}
       ${opt.showOrg && p ? `<div class="chips"><span class="chip org">#${esc(p.numero)} · ${esc(p.orgao)}</span></div>` : ''}
-      <div class="small muted i-meta"><span class="i-meta-tx">${C.qtdBR(it.qtd)} ${esc(it.unidade || 'Un')} · custo ${C.brl(it.custo)}<span class="i-teto"> · teto ${C.brl(c.teto)}</span>${it.marca ? ' · ' + esc(it.marca) : ''}</span>${(!c.fora && !it.semLance && !(String(it.marca || '').trim() && String(it.modelo || '').trim())) ? `<button type="button" class="foto-tag falta mm-tag hide-m" data-act="editar-item" data-id="${it.id}" title="${!String(it.marca || '').trim() && !String(it.modelo || '').trim() ? 'Falta a marca e o modelo' : !String(it.marca || '').trim() ? 'Falta a marca' : 'Falta o modelo'} (a proposta não é gerada sem eles). Clique para preencher.">${icon('alert', 'sm')}${!String(it.marca || '').trim() && !String(it.modelo || '').trim() ? 'Sem marca/modelo' : !String(it.marca || '').trim() ? 'Sem marca' : 'Sem modelo'}</button>` : ''}${(() => { const nf = Number(it.fotosN) || 0; return `<button type="button" class="foto-tag hide-m ${nf ? 'tem' : 'sem'}" data-act="cat-ir" data-id="${it.id}" title="${nf ? 'Tem foto no catálogo. Clique para ver.' : 'Sem foto no catálogo. Clique para incluir.'}">${icon('image', 'sm')}${nf ? nf + (nf === 1 ? ' foto' : ' fotos') : 'Sem foto'}</button>`; })()}</div>
+      <div class="small muted i-meta"><span class="i-meta-tx">${C.qtdBR(it.qtd)} ${esc(it.unidade || 'Un')} · custo ${C.brl(it.custo)}${it.marca ? ' · ' + esc(it.marca) : ''}</span>${(!c.fora && !it.semLance && !(String(it.marca || '').trim() && String(it.modelo || '').trim())) ? `<button type="button" class="foto-tag falta mm-tag hide-m" data-act="editar-item" data-id="${it.id}" title="${!String(it.marca || '').trim() && !String(it.modelo || '').trim() ? 'Falta a marca e o modelo' : !String(it.marca || '').trim() ? 'Falta a marca' : 'Falta o modelo'} (a proposta não é gerada sem eles). Clique para preencher.">${icon('alert', 'sm')}${!String(it.marca || '').trim() && !String(it.modelo || '').trim() ? 'Sem marca/modelo' : !String(it.marca || '').trim() ? 'Sem marca' : 'Sem modelo'}</button>` : ''}${(() => { const nf = Number(it.fotosN) || 0; return `<button type="button" class="foto-tag hide-m ${nf ? 'tem' : 'sem'}" data-act="cat-ir" data-id="${it.id}" title="${nf ? 'Tem foto no catálogo. Clique para ver.' : 'Sem foto no catálogo. Clique para incluir.'}">${icon('image', 'sm')}${nf ? nf + (nf === 1 ? ' foto' : ' fotos') : 'Sem foto'}</button>`; })()}</div>
       ${vals}
       ${obs}
       ${descLinha}
       ${venc}
-      ${decisaoHtml(c)}
+      ${decisaoHtml(c, true)}
       ${(() => { const d = decisao(c); return `<div class="row between wrap small muted i-fin2" style="gap:4px 10px"><span>Posso baixar do teto até o mínimo: <b style="color:var(--ink)">${d.min != null && c.teto ? C.brl(c.teto - d.min) + ' (' + C.pct(1 - d.min / c.teto, 0) + ')' : '—'}</b></span><span>${c.impostoTotal > 0 ? 'Impostos ' + C.brl(c.impostoTotal) + ' · ' : ''}Lucro ${c.lance !== null ? 'no lance' : 'pelo teto'}: <b style="color:${c.lucro != null && c.lucro < 0 ? 'var(--red)' : 'var(--ink)'}">${C.brl(c.lucro)}</b></span>${tesouroTxt(c.tesouro)}</div>`; })()}
       ${p && !c.fora && !c.ganhou && (p.status === 'Julgamento' || it.possivelGanhar || it.colocacao || c.resultado === 'perdi' || c.naoGanhou || ['Perdeu', 'Desclassificado', 'Aguardando empenho', 'Faturado', 'Concluído'].includes(p.status) || (p.sessao && (diasDesde(p.sessao) || 0) >= 0)) ? `<div class="coloc-row">${colocacaoInput(it)}${it.colocacao ? `<span class="coloc-badge ${it.colocacao === 1 ? 'c1' : it.colocacao <= 3 ? 'c3' : ''}">${colocTxt(it.colocacao)} lugar</span>` : ''}</div>` : ''}
       ${p && ['Julgamento', 'Proposta enviada'].includes(p.status) && !['perdi', 'desc'].includes(c.resultado) ? simLanceHtml(it, c, meuLance) : ''}
@@ -7270,7 +7315,14 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
   /* ---------- eventos ---------- */
   function onClick(e) {
     const t = e.target.closest('[data-act]');
-    if (!t) return;
+    if (!t) {
+      // clique em qualquer lugar do cartão do item (fora de botões/campos/links) abre a edição
+      const card = e.target.closest('article.icard');
+      if (card && card.dataset.id && !e.target.closest('input,select,textarea,button,a,label,summary,details,.sim') && !(window.getSelection && String(window.getSelection()).trim())) {
+        const b = card.querySelector('[data-act="editar-item"]'); if (b) b.click();
+      }
+      return;
+    }
     const a = t.dataset.act, id = t.dataset.id;
     switch (a) {
       case 'noop': break;
@@ -7283,6 +7335,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
       case 'item-res': { UI.keepScroll = true; const c = Rc().iMap.get(id); const v = t.dataset.v; definirResultado(id, c && c.resultado === v ? '' : v); break; }
       case 'aviso-pend-i': UI.pendI = UI.pendI === t.dataset.v ? '' : t.dataset.v; UI.keepScroll = true; render(); break;
       case 'aviso-preg-i': UI.fPregaoI = UI.fPregaoI === id ? '' : id; UI.keepScroll = true; render(); break;
+      case 'item-det': abrirDetalhesItem(id); break;
       case 'item-revisado': { UI.keepScroll = true; store.upsertItem({ id, revisar: '' }); toast('Alerta de revisão tirado'); break; }
       case 'item-pode': { UI.keepScroll = true; const it = store.get().itens.find((i) => i.id === id); const liga = !(it && it.possivelGanhar); store.upsertItem({ id, possivelGanhar: liga }); toast(liga ? 'Item marcado: posso ganhar' : 'Marcação removida'); break; }
       case 'item-fora': { UI.keepScroll = true; const it = store.get().itens.find((i) => i.id === id); const fora = !(it && it.semLance); store.upsertItem({ id, semLance: fora }); toast(fora ? 'Item fora da disputa' : 'Item de volta à disputa'); break; }
