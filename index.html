@@ -1510,7 +1510,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.142.1';
+  const APP_VERSION = '1.143.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Julgamento', 'Aguardando empenho', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -5745,9 +5745,9 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
   }
   // código que roda DENTRO da janela (sem usar nada do app): vira texto com toString()
   function modoPregaoJanela(D) {
-    var KEY = 'modoPregao.' + D.pid, V = {}, S = {}, W = {};
-    try { var o = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; V = o.v || {}; S = o.s || {}; W = o.w || {}; } catch (e) {}
-    function sv() { try { localStorage.setItem(KEY, JSON.stringify({ v: V, s: S, w: W })); } catch (e) {} }
+    var KEY = 'modoPregao.' + D.pid, V = {}, S = {}, W = {}, Q = {};
+    try { var o = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; V = o.v || {}; S = o.s || {}; W = o.w || {}; Q = o.q || {}; } catch (e) {}
+    function sv() { try { localStorage.setItem(KEY, JSON.stringify({ v: V, s: S, w: W, q: Q })); } catch (e) {} }
     var F = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
     function R(n) { return n == null || !isFinite(n) ? '—' : F.format(n); }
     function T(n) { return n == null ? '—' : (Math.abs(n * 100 - Math.round(n * 100)) > 1e-7 ? 'R$ ' + n.toLocaleString('pt-BR', { minimumFractionDigits: 3, maximumFractionDigits: 3 }) : R(n)); }
@@ -5771,9 +5771,9 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     function def(it) { return it.lanceApp > 0 ? it.lanceApp : (it.teto != null ? fl2(it.teto) : null); }   // sem nada digitado: o lance do cadastro; sem lance, o teto
     function ef(it) { return V[it.id] > 0 ? V[it.id] : def(it); }
     function res(it) { return S[it.id] !== undefined ? S[it.id] : it.res; }   // o que foi marcado aqui vale; senão, o que já estava no app
-    function envia(it, r, lance) {
+    function envia(it, r, lance, coloc) {
       var q = []; try { q = JSON.parse(localStorage.getItem(D.fila) || '[]') || []; } catch (e) {}
-      q.push({ k: Date.now() + '-' + it.id, id: it.id, res: r, lance: lance || null });
+      q.push({ k: Date.now() + '-' + it.id, id: it.id, res: r, lance: lance || null, coloc: coloc || null });
       try { localStorage.setItem(D.fila, JSON.stringify(q)); } catch (e) {}
     }
     function rodape() {
@@ -5791,7 +5791,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
       if (r) {   // encerrado: linha pequena, vai para o fim
         var lance = r === 'venci' ? (W[it.id] != null ? W[it.id] : it.lanceApp) : null;
         el.className = 'c enc ' + (r === 'venci' ? 'v' : 'p');
-        el.querySelector('.fim').innerHTML = '<span class="bd ' + (r === 'venci' ? 'v' : 'p') + '">' + (r === 'venci' ? 'Venci' : r === 'desc' ? 'Desclassif.' : 'Não ganhei') + '</span>' + (lance > 0 ? '<b>' + R(lance) + '</b>' : '') + '<button type="button" data-o="1">Reabrir</button>';
+        el.querySelector('.fim').innerHTML = '<span class="bd ' + (r === 'venci' ? 'v' : 'p') + '">' + (r === 'venci' ? 'Venci' : r === 'desc' ? 'Desclassif.' : Q[it.id] ? 'Já foi · ' + Q[it.id] + 'º lugar' : 'Não ganhei') + '</span>' + (lance > 0 ? '<b>' + R(lance) + '</b>' : '') + '<button type="button" data-o="1">Reabrir</button>';
         el.style.order = 1000 + D.itens.indexOf(it); return;
       }
       el.style.order = D.itens.indexOf(it);
@@ -5818,15 +5818,30 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
       if (!confirm(msg)) return;
       S[it.id] = 'venci'; if (v > 0) W[it.id] = v; sv(); envia(it, 'venci', v > 0 ? v : null); tudo();
     }
-    function foi(it) { if (!confirm('Item ' + (it.n || '?') + ': já foi e eu não ganhei?\n\nO item sai da proposta final.')) return; S[it.id] = 'perdi'; sv(); envia(it, 'perdi', null); tudo(); }
-    function reabre(it) { if (!confirm('Item ' + (it.n || '?') + ': reabrir (voltar para aguardando resultado)?')) return; S[it.id] = ''; delete W[it.id]; sv(); envia(it, '', null); tudo(); }
+    function naoVenci(it) { if (!confirm('Item ' + (it.n || '?') + ': não venci?\n\nO item sai da proposta final.')) return; S[it.id] = 'perdi'; delete Q[it.id]; sv(); envia(it, 'perdi', null); tudo(); }
+    // "Já foi": caixinha para eu digitar a minha colocação; marca não ganho e grava a colocação no item
+    function foi(it) {
+      var old = document.getElementById('cxpos'); if (old) old.remove();
+      var o = document.createElement('div'); o.id = 'cxpos'; o.style.cssText = 'position:fixed;inset:0;z-index:50;background:rgba(15,23,42,.55);display:flex;align-items:center;justify-content:center;padding:16px';
+      o.innerHTML = '<div style="background:#fff;border-radius:14px;padding:16px;width:min(320px,100%);display:grid;gap:10px;box-shadow:0 10px 30px rgba(0,0,0,.35)"><b style="font-size:17px">Item ' + esc(it.n || '?') + ' · já foi</b><label style="font-size:13px;color:#667489">Minha posição (1 = primeiro)</label><input id="posv" inputmode="numeric" maxlength="3" autocomplete="off" placeholder="ex.: 3" style="font:inherit;font-size:28px;font-weight:700;text-align:center;border:2px solid #d9dfe8;border-radius:12px;padding:8px"><div style="display:flex;gap:8px"><button type=button id="posc" style="flex:1;font:inherit;font-size:15px;border:1px solid #d9dfe8;background:#fff;border-radius:12px;padding:11px">Cancelar</button><button type=button id="poso" style="flex:1;font:inherit;font-size:15px;font-weight:700;border:0;background:#1f3a5f;color:#fff;border-radius:12px;padding:11px">Salvar</button></div></div>';
+      document.body.appendChild(o);
+      var inp = o.querySelector('#posv'); inp.focus();
+      function ok() {
+        var n = parseInt(String(inp.value).replace(/\D/g, ''), 10);
+        if (!(n >= 1 && n <= 999)) { inp.style.borderColor = '#c0392b'; return; }
+        S[it.id] = 'perdi'; Q[it.id] = n; sv(); envia(it, 'perdi', null, n); o.remove(); tudo();
+      }
+      o.querySelector('#poso').onclick = ok; o.querySelector('#posc').onclick = function () { o.remove(); };
+      inp.addEventListener('keydown', function (e) { if (e.key === 'Enter') ok(); else if (e.key === 'Escape') o.remove(); });
+    }
+    function reabre(it) { if (!confirm('Item ' + (it.n || '?') + ': reabrir (voltar para aguardando resultado)?')) return; S[it.id] = ''; delete W[it.id]; delete Q[it.id]; sv(); envia(it, '', null); tudo(); }
     function box(it) {
       var s = document.createElement('section'); s.id = 'c' + it.id; s.dataset.n = (it.n || '').replace(/^0+/, '');
       s.innerHTML = '<div class=top><div class=num><small>' + (it.lote ? 'LOTE ' + it.lote + ' · ITEM' : 'ITEM') + '</small>' + (it.n || '?') + '</div><div class=nm>' + esc(it.nome) + ' · ' + it.qtd + ' un.</div>' + (it.riscos && it.riscos.length ? '<button type=button class=rk data-k=1 aria-label="Alertas do item"><svg viewBox="0 0 24 24" width="22" height="22"><path d="M12 3 2 21h20z" fill="#f3b73b" stroke="#b7791f" stroke-width="1.6" stroke-linejoin="round"/><path d="M12 10v5M12 17.6v.2" stroke="#5c3d00" stroke-width="2" stroke-linecap="round"/></svg></button>' : '') + '<div class=fim></div></div>'
         + '<div class="ref cx"><div><span>Teto</span><b>' + T(it.teto) + '</b></div><div class=piso><span>Piso (mínimo)</span><b>' + R(it.piso) + '</b></div><div><span>Posso baixar</span><b>' + (it.teto != null && it.piso != null && it.piso <= it.teto + 0.004 ? R(C2(fl2(it.teto) - it.piso)) : '—') + '</b></div></div>'
         + '<div class="in cx" id=w' + it.id + '><button type=button data-s=-1>−</button><input id=i' + it.id + ' inputmode=decimal autocomplete=off placeholder="Meu lance (unit.)"><button type=button data-s=1>+</button></div>'
         + '<div class="st cx"><button type=button data-d=-0.01>−0,01</button><button type=button data-d=-0.1>−0,10</button><button type=button data-d=-1>−1,00</button><button class=pz type=button data-p=1>Piso</button></div><div class="res cx" id=r' + it.id + '></div>'
-        + '<div class="fx cx"><button class=gv type=button data-v=1>🏆 Venci</button><button class=gp type=button data-f=1>Já foi</button></div>';
+        + '<div class="fx cx"><button class=gv type=button data-v=1>🏆 Venci</button><button class=gp type=button data-f=1>Já foi</button><button class=gp type=button data-nv=1>Não venci</button></div>';
       var i = s.querySelector('input'); i.value = ef(it) == null ? '' : N(ef(it));
       i.addEventListener('input', function () { var v = P(i.value); if (v > 0) V[it.id] = v; else delete V[it.id]; sv(); pinta(it); rodape(); });
       i.addEventListener('change', function () { set(it, P(i.value), true); });
@@ -5834,7 +5849,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
       s.addEventListener('click', function (e) {
         var b = e.target.closest('button'); if (!b) return;
         if (b.dataset.d) step(it, Number(b.dataset.d)); else if (b.dataset.s) step(it, Number(b.dataset.s) * 0.01);
-        else if (b.dataset.k) { aviso(s, it.riscos); } else if (b.dataset.p && it.piso != null) set(it, it.piso, true); else if (b.dataset.v) venci(it); else if (b.dataset.f) foi(it); else if (b.dataset.o) reabre(it);
+        else if (b.dataset.k) { aviso(s, it.riscos); } else if (b.dataset.p && it.piso != null) set(it, it.piso, true); else if (b.dataset.v) venci(it); else if (b.dataset.f) foi(it); else if (b.dataset.nv) naoVenci(it); else if (b.dataset.o) reabre(it);
       });
       return s;
     }
@@ -5842,13 +5857,13 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     D.itens.forEach(function (it) { M.appendChild(box(it)); });
     if (!D.itens.length) M.innerHTML = '<div class=vazio>Este pregão não tem itens na disputa.</div>';
     tudo();
-    document.getElementById('hora').textContent = 'Dados do app de ' + new Date().toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) + ' · lances digitados aqui não são gravados; só Venci / Já foi';
+    document.getElementById('hora').textContent = 'Dados do app de ' + new Date().toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) + ' · lances digitados aqui não são gravados; só Venci / Já foi / Não venci';
     document.getElementById('q').addEventListener('input', function (e) {
       var q = e.target.value.replace(/\D/g, '').replace(/^0+/, '');
       D.itens.forEach(function (it) { var el = document.getElementById('c' + it.id); el.style.display = !q || el.dataset.n === q || (it.lote && it.lote.replace(/^0+/, '') === q) ? '' : 'none'; });
     });
     document.getElementById('lt').addEventListener('click', function () {
-      if (!confirm('Voltar todos os lances ao valor do cadastro (ou ao teto)? (Venci / Já foi já enviados ao app não mudam.)')) return;
+      if (!confirm('Voltar todos os lances ao valor do cadastro (ou ao teto)? (Venci / Já foi / Não venci já enviados ao app não mudam.)')) return;
       V = {}; sv(); D.itens.forEach(function (it) { document.getElementById('i' + it.id).value = ef(it) == null ? '' : N(ef(it)); }); tudo();
     });
   }
@@ -5891,7 +5906,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
         const v = Number(e.lance);
         if (v > 0 && (it.teto == null || v <= it.teto + 0.004)) store.upsertItem({ id: e.id, lanceFinal: Math.round(v * 100) / 100 });
         marcarGanho(e.id, true);
-      } else if (e.res === 'perdi') definirResultado(e.id, 'perdi');
+      } else if (e.res === 'perdi') { definirResultado(e.id, 'perdi'); const n = parseInt(e.coloc, 10); if (n >= 1 && n <= 999) store.upsertItem({ id: e.id, colocacao: n }); }
       else if (e.res === '') definirResultado(e.id, '');
     }
   }
