@@ -216,7 +216,7 @@
     `Tabela editável só dos itens “Venci” e “Posso ganhar”, agrupados por pregão, com lance, colocação, botão de compra e botão que gera a proposta final. Repete funções de Itens, do detalhe do pregão e das tabelas “Itens que posso ganhar/Colocações” do Painel.`,
     { red: ['guia-itens', 'resultado-item', 'painel-itens'], para: 'Se mantiver, fazer dela o único lugar com tabela de “posso ganhar / colocação” e tirar as duas tabelas do Painel.', sel: ['.acp-tbl', '.acp-kpis'] });
   F('certidoes-guia', AR.outr, 3, 'manter', 'Guia Certidões (só PC)',
-    `Botões para os sites onde você baixa cada certidão (federal, FGTS, trabalhista…), com data de emissão e vencimento. Avisa no Painel quando falta pouco para vencer.`, { sel: ['.cert-list', '.cert-row'] });
+    `Botões para os sites onde você baixa cada certidão (federal, FGTS, trabalhista…), com data de emissão e vencimento (validade em dias ou data de vencimento digitada). Avisa no Painel quando falta pouco para vencer.`, { sel: ['.cert-list', '.cert-row'] });
   F('painel-funil', AR.pain, 3, 'manter', 'Painel: funil das propostas',
     `Barras: enviadas → ganhas → entregues → pagas, clicáveis para filtrar a tabela do dashboard.`, { sel: ['.dash-top'] });
   F('painel-composicao', AR.pain, 3, 'manter', 'Painel: de onde vem o preço de venda (rosca)',

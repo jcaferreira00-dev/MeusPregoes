@@ -1510,7 +1510,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.143.1';
+  const APP_VERSION = '1.144.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Julgamento', 'Aguardando empenho', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -4916,9 +4916,10 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
 
   /* ---------- validade das certidões ---------- */
   function certInfo(c) {
-    if (!c || !c.emissao) return { nivel: 'off', curto: 'sem data', texto: 'Sem data de emissão', venc: '', d: null };
-    if (!(c.validadeDias > 0)) return { nivel: 'off', curto: 'sem validade', texto: 'Informe a validade em dias', venc: '', d: null };
-    const venc = addDias(c.emissao, c.validadeDias), d = diasAte(venc);
+    // data de vencimento digitada (venceEm) vale mais; sem ela, emissão + validade em dias
+    if (!c || (!c.emissao && !c.venceEm)) return { nivel: 'off', curto: 'sem data', texto: 'Sem data de emissão', venc: '', d: null };
+    if (!c.venceEm && !(c.validadeDias > 0)) return { nivel: 'off', curto: 'sem validade', texto: 'Informe a validade em dias ou a data de vencimento', venc: '', d: null };
+    const venc = c.venceEm || addDias(c.emissao, c.validadeDias), d = diasAte(venc);
     if (d < 0) return { nivel: 'bad', curto: 'vencida', texto: 'Vencida há ' + plural(-d, 'dia', 'dias') + ' (' + C.fmtSessao(venc) + ')', venc, d };
     if (d <= 5) return { nivel: 'bad', curto: d === 0 ? 'vence hoje' : d + ' d', texto: d === 0 ? 'Vence hoje' : 'Vence em ' + plural(d, 'dia', 'dias') + ' (' + C.fmtSessao(venc) + ')', venc, d };
     if (d <= 15) return { nivel: 'warn', curto: d + ' d', texto: 'Vence em ' + plural(d, 'dia', 'dias') + ' (' + C.fmtSessao(venc) + ')', venc, d };
@@ -7185,12 +7186,13 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     openForm({
       key: 'certidao:' + (id || 'nova'),
       title: id ? 'Editar certidão' : 'Incluir certidão',
-      values: { certNome: c ? c.nome : '', certUrl: c ? c.url : '', certEmissao: c ? (c.emissao || '') : '', certValidade: c && c.validadeDias ? String(c.validadeDias) : '' },
+      values: { certNome: c ? c.nome : '', certUrl: c ? c.url : '', certEmissao: c ? (c.emissao || '') : '', certValidade: c && c.validadeDias ? String(c.validadeDias) : '', certVence: c ? (c.venceEm || '') : '' },
       body: `<div class="formgrid">
         ${field({ label: 'Nome da certidão', name: 'certNome', value: c ? c.nome : '', full: true, ph: 'Ex.: CND Estadual (PR)' })}
         ${field({ label: 'Link do site onde baixa', name: 'certUrl', type: 'url', value: c ? c.url : '', full: true, ph: 'https://…', inputmode: 'url', hint: 'Vira um botão na guia Certidões.' })}
         ${field({ label: 'Emitida em', name: 'certEmissao', type: 'date', value: c ? (c.emissao || '') : '' })}
         ${field({ label: 'Validade (dias)', name: 'certValidade', value: c && c.validadeDias ? String(c.validadeDias) : '', inputmode: 'numeric', ph: '180' })}
+        ${field({ label: 'Vence em (data)', name: 'certVence', type: 'date', value: c ? (c.venceEm || '') : '', full: true, hint: 'Opcional. Se preencher, vale esta data (a do documento) no lugar de emissão + dias.' })}
         <div class="full hint" style="margin:-4px 0 10px">Em geral: CND Federal e CNDT 180 dias, CRF do FGTS 30 dias. Estadual e municipal variam; confira no documento.</div></div>`,
       saveLabel: id ? 'Salvar' : 'Incluir',
       deleteLabel: 'Excluir botão',
@@ -7200,7 +7202,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
         if (!(x.certUrl || '').trim()) return 'Informe o link do site.';
         const link = certUrl(x.certUrl);
         if (link === null) return 'Link inválido. Use um endereço de site (http ou https).';
-        const vd = parseInt(x.certValidade, 10), extra = { emissao: x.certEmissao || '', validadeDias: vd > 0 ? vd : null };
+        const vd = parseInt(x.certValidade, 10), extra = { emissao: x.certEmissao || '', validadeDias: vd > 0 ? vd : null, venceEm: x.certVence || '' };
         const lista = certidoes().map((o) => Object.assign({}, o));
         if (id) { const i = lista.findIndex((o) => o.id === id); if (i >= 0) lista[i] = Object.assign({}, lista[i], { nome, url: link }, extra); }
         else lista.push(Object.assign({ id: C.uid(), nome, url: link }, extra));
@@ -7434,7 +7436,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
       case 'pos-desfaz-pago': UI.keepScroll = true; store.upsertPregao({ id, pagoEm: '' }); toast('Pagamento desfeito'); break;
       case 'cert-hoje': {
         const lista = certidoes().map((o) => Object.assign({}, o)), i = lista.findIndex((o) => o.id === id);
-        if (i >= 0) { lista[i].emissao = C.hojeISO(); salvarCertidoes(lista); toast(lista[i].validadeDias > 0 ? 'Emissão registrada: hoje' : 'Emissão registrada. Informe a validade (lápis) para ver o vencimento'); }
+        if (i >= 0) { lista[i].emissao = C.hojeISO(); if (lista[i].validadeDias > 0) lista[i].venceEm = ''; salvarCertidoes(lista); toast(lista[i].validadeDias > 0 ? 'Emissão registrada: hoje' : 'Emissão registrada. Informe a validade (lápis) para ver o vencimento'); }
         break;
       }
       case 'sessao-continua': { e.stopPropagation(); UI.keepScroll = true; const p = store.get().pregoes.find((x) => x.id === id); if (p) { store.upsertPregao({ id, sessao: sessaoNova(p, 1) }); toast('Sessão continua amanhã'); } break; }
