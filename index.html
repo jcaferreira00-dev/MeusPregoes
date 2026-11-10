@@ -835,6 +835,18 @@ input.input[type=datetime-local]::-webkit-date-and-time-value, input.input[type=
 .mei-nums > div { min-width: 0; } .mei-nums span { display: block; font-size: 11px; color: var(--muted); font-weight: 600; }
 .mei-nums b { display: block; font-size: 20px; font-weight: 800; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
 .mei-nums i { display: block; font-style: normal; font-size: 11px; color: var(--muted); }
+/* v1.151.0: ganhos firmes em destaque; ata sem empenho listrada (potencial, não compromete o limite) */
+.mei-nums > div { border: 1px solid transparent; border-radius: 12px; padding: 7px 10px; }
+.mei-nums > div.dest { background: color-mix(in srgb, #2e75b6 11%, var(--card)); border-color: color-mix(in srgb, #2e75b6 35%, transparent); }
+.mei-nums > div.dest b { font-size: 24px; }
+.seg.ata { background: repeating-linear-gradient(135deg, #9ec5e8 0 5px, #dcecf9 5px 10px); }
+.mei-ata { display: flex; align-items: center; gap: 7px; margin-top: 8px; padding: 6px 10px; border-radius: 10px; font-size: 12px; background: color-mix(in srgb, #9ec5e8 22%, var(--card)); border: 1px dashed color-mix(in srgb, #2e75b6 45%, transparent); }
+.mei-ata b { margin-left: auto; font-variant-numeric: tabular-nums; }
+.lc-tier { display: grid; grid-template-columns: 10px 1fr auto; align-items: center; gap: 4px 8px; margin: 10px 0 6px; font-size: 12px; }
+.lc-tier i { width: 10px; height: 10px; border-radius: 3px; display: block; }
+.lc-tier span { color: var(--muted); } .lc-tier b { text-align: right; font-variant-numeric: tabular-nums; }
+.lc-tier .lc-no span, .lc-tier .lc-no b { opacity: .6; }
+.lc-sep { border: 0; border-top: 1px solid var(--line); margin: 8px 0; }
 .mei-bar { height: 12px; margin-top: 10px; } .res-bar { height: 10px; margin-top: auto; }
 .p-top .legend { margin-top: 6px; font-size: 11px; }
 .mei-al { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-top: auto; padding-top: 8px; font-size: 12px; font-weight: 600; }
@@ -1537,6 +1549,18 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
 .filters button.on .f-n { color: inherit; }
 .filters button[style].on { background: var(--fc); border-color: var(--fc); color: #fff; }
 .filters button.f-zero { opacity: .5; }
+/* v1.151.0 (pedido do João, 10/11/2026): linha "Imagem + opções de compra + fotos" da janela do item (PC) mais enxuta e dentro da margem */
+.opc-slot #linkBox > label { display: none !important; }
+.sheet-wide .cat-img-row { flex-wrap: wrap; row-gap: 8px; }
+.sheet-wide .cat-img-row .cat-thumbs { flex-wrap: wrap; min-width: 0; max-width: 100%; }
+.sheet-wide .cat-img-row > label.btn, .sheet-wide .opc-slot .btn.ibtn.altc[data-alt-go] { min-height: 34px; height: 34px; }
+.sheet-wide .cat-img-row > label.btn { width: auto; padding: 0 12px; }
+.sheet-wide .opc-slot .btn.ibtn[data-alt=abrir], .sheet-wide .opc-slot .btn.ibtn.altplus { width: 34px !important; min-width: 34px !important; max-width: 34px !important; min-height: 34px !important; height: 34px; padding: 0 !important; }
+.sheet-wide .opc-slot .linkrow { gap: 5px; }
+.sheet-wide .opc-slot .btn.ibtn.altc[data-alt-go] { max-width: 118px; padding: 0 8px; }
+.sheet-wide .opc-slot .altc-t { max-width: 80px; font-size: 12px; }
+.sheet-wide .opc-slot { margin-left: 0; }
+.sheet-wide .opc-slot #linkBox { gap: 0; }
 </style>
 </head>
 <body>
@@ -1549,7 +1573,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.150.1';
+  const APP_VERSION = '1.151.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Julgamento', 'Aguardando empenho', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -1874,6 +1898,17 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     return { entrega, extra, custoTotal, empate, minimo, lucro, lucroTeto, margemReal, risco, relevante: extra > 0.5, lucroIdeal, idealUnit, horas };
   }
 
+  // registro de preços (ata): o órgão compra conforme a demanda; ganhar não significa vender o valor todo (v1.151.0)
+  function isSRP(p) {
+    if (p.tipoCompra === 'SRP') return true;
+    if (p.tipoCompra === 'Aquisição') return false;
+    return /registro\s+de\s+pre[çc]os?|\bSRP\b|ata\s+de\s+registro/i.test([p.obs, p.exigencias, p.entregaParceladaObs, p.numero, p.orgao].join(' '));
+  }
+  // o valor só está comprometido de verdade quando saiu o empenho (ou já houve entrega/pagamento/faturamento)
+  function temEmpenho(p) {
+    return !!(p.empenhoData || p.empenhoNum || p.entregaPrazo || p.entregueEm || p.pagoEm) || p.status === 'Faturado' || p.status === 'Concluído';
+  }
+
   function limiteMEI(cfg) {
     const ab = Number(cfg.anoAbertura), mes = Number(cfg.mesAbertura);
     if (ab && mes >= 1 && mes <= 12 && ab === Number(cfg.anoRef)) return round2(n0(cfg.limiteCheio) / 12 * (13 - mes));
@@ -1990,22 +2025,33 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
       pst.propostaGanha = somaProp(pst.itens.filter((it) => !iMap.get(it.id).naoGanhou));   // só o que foi ganho
     }
 
-    // limite do MEI
+    // limite do MEI (v1.151.0): só conta como COMPROMETIDO o que foi ganho E está firme (aquisição ganha, ou registro de preços já com empenho).
+    // Ata de registro de preços ganha sem empenho fica à parte ("ata a empenhar"): é potencial, depende do órgão pedir.
     const limite = limiteMEI(cfg);
-    let somaFat = 0, aFaturar = 0, emDisputa = 0;
+    let somaFat = 0, aFaturar = 0, ataSemEmp = 0, nAta = 0, emDisputa = 0;
+    const lucroN = { garantido: 0, ata: 0, disputa: 0, analise: 0 };
     for (const pst of pMap.values()) {
       const s = pst.p.status;
-      if (pst.ganho) { if (s === 'Faturado' || s === 'Concluído') somaFat += pst.venda; else aFaturar += pst.venda; }
+      pst.srp = isSRP(pst.p);
+      pst.firme = pst.ganho && (!pst.srp || temEmpenho(pst.p));
+      if (pst.ganho) {
+        if (pst.firme) { if (s === 'Faturado' || s === 'Concluído') somaFat += pst.venda; else aFaturar += pst.venda; }
+        else { ataSemEmp += pst.venda; nAta += 1; }
+      }
       else if (s === 'Proposta enviada' || s === 'Julgamento') emDisputa += pst.venda;
+      if (INATIVOS.includes(s)) continue;
+      if (pst.ganho) lucroN[pst.firme ? 'garantido' : 'ata'] += pst.lucro;
+      else if (s === 'Proposta enviada' || s === 'Julgamento') lucroN.disputa += pst.lucro;
+      else lucroN.analise += pst.lucro;
     }
     const faturado = n0(cfg.fatFora) + somaFat;
     const comprometido = faturado + aFaturar;
     const mei = {
-      limite, faturado, aFaturar, comprometido, emDisputa,
+      limite, faturado, aFaturar, comprometido, emDisputa, ataSemEmp, nAta, lucroN,
       saldoAgora: limite - comprometido,
-      saldoSeGanhar: limite - comprometido - emDisputa,
+      saldoSeGanhar: limite - comprometido - ataSemEmp - emDisputa,
       pctComprometido: limite > 0 ? comprometido / limite : 0,
-      pctComTudo: limite > 0 ? (comprometido + emDisputa) / limite : 0,
+      pctComTudo: limite > 0 ? (comprometido + ataSemEmp + emDisputa) / limite : 0,
     };
     mei.alerta = mei.saldoAgora < 0 ? 'bad' : (mei.saldoSeGanhar < 0 ? 'warn' : 'ok');
 
@@ -2029,7 +2075,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     comp.impostos = comp.impostoVenda;
     comp.venda = comp.produtos + comp.frete + comp.entrega + comp.impostos + comp.lucro;
     const das = dasMensal(cfg), meses = mesesAtivos(cfg);
-    const tributos = { das, meses, dasAno: round2(das * meses), impostoVenda: comp.impostoVenda, lucroLiquido: comp.lucro - das * meses };
+    const tributos = { das, meses, dasAno: round2(das * meses), impostoVenda: comp.impostoVenda, lucroLiquido: comp.lucro - das * meses, lucroGarantidoLiquido: mei.lucroN.garantido - das * meses };
 
     // próximas sessões
     const agora = Date.now();
@@ -2566,7 +2612,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
 
   const api = {
     APP_VERSION, STATUS, INATIVOS, DECL_PADRAO, DECL_PROPOSTA, uid, n0, round2, ceil2, floor2, parseBR, brl, brl0, pct, numBR, qtdBR,
-    fmtSessao, dataExtensa, hojeISO, defaultConfig, emptyState, migrate, custoViagem, localEntregaPadrao, calcItem, limiteMEI,
+    fmtSessao, dataExtensa, hojeISO, defaultConfig, emptyState, migrate, custoViagem, localEntregaPadrao, calcItem, limiteMEI, isSRP, temEmpenho,
     custoUnitOpc, embDe, tesouro, corTesouro, agora, setClockOffset, getClockOffset, pendenciasNuvem, computeAll, custoCompra, freteCompra, ordemLoteItem, padLE, dasMensal, mesesAtivos, previewItem, linhasProposta, faltasOferta, marcaModeloDoTexto, normMM, horizontal, capitalizarTitulos, unitProposta, resolverPdfOpts, camposModelo, pendenciasModelo, CAMPOS_MODELO, identificaEmpresa, COLUNAS_DESC, CAMPOS_FORNECEDOR, CAMPOS_BANCO, mergeState, diffState, paraNuvem, createStore, };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   root.Core = api;
@@ -4619,7 +4665,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
           <textarea class="input" name="catalogoDesc" rows="5" spellcheck="true" lang="pt-BR" autocorrect="on" placeholder="Descrição pormenorizada do produto (características técnicas, medidas, material, composição, normas, garantia…)">${esc(v.catalogoDesc)}</textarea>
           <div class="cat-tits"><div class="cat-tit-add"><input class="input" data-ftit-in placeholder="Título (ex.: Marca, Modelo, Voltagem)" autocapitalize="characters" enterkeyhint="done"><button type="button" class="btn sm primary" data-ftit-add title="Incluir título na descrição" aria-label="Incluir título">${icon('plus', 'sm')}</button><div id="tetoSlot" class="teto-slot"></div></div>
             <div class="cat-tit-sug" data-ftit-sug></div></div>
-          <div class="cat-img-row"><span class="opc-home" hidden></span>${id ? `<label class="btn sm" style="cursor:pointer" title="Incluir imagem" aria-label="Incluir imagem">${icon('image', 'sm')}<span class="img-t"> Incluir imagem</span><input type="file" accept="image/png,image/jpeg,image/webp" multiple data-foto-form="${esc(id)}" class="sr-only" style="position:absolute;width:1px;height:1px;opacity:0;overflow:hidden"></label>` : '<span class="tiny muted">Salve o item uma vez para poder incluir imagens.</span>'}<div id="opcSlot" class="opc-slot"></div>${id ? `<div class="cat-thumbs" data-cat-thumbs="${esc(id)}"></div>` : ''}</div>
+          <div class="cat-img-row"><span class="opc-home" hidden></span>${id ? `<label class="btn sm" style="cursor:pointer" title="Incluir imagem" aria-label="Incluir imagem">${icon('image', 'sm')}<span class="img-t"> Imagem</span><input type="file" accept="image/png,image/jpeg,image/webp" multiple data-foto-form="${esc(id)}" class="sr-only" style="position:absolute;width:1px;height:1px;opacity:0;overflow:hidden"></label>` : '<span class="tiny muted">Salve o item uma vez para poder incluir imagens.</span>'}<div id="opcSlot" class="opc-slot"></div>${id ? `<div class="cat-thumbs" data-cat-thumbs="${esc(id)}"></div>` : ''}</div>
                   </div>
         </div>
         <span hidden data-mv-home="un"></span><div data-mv="un">
@@ -5076,42 +5122,52 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
   // nada foi tirado: limite, comprometido, saldo, barra de uso e alerta (antes em 4 números + cartão "Uso do limite"),
   // lucro previsto + DAS (antes cartão "Tributos") e conversão/margem dos ganhos/em aberto (antes cartão "Resultado das propostas")
   function painelTopoHtml(R, st) {
-    const m = R.mei, T = R.tributos;
-    const f = m.faturado, a = m.aFaturar, d = m.emDisputa, livre = Math.max(0, m.limite - (f + a + d));
-    const scale = Math.max(m.limite, f + a + d) || 1;
+    const m = R.mei, T = R.tributos, LN = m.lucroN;
+    const f = m.faturado, a = m.aFaturar, at = m.ataSemEmp, d = m.emDisputa, livre = Math.max(0, m.limite - (f + a + at + d));
+    const scale = Math.max(m.limite, f + a + at + d) || 1;
     const w = (x) => (Math.max(0, x) / scale * 100).toFixed(2) + '%';
-    const alertTxt = m.alerta === 'bad' ? 'O que já está faturado + ganho passa do limite do MEI.'
-      : m.alerta === 'warn' ? 'Se ganhar tudo o que está em disputa, passa do limite do MEI.' : 'Dentro do limite do MEI.';
-    let lg = 0, ld = 0; for (const x of R.pMap.values()) { if (C.INATIVOS.includes(x.p.status)) continue; if (x.ganho) lg += x.lucro; else ld += x.lucro; }
+    const alertTxt = m.alerta === 'bad' ? 'O que já está faturado + ganho firme passa do limite do MEI.'
+      : m.alerta === 'warn' ? 'Se a ata for empenhada e você ganhar o que está em disputa, passa do limite do MEI.' : 'Dentro do limite do MEI.';
     const PERDA = ['Perdeu', 'Desclassificado'], ABERTO = ['Proposta enviada', 'Julgamento'];
     const ps = [...R.pMap.values()];
     const g = ps.filter((x) => x.ganho), l = ps.filter((x) => !x.ganho && PERDA.includes(x.p.status)), ab = ps.filter((x) => !x.ganho && ABERTO.includes(x.p.status));
     const dec = g.length + l.length, soma = (arr, k) => arr.reduce((s2, x) => s2 + (x[k] || 0), 0);
     const taxa = dec ? g.length / dec : null, vendaG = soma(g, 'venda'), lucroG = soma(g, 'lucro'), margemG = vendaG > 0 ? lucroG / vendaG : null;
     const tot = g.length + l.length + ab.length || 1, wr = (n) => (n / tot * 100).toFixed(1) + '%';
-    const notaLim = 'O total de cada pregão usa o lance final; sem lance, usa o valor do edital (pior caso para o teto).';
-    const notaDas = 'Lucro previsto dos pregões ativos menos o DAS do ano. MEI não paga percentual sobre a venda (dentro do limite). Optante do Simples/MEI em geral não sofre retenção de IR, PIS, Cofins e CSLL do órgão público: se o órgão pedir, apresente a declaração do Anexo IV da IN RFB 1.234/2012. Ajuste em Config › Tributos.';
+    const notaLim = 'Comprometido = faturado + o que você ganhou e está firme (compra direta, ou registro de preços já com empenho). Ata de registro de preços ganha sem empenho NÃO compromete o limite: o órgão só compra se pedir. O total de cada pregão usa o lance final; sem lance, usa o valor do edital (pior caso para o teto).';
+    const notaDas = 'Lucro garantido = ganhos firmes (compra direta, ou registro de preços com empenho). Ata sem empenho, propostas em disputa e pregões em análise aparecem separados e não entram no garantido. MEI não paga percentual sobre a venda (dentro do limite). Optante do Simples/MEI em geral não sofre retenção de IR, PIS, Cofins e CSLL do órgão público: se o órgão pedir, apresente a declaração do Anexo IV da IN RFB 1.234/2012. Ajuste em Config › Tributos.';
+    const todos = LN.garantido + LN.ata + LN.disputa + LN.analise;
+    const tier = (cor, nome, v, no) => `<div class="lc-row${no ? ' lc-no' : ''}" style="display:contents"><i style="background:${cor}"></i><span>${nome}</span><b>${C.brl0(v)}</b></div>`;
     return `<div class="kpis p-kpis p-top">
       <div class="kpi kpi-mei" style="--c:#1f3864" title="${esc(notaLim)}"><div class="l">Limite do MEI · ${esc(String(st.config.anoRef))}</div>
         <div class="mei-nums">
           <div><span>Limite</span><b>${C.brl0(m.limite)}</b></div>
-          <div><span>Comprometido</span><b style="color:#2e75b6">${C.brl0(m.comprometido)}</b><i>faturado + ganho · ${C.pct(m.pctComprometido, 0)}</i></div>
-          <div><span>Saldo disponível</span><b style="color:${m.saldoAgora < 0 ? 'var(--red)' : '#2f7d3a'}">${C.brl0(m.saldoAgora)}</b><i>se ganhar tudo: ${C.brl0(m.saldoSeGanhar)}</i></div>
+          <div class="dest"><span>Comprometido<em class="m-hide" style="font-style:normal"> · ganhos firmes</em></span><b style="color:#2e75b6">${C.brl0(m.comprometido)}</b><i>faturado ${C.brl0(f)} + a faturar ${C.brl0(a)} · ${C.pct(m.pctComprometido, 0)}</i></div>
+          <div><span>Saldo disponível</span><b style="color:${m.saldoAgora < 0 ? 'var(--red)' : '#2f7d3a'}">${C.brl0(m.saldoAgora)}</b><i>se tudo for empenhado e ganho: ${C.brl0(m.saldoSeGanhar)}</i></div>
         </div>
         <div class="stack mei-bar" role="img" aria-label="Uso do limite">
           <div class="seg" style="width:${w(f)};background:#1f3864"></div><div class="seg" style="width:${w(a)};background:#2e75b6"></div>
+          <div class="seg ata" style="width:${w(at)}"></div>
           <div class="seg" style="width:${w(d)};background:#f4b183"></div><div class="seg" style="width:${w(livre)};background:#a9d18e"></div>
           ${scale > m.limite ? `<div class="mark" style="left:${(m.limite / scale * 100).toFixed(2)}%"></div>` : ''}
         </div>
-        <div class="legend m-hide"><span><i style="background:#1f3864"></i>Faturado ${C.brl0(f)}</span><span><i style="background:#2e75b6"></i>A faturar ${C.brl0(a)}</span><span><i style="background:#f4b183"></i>Em disputa ${C.brl0(d)}</span><span><i style="background:#a9d18e"></i>Livre ${C.brl0(livre)}</span></div>
-        <div class="mei-al ${m.alerta}">${icon(m.alerta === 'ok' ? 'check' : 'alert', 'sm')}<span>${alertTxt}</span><b>Se ganhar tudo em disputa: ${C.pct(m.pctComTudo, 0)} do limite</b></div>
+        <div class="legend m-hide"><span><i style="background:#1f3864"></i>Faturado ${C.brl0(f)}</span><span><i style="background:#2e75b6"></i>A faturar ${C.brl0(a)}</span><span><i class="ata-i" style="background:repeating-linear-gradient(135deg,#9ec5e8 0 3px,#dcecf9 3px 6px)"></i>Ata sem empenho ${C.brl0(at)}</span><span><i style="background:#f4b183"></i>Em disputa ${C.brl0(d)}</span><span><i style="background:#a9d18e"></i>Livre ${C.brl0(livre)}</span></div>
+        ${m.nAta ? `<div class="mei-ata m-hide">${icon('alert', 'sm')}<span><b style="margin:0">${m.nAta} ${m.nAta === 1 ? 'ata ganha' : 'atas ganhas'} sem empenho</b> · fora do comprometido até o órgão empenhar</span><b>${C.brl0(at)}</b></div>` : ''}
+        <div class="mei-al ${m.alerta}">${icon(m.alerta === 'ok' ? 'check' : 'alert', 'sm')}<span>${alertTxt}</span><b>Se ganhar tudo: ${C.pct(m.pctComTudo, 0)} do limite</b></div>
       </div>
-      <div class="kpi" style="--c:#b7791f" title="${esc(notaDas)}"><div class="l">Lucro previsto</div><div class="v">${C.brl0(R.lucroPrevisto)}</div><div class="s">ganho ${C.brl0(lg)} · em disputa ${C.brl0(ld)}</div>
+      <div class="kpi" style="--c:#2f7d3a" title="${esc(notaDas)}"><div class="l">Lucro garantido</div><div class="v">${C.brl0(LN.garantido)}</div><div class="s">ganhos firmes · compra direta ou ata com empenho</div>
+        <div class="lc-tier m-hide">
+          ${tier('#9ec5e8', 'Ata a empenhar (a confirmar)', LN.ata)}
+          ${tier('#f4b183', 'Em disputa (proposta enviada)', LN.disputa)}
+          ${tier('#b8bec9', 'Em análise · não conta', LN.analise, true)}
+        </div>
+        <hr class="lc-sep m-hide">
         <div class="kv-mini m-hide">
+          <span>Se tudo vingar</span><b>${C.brl0(todos)}</b>
           <span>DAS mensal (fixo)</span><b>${C.brl(T.das)}</b>
           <span>DAS no ano (${T.meses} meses)</span><b>${C.brl(T.dasAno)}</b>
           <span>Imposto sobre vendas</span><b>${C.brl(T.impostoVenda)}${st.config.impostoPct > 0 ? ' (' + C.pct(st.config.impostoPct, 1) + ')' : ''}</b>
-          <span>Lucro depois do DAS</span><b style="color:${T.lucroLiquido < 0 ? 'var(--red)' : 'var(--green)'}">${C.brl(T.lucroLiquido)}</b>
+          <span>Garantido depois do DAS</span><b style="color:${T.lucroGarantidoLiquido < 0 ? 'var(--red)' : 'var(--green)'}">${C.brl(T.lucroGarantidoLiquido)}</b>
         </div></div>
       <div class="kpi" style="--c:#2f7d3a"${dec < 5 ? ' title="Ainda são poucos pregões decididos. Com 10 ou mais, a taxa de conversão fica mais confiável."' : ''}><div class="l">Resultado das propostas</div><div class="v">${taxa == null ? '—' : C.pct(taxa, 0)}</div><div class="s">conversão · ${g.length} de ${dec} decididos</div>
         <div class="kv-mini m-hide">

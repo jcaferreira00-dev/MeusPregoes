@@ -69,7 +69,15 @@ with sync_playwright() as p:
     ok(ex[0] == 'Ligar antes\nExigências: SICAF e CND estadual' and not ex[1], 'Exigências juntadas às Observações (F82), sem perder o texto')
     pg.evaluate("()=>localStorage.setItem('mp.ui',JSON.stringify({tab:'painel'}))"); pg.reload(); pg.wait_for_timeout(800)
     pt = pg.inner_text('#main')
-    ok(all(k.upper() in pt.upper() for k in ['LIMITE DO MEI', 'Saldo disponível', 'Comprometido', 'LUCRO PREVISTO', 'Lucro depois do DAS', 'DAS no ano', 'RESULTADO DAS PROPOSTAS', 'Margem dos ganhos', 'Em aberto', 'Encerrados', 'Livre']), 'Painel: limite do MEI, DAS, resultado e status continuam visíveis (Rodada 2)')
+    ok(all(k.upper() in pt.upper() for k in ['LIMITE DO MEI', 'Saldo disponível', 'Comprometido', 'LUCRO GARANTIDO', 'Garantido depois do DAS', 'Ata sem empenho', 'DAS no ano', 'RESULTADO DAS PROPOSTAS', 'Margem dos ganhos', 'Em aberto', 'Encerrados', 'Livre']), 'Painel: limite do MEI, DAS, resultado e status continuam visíveis (Rodada 2)')
+    # limite do MEI (10/11/2026, v1.151.0): ata de registro de preços ganha SEM empenho não compromete o limite; com empenho compromete; compra direta compromete
+    lm = pg.evaluate("""()=>{const C=window.Core;const t=1;
+      const P=(id,tp,extra)=>Object.assign({id,numero:id,orgao:'O',cidadeUf:'A/PR',status:'Aguardando empenho',tipoCompra:tp,km:10,viagens:1,createdAt:t,updatedAt:t,deleted:false},extra||{});
+      const I=(id,pid)=>({id,pregaoId:pid,itemEdital:'01',descricao:'x',unidade:'Un',qtd:10,custo:5,teto:10,frete:0,ganhou:true,semLance:false,alternativas:[],createdAt:t,updatedAt:t,deleted:false});
+      const st={version:1,config:{fatFora:0},pregoes:[P('a','SRP'),P('b','SRP',{empenhoData:'2026-11-01'}),P('c','Aquisição'),P('d','Aquisição',{status:'Analisando'})],itens:[I('ia','a'),I('ib','b'),I('ic','c'),I('id','d')]};
+      st.itens[3].ganhou=undefined;
+      const R=C.computeAll(C.migrate?C.migrate(st):st); return [R.mei.ataSemEmp, R.mei.aFaturar, R.mei.nAta, R.mei.lucroN.analise>0];}""")
+    ok(lm == [100, 200, 1, True], 'Limite do MEI: ata sem empenho fica fora do comprometido; com empenho e compra direta entram; análise não conta como ganho %s' % lm)
     rp = pg.evaluate("""()=>{const C=window.Core;const cfg={pdfPadrao:{desc:{tituloTexto:'ANEXO VELHO',blocos:[{titulo:'X',texto:'y'}]}},proposta:{},empresa:{}};
       const p={id:'z',numero:'9/2026',pagamentoDias:15,pdfOpts:{validade:90,prazoEntrega:'5 dias',desc:{tabela:true,tituloTexto:'EDITAL',blocos:[{titulo:'CL',texto:'t'}]},documentos:[{titulo:'D'}],anonima:true}};
       const o=C.resolverPdfOpts(p,cfg,'inicial'), f=C.resolverPdfOpts(p,cfg,'final');
