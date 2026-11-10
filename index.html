@@ -1533,7 +1533,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.146.0';
+  const APP_VERSION = '1.147.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Julgamento', 'Aguardando empenho', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -5517,7 +5517,10 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     if (!st.pregoes.some((p) => !p.deleted)) return emptyWelcome();
     const nGanhei = C.computeAll(st).pMap.size ? [...C.computeAll(st).pMap.values()].filter((x) => x.ganho).length : 0;
     if (UI.filtro === 'ganhei' && !nGanhei) UI.filtro = 'todos';
-    const fl = ['todos', ...(nGanhei ? ['ganhei'] : []), ...C.STATUS];
+    // botão de status sem nenhum pregão não aparece (pedido do João, 10/11/2026); se o filtro ligado ficou vazio, volta para "Todos"
+    const cntSt = (s) => st.pregoes.filter((p) => !p.deleted && p.status === s).length;
+    const fl = ['todos', ...(nGanhei ? ['ganhei'] : []), ...C.STATUS.filter((s) => cntSt(s) > 0)];
+    if (UI.filtro !== 'todos' && !fl.includes(UI.filtro)) UI.filtro = 'todos';
     return `<div class="page">
       <div class="search">${icon('search')}<input class="input" id="busca" type="search" placeholder="Buscar por número, órgão ou item" value="${esc(UI.busca)}"></div>
       <div class="filters">${fl.map((s) => { const n = s === 'todos' ? st.pregoes.filter((p) => !p.deleted).length : s === 'ganhei' ? nGanhei : st.pregoes.filter((p) => !p.deleted && p.status === s).length; return `<button data-act="filtro" data-v="${esc(s)}" class="${UI.filtro === s ? 'on' : ''}${n ? '' : ' f-zero'}"${s === 'todos' ? '' : ` style="--fc:${s === 'ganhei' ? 'var(--green)' : (COR_STATUS[s] || '#7b8798')}"`}>${s === 'todos' ? '' : '<i class="f-dot"></i>'}${s === 'todos' ? 'Todos' : s === 'ganhei' ? 'Ganhei 🏆' : esc(stTxt(s))}<b class="f-n">${n}</b></button>`; }).join('')}</div>
