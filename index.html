@@ -316,6 +316,11 @@ input[type=range] { width: 100%; accent-color: var(--blue); }
 .seg-ctl button { flex: 1; border: 0; background: transparent; padding: 9px 6px; border-radius: 9px; font-weight: 700; font-size: 13px; color: var(--muted); cursor: pointer; }
 .seg-ctl button.on { background: var(--card); color: var(--blue); box-shadow: 0 1px 3px rgba(0,0,0,.12); }
 .hidden { display: none !important; }
+.wapp-box { margin-bottom: 8px; display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
+.wapp-lb { font-size: 13px; font-weight: 700; }
+.wapp-row { display: flex; gap: 8px; width: 100%; max-width: 360px; }
+.wapp-row .input { flex: 1; min-width: 0; }
+.wapp-x { flex: none; width: 46px; padding: 0; color: var(--red); }
 .cert-list { display: flex; flex-direction: column; gap: 10px; }
 .cert-row { display: flex; gap: 8px; align-items: stretch; min-width: 0; }
 .cert-lk { justify-content: flex-start; text-align: left; text-decoration: none; color: var(--blue); min-width: 0; }
@@ -1533,7 +1538,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.147.0';
+  const APP_VERSION = '1.148.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Julgamento', 'Aguardando empenho', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -7153,7 +7158,10 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
         ${fld('CEP', 'empresa.cep', 'text', e.cep, { im: 'numeric', ph: '00000-000' })}
         ${fld('Cidade', 'empresa.cidade', 'text', e.cidade)}
         ${fld('UF (Estado)', 'empresa.uf', 'text', e.uf, { ph: 'PR' })}
-        ${fld('Telefone', 'empresa.telefone', 'text', e.telefone, { im: 'tel' })}
+        ${fld('Telefone / WhatsApp', 'empresa.telefone', 'text', e.telefone, { im: 'tel' })}
+        <div class="full wapp-box"><label class="wapp-lb">Outros WhatsApp <span class="tiny muted">(opcional; só ficam guardados aqui)</span></label>
+          ${(Array.isArray(e.whatsapps) ? e.whatsapps : []).map((n, i) => `<div class="wapp-row"><input class="input" inputmode="tel" autocomplete="off" data-cfg="empresa.whatsapps.${i}" data-type="text" placeholder="(00) 00000-0000" value="${esc(n)}"><button type="button" class="btn ghost wapp-x" data-act="wapp-del" data-i="${i}" aria-label="Remover este WhatsApp">${icon('trash', 'sm')}</button></div>`).join('')}
+          <button type="button" class="btn sm" data-act="wapp-add">${icon('plus', 'sm')} Incluir WhatsApp</button></div>
         ${fld('E-mail', 'empresa.email', 'text', e.email, { full: true, im: 'email' })}</div>
         <h4 class="cfg-sub">Dados bancários</h4><div class="formgrid">
         ${fld('Banco', 'empresa.banco', 'text', e.banco, { ph: '077 - INTER' })}
@@ -7458,6 +7466,8 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
       case 'sim-gravar': gravarLanceSimulado(id); break;
       case 'tab': setTab(t.dataset.v); break;
       case 'meus-dados': UI.meusDados = !UI.meusDados; UI.keepScroll = true; render(); break;
+      case 'wapp-add': { const e = (store.get().config || {}).empresa || {}; store.setConfigPath('empresa.whatsapps', (Array.isArray(e.whatsapps) ? e.whatsapps.slice() : []).concat(['']), { silent: true }); UI.keepScroll = true; render(); setTimeout(() => { const ins = $$('[data-cfg^="empresa.whatsapps."]'); if (ins.length) ins[ins.length - 1].focus(); }, 30); break; }
+      case 'wapp-del': { const e = (store.get().config || {}).empresa || {}, l = Array.isArray(e.whatsapps) ? e.whatsapps.slice() : []; l.splice(Number(t.dataset.i), 1); store.setConfigPath('empresa.whatsapps', l, { silent: true }); flashSaved(); UI.keepScroll = true; render(); break; }
       case 'abrir-meus-dados': UI.meusDados = true; setTab('config'); setTimeout(() => { const el = document.querySelector('.cfg-dados'); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 60); break;
       case 'itens-ganhos': openGanhosForm(id); break;
       case 'item-res': { UI.keepScroll = true; const c = Rc().iMap.get(id); const v = t.dataset.v; definirResultado(id, c && c.resultado === v ? '' : v); break; }
