@@ -321,6 +321,29 @@ input[type=range] { width: 100%; accent-color: var(--blue); }
 .cert-lk { justify-content: flex-start; text-align: left; text-decoration: none; color: var(--blue); min-width: 0; }
 .cert-lk span { min-width: 0; overflow-wrap: anywhere; }
 .cert-ed { flex: none; padding: 0; width: 46px; }
+.cert-top { display: grid; gap: 14px; grid-template-columns: 1fr; }
+.cnpj-card { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; border-left: 5px solid var(--blue); }
+.cnpj-ic { flex: none; width: 46px; height: 46px; border-radius: 12px; background: var(--blue-soft); color: var(--blue); display: flex; align-items: center; justify-content: center; }
+.cnpj-ic .i { width: 24px; height: 24px; }
+.cnpj-tx { flex: 1; min-width: 180px; display: flex; flex-direction: column; line-height: 1.2; }
+.cnpj-tx small { font-size: 11.5px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+.cnpj-tx b { font-size: 24px; font-weight: 800; letter-spacing: .02em; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.cnpj-tx em { font-style: normal; font-size: 12.5px; color: var(--muted); margin-top: 2px; }
+.cnpj-bt { display: flex; gap: 8px; flex-wrap: wrap; }
+.cert-resumo { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+.cert-chip { display: inline-flex; align-items: center; gap: 6px; padding: 5px 11px; border-radius: 999px; font-size: 12.5px; font-weight: 800; background: var(--bg); border: 1px solid var(--line); color: var(--muted); }
+.cert-chip.ok { color: var(--green); } .cert-chip.warn { color: var(--amber); } .cert-chip.bad { color: var(--red); }
+.cert-grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); }
+.cert-grid .cert-row { min-height: 66px; border: 1px solid var(--line); border-left: 5px solid var(--line); border-radius: 12px; padding: 10px; background: var(--card); align-items: center; }
+.cert-grid .cert-row.ok { border-left-color: var(--green); } .cert-grid .cert-row.warn { border-left-color: var(--amber); } .cert-grid .cert-row.bad { border-left-color: var(--red); }
+.cert-grid .cert-lk { border: 0; background: transparent; box-shadow: none; padding: 0 4px; }
+.cert-st { flex: none; width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: var(--bg); color: var(--muted); }
+.cert-row.ok .cert-st { background: var(--green-soft); color: var(--green); } .cert-row.warn .cert-st { color: var(--amber); } .cert-row.bad .cert-st { color: var(--red); }
+.cert-dts { display: flex; gap: 12px; flex-wrap: wrap; font-size: 11.5px; color: var(--muted); font-weight: 600; margin-top: 2px; }
+.cert-dts span { display: inline-flex; align-items: center; gap: 4px; }
+.cert-dts .i { width: 13px; height: 13px; }
+.cert-go { flex: none; color: var(--muted); display: flex; }
+@media (max-width: 420px) { .cnpj-tx b { font-size: 20px; } .cert-grid { grid-template-columns: 1fr; } }
 @media print { .nav, .topbar, .fab { display: none !important; } }
 /* datas no formulário: nunca estouram a coluna no celular */
 input.input[type=datetime-local], input.input[type=date] { display: block; -webkit-appearance: none; appearance: none; width: 100%; max-width: 100%; min-width: 0; text-align: left; }
@@ -1510,7 +1533,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.144.0';
+  const APP_VERSION = '1.145.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Julgamento', 'Aguardando empenho', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -7171,12 +7194,20 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     const lista = certidoes();
     const infos = lista.map((c) => ({ c, ci: certInfo(c) }));
     const atencao = infos.filter((o) => o.ci.nivel === 'bad' || o.ci.nivel === 'warn').length;
+    const emDia = infos.filter((o) => o.ci.nivel === 'ok').length, semData = infos.filter((o) => o.ci.nivel === 'off').length;
+    const emp = (store.get().config || {}).empresa || {};
+    const cnpj = String(emp.cnpj || '').trim();
+    const cnpjCard = `<div class="card cnpj-card"><span class="cnpj-ic">${icon('pdf')}</span>
+        <div class="cnpj-tx"><small>CNPJ${emp.nome ? ' · ' + esc(emp.nome) : ''}</small>${cnpj ? `<b>${esc(cnpj)}</b>` : `<em>Ainda não preenchido. Cadastre em Config › Meus dados.</em>`}</div>
+        <div class="cnpj-bt">${cnpj ? `<button type="button" class="btn primary" data-act="copiar-cnpj" data-v="tudo">${icon('copy', 'sm')} Copiar CNPJ</button><button type="button" class="btn" data-act="copiar-cnpj" data-v="num" title="Copia só os números, sem pontos, barra e traço">${icon('copy', 'sm')} Só números</button>` : `<button type="button" class="btn primary" data-act="abrir-meus-dados">${icon('config', 'sm')} Preencher</button>`}</div></div>`;
     const linhas = infos.map(({ c, ci }) => `<div class="cert-row ${ci.nivel}">
-        <a class="btn grow cert-lk" href="${esc(certUrl(c.url) || '#')}" target="_blank" rel="noopener noreferrer" data-act="link-externo">${icon('link', 'sm')}<span class="cert-t"><b>${esc(c.nome)}</b><small class="cert-s ${ci.nivel}">${esc(ci.texto)}</small></span></a>
+        <span class="cert-st" aria-hidden="true">${icon(ci.nivel === 'ok' ? 'check' : ci.nivel === 'off' ? 'calendar' : 'alert')}</span>
+        <a class="btn grow cert-lk" href="${esc(certUrl(c.url) || '#')}" target="_blank" rel="noopener noreferrer" data-act="link-externo"><span class="cert-t"><b>${esc(c.nome)}</b><small class="cert-s ${ci.nivel}">${esc(ci.texto)}</small>${c.emissao ? `<span class="cert-dts"><span>${icon('download', 'sm')}Emitida ${esc(C.fmtSessao(c.emissao))}</span></span>` : ''}</span><span class="cert-go">${icon('link', 'sm')}</span></a>
         <button type="button" class="btn ghost cert-ok" data-act="cert-hoje" data-id="${esc(c.id)}" title="Emiti hoje" aria-label="Marcar ${esc(c.nome)} como emitida hoje">${icon('check', 'sm')}</button>
         <button type="button" class="btn ghost cert-ed" data-act="editar-certidao" data-id="${esc(c.id)}" aria-label="Editar ${esc(c.nome)}">${icon('edit', 'sm')}</button></div>`).join('');
-    return `<div class="page"><div class="card"><h3>${icon('certidoes', 'sm')}<span class="grow">Onde baixar as certidões</span>${atencao ? `<span class="prazo ${infos.some((o) => o.ci.nivel === 'bad') ? 'bad' : 'warn'}">${atencao} pedindo atenção</span>` : ''}</h3>
-        ${lista.length ? `<div class="cert-list">${linhas}</div><p class="tiny muted" style="margin-top:12px">Baixou uma certidão? Toque em ✓ para registrar a emissão de hoje. O vencimento aparece aqui e no Painel.</p>` : `<p class="muted small">Nenhum botão ainda. Toque em “Incluir certidão” para adicionar.</p>`}</div>
+    const resumo = lista.length ? `<div class="cert-resumo">${emDia ? `<span class="cert-chip ok">${icon('check', 'sm')}${emDia} em dia</span>` : ''}${atencao ? `<span class="cert-chip ${infos.some((o) => o.ci.nivel === 'bad') ? 'bad' : 'warn'}">${icon('alert', 'sm')}${atencao} pedindo atenção</span>` : ''}${semData ? `<span class="cert-chip">${icon('calendar', 'sm')}${semData} sem data</span>` : ''}</div>` : '';
+    return `<div class="page">${cnpjCard}<div class="card"><h3>${icon('certidoes', 'sm')}<span class="grow">Onde baixar as certidões</span>${atencao ? `<span class="prazo ${infos.some((o) => o.ci.nivel === 'bad') ? 'bad' : 'warn'}">${atencao} pedindo atenção</span>` : ''}</h3>
+        ${resumo}${lista.length ? `<div class="cert-grid">${linhas}</div><p class="tiny muted" style="margin-top:12px">Baixou uma certidão? Toque em ✓ para registrar a emissão de hoje. O vencimento aparece aqui e no Painel.</p>` : `<p class="muted small">Nenhum botão ainda. Toque em “Incluir certidão” para adicionar.</p>`}</div>
       <button type="button" class="btn primary block" data-act="nova-certidao">${icon('plus')} Incluir certidão</button></div>`;
   }
 
@@ -7239,7 +7270,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     const y = window.scrollY;
     if ((UI.tab === 'itens' || UI.tab === 'certidoes') && window.matchMedia && window.matchMedia('(max-width: 600px)').matches) { UI.tab = 'pregoes'; saveUI(); }
     const fn = { painel: renderPainel, pregoes: renderPregoes, itens: renderItens, acomp: renderAcomp, pdf: renderPDF, certidoes: renderCertidoes, config: renderConfig }[UI.tab];
-    main.classList.toggle('wide', UI.tab === 'acomp' || (UI.tab === 'pregoes' && !UI.detailId) || UI.tab === 'itens' || UI.tab === 'painel');
+    main.classList.toggle('wide', UI.tab === 'acomp' || UI.tab === 'certidoes' || (UI.tab === 'pregoes' && !UI.detailId) || UI.tab === 'itens' || UI.tab === 'painel');
     main.classList.toggle('pn', UI.tab === 'painel');
     main.classList.toggle('pg', UI.tab === 'pregoes' && !UI.detailId);
     // faixas que rolam para o lado (filtros, status, quadro): ao redesenhar no mesmo lugar, mantêm a posição em que você estava
@@ -7434,6 +7465,13 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
       case 'pos-pago': UI.keepScroll = true; store.upsertPregao({ id, pagoEm: C.hojeISO() }); toast('Pagamento registrado'); break;
       case 'pos-desfaz-entrega': UI.keepScroll = true; store.get().itens.filter((i) => i.pregaoId === id && i.entregueEm).forEach((i) => store.upsertItem({ id: i.id, entregueEm: '' })); store.upsertPregao({ id, entregueEm: '', pagoEm: '' }); toast('Entrega desfeita'); break;
       case 'pos-desfaz-pago': UI.keepScroll = true; store.upsertPregao({ id, pagoEm: '' }); toast('Pagamento desfeito'); break;
+      case 'copiar-cnpj': {
+        const v = String(((store.get().config || {}).empresa || {}).cnpj || '').trim();
+        if (!v) { toast('CNPJ não preenchido (Config › Meus dados)'); break; }
+        const txt = t.dataset.v === 'num' ? v.replace(/\D+/g, '') : v;
+        copiarTexto(txt).then((ok) => toast(ok ? 'CNPJ copiado: ' + txt : 'Não consegui copiar. Selecione e copie à mão'));
+        break;
+      }
       case 'cert-hoje': {
         const lista = certidoes().map((o) => Object.assign({}, o)), i = lista.findIndex((o) => o.id === id);
         if (i >= 0) { lista[i].emissao = C.hojeISO(); if (lista[i].validadeDias > 0) lista[i].venceEm = ''; salvarCertidoes(lista); toast(lista[i].validadeDias > 0 ? 'Emissão registrada: hoje' : 'Emissão registrada. Informe a validade (lápis) para ver o vencimento'); }
