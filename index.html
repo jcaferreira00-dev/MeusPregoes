@@ -316,6 +316,16 @@ input[type=range] { width: 100%; accent-color: var(--blue); }
 .seg-ctl button { flex: 1; border: 0; background: transparent; padding: 9px 6px; border-radius: 9px; font-weight: 700; font-size: 13px; color: var(--muted); cursor: pointer; }
 .seg-ctl button.on { background: var(--card); color: var(--blue); box-shadow: 0 1px 3px rgba(0,0,0,.12); }
 .hidden { display: none !important; }
+/* guia Proposta (pedido do João, 10/11/2026): cada bloco bem destacado — faixa colorida no título, borda e cor própria */
+.pd-blk { --bc: #2e75b6; border: 1.5px solid color-mix(in srgb, var(--bc) 45%, var(--line)); border-left: 7px solid var(--bc); box-shadow: 0 2px 8px rgba(0,0,0,.07); overflow: hidden; }
+.pd-blk > h3, .pd-blk > summary > h3 { background: color-mix(in srgb, var(--bc) 14%, var(--card)); color: var(--bc); margin: -16px -16px 12px; padding: 11px 16px; border-bottom: 1px solid color-mix(in srgb, var(--bc) 30%, var(--line)); font-size: 13.5px; letter-spacing: .04em; }
+.pd-blk > h3[style*="inline"] { display: block !important; margin-bottom: 0; }
+.pd-blk > h3[style*="inline"] + .tiny { display: block; padding-top: 10px; }
+.pd-blk > summary { padding: 0; } .pd-blk > summary > h3 { display: block !important; margin: -16px -16px 0; }
+.pd-blk > summary > .tiny { display: block; padding-top: 10px; }
+.pd-b1 { --bc: #2e75b6; } .pd-b2 { --bc: #5b5fc7; } .pd-b3 { --bc: #2f7d3a; } .pd-b4 { --bc: #b7791f; } .pd-b5 { --bc: #6b7a90; } .pd-b6 { --bc: #8e44ad; } .pd-b7 { --bc: #1f3864; }
+.pd-b7 > h3 { background: var(--bc); color: #fff; }
+@media (prefers-color-scheme: dark) { .pd-b7 { --bc: #5aa2e6; } .pd-b7 > h3 { color: #0b1220; } }
 .wapp-box { margin-bottom: 8px; display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
 .wapp-lb { font-size: 13px; font-weight: 700; }
 .wapp-row { display: flex; gap: 8px; width: 100%; max-width: 360px; }
@@ -1538,7 +1548,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.148.0';
+  const APP_VERSION = '1.149.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Julgamento', 'Aguardando empenho', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -6402,14 +6412,14 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     const camposBanco = C.CAMPOS_BANCO.map(([id, nome]) => swp(o, 'bancoCampos.' + id, nome)).join('');
     const decl = C.DECL_PROPOSTA.map(([k, t, x]) => swp(o, 'decl.' + k, t, k === 'representante' ? 'Nome, CPF, RG, estado civil, e-mail e telefone do titular (só o que estiver preenchido em Config › Meus dados). Sai fora da proposta sem identificação.' : esc(x.replace('{numero}', pz.numero || '…')))).join('');
     const cab = `
-      <div class="card"><h3>2 · Documento da proposta <span class="grow"></span><span class="saved-ind" id="savedInd">Salvo</span></h3>
+      <div class="card pd-blk pd-b2"><h3>2 · Documento da proposta <span class="grow"></span><span class="saved-ind" id="savedInd">Salvo</span></h3>
         <p class="tiny muted" style="margin:0 0 8px">Todos os pregões saem no seu modelo padrão. Aqui você só ajusta as condições deste edital e, se ele pedir, a versão sem identificação. As declarações do edital são feitas à parte, conforme cada pregão pede.</p>
         ${(() => { if (UI.pdf.tipo === 'final') return ''; const pz = store.get().pregoes.find((x) => x.id === UI.pdf.pregaoId), k = confereIdent(pz, o); if (!k) return '';
           return `<div class="alert ${k.ok ? 'ok' : 'bad'}" style="margin:0 0 10px">${icon(k.ok ? 'check' : 'alert', 'sm')}<div class="grow">Edital: ${regraIdentTxt(k.r)}. ${k.ok ? 'A proposta está configurada assim.' : '<b>A chavinha abaixo está diferente do edital.</b> O app não gera assim sem você confirmar.'}${k.r.observacoes ? '<br><span class="tiny">' + esc(k.r.observacoes) + '</span>' : ''}</div>${k.ok ? '' : '<button type="button" class="btn sm" data-act="pdf-ident-edital">Ajustar</button>'}</div>`; })()}
         ${UI.pdf.tipo === 'final' ? '' : swp(o, 'anonima', 'Proposta inicial sem identificação da empresa', 'Para o edital que proíbe identificar o licitante. Sai sem nome, CNPJ, cabeçalho, dados bancários, local, assinatura, declarações e cláusulas com dados da empresa. Vale só para este pregão; a proposta final sai identificada.')}
         ${o.anonima ? `<div class="alert warn" style="margin:4px 0 10px">${icon('alert', 'sm')}<div class="grow">Sem identificação: ao gerar, o app confere se o nome, CNPJ, CPF, e-mail ou telefone aparecem no PDF. Confira também as fotos do catálogo (logo ou etiqueta da empresa).</div></div>` : ''}
       </div>
-      <div class="card"><h3>3 · Condições deste pregão</h3>
+      <div class="card pd-blk pd-b3"><h3>3 · Condições deste pregão</h3>
         <div class="formgrid">
           ${fp(o, 'validade', 'Validade (dias)', { type: 'int', im: 'numeric' })}
           ${fp(o, 'pagamento', 'Prazo de pagamento', { ph: pz.pagamentoDias ? pz.pagamentoDias + ' dias (do pregão)' : 'ex.: 30 dias' })}
@@ -6419,7 +6429,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
         ${fp(o, 'observacoes', 'Observações deste pregão (saem no PDF)', { area: true, rows: 2, full: true })}
         <p class="tiny muted" style="margin:6px 0 0">Tudo aqui vale só para este pregão (vem do edital). Em branco: prazo de entrega e pagamento saem do cadastro do pregão; validade, do padrão da Config.</p>
       </div>
-      <div class="card"><h3>4 · O que os pregões costumam pedir</h3>
+      <div class="card pd-blk pd-b4"><h3>4 · O que os pregões costumam pedir</h3>
         <p class="tiny muted" style="margin:0 0 8px">Frases fixas que saem no fim da proposta, antes do local e da assinatura. Desligue a que não quiser; a escolha vira o padrão dos próximos pregões.</p>
         <div class="swgrid sw1">${decl}</div>
       </div>`;
@@ -6440,7 +6450,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
         `${swp(o, 'cabecalho', 'Cabeçalho (nome e imagem)', 'Aparece em todas as páginas')}${swp(o, 'marca', 'Marca d’água')}
          <div class="field full" style="margin-top:8px"><label>Cor do documento (rótulos, faixas e bordas)</label><input class="input" type="color" data-cfg="proposta.cor" data-type="text" value="${esc(cfg.proposta.cor)}"></div>`),
     ].join('');
-    return cab + `<details class="card pdf-avanc"${UI.pdfAvanc ? ' open' : ''}><summary><h3 style="display:inline">Avançado · o que aparece na proposta</h3><span class="tiny muted" style="display:block;margin-top:2px">Chavinhas do modelo padrão, cabeçalho e marca d’água. Fechado por padrão.</span></summary>${corpo}
+    return cab + `<details class="card pd-blk pd-b5 pdf-avanc"${UI.pdfAvanc ? ' open' : ''}><summary><h3 style="display:inline">Avançado · o que aparece na proposta</h3><span class="tiny muted" style="display:block;margin-top:2px">Chavinhas do modelo padrão, cabeçalho e marca d’água. Fechado por padrão.</span></summary>${corpo}
       <div class="grid2" style="margin-top:10px"><button type="button" class="btn sm" data-act="pdf-reset">Voltar ao padrão (este pregão)</button></div></details>`;
   }
 
@@ -6482,7 +6492,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     const cf = (path, type, val, extra) => `data-cfg="${path}" data-type="${type}" value="${esc(val)}" ${extra || ''}`;
     const empOk = !!(e.nome && e.cnpj);
     return `<div class="page">
-      <div class="card"><h3>1 · Qual pregão?</h3>
+      <div class="card pd-blk pd-b1"><h3>1 · Qual pregão?</h3>
         <div class="field pdfp-field"><label for="pdfp">Pregão</label><select class="input" id="pdfp" data-ui="pregaoId">${list.map((x) => `<option value="${x.id}"${x.id === UI.pdf.pregaoId ? ' selected' : ''}>${esc(pregaoLabel(x))}</option>`).join('')}</select></div>
         ${tipoHtml}
         ${(pz0.modeloProprio || pz0.linkModelo) ? `<div class="alert warn" style="margin-bottom:12px">${icon('alert', 'sm')}<div class="grow">Este edital tem modelo próprio de proposta.${pz0.obs ? '<br><span style="font-weight:600;white-space:pre-wrap">' + esc(pz0.obs) + '</span>' : ''}</div>${pz0.linkModelo ? `<a class="btn sm" href="${esc(/^https?:\/\//i.test(pz0.linkModelo) ? pz0.linkModelo : 'https://' + pz0.linkModelo)}" target="_blank" rel="noopener noreferrer">Abrir modelo</a>` : ''}</div>` : ''}
@@ -6500,7 +6510,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
         ${L.semValor ? `<div class="alert warn" style="margin-top:10px">${icon('alert', 'sm')}<span>${L.semValor} item(ns) sem valor nesta opção. Preencha o teto ou o lance final, ou troque a opção acima.</span></div>` : ''}
       </div>
       <div class="m-hide">${pdfModelCards(opts, cfg, pz)}</div>
-      <details class="pdf-avanc pdf-avanc-vis m-hide" data-k="pdfVis"${UI.pdfVis ? ' open' : ''}><summary class="card"><h3 style="display:inline">Avançado · cabeçalho e marca d’água</h3><span class="tiny muted" style="display:block;margin-top:2px">Imagem do cabeçalho e marca d’água das propostas. Fechado por padrão.</span></summary>
+      <details class="pdf-avanc pdf-avanc-vis m-hide" data-k="pdfVis"${UI.pdfVis ? ' open' : ''}><summary class="card pd-blk pd-b5"><h3 style="display:inline">Avançado · cabeçalho e marca d’água</h3><span class="tiny muted" style="display:block;margin-top:2px">Imagem do cabeçalho e marca d’água das propostas. Fechado por padrão.</span></summary>
       <div class="card"><h3>Cabeçalho (imagem e nome)</h3>
         <div class="wm-prev" id="hdPrev" style="height:auto;padding:10px 12px;margin-bottom:12px;display:block">${hdPreviewHtml(hd, cfg.empresa)}</div>
         <label class="switch"><span>Nome e dados da empresa escritos</span><input type="checkbox" data-cfg="cabecalho.mostrarNome" data-type="check" ${hd.mostrarNome ? 'checked' : ''}></label>
@@ -6698,7 +6708,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     const bloq = falt.length ? `<div class="alert bad" style="margin-bottom:10px">${icon('alert', 'sm')}<div class="grow"><b>Não dá para gerar a proposta ainda.</b> Em cada item precisa ter a marca e o modelo (no item, iguais aos do descritivo) e o descritivo do item ofertado (no catálogo, logo acima):<div class="falta-lista">${falt.map((x) => `<div class="falta-it"><span class="grow"><b>${esc(x.rotulo)}</b> · ${esc(x.descricao)}<br><span class="tiny muted">falta: ${esc(x.falta.join('; '))}</span></span>${x.falta.some((f) => f !== 'descritivo do item ofertado') ? `<button type="button" class="btn sm" data-act="editar-item" data-id="${esc(x.id)}">${icon('edit', 'sm')} Marca/modelo</button>` : ''}${x.falta.includes('descritivo do item ofertado') ? `<button type="button" class="btn sm" data-act="cat-foco" data-id="${esc(x.id)}">${icon('image', 'sm')} Descritivo</button>` : ''}</div>`).join('')}</div></div></div>` : '';
     const aviso = pend.length ? `<div class="alert warn" style="margin-bottom:10px">${icon('alert', 'sm')}<div class="grow"><b>Confira antes de gerar:</b><br>${pend.map((x) => esc(x)).join('<br>')}</div></div>` : (falt.length ? '' : `<div class="alert ok" style="margin-bottom:10px">${icon('check', 'sm')}<span>Dados conferidos: nenhum campo em branco, todos os itens com marca, modelo, descritivo e valor.</span></div>`);
     const off = UI.pdf.busy || falt.length ? 'disabled' : '';
-    return `<div class="card" id="gerarCard" style="scroll-margin-top:80px"><h3>${icon('pdf', 'sm')} Gerar</h3>
+    return `<div class="card pd-blk pd-b7" id="gerarCard" style="scroll-margin-top:80px"><h3>${icon('pdf', 'sm')} Gerar</h3>
       ${bloq}${aviso}
       ${L.linhas.length ? `<label class="switch m-hide" style="margin-bottom:10px"><span>Anexar o catálogo ao final da proposta<small class="hint" style="display:block;font-weight:500">Ligado: o botão “Gerar PDF da proposta” já sai com o catálogo nas últimas páginas, num arquivo só.</small></span><input type="checkbox" data-cfg="proposta.catalogoJunto" data-type="check" ${st.config.proposta.catalogoJunto ? 'checked' : ''}></label>` : ''}
       <button class="btn primary block" data-act="pdf-gerar" ${off}>${icon('pdf')} ${UI.pdf.busy ? 'Gerando…' : 'Gerar PDF da proposta'}</button>
@@ -6727,7 +6737,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
       </div>`; }).join('');
     setTimeout(preencherFotosCatalogo, 0);
     const dl = `<datalist id="catTitList">${catTitulosOrdem().map((t) => `<option value="${esc(t)}">`).join('')}</datalist>`;
-    return `<div class="card" id="catCard" style="scroll-margin-top:80px">${dl}<h3>${icon('image', 'sm')} Catálogo dos produtos</h3>
+    return `<div class="card pd-blk pd-b6" id="catCard" style="scroll-margin-top:80px">${dl}<h3>${icon('image', 'sm')} Catálogo dos produtos</h3>
         <p class="tiny muted" style="margin:0 0 10px">Para o pregoeiro confrontar o edital com o que você oferece. Cada item sai com o que o edital exige, a marca/modelo, as especificações, a sua descrição detalhada e as fotos (até 4 por item). As fotos são reduzidas e sincronizadas com a sua conta (Config › Nuvem), para aparecerem nos outros aparelhos.</p>
         ${itens}
       </div>`;
