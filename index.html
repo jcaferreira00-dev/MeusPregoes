@@ -1533,7 +1533,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.145.0';
+  const APP_VERSION = '1.146.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Julgamento', 'Aguardando empenho', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -5463,14 +5463,16 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
   function pregoesListHtml() {
     const R = C.computeAll(store.get());
     let list = [...R.pMap.values()];
-    if (UI.filtro !== 'todos') list = list.filter((x) => x.p.status === UI.filtro);
+    // filtro "Ganhei" (pedido do João, 10/11/2026): pregões com pelo menos 1 item marcado como ganho, em qualquer status (inclusive concluídos)
+    if (UI.filtro === 'ganhei') list = list.filter((x) => x.ganho);
+    else if (UI.filtro !== 'todos') list = list.filter((x) => x.p.status === UI.filtro);
     const q = UI.busca.trim().toLowerCase();
     if (q) list = list.filter((x) => (x.p.numero + ' ' + x.p.orgao + ' ' + (x.p.cidadeUf || '') + ' ' + x.itens.map((i) => i.descricao).join(' ')).toLowerCase().includes(q));
     // mesma ordem do Painel: por status e, dentro de cada status, a data mais próxima primeiro
     list.sort((a, b) => (rankStatus(a.p.status) - rankStatus(b.p.status)) || ordemPainel(a, b));
     if (!list.length) return `<div class="card empty"><p class="muted">Nenhum pregão encontrado.</p></div>`;
     // raias por status: cada uma é uma fileira que desliza para o lado (PC e celular); encerrados e concluídos num botão só
-    const atvAll = list.filter((x) => !C.INATIVOS.includes(x.p.status)), ina = list.filter((x) => C.INATIVOS.includes(x.p.status)).sort(descPrimeiro);
+    const gh = UI.filtro === 'ganhei', atvAll = list.filter((x) => gh || !C.INATIVOS.includes(x.p.status)), ina = gh ? [] : list.filter((x) => C.INATIVOS.includes(x.p.status)).sort(descPrimeiro);
     const raias = [['Atenção agora', 'Atenção agora', 'atn'], ['Julgamento', 'Julgamento', 'jul'], ['Venci', 'Venci 🏆', 'venci'], ['Enviadas', 'Enviadas', 'env'], ['Analisando', 'Analisando', 'ana'], ['Incompletos', 'Incompletos', 'inc'], ['Outros', 'Outros', '']].map((r) => r.concat([[]]));
     const gDe = (x) => { const a = alertaPregao(x); if (a && a.lane) return 0; return 1 + ((x.p.status === 'Aguardando empenho' || x.ganho) ? 1 : x.p.status === 'Julgamento' ? 0 : x.p.status === 'Proposta enviada' ? 2 : x.p.status === 'Analisando' ? 3 : x.p.status === 'Falta dados' ? 4 : 5); };
     atvAll.forEach((x) => raias[gDe(x)][3].push(x));
@@ -5481,7 +5483,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     // numa coluna e os outros noutra, fora da tela; o João via só o de amanhã) — pedido do João, 08/11/2026
     if (UI.filtro !== 'todos' && cols.length > 1) {
       const ref = cols.find((r) => r[0] !== 'Atenção agora') || cols[0];
-      cols = [[UI.filtro, stTxt(UI.filtro), ref[2], cols.flatMap((r) => r[3])]];
+      cols = [[UI.filtro, UI.filtro === 'ganhei' ? 'Ganhei 🏆' : stTxt(UI.filtro), ref[2], cols.flatMap((r) => r[3])]];
     }
     if (UI.lane && !cols.some((r) => r[0] === UI.lane)) UI.lane = null;
     const chip = (x) => `<button type="button" class="enc-chip${x.p.status === 'Concluído' ? ' conc' : ''}" data-act="abrir-pregao" data-id="${x.p.id}" title="${esc(x.p.orgao)} · ${esc(stTxt(x.p.status))}"><b>Nº ${esc(x.p.numero)}</b><span class="ell">${esc(x.p.orgao)}</span><i>${esc(stTxt(x.p.status))}</i></button>`;
@@ -5513,10 +5515,12 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     if (UI.detailId) return renderDetail();
     const st = store.get();
     if (!st.pregoes.some((p) => !p.deleted)) return emptyWelcome();
-    const fl = ['todos', ...C.STATUS];
+    const nGanhei = C.computeAll(st).pMap.size ? [...C.computeAll(st).pMap.values()].filter((x) => x.ganho).length : 0;
+    if (UI.filtro === 'ganhei' && !nGanhei) UI.filtro = 'todos';
+    const fl = ['todos', ...(nGanhei ? ['ganhei'] : []), ...C.STATUS];
     return `<div class="page">
       <div class="search">${icon('search')}<input class="input" id="busca" type="search" placeholder="Buscar por número, órgão ou item" value="${esc(UI.busca)}"></div>
-      <div class="filters">${fl.map((s) => { const n = s === 'todos' ? st.pregoes.filter((p) => !p.deleted).length : st.pregoes.filter((p) => !p.deleted && p.status === s).length; return `<button data-act="filtro" data-v="${esc(s)}" class="${UI.filtro === s ? 'on' : ''}${n ? '' : ' f-zero'}"${s === 'todos' ? '' : ` style="--fc:${COR_STATUS[s] || '#7b8798'}"`}>${s === 'todos' ? '' : '<i class="f-dot"></i>'}${s === 'todos' ? 'Todos' : esc(stTxt(s))}<b class="f-n">${n}</b></button>`; }).join('')}</div>
+      <div class="filters">${fl.map((s) => { const n = s === 'todos' ? st.pregoes.filter((p) => !p.deleted).length : s === 'ganhei' ? nGanhei : st.pregoes.filter((p) => !p.deleted && p.status === s).length; return `<button data-act="filtro" data-v="${esc(s)}" class="${UI.filtro === s ? 'on' : ''}${n ? '' : ' f-zero'}"${s === 'todos' ? '' : ` style="--fc:${s === 'ganhei' ? 'var(--green)' : (COR_STATUS[s] || '#7b8798')}"`}>${s === 'todos' ? '' : '<i class="f-dot"></i>'}${s === 'todos' ? 'Todos' : s === 'ganhei' ? 'Ganhei 🏆' : esc(stTxt(s))}<b class="f-n">${n}</b></button>`; }).join('')}</div>
       <div id="plist">${pregoesListHtml()}</div></div>
       <button class="fab" data-act="novo-pregao" aria-label="Novo pregão">${icon('plus')}</button>`;
   }

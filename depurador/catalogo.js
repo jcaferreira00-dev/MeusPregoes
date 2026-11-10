@@ -246,7 +246,7 @@
   F('exigencias', AR.preg, 2, 'manter', 'Exigências (juntado às Observações)',
     `FEITO na v1.122.0 (05/11/2026, Rodada 2): o campo saiu do formulário e virou parte das “Observações e exigências”. O texto antigo foi para o fim das observações com “Exigências:” na frente (migração automática, uma vez). JSON com \`exigencias\` continua aceito.`, { red: ['obs-pregao'], probe: 'exigencias', sel: ['[name=obs]'] });
   F('filtros-status', AR.quad, 2, 'remover', 'Barra de filtros por status (acima do quadro)',
-    `Botões Todos/Incompleto/Analisando/Enviada/…/Desisti que filtram o quadro. As raias já agrupam por status e o grupo em tela cheia mostra um status só; o Painel também leva à guia já filtrada.`,
+    `Botões Todos/Ganhei/Incompleto/Analisando/Enviada/…/Desisti que filtram o quadro ("Ganhei" só aparece quando algum item foi marcado como ganho). As raias já agrupam por status e o grupo em tela cheia mostra um status só; o Painel também leva à guia já filtrada.`,
     { red: ['cartao-quadro', 'grupo-tela-cheia'], para: 'Remover a barra; manter o clique nos números do Painel (que filtra) ou trocar por abrir o grupo em tela cheia.', sel: ['.filters'] });
   F('mini-pregao', AR.quad, 2, 'fundir', 'Cartão compacto de encerrados (duas versões)',
     `Há dois desenhos para o pregão encerrado: o cartão pequeno “mini” (guia Itens) e o chip “enc-chip” (guia Pregões, botão Encerrados e concluídos).`, { red: ['cartao-quadro'], para: 'Ficar com um só desenho.', sel: ['.mini-p', '.enc-chip'] });
