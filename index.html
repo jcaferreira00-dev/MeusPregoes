@@ -5721,7 +5721,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
   // Mostra, por item, o número do edital, o teto e o PISO (menor lance sem prejuízo ganhando só este item). Abaixo do piso o campo não aceita:
   // fica vermelho, não mostra lucro e, ao sair do campo, volta para o piso. Os lances digitados são só simulação (ficam no navegador).
   // O que vai para o app: "Venci" (grava o lance como lance final e marca o item vencido, então entra na proposta final) e
-  // "Já foi / não ganhei" (marca não ganho, sai da proposta final). "Reabrir" volta o item para aguardando. A janela fala com o app pela fila
+  // "Não venci" (caixinha da colocação; marca não ganho, sai da proposta final). "Reabrir" volta o item para aguardando. A janela fala com o app pela fila
   // `mp.modo.fila` no localStorage (mesmo domínio): o app esvazia a fila na hora (evento storage) e também ao abrir ou voltar para o app.
   const FILA_MODO = 'mp.modo.fila';
   function modoPregaoDados(pst, R) {
@@ -5791,7 +5791,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
       if (r) {   // encerrado: linha pequena, vai para o fim
         var lance = r === 'venci' ? (W[it.id] != null ? W[it.id] : it.lanceApp) : null;
         el.className = 'c enc ' + (r === 'venci' ? 'v' : 'p');
-        el.querySelector('.fim').innerHTML = '<span class="bd ' + (r === 'venci' ? 'v' : 'p') + '">' + (r === 'venci' ? 'Venci' : r === 'desc' ? 'Desclassif.' : Q[it.id] ? 'Já foi · ' + Q[it.id] + 'º lugar' : 'Não ganhei') + '</span>' + (lance > 0 ? '<b>' + R(lance) + '</b>' : '') + '<button type="button" data-o="1">Reabrir</button>';
+        el.querySelector('.fim').innerHTML = '<span class="bd ' + (r === 'venci' ? 'v' : 'p') + '">' + (r === 'venci' ? 'Venci' : r === 'desc' ? 'Desclassif.' : Q[it.id] ? 'Não venci · ' + Q[it.id] + 'º lugar' : 'Não ganhei') + '</span>' + (lance > 0 ? '<b>' + R(lance) + '</b>' : '') + '<button type="button" data-o="1">Reabrir</button>';
         el.style.order = 1000 + D.itens.indexOf(it); return;
       }
       el.style.order = D.itens.indexOf(it);
@@ -5818,18 +5818,17 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
       if (!confirm(msg)) return;
       S[it.id] = 'venci'; if (v > 0) W[it.id] = v; sv(); envia(it, 'venci', v > 0 ? v : null); tudo();
     }
-    function naoVenci(it) { if (!confirm('Item ' + (it.n || '?') + ': não venci?\n\nO item sai da proposta final.')) return; S[it.id] = 'perdi'; delete Q[it.id]; sv(); envia(it, 'perdi', null); tudo(); }
-    // "Já foi": caixinha para eu digitar a minha colocação; marca não ganho e grava a colocação no item
+    // "Não venci": caixinha para eu digitar a minha colocação; marca não ganho e grava a colocação no item (vazio = só marca não ganho)
     function foi(it) {
       var old = document.getElementById('cxpos'); if (old) old.remove();
       var o = document.createElement('div'); o.id = 'cxpos'; o.style.cssText = 'position:fixed;inset:0;z-index:50;background:rgba(15,23,42,.55);display:flex;align-items:center;justify-content:center;padding:16px';
-      o.innerHTML = '<div style="background:#fff;border-radius:14px;padding:16px;width:min(320px,100%);display:grid;gap:10px;box-shadow:0 10px 30px rgba(0,0,0,.35)"><b style="font-size:17px">Item ' + esc(it.n || '?') + ' · já foi</b><label style="font-size:13px;color:#667489">Minha posição (1 = primeiro)</label><input id="posv" inputmode="numeric" maxlength="3" autocomplete="off" placeholder="ex.: 3" style="font:inherit;font-size:28px;font-weight:700;text-align:center;border:2px solid #d9dfe8;border-radius:12px;padding:8px"><div style="display:flex;gap:8px"><button type=button id="posc" style="flex:1;font:inherit;font-size:15px;border:1px solid #d9dfe8;background:#fff;border-radius:12px;padding:11px">Cancelar</button><button type=button id="poso" style="flex:1;font:inherit;font-size:15px;font-weight:700;border:0;background:#1f3a5f;color:#fff;border-radius:12px;padding:11px">Salvar</button></div></div>';
+      o.innerHTML = '<div style="background:#fff;border-radius:14px;padding:16px;width:min(320px,100%);display:grid;gap:10px;box-shadow:0 10px 30px rgba(0,0,0,.35)"><b style="font-size:17px">Item ' + esc(it.n || '?') + ' · não venci</b><label style="font-size:13px;color:#667489">Minha colocação (1 = primeiro)</label><input id="posv" inputmode="numeric" maxlength="3" autocomplete="off" placeholder="ex.: 3" style="font:inherit;font-size:28px;font-weight:700;text-align:center;border:2px solid #d9dfe8;border-radius:12px;padding:8px"><div style="display:flex;gap:8px"><button type=button id="posc" style="flex:1;font:inherit;font-size:15px;border:1px solid #d9dfe8;background:#fff;border-radius:12px;padding:11px">Cancelar</button><button type=button id="poso" style="flex:1;font:inherit;font-size:15px;font-weight:700;border:0;background:#1f3a5f;color:#fff;border-radius:12px;padding:11px">Salvar</button></div></div>';
       document.body.appendChild(o);
       var inp = o.querySelector('#posv'); inp.focus();
       function ok() {
-        var n = parseInt(String(inp.value).replace(/\D/g, ''), 10);
-        if (!(n >= 1 && n <= 999)) { inp.style.borderColor = '#c0392b'; return; }
-        S[it.id] = 'perdi'; Q[it.id] = n; sv(); envia(it, 'perdi', null, n); o.remove(); tudo();
+        var t = String(inp.value).replace(/\D/g, ''), n = parseInt(t, 10);
+        if (t && !(n >= 1 && n <= 999)) { inp.style.borderColor = '#c0392b'; return; }
+        S[it.id] = 'perdi'; if (n >= 1) Q[it.id] = n; else delete Q[it.id]; sv(); envia(it, 'perdi', null, n >= 1 ? n : null); o.remove(); tudo();
       }
       o.querySelector('#poso').onclick = ok; o.querySelector('#posc').onclick = function () { o.remove(); };
       inp.addEventListener('keydown', function (e) { if (e.key === 'Enter') ok(); else if (e.key === 'Escape') o.remove(); });
@@ -5841,7 +5840,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
         + '<div class="ref cx"><div><span>Teto</span><b>' + T(it.teto) + '</b></div><div class=piso><span>Piso (mínimo)</span><b>' + R(it.piso) + '</b></div><div><span>Posso baixar</span><b>' + (it.teto != null && it.piso != null && it.piso <= it.teto + 0.004 ? R(C2(fl2(it.teto) - it.piso)) : '—') + '</b></div></div>'
         + '<div class="in cx" id=w' + it.id + '><button type=button data-s=-1>−</button><input id=i' + it.id + ' inputmode=decimal autocomplete=off placeholder="Meu lance (unit.)"><button type=button data-s=1>+</button></div>'
         + '<div class="st cx"><button type=button data-d=-0.01>−0,01</button><button type=button data-d=-0.1>−0,10</button><button type=button data-d=-1>−1,00</button><button class=pz type=button data-p=1>Piso</button></div><div class="res cx" id=r' + it.id + '></div>'
-        + '<div class="fx cx"><button class=gv type=button data-v=1>🏆 Venci</button><button class=gp type=button data-f=1>Já foi</button><button class=gp type=button data-nv=1>Não venci</button></div>';
+        + '<div class="fx cx"><button class=gv type=button data-v=1>🏆 Venci</button><button class=gp type=button data-f=1>Não venci</button></div>';
       var i = s.querySelector('input'); i.value = ef(it) == null ? '' : N(ef(it));
       i.addEventListener('input', function () { var v = P(i.value); if (v > 0) V[it.id] = v; else delete V[it.id]; sv(); pinta(it); rodape(); });
       i.addEventListener('change', function () { set(it, P(i.value), true); });
@@ -5849,7 +5848,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
       s.addEventListener('click', function (e) {
         var b = e.target.closest('button'); if (!b) return;
         if (b.dataset.d) step(it, Number(b.dataset.d)); else if (b.dataset.s) step(it, Number(b.dataset.s) * 0.01);
-        else if (b.dataset.k) { aviso(s, it.riscos); } else if (b.dataset.p && it.piso != null) set(it, it.piso, true); else if (b.dataset.v) venci(it); else if (b.dataset.f) foi(it); else if (b.dataset.nv) naoVenci(it); else if (b.dataset.o) reabre(it);
+        else if (b.dataset.k) { aviso(s, it.riscos); } else if (b.dataset.p && it.piso != null) set(it, it.piso, true); else if (b.dataset.v) venci(it); else if (b.dataset.f) foi(it); else if (b.dataset.o) reabre(it);
       });
       return s;
     }
@@ -5857,13 +5856,13 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     D.itens.forEach(function (it) { M.appendChild(box(it)); });
     if (!D.itens.length) M.innerHTML = '<div class=vazio>Este pregão não tem itens na disputa.</div>';
     tudo();
-    document.getElementById('hora').textContent = 'Dados do app de ' + new Date().toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) + ' · lances digitados aqui não são gravados; só Venci / Já foi / Não venci';
+    document.getElementById('hora').textContent = 'Dados do app de ' + new Date().toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) + ' · lances digitados aqui não são gravados; só Venci / Não venci';
     document.getElementById('q').addEventListener('input', function (e) {
       var q = e.target.value.replace(/\D/g, '').replace(/^0+/, '');
       D.itens.forEach(function (it) { var el = document.getElementById('c' + it.id); el.style.display = !q || el.dataset.n === q || (it.lote && it.lote.replace(/^0+/, '') === q) ? '' : 'none'; });
     });
     document.getElementById('lt').addEventListener('click', function () {
-      if (!confirm('Voltar todos os lances ao valor do cadastro (ou ao teto)? (Venci / Já foi / Não venci já enviados ao app não mudam.)')) return;
+      if (!confirm('Voltar todos os lances ao valor do cadastro (ou ao teto)? (Venci / Não venci já enviados ao app não mudam.)')) return;
       V = {}; sv(); D.itens.forEach(function (it) { document.getElementById('i' + it.id).value = ef(it) == null ? '' : N(ef(it)); }); tudo();
     });
   }
@@ -5895,7 +5894,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
 + '<footer><div class="a"><span>Venci: <b id="fn">0</b></span><span>Lucro dos vencidos: <b id="fl">R$ 0,00</b></span></div><small id="fa"></small></footer><script>('
 + modoPregaoJanela.toString() + ')(' + dados + ');<\/script></body></html>';
   }
-  // o app esvazia a fila da janela do Modo pregão: Venci grava o lance como lance final e marca vencido; Já foi marca não ganho; '' reabre
+  // o app esvazia a fila da janela do Modo pregão: Venci grava o lance como lance final e marca vencido; Não venci marca não ganho e grava a colocação; '' reabre
   function drenarFilaModo() {
     let q = [];
     try { q = JSON.parse(localStorage.getItem(FILA_MODO) || '[]') || []; localStorage.removeItem(FILA_MODO); } catch (e) { return; }
@@ -7887,7 +7886,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     else if (S.enabled) { S.run('voltou para a janela'); sincronizarImagens(); }
   });
   window.addEventListener('pagehide', enviarAoSair);
-  // Modo pregão: recebe o que foi marcado na janela (Venci / Já foi / Reabrir) na hora, ao voltar para o app e ao abrir
+  // Modo pregão: recebe o que foi marcado na janela (Venci / Não venci / Reabrir) na hora, ao voltar para o app e ao abrir
   window.addEventListener('storage', (e) => { if (e.key === FILA_MODO && e.newValue) drenarFilaModo(); });
   window.addEventListener('focus', drenarFilaModo);
   document.addEventListener('visibilitychange', () => { if (!document.hidden) drenarFilaModo(); });
