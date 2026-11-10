@@ -1549,7 +1549,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.150.0';
+  const APP_VERSION = '1.150.1';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Julgamento', 'Aguardando empenho', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -2200,7 +2200,6 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
   }
   // o que falta conferir antes de gerar a proposta (lista vazia = tudo certo)
   // campos que identificam a empresa: na proposta sem identificação, a cláusula que usa algum deles fica de fora
-  const telsEmp = (emp) => { const l = [emp && emp.telefone].concat(Array.isArray(emp && emp.whatsapps) ? emp.whatsapps : []).map((x) => String(x || '').trim()).filter(Boolean); return l.filter((x, i) => l.indexOf(x) === i).join(' / '); };
   const CAMPOS_IDENTIFICAM = ['razao', 'cnpj', 'ie', 'endereco', 'bairro', 'cep', 'cidade', 'uf', 'enderecoCompleto', 'telefone', 'email', 'responsavel', 'cpf', 'rg', 'rgOrgao',
     'estadoCivil', 'nacionalidade', 'profissao', 'enderecoResidencial', 'banco', 'agencia', 'conta', 'pix', 'favorecido'];
   const identificaEmpresa = (txt) => (String(txt || '').match(/\{([a-zA-Z]+)\}/g) || []).some((m) => CAMPOS_IDENTIFICAM.includes(m.slice(1, -1)));
@@ -2970,6 +2969,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
   'use strict';
 
   const C = root.Core || (typeof require !== 'undefined' ? require('./core.js') : null);
+  const telsEmp = (emp) => { const l = [emp && emp.telefone].concat(Array.isArray(emp && emp.whatsapps) ? emp.whatsapps : []).map((x) => String(x || '').trim()).filter(Boolean); return l.filter((x, i) => l.indexOf(x) === i).join(' / '); };
   const PL = () => root.PDFLib || (typeof require !== 'undefined' ? require('pdf-lib') : null);
 
   /* ---------- valor por extenso ---------- */
