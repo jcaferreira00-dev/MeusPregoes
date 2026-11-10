@@ -324,6 +324,7 @@ input[type=range] { width: 100%; accent-color: var(--blue); }
 .pd-blk > summary { padding: 0; } .pd-blk > summary > h3 { display: block !important; margin: -16px -16px 0; }
 .pd-blk > summary > .tiny { display: block; padding-top: 10px; }
 .pd-b1 { --bc: #2e75b6; } .pd-b2 { --bc: #5b5fc7; } .pd-b3 { --bc: #2f7d3a; } .pd-b4 { --bc: #b7791f; } .pd-b5 { --bc: #6b7a90; } .pd-b6 { --bc: #8e44ad; } .pd-b7 { --bc: #1f3864; }
+.pd-b8 { --bc: #c0392b; }
 .pd-b7 > h3 { background: var(--bc); color: #fff; }
 @media (prefers-color-scheme: dark) { .pd-b7 { --bc: #5aa2e6; } .pd-b7 > h3 { color: #0b1220; } }
 .wapp-box { margin-bottom: 8px; display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
@@ -1548,7 +1549,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.149.0';
+  const APP_VERSION = '1.150.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Julgamento', 'Aguardando empenho', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -2199,6 +2200,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
   }
   // o que falta conferir antes de gerar a proposta (lista vazia = tudo certo)
   // campos que identificam a empresa: na proposta sem identificação, a cláusula que usa algum deles fica de fora
+  const telsEmp = (emp) => { const l = [emp && emp.telefone].concat(Array.isArray(emp && emp.whatsapps) ? emp.whatsapps : []).map((x) => String(x || '').trim()).filter(Boolean); return l.filter((x, i) => l.indexOf(x) === i).join(' / '); };
   const CAMPOS_IDENTIFICAM = ['razao', 'cnpj', 'ie', 'endereco', 'bairro', 'cep', 'cidade', 'uf', 'enderecoCompleto', 'telefone', 'email', 'responsavel', 'cpf', 'rg', 'rgOrgao',
     'estadoCivil', 'nacionalidade', 'profissao', 'enderecoResidencial', 'banco', 'agencia', 'conta', 'pix', 'favorecido'];
   const identificaEmpresa = (txt) => (String(txt || '').match(/\{([a-zA-Z]+)\}/g) || []).some((m) => CAMPOS_IDENTIFICAM.includes(m.slice(1, -1)));
@@ -3086,7 +3088,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
       const achou = [];
       [['nome da empresa', emp.nome], ['nome do titular', emp.responsavel], ['e-mail', emp.email], ['endereço', emp.endereco], ['PIX', emp.pix]]
         .forEach(([r, v]) => { const n = norm(v); if (n.length >= 5 && tudo.includes(n)) achou.push(r); });
-      [['CNPJ', emp.cnpj], ['CPF', emp.cpf], ['telefone', emp.telefone], ['RG', emp.rg], ['inscrição estadual', emp.ie]]
+      [['CNPJ', emp.cnpj], ['CPF', emp.cpf], ['telefone', emp.telefone], ...(Array.isArray(emp.whatsapps) ? emp.whatsapps : []).map((w) => ['telefone', w]), ['RG', emp.rg], ['inscrição estadual', emp.ie]]
         .forEach(([r, v]) => { const d = dig(v); if (d.length >= 8 && digitos.includes(d)) achou.push(r); });
       res.anonima = true; res.identificacao = achou;
       return res;
@@ -3145,7 +3147,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     const hdImg = cabOn ? await embedImg(hc.imagem) : null;
     const nomeEmp = emp.nome || 'SUA EMPRESA (preencha em Config)';
     const endCompleto = [emp.endereco, emp.bairro, emp.cep ? 'CEP ' + emp.cep : '', [emp.cidade, emp.uf].filter(Boolean).join('/')].filter(Boolean).join(' - ');
-    const linhasEmp0 = [[emp.cnpj ? 'CNPJ: ' + emp.cnpj : '', emp.ie ? 'IE: ' + emp.ie : ''].filter(Boolean).join('    '), endCompleto, [emp.telefone, emp.email].filter(Boolean).join('  ·  ')].filter(Boolean);
+    const linhasEmp0 = [[emp.cnpj ? 'CNPJ: ' + emp.cnpj : '', emp.ie ? 'IE: ' + emp.ie : ''].filter(Boolean).join('    '), endCompleto, [telsEmp(emp), emp.email].filter(Boolean).join('  ·  ')].filter(Boolean);
     const linhasEmp = linhasEmp0.reduce((acc, l) => acc.concat(wrap(l, font, 8.5, CW * (hdImg && hc.pos === 'direita' ? 0.55 : 0.92))), []);
     const TOPO = 22;                                                       // distância do topo da página
     let imgW = 0, imgH = 0;
@@ -3275,7 +3277,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
       const fornL = [
         [['Fornecedor: ', emp.nome || '—'], ['CNPJ: ', emp.cnpj || '—']],
         [['Endereço: ', endCompleto || '—']],
-        [['Telefone: ', emp.telefone || '—'], ['E-mail: ', emp.email || '—']],
+        [[telsEmp(emp).includes(' / ') ? 'Telefones: ' : 'Telefone: ', telsEmp(emp) || '—'], ['E-mail: ', emp.email || '—']],
       ].map((row) => row.map(([a, b]) => [{ t: a, f: bold }, { t: b + '     ', f: font }]).flat());
       const fLines = fornL.reduce((acc, segs) => acc.concat(wrapMixed(segs, 9, CW - 16)), []);
       const hF = 16 + fLines.length * 12 + 6;
@@ -3445,7 +3447,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     if (D.fornecedor) {
       const cf = D.campos || {};
       const defs = [['fornecedor', 'FORNECEDOR', emp.nome, true], ['cnpj', 'CNPJ / CPF', emp.cnpj || emp.cpf], ['ie', 'INSCRIÇÃO ESTADUAL', emp.ie], ['endereco', 'ENDEREÇO', emp.endereco, true],
-        ['bairro', 'BAIRRO', emp.bairro], ['cep', 'CEP', emp.cep], ['cidade', 'CIDADE', emp.cidade], ['uf', 'ESTADO', emp.uf], ['telefone', 'TELEFONE', emp.telefone], ['email', 'E-MAIL', emp.email]];
+        ['bairro', 'BAIRRO', emp.bairro], ['cep', 'CEP', emp.cep], ['cidade', 'CIDADE', emp.cidade], ['uf', 'ESTADO', emp.uf], ['telefone', 'TELEFONE', telsEmp(emp)], ['email', 'E-MAIL', emp.email]];
       const pares = defs.filter(([id]) => cf[id]).map(([, l, v, full]) => [l, v, full]);
       if (pares.length) {
         garantir(24 + 40);
@@ -3791,7 +3793,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
       const kv = (a, b) => run(a, { b: true, sz: 18 }) + run(b + '     ', { sz: 18 });
       body += `<w:tbl><w:tblPr><w:tblW w:w="9638" w:type="dxa"/>${bordas(COR, 6)}<w:tblLayout w:type="fixed"/></w:tblPr><w:tblGrid><w:gridCol w:w="9638"/></w:tblGrid>
         <w:tr>${cel(p(run('DADOS DO FORNECEDOR', { b: true, cor: COR, sz: 17 })), 9638, 'F3F3F3')}</w:tr>
-        <w:tr>${cel(p(kv('Fornecedor: ', emp.nome || '—') + kv('CNPJ: ', emp.cnpj || '—')) + p(kv('Endereço: ', endC || '—')) + p(kv('Telefone: ', emp.telefone || '—') + kv('E-mail: ', emp.email || '—')), 9638)}</w:tr></w:tbl>`;
+        <w:tr>${cel(p(kv('Fornecedor: ', emp.nome || '—') + kv('CNPJ: ', emp.cnpj || '—')) + p(kv('Endereço: ', endC || '—')) + p(kv(telsEmp(emp).includes(' / ') ? 'Telefones: ' : 'Telefone: ', telsEmp(emp) || '—') + kv('E-mail: ', emp.email || '—')), 9638)}</w:tr></w:tbl>`;
       body += p('', esp(0, 200));
       for (const ln of L.linhas) {
         body += p(run(`${ln.rotulo} - ${String(ln.descricao || '').toUpperCase()}`, { b: true, sz: 21 }), esp(160, 80) + '<w:keepNext/><w:pBdr><w:top w:val="single" w:sz="6" w:space="3" w:color="' + COR + '"/><w:left w:val="single" w:sz="6" w:space="4" w:color="' + COR + '"/><w:bottom w:val="single" w:sz="6" w:space="3" w:color="' + COR + '"/><w:right w:val="single" w:sz="6" w:space="4" w:color="' + COR + '"/></w:pBdr><w:shd w:val="clear" w:color="auto" w:fill="F3F3F3"/>');
@@ -3825,7 +3827,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
       if (op.cabecalho && hc.imagem) cab += p(imagem(hc.imagem, 2200000, 650000), jc(hc.pos === 'esquerda' ? 'left' : hc.pos === 'centro' ? 'center' : 'right'));
       if (op.cabecalho !== false && (!hc.imagem || hc.mostrarNome !== false)) {
         cab += p(run(emp.nome || '', { b: true, sz: 26, cor: COR }), esp(0, 0));
-        const l2 = [emp.cnpj ? 'CNPJ: ' + emp.cnpj : '', [emp.cidade, emp.uf].filter(Boolean).join('/'), [emp.telefone, emp.email].filter(Boolean).join(' · ')].filter(Boolean).join('   ');
+        const l2 = [emp.cnpj ? 'CNPJ: ' + emp.cnpj : '', [emp.cidade, emp.uf].filter(Boolean).join('/'), [telsEmp(emp), emp.email].filter(Boolean).join(' · ')].filter(Boolean).join('   ');
         if (l2) cab += p(run(l2, { sz: 16, cor: '666666' }), esp(0, 0));
       }
       cab += p('', `<w:pBdr><w:bottom w:val="single" w:sz="8" w:space="1" w:color="${COR}"/></w:pBdr>` + esp(0, 120));
@@ -6412,14 +6414,14 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     const camposBanco = C.CAMPOS_BANCO.map(([id, nome]) => swp(o, 'bancoCampos.' + id, nome)).join('');
     const decl = C.DECL_PROPOSTA.map(([k, t, x]) => swp(o, 'decl.' + k, t, k === 'representante' ? 'Nome, CPF, RG, estado civil, e-mail e telefone do titular (só o que estiver preenchido em Config › Meus dados). Sai fora da proposta sem identificação.' : esc(x.replace('{numero}', pz.numero || '…')))).join('');
     const cab = `
-      <div class="card pd-blk pd-b2"><h3>2 · Documento da proposta <span class="grow"></span><span class="saved-ind" id="savedInd">Salvo</span></h3>
+      <details class="card pd-blk pd-b2 pdf-avanc" data-k="pdfB2"${UI.pdfB2 === false ? '' : ' open'}><summary><h3>2 · Documento da proposta <span class="grow"></span><span class="saved-ind" id="savedInd">Salvo</span></h3></summary>
         <p class="tiny muted" style="margin:0 0 8px">Todos os pregões saem no seu modelo padrão. Aqui você só ajusta as condições deste edital e, se ele pedir, a versão sem identificação. As declarações do edital são feitas à parte, conforme cada pregão pede.</p>
         ${(() => { if (UI.pdf.tipo === 'final') return ''; const pz = store.get().pregoes.find((x) => x.id === UI.pdf.pregaoId), k = confereIdent(pz, o); if (!k) return '';
           return `<div class="alert ${k.ok ? 'ok' : 'bad'}" style="margin:0 0 10px">${icon(k.ok ? 'check' : 'alert', 'sm')}<div class="grow">Edital: ${regraIdentTxt(k.r)}. ${k.ok ? 'A proposta está configurada assim.' : '<b>A chavinha abaixo está diferente do edital.</b> O app não gera assim sem você confirmar.'}${k.r.observacoes ? '<br><span class="tiny">' + esc(k.r.observacoes) + '</span>' : ''}</div>${k.ok ? '' : '<button type="button" class="btn sm" data-act="pdf-ident-edital">Ajustar</button>'}</div>`; })()}
         ${UI.pdf.tipo === 'final' ? '' : swp(o, 'anonima', 'Proposta inicial sem identificação da empresa', 'Para o edital que proíbe identificar o licitante. Sai sem nome, CNPJ, cabeçalho, dados bancários, local, assinatura, declarações e cláusulas com dados da empresa. Vale só para este pregão; a proposta final sai identificada.')}
         ${o.anonima ? `<div class="alert warn" style="margin:4px 0 10px">${icon('alert', 'sm')}<div class="grow">Sem identificação: ao gerar, o app confere se o nome, CNPJ, CPF, e-mail ou telefone aparecem no PDF. Confira também as fotos do catálogo (logo ou etiqueta da empresa).</div></div>` : ''}
-      </div>
-      <div class="card pd-blk pd-b3"><h3>3 · Condições deste pregão</h3>
+      </details>
+      <details class="card pd-blk pd-b3 pdf-avanc" data-k="pdfB3"${UI.pdfB3 === false ? '' : ' open'}><summary><h3>3 · Condições deste pregão</h3></summary>
         <div class="formgrid">
           ${fp(o, 'validade', 'Validade (dias)', { type: 'int', im: 'numeric' })}
           ${fp(o, 'pagamento', 'Prazo de pagamento', { ph: pz.pagamentoDias ? pz.pagamentoDias + ' dias (do pregão)' : 'ex.: 30 dias' })}
@@ -6428,11 +6430,11 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
         </div>
         ${fp(o, 'observacoes', 'Observações deste pregão (saem no PDF)', { area: true, rows: 2, full: true })}
         <p class="tiny muted" style="margin:6px 0 0">Tudo aqui vale só para este pregão (vem do edital). Em branco: prazo de entrega e pagamento saem do cadastro do pregão; validade, do padrão da Config.</p>
-      </div>
-      <div class="card pd-blk pd-b4"><h3>4 · O que os pregões costumam pedir</h3>
+      </details>
+      <details class="card pd-blk pd-b4 pdf-avanc" data-k="pdfB4"${UI.pdfB4 === false ? '' : ' open'}><summary><h3>4 · O que os pregões costumam pedir</h3></summary>
         <p class="tiny muted" style="margin:0 0 8px">Frases fixas que saem no fim da proposta, antes do local e da assinatura. Desligue a que não quiser; a escolha vira o padrão dos próximos pregões.</p>
         <div class="swgrid sw1">${decl}</div>
-      </div>`;
+      </details>`;
     const corpo = [
       acc('acc-tit', 'Títulos e faixa',
         `${swp(o, 'desc.titulo', 'Título do documento')}${fp(o, 'desc.tituloTexto', 'Título', { area: true, rows: 2, full: true, hint: 'Sai em caixa alta e negrito, ajustado às margens. Enter = nova linha.' })}
@@ -6471,6 +6473,39 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     }).join('')}<div class="pm-sum"><span>Total da proposta</span><b>${C.brl(L.total)}</b></div></div>`;
   }
 
+  function meusDadosHtml(e) {
+    const cf = (path, type, val, ph) => `data-cfg="${path}" data-type="${type}" value="${esc(val == null ? '' : val)}"${ph ? ` placeholder="${esc(ph)}"` : ''}`;
+    const fld = (label, path, type, val, o) => `<div class="field${o && o.full ? ' full' : ''}"><label>${label}</label><input class="input" ${o && o.im ? `inputmode="${o.im}"` : ''} ${cf(path, type, val, o && o.ph)}>${o && o.hint ? `<div class="hint">${o.hint}</div>` : ''}</div>`;
+    return `<details class="card pd-blk pd-b8 pdf-avanc cfg-dados" data-k="meusDados"${UI.meusDados ? ' open' : ''}><summary><h3>Meus dados · empresa, titular e banco</h3></summary>
+        <div class="small muted" style="margin-bottom:8px">Empresa, titular (CPF, RG, estado civil) e banco. Vão na proposta e nas declarações. ${dadosResumo(e)}</div>
+        <h4 class="cfg-sub">Empresa e titular</h4><div class="formgrid">
+        ${fld('Nome / razão social', 'empresa.nome', 'text', e.nome, { full: true, ph: 'ex.: JOÃO DA SILVA 00000000000' })}
+        ${fld('CNPJ', 'empresa.cnpj', 'text', e.cnpj, { im: 'numeric', ph: '00.000.000/0001-00' })}
+        ${fld('CPF do titular (assinatura)', 'empresa.cpf', 'text', e.cpf, { im: 'numeric', ph: '000.000.000-00' })}
+        ${fld('Inscrição Estadual', 'empresa.ie', 'text', e.ie, { full: true, ph: 'deixe vazio se não tiver' })}
+        ${fld('Nome do titular (assinatura)', 'empresa.responsavel', 'text', e.responsavel, { full: true })}
+        ${fld('RG do titular', 'empresa.rg', 'text', e.rg, { ph: '00.000.000-0' })}
+        ${fld('Órgão emissor do RG', 'empresa.rgOrgao', 'text', e.rgOrgao, { ph: 'SESP/PR' })}
+        ${fld('Estado civil', 'empresa.estadoCivil', 'text', e.estadoCivil, { ph: 'solteiro, casado…' })}
+        ${fld('Profissão', 'empresa.profissao', 'text', e.profissao, { ph: 'empresário' })}
+        ${fld('Endereço residencial do titular', 'empresa.enderecoResidencial', 'text', e.enderecoResidencial, { full: true, hint: 'Alguns editais pedem nas declarações. Usado só no PDF.' })}
+        ${fld('Endereço', 'empresa.endereco', 'text', e.endereco, { full: true })}
+        ${fld('Bairro', 'empresa.bairro', 'text', e.bairro)}
+        ${fld('CEP', 'empresa.cep', 'text', e.cep, { im: 'numeric', ph: '00000-000' })}
+        ${fld('Cidade', 'empresa.cidade', 'text', e.cidade)}
+        ${fld('UF (Estado)', 'empresa.uf', 'text', e.uf, { ph: 'PR' })}
+        ${fld('Telefone / WhatsApp', 'empresa.telefone', 'text', e.telefone, { im: 'tel' })}
+        <div class="full wapp-box"><label class="wapp-lb">Outros WhatsApp <span class="tiny muted">(opcional; saem na proposta junto com o telefone)</span></label>
+          ${(Array.isArray(e.whatsapps) ? e.whatsapps : []).map((n, i) => `<div class="wapp-row"><input class="input" inputmode="tel" autocomplete="off" data-cfg="empresa.whatsapps.${i}" data-type="text" placeholder="(00) 00000-0000" value="${esc(n)}"><button type="button" class="btn ghost wapp-x" data-act="wapp-del" data-i="${i}" aria-label="Remover este WhatsApp">${icon('trash', 'sm')}</button></div>`).join('')}
+          <button type="button" class="btn sm" data-act="wapp-add">${icon('plus', 'sm')} Incluir WhatsApp</button></div>
+        ${fld('E-mail', 'empresa.email', 'text', e.email, { full: true, im: 'email' })}</div>
+        <h4 class="cfg-sub">Dados bancários</h4><div class="formgrid">
+        ${fld('Banco', 'empresa.banco', 'text', e.banco, { ph: '077 - INTER' })}
+        ${fld('Agência', 'empresa.agencia', 'text', e.agencia, { im: 'numeric' })}
+        ${fld('Conta', 'empresa.conta', 'text', e.conta)}
+        ${fld('PIX', 'empresa.pix', 'text', e.pix)}
+        ${fld('Favorecido', 'empresa.favorecido', 'text', e.favorecido, { full: true, hint: 'Vazio = usa o nome da empresa.' })}</div></details>`;
+  }
   function renderPDF() {
     const st = store.get(), cfg = st.config, p = cfg.proposta, w = cfg.marcaDagua, e = cfg.empresa;
     const list = activePregoes();
@@ -6492,7 +6527,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     const cf = (path, type, val, extra) => `data-cfg="${path}" data-type="${type}" value="${esc(val)}" ${extra || ''}`;
     const empOk = !!(e.nome && e.cnpj);
     return `<div class="page">
-      <div class="card pd-blk pd-b1"><h3>1 · Qual pregão?</h3>
+      <details class="card pd-blk pd-b1 pdf-avanc" data-k="pdfB1"${UI.pdfB1 === false ? '' : ' open'}><summary><h3>1 · Qual pregão?</h3></summary>
         <div class="field pdfp-field"><label for="pdfp">Pregão</label><select class="input" id="pdfp" data-ui="pregaoId">${list.map((x) => `<option value="${x.id}"${x.id === UI.pdf.pregaoId ? ' selected' : ''}>${esc(pregaoLabel(x))}</option>`).join('')}</select></div>
         ${tipoHtml}
         ${(pz0.modeloProprio || pz0.linkModelo) ? `<div class="alert warn" style="margin-bottom:12px">${icon('alert', 'sm')}<div class="grow">Este edital tem modelo próprio de proposta.${pz0.obs ? '<br><span style="font-weight:600;white-space:pre-wrap">' + esc(pz0.obs) + '</span>' : ''}</div>${pz0.linkModelo ? `<a class="btn sm" href="${esc(/^https?:\/\//i.test(pz0.linkModelo) ? pz0.linkModelo : 'https://' + pz0.linkModelo)}" target="_blank" rel="noopener noreferrer">Abrir modelo</a>` : ''}</div>` : ''}
@@ -6508,7 +6543,8 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
         ${L.lanceAcima ? `<div class="alert warn" style="margin-top:10px">${icon('alert', 'sm')}<span>${L.lanceAcima} item(ns) com lance final acima do teto do edital. O lance foi mantido, como você definiu.</span></div>` : ''}
         ${L.limitados ? `<div class="alert warn" style="margin-top:10px">${icon('alert', 'sm')}<span>${L.limitados} item(ns) passavam do teto do edital e entram na proposta com o valor do teto (${C.brl(L.reducao)} a menos no total), para não desclassificar.${L.abaixoMin ? ' Em ' + L.abaixoMin + ' deles o teto fica abaixo do seu valor mínimo: lucro menor ou prejuízo.' : ''}</span></div>` : ''}
         ${L.semValor ? `<div class="alert warn" style="margin-top:10px">${icon('alert', 'sm')}<span>${L.semValor} item(ns) sem valor nesta opção. Preencha o teto ou o lance final, ou troque a opção acima.</span></div>` : ''}
-      </div>
+      </details>
+      ${meusDadosHtml(e)}
       <div class="m-hide">${pdfModelCards(opts, cfg, pz)}</div>
       <details class="pdf-avanc pdf-avanc-vis m-hide" data-k="pdfVis"${UI.pdfVis ? ' open' : ''}><summary class="card pd-blk pd-b5"><h3 style="display:inline">Avançado · cabeçalho e marca d’água</h3><span class="tiny muted" style="display:block;margin-top:2px">Imagem do cabeçalho e marca d’água das propostas. Fechado por padrão.</span></summary>
       <div class="card"><h3>Cabeçalho (imagem e nome)</h3>
@@ -6708,7 +6744,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     const bloq = falt.length ? `<div class="alert bad" style="margin-bottom:10px">${icon('alert', 'sm')}<div class="grow"><b>Não dá para gerar a proposta ainda.</b> Em cada item precisa ter a marca e o modelo (no item, iguais aos do descritivo) e o descritivo do item ofertado (no catálogo, logo acima):<div class="falta-lista">${falt.map((x) => `<div class="falta-it"><span class="grow"><b>${esc(x.rotulo)}</b> · ${esc(x.descricao)}<br><span class="tiny muted">falta: ${esc(x.falta.join('; '))}</span></span>${x.falta.some((f) => f !== 'descritivo do item ofertado') ? `<button type="button" class="btn sm" data-act="editar-item" data-id="${esc(x.id)}">${icon('edit', 'sm')} Marca/modelo</button>` : ''}${x.falta.includes('descritivo do item ofertado') ? `<button type="button" class="btn sm" data-act="cat-foco" data-id="${esc(x.id)}">${icon('image', 'sm')} Descritivo</button>` : ''}</div>`).join('')}</div></div></div>` : '';
     const aviso = pend.length ? `<div class="alert warn" style="margin-bottom:10px">${icon('alert', 'sm')}<div class="grow"><b>Confira antes de gerar:</b><br>${pend.map((x) => esc(x)).join('<br>')}</div></div>` : (falt.length ? '' : `<div class="alert ok" style="margin-bottom:10px">${icon('check', 'sm')}<span>Dados conferidos: nenhum campo em branco, todos os itens com marca, modelo, descritivo e valor.</span></div>`);
     const off = UI.pdf.busy || falt.length ? 'disabled' : '';
-    return `<div class="card pd-blk pd-b7" id="gerarCard" style="scroll-margin-top:80px"><h3>${icon('pdf', 'sm')} Gerar</h3>
+    return `<details class="card pd-blk pd-b7 pdf-avanc" data-k="pdfB7" id="gerarCard" style="scroll-margin-top:80px"${UI.pdfB7 === false ? '' : ' open'}><summary><h3>${icon('pdf', 'sm')} Gerar</h3></summary>
       ${bloq}${aviso}
       ${L.linhas.length ? `<label class="switch m-hide" style="margin-bottom:10px"><span>Anexar o catálogo ao final da proposta<small class="hint" style="display:block;font-weight:500">Ligado: o botão “Gerar PDF da proposta” já sai com o catálogo nas últimas páginas, num arquivo só.</small></span><input type="checkbox" data-cfg="proposta.catalogoJunto" data-type="check" ${st.config.proposta.catalogoJunto ? 'checked' : ''}></label>` : ''}
       <button class="btn primary block" data-act="pdf-gerar" ${off}>${icon('pdf')} ${UI.pdf.busy ? 'Gerando…' : 'Gerar PDF da proposta'}</button>
@@ -6716,7 +6752,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
       ${L.linhas.length ? `<div class="grid2 m-hide" style="margin-top:10px">
         <button class="btn" data-act="cat-gerar" ${UI.pdf.busy ? 'disabled' : ''}>${icon('pdf', 'sm')} Só o catálogo (PDF)</button>
         <button class="btn" data-act="cat-docx" ${UI.pdf.busy ? 'disabled' : ''}>${icon('download', 'sm')} Catálogo em Word (.docx)</button>
-      </div>` : ''}</div>`;
+      </div>` : ''}</details>`;
   }
   function catalogoCardHtml(st, L) {
     if (!L.linhas.length) return '';
@@ -6737,10 +6773,10 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
       </div>`; }).join('');
     setTimeout(preencherFotosCatalogo, 0);
     const dl = `<datalist id="catTitList">${catTitulosOrdem().map((t) => `<option value="${esc(t)}">`).join('')}</datalist>`;
-    return `<div class="card pd-blk pd-b6" id="catCard" style="scroll-margin-top:80px">${dl}<h3>${icon('image', 'sm')} Catálogo dos produtos</h3>
+    return `<details class="card pd-blk pd-b6 pdf-avanc" data-k="pdfB6" id="catCard" style="scroll-margin-top:80px"${UI.pdfB6 === false ? '' : ' open'}><summary><h3>${icon('image', 'sm')} Catálogo dos produtos</h3></summary>${dl}
         <p class="tiny muted" style="margin:0 0 10px">Para o pregoeiro confrontar o edital com o que você oferece. Cada item sai com o que o edital exige, a marca/modelo, as especificações, a sua descrição detalhada e as fotos (até 4 por item). As fotos são reduzidas e sincronizadas com a sua conta (Config › Nuvem), para aparecerem nos outros aparelhos.</p>
         ${itens}
-      </div>`;
+      </details>`;
   }
   async function preencherFotosCatalogo() {
     for (const el of $$('[data-cat-thumbs]')) {
@@ -7149,36 +7185,9 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
         ${fld('Imposto sobre a venda (%)', 'impostoPct', 'pct', C.numBR(c.impostoPct * 100, 2), { im: 'decimal', hint: 'MEI: deixe 0. Use só se sair do MEI (alíquota do Simples).' })}</div>
         <div class="alert info" style="margin-top:6px">${icon('info', 'sm')}<span id="dasInfo">DAS mensal: <b>${C.brl(C.dasMensal(c))}</b> (5% do salário mínimo + ICMS/ISS)</span></div>
         <p class="tiny muted" style="margin-top:8px">Em 2026: INSS R$ 81,05 + ICMS R$ 1,00 (comércio) e/ou ISS R$ 5,00 (serviços). Com o imposto sobre a venda acima de 0, o valor mínimo da proposta já o considera. O DAS é fixo e aparece no Painel.</p></div>
-      <div class="card cfg-dados${UI.meusDados ? ' aberto' : ''}"><h3><span class="grow">Meus dados</span></h3>
-        <div class="row between wrap" style="gap:10px"><span class="small muted">Empresa, titular (CPF, RG, estado civil) e banco. Vão na proposta e nas declarações. ${dadosResumo(e)}</span>
-        <button class="btn${UI.meusDados ? '' : ' primary'}" data-act="meus-dados">${UI.meusDados ? 'Fechar meus dados' : 'Abrir meus dados'}</button></div>
-        ${UI.meusDados ? `<h4 class="cfg-sub">Empresa e titular</h4><div class="formgrid">
-        ${fld('Nome / razão social', 'empresa.nome', 'text', e.nome, { full: true, ph: 'ex.: JOÃO DA SILVA 00000000000' })}
-        ${fld('CNPJ', 'empresa.cnpj', 'text', e.cnpj, { im: 'numeric', ph: '00.000.000/0001-00' })}
-        ${fld('CPF do titular (assinatura)', 'empresa.cpf', 'text', e.cpf, { im: 'numeric', ph: '000.000.000-00' })}
-        ${fld('Inscrição Estadual', 'empresa.ie', 'text', e.ie, { full: true, ph: 'deixe vazio se não tiver' })}
-        ${fld('Nome do titular (assinatura)', 'empresa.responsavel', 'text', e.responsavel, { full: true })}
-        ${fld('RG do titular', 'empresa.rg', 'text', e.rg, { ph: '00.000.000-0' })}
-        ${fld('Órgão emissor do RG', 'empresa.rgOrgao', 'text', e.rgOrgao, { ph: 'SESP/PR' })}
-        ${fld('Estado civil', 'empresa.estadoCivil', 'text', e.estadoCivil, { ph: 'solteiro, casado…' })}
-        ${fld('Profissão', 'empresa.profissao', 'text', e.profissao, { ph: 'empresário' })}
-        ${fld('Endereço residencial do titular', 'empresa.enderecoResidencial', 'text', e.enderecoResidencial, { full: true, hint: 'Alguns editais pedem nas declarações. Usado só no PDF.' })}
-        ${fld('Endereço', 'empresa.endereco', 'text', e.endereco, { full: true })}
-        ${fld('Bairro', 'empresa.bairro', 'text', e.bairro)}
-        ${fld('CEP', 'empresa.cep', 'text', e.cep, { im: 'numeric', ph: '00000-000' })}
-        ${fld('Cidade', 'empresa.cidade', 'text', e.cidade)}
-        ${fld('UF (Estado)', 'empresa.uf', 'text', e.uf, { ph: 'PR' })}
-        ${fld('Telefone / WhatsApp', 'empresa.telefone', 'text', e.telefone, { im: 'tel' })}
-        <div class="full wapp-box"><label class="wapp-lb">Outros WhatsApp <span class="tiny muted">(opcional; só ficam guardados aqui)</span></label>
-          ${(Array.isArray(e.whatsapps) ? e.whatsapps : []).map((n, i) => `<div class="wapp-row"><input class="input" inputmode="tel" autocomplete="off" data-cfg="empresa.whatsapps.${i}" data-type="text" placeholder="(00) 00000-0000" value="${esc(n)}"><button type="button" class="btn ghost wapp-x" data-act="wapp-del" data-i="${i}" aria-label="Remover este WhatsApp">${icon('trash', 'sm')}</button></div>`).join('')}
-          <button type="button" class="btn sm" data-act="wapp-add">${icon('plus', 'sm')} Incluir WhatsApp</button></div>
-        ${fld('E-mail', 'empresa.email', 'text', e.email, { full: true, im: 'email' })}</div>
-        <h4 class="cfg-sub">Dados bancários</h4><div class="formgrid">
-        ${fld('Banco', 'empresa.banco', 'text', e.banco, { ph: '077 - INTER' })}
-        ${fld('Agência', 'empresa.agencia', 'text', e.agencia, { im: 'numeric' })}
-        ${fld('Conta', 'empresa.conta', 'text', e.conta)}
-        ${fld('PIX', 'empresa.pix', 'text', e.pix)}
-        ${fld('Favorecido', 'empresa.favorecido', 'text', e.favorecido, { full: true, hint: 'Vazio = usa o nome da empresa.' })}</div>` : ''}</div>
+      <div class="card"><h3>Meus dados</h3>
+        <div class="row between wrap" style="gap:10px"><span class="small muted">Empresa, titular e banco agora ficam na guia <b>Proposta</b>. ${dadosResumo(e)}</span>
+        <button class="btn primary" data-act="abrir-meus-dados">Abrir em Proposta</button></div></div>
       <div class="card"><h3>Dados e backup</h3>
         <div class="grid2"><button class="btn" data-act="export">${icon('download', 'sm')} Exportar</button><label class="btn" style="cursor:pointer">${icon('plus', 'sm')} Importar<input type="file" accept="application/json,.json" data-import class="hidden"></label></div>
         <div class="grid2" style="margin-top:10px"><button class="btn danger" data-act="apagar-desisti">${icon('trash', 'sm')} Limpar desistências</button><button class="btn danger" data-act="apagar">${icon('trash', 'sm')} Apagar tudo</button></div></div>
@@ -7475,10 +7484,9 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
       case 'sim-limpar': { delete UI.sim[id]; const inp = document.querySelector('[data-sim="' + id + '"]'); if (inp) { inp.value = ''; inp.dispatchEvent(new Event('input', { bubbles: true })); inp.focus(); } break; }
       case 'sim-gravar': gravarLanceSimulado(id); break;
       case 'tab': setTab(t.dataset.v); break;
-      case 'meus-dados': UI.meusDados = !UI.meusDados; UI.keepScroll = true; render(); break;
       case 'wapp-add': { const e = (store.get().config || {}).empresa || {}; store.setConfigPath('empresa.whatsapps', (Array.isArray(e.whatsapps) ? e.whatsapps.slice() : []).concat(['']), { silent: true }); UI.keepScroll = true; render(); setTimeout(() => { const ins = $$('[data-cfg^="empresa.whatsapps."]'); if (ins.length) ins[ins.length - 1].focus(); }, 30); break; }
       case 'wapp-del': { const e = (store.get().config || {}).empresa || {}, l = Array.isArray(e.whatsapps) ? e.whatsapps.slice() : []; l.splice(Number(t.dataset.i), 1); store.setConfigPath('empresa.whatsapps', l, { silent: true }); flashSaved(); UI.keepScroll = true; render(); break; }
-      case 'abrir-meus-dados': UI.meusDados = true; setTab('config'); setTimeout(() => { const el = document.querySelector('.cfg-dados'); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 60); break;
+      case 'abrir-meus-dados': UI.meusDados = true; setTab('pdf'); setTimeout(() => { const el = document.querySelector('.cfg-dados'); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 80); break;
       case 'itens-ganhos': openGanhosForm(id); break;
       case 'item-res': { UI.keepScroll = true; const c = Rc().iMap.get(id); const v = t.dataset.v; definirResultado(id, c && c.resultado === v ? '' : v); break; }
       case 'aviso-pend-i': UI.pendI = UI.pendI === t.dataset.v ? '' : t.dataset.v; UI.keepScroll = true; render(); break;

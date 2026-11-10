@@ -99,6 +99,8 @@ Ao acrescentar uma função que o João usa, acrescentar a conferência dela no 
 
 ---
 
+- Guia Proposta, v1.150.0 (pedido do João, 10/11/2026): TODOS os blocos são recolhíveis como o "Avançado" (`<details class="pdf-avanc" data-k="pdfB1…pdfB7">`; abertos por padrão, o que o João fechar fica lembrado na sessão em `UI`). "Meus dados" (empresa, titular e banco) MUDOU da Config para a guia Proposta (bloco vermelho `pd-b8`, fechado por padrão, `meusDadosHtml`); na Config ficou só o atalho "Abrir em Proposta" (`abrir-meus-dados` leva à Proposta). Isso SUBSTITUI a regra de 05/11 que mandava deixar os dados só na Config. Os dois telefones (principal + "Outros WhatsApp", `telsEmp`) saem juntos no cabeçalho e no bloco "dados do fornecedor" do PDF e do Word; nas declarações continua só o principal.
+
 ## 2. Análise de edital (quando o João mandar o PDF)
 
 ### Conferência dos documentos (ANTES de analisar ou cotar — decisão de 31/10/2026)
