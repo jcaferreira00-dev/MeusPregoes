@@ -1052,6 +1052,29 @@ html body .pgc-st { border-radius: 6px; font-size: 10.5px; letter-spacing: .02em
   html body .pgc .pgc-plat { font-size: 10.5px; padding: 2px 7px; }
 }
 
+/* ---------- Painel: Ganho provável (v1.160.0) ---------- */
+.gp-card { border-top: 3px solid var(--blue); padding: 14px 16px; margin-bottom: 12px; }
+.gp-card h3 { margin-bottom: 10px; } .gp-lim { font-size: 11px; font-weight: 600; letter-spacing: 0; text-transform: none; color: var(--muted); }
+.gp-grid { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1.15fr); gap: 8px; align-items: stretch; }
+.gp-t { min-width: 0; border: 1px solid var(--line); border-radius: 12px; padding: 8px 12px; display: flex; flex-direction: column; justify-content: center; text-align: center; background: var(--card); }
+.gp-t span { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+.gp-t b { font-size: 22px; font-weight: 800; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; line-height: 1.2; }
+.gp-t i { font-style: normal; font-size: 11px; color: var(--muted); }
+.gp-a b { color: #2e75b6; } .gp-a { background: color-mix(in srgb, #2e75b6 9%, var(--card)); border-color: color-mix(in srgb, #2e75b6 30%, transparent); }
+.gp-b { background: color-mix(in srgb, #9ec5e8 18%, var(--card)); border: 1px dashed color-mix(in srgb, #2e75b6 45%, transparent); } .gp-b b { color: #5a8fc4; }
+.gp-c { background: linear-gradient(135deg, #1f3864, #2e75b6); border-color: transparent; } .gp-c span, .gp-c i { color: rgba(255,255,255,.82); } .gp-c b { color: #fff; font-size: 26px; }
+.gp-bad .gp-c { background: linear-gradient(135deg, #8e2a20, #c0392b); } .gp-warn .gp-c { background: linear-gradient(135deg, #8a5a12, #c98a12); }
+.gp-op { align-self: center; font-size: 22px; font-weight: 800; color: var(--muted); }
+.gp-bar { height: 12px; margin-top: 12px; }
+.gp-foot { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 8px; font-size: 12px; }
+.gp-leg { display: inline-flex; align-items: center; gap: 5px; color: var(--muted); } .gp-leg i { width: 10px; height: 10px; border-radius: 3px; display: inline-block; margin-left: 8px; } .gp-leg i:first-child { margin-left: 0; }
+.gp-livre { margin-left: auto; font-weight: 700; } .gp-ok .gp-livre { color: var(--green); } .gp-warn .gp-livre { color: #b7791f; } .gp-bad .gp-livre { color: var(--red); }
+@media (max-width: 699px) {
+  .gp-card { padding: 10px 12px; }
+  .gp-grid { gap: 4px; } .gp-t { padding: 6px 4px; border-radius: 10px; } .gp-t span { font-size: 9.5px; letter-spacing: 0; } .gp-t b { font-size: 14px; } .gp-c b { font-size: 15px; } .gp-t i { display: none; } .gp-op { font-size: 15px; }
+  .gp-foot { margin-top: 6px; } .gp-livre { margin-left: 0; width: 100%; text-align: center; }
+}
+
 /* ---------- Painel: agenda dos pregões (v1.53) ---------- */
 .pend-go { color: var(--muted); font-size: 20px; line-height: 1; }
 @media (max-width: 600px) {
@@ -1575,7 +1598,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.159.0';
+  const APP_VERSION = '1.160.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   // Status do pregão (decisão do João, 11/11/2026): padrão da BLL + os dele (Falta dados, Analisando, Empenho, Concluído, Desisti).
   // O que muda nas contas e no Dashboard é ter ou não item Venci (pst.ganho), não o nome do status.
@@ -2080,6 +2103,10 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
       pctComprometido: limite > 0 ? comprometido / limite : 0,
       pctComTudo: limite > 0 ? (comprometido + ataSemEmp + emDisputa) / limite : 0,
     };
+    // v1.160.0: valor provável de compromisso = já comprometido + o que foi ganho mas ainda não tem empenho (itens Venci, mesmo em Julgamento); não inclui propostas em disputa
+    mei.ganhoAConfirmar = ataSemEmp;
+    mei.ganhoProvavel = comprometido + ataSemEmp;
+    mei.pctProvavel = limite > 0 ? mei.ganhoProvavel / limite : 0;
     mei.alerta = mei.saldoAgora < 0 ? 'bad' : (mei.saldoSeGanhar < 0 ? 'warn' : 'ok');
 
     // por status
@@ -5508,12 +5535,38 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     return `<div class="card m-only agm"><h3>${icon('calendar', 'sm')}<span class="grow">Agenda</span></h3>${out.length ? out.slice(0, 8).map((e) => `<div class="agm-r ${e.cls}" data-act="abrir-pregao" data-id="${e.p.id}" role="button" tabindex="0"><div class="agm-d"><span>${esc(e.tag)}</span><b>${esc(e.big)}</b></div><div class="agm-t"><b>${esc(org(e.p))} · ${esc(e.p.numero)}</b><small>${esc(e.txt)}</small></div>${e.btn ? `<button type="button" class="btn sm primary" data-act="ir-proposta-final" data-id="${e.p.id}">Proposta</button>` : ''}</div>`).join('') : '<p class="muted small" style="margin:0">Nada urgente nos próximos dias.</p>'}</div>`;
   }
 
+  // bloco do topo (v1.160.0): quanto já está comprometido + o que ganhei e ainda não tem empenho (inclusive em Julgamento) = valor provável de compromisso.
+  // Serve para avaliar as próximas propostas; o cartão "Limite do MEI" continua igual.
+  function ganhoProvavelHtml(R, st) {
+    const m = R.mei, f = m.faturado, a = m.aFaturar, at = m.ataSemEmp, tot = m.ganhoProvavel;
+    const livre = m.limite - tot, scale = Math.max(m.limite, tot) || 1;
+    const w = (x) => (Math.max(0, x) / scale * 100).toFixed(2) + '%';
+    const cls = livre < 0 ? 'bad' : (m.limite > 0 && tot / m.limite >= 0.85 ? 'warn' : 'ok');
+    const nota = 'Já comprometido = faturado + ganhos firmes (compra direta, ou registro de preços com empenho). Ganho a confirmar = itens que você marcou como Venci (mesmo com o pregão ainda em Julgamento) num registro de preços sem empenho. Não entram as propostas ainda em disputa.';
+    return `<div class="card gp-card gp-${cls}" title="${esc(nota)}">
+      <h3>${icon('acomp', 'sm')}<span class="grow">Ganho provável</span><span class="gp-lim m-hide">limite ${esc(String(st.config.anoRef))}: ${C.brl0(m.limite)}</span></h3>
+      <div class="gp-grid">
+        <div class="gp-t gp-a"><span>Já comprometido</span><b>${C.brl0(m.comprometido)}</b><i>faturado ${C.brl0(f)} + a faturar ${C.brl0(a)}</i></div>
+        <div class="gp-op">+</div>
+        <div class="gp-t gp-b"><span>Ganho a confirmar</span><b>${C.brl0(at)}</b><i>${m.nAta ? m.nAta + (m.nAta === 1 ? ' ata' : ' atas') + ' sem empenho' : 'nada a confirmar'}</i></div>
+        <div class="gp-op">=</div>
+        <div class="gp-t gp-c"><span>Total provável</span><b>${C.brl0(tot)}</b><i>${C.pct(m.pctProvavel, 0)} do limite</i></div>
+      </div>
+      <div class="stack gp-bar m-hide" role="img" aria-label="Uso provável do limite">
+        <div class="seg" style="width:${w(f)};background:#1f3864"></div><div class="seg" style="width:${w(a)};background:#2e75b6"></div><div class="seg ata" style="width:${w(at)}"></div><div class="seg" style="width:${w(livre)};background:#a9d18e"></div>
+        ${scale > m.limite ? `<div class="mark" style="left:${(m.limite / scale * 100).toFixed(2)}%"></div>` : ''}
+      </div>
+      <div class="gp-foot"><span class="m-hide gp-leg"><i style="background:#1f3864"></i>Faturado <i style="background:#2e75b6"></i>A faturar <i class="ata-i" style="background:repeating-linear-gradient(135deg,#9ec5e8 0 3px,#dcecf9 3px 6px)"></i>A confirmar <i style="background:#a9d18e"></i>Livre</span><b class="gp-livre">${livre < 0 ? 'Passa do limite em ' + C.brl0(-livre) : 'Livre para novas propostas: ' + C.brl0(livre)}</b></div>
+    </div>`;
+  }
+
   function renderPainel() {
     const st = store.get();
     if (!st.pregoes.some((p) => !p.deleted)) return emptyWelcome();
     const R = C.computeAll(st);
     const drafts = Draft.all();
     return `<div class="page">
+      ${ganhoProvavelHtml(R, st)}
       ${agendaMobileHtml(R)}
       ${drafts.length ? `<div class="alert warn">${icon('alert', 'sm')}<div class="grow">Você tem preenchimento não salvo: ${esc(drafts.slice(0, 2).map((x) => draftDesc(x.key)).join(', '))}.</div><button class="btn sm" data-act="rascunho" data-key="${esc(drafts[0].key)}">Continuar</button></div>` : ''}
       ${painelTopoHtml(R, st)}
