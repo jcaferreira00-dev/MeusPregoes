@@ -1573,7 +1573,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.155.0';
+  const APP_VERSION = '1.155.1';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   // Status do pregão (decisão do João, 11/11/2026): padrão da BLL + os dele (Falta dados, Analisando, Empenho, Concluído, Desisti).
   // O que muda nas contas e no Dashboard é ter ou não item Venci (pst.ganho), não o nome do status.
@@ -2285,9 +2285,13 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
   }
   // "OBSERVAÇÃO" no texto do edital: ela e tudo que vem depois saem destacadas (marca-texto) no PDF, sempre começando em linha nova
   function separarObservacao(txt) {
-    const t = String(txt || ''), m = /observa(?:ç|c)(?:ã|a)o|observa(?:ç|c)(?:õ|o)es/i.exec(t);
+    // procura sem depender de acento: texto colado de PDF costuma vir com o acento "solto" (C + cedilha), então comparo sem os acentos
+    const t = String(txt || ''); let norm = '', mapa = [];
+    for (let i = 0; i < t.length; i++) { const d = t[i].normalize('NFD').replace(/[\u0300-\u036f]/g, ''); for (const ch of d) { norm += ch.toLowerCase(); mapa.push(i); } }
+    const m = /observac[\s\u200b\u00ad]*ao|observac[\s\u200b\u00ad]*oes/.exec(norm);
     if (!m) return { antes: t, obs: '' };
-    return { antes: t.slice(0, m.index).trim(), obs: t.slice(m.index).trim() };
+    const ini = mapa[m.index];
+    return { antes: t.slice(0, ini).trim(), obs: t.slice(ini).trim() };
   }
   // "MARCA: x" e "MODELO: y" escritos no descritivo do item ofertado (linha própria ou separados por ; ou por outro TÍTULO:)
   function marcaModeloDoTexto(txt) {
