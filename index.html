@@ -1573,7 +1573,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.155.1';
+  const APP_VERSION = '1.156.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   // Status do pregão (decisão do João, 11/11/2026): padrão da BLL + os dele (Falta dados, Analisando, Empenho, Concluído, Desisti).
   // O que muda nas contas e no Dashboard é ter ou não item Venci (pst.ganho), não o nome do status.
@@ -3393,7 +3393,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
           { segs: [{ t: ln.modeloSo ? 'Marca: ' : 'Marca/modelo: ', f: bold }, { t: ln.modeloSo ? (ln.marcaSo || '—') + '     ' : (ln.marca || '—'), f: font }].concat(ln.modeloSo ? [{ t: 'Modelo: ', f: bold }, { t: ln.modeloSo, f: font }] : []), size: 9.5 },
           { segs: [{ t: 'Unidade: ', f: bold }, { t: ln.un + '     ', f: font }, { t: 'Quantidade: ', f: bold }, { t: new Intl.NumberFormat('pt-BR').format(ln.qtd), f: font }], size: 9.5 },
         ].concat(ln.especificacoes ? [{ rot: 'ESPECIFICAÇÕES' }, { t: ln.especificacoes, size: 9.5 }] : [])
-         .concat(ln.catalogo ? [{ rot: 'DESCRIÇÃO DETALHADA DO PRODUTO' }, { t: ln.catalogoH, size: 9.5 }] : []));
+         .concat(ln.catalogo ? (() => { const so = C.separarObservacao(ln.catalogoH); return [{ rot: 'DESCRIÇÃO DETALHADA DO PRODUTO' }].concat(so.antes ? [{ t: so.antes, size: 9.5 }] : []).concat(so.obs ? [{ t: so.obs, size: 9.5, hl: true }] : []); })() : []));
         const soma = (arr) => arr.reduce((a, x) => a + x.h, 0);
         const fH = fotos.length ? Math.min((CW - 12 - 10 * (fotos.length - 1)) / fotos.length, fotos.length === 1 ? 230 : fotos.length === 2 ? 210 : 160) + 12 : 0;
         const est = hT + 8 + 18 + Math.max(soma(LL), soma(RR)) + 10 + fH;
@@ -3574,9 +3574,11 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
       const descL = wrap('EXIGIDO NO EDITAL: ' + sepObs.antes, font, 10, CW - 14);
       const obsL = sepObs.obs ? wrap(sepObs.obs, font, 10, CW - 14) : [];
       const marcaL = wrap(ln.marcaTxt, font, 9.5, CW - 14);
-      const ofL = wrap('DESCRITIVO DO ITEM OFERTADO: ' + (ln.catalogoH || '—'), font, 9.5, CW - 14);
+      const sepOf = C.separarObservacao(ln.catalogoH);
+      const ofL = wrap('DESCRITIVO DO ITEM OFERTADO: ' + (sepOf.antes || (sepOf.obs ? '' : '—')), font, 9.5, CW - 14);
+      const ofObsL = sepOf.obs ? wrap(sepOf.obs, font, 9.5, CW - 14) : [];
       const espL = ln.especificacoes ? wrap('ESPECIFICAÇÕES: ' + ln.especificacoes, font, 9.5, CW - 14) : [];
-      const hHead = 19, hRow = 24, hDesc = (descL.length + obsL.length) * 12.5 + 10, hMarca = marcaL.length * 12 + 8, hOf = ofL.length * 12 + 8, hEsp = espL.length ? espL.length * 12 + 8 : 0;
+      const hHead = 19, hRow = 24, hDesc = (descL.length + obsL.length) * 12.5 + 10, hMarca = marcaL.length * 12 + 8, hOf = (ofL.length + ofObsL.length) * 12 + 8, hEsp = espL.length ? espL.length * 12 + 8 : 0;
       const total = hHead + hRow + hDesc + hMarca + hOf + hEsp;
       garantir(total + 2);
       // faixa de cabeçalho
@@ -3612,6 +3614,12 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
       // descritivo do item ofertado (digitado por mim) e, abaixo, separada por linha tracejada, a marca/modelo
       box(M, y - hOf - hMarca, CW, hOf + hMarca);
       ofL.forEach((l, j) => T(l, M + 7, y - 14 - j * 12, 9.5, font, ACCT));
+      // OBSERVAÇÃO (do descritivo ofertado) e o que vem depois: marca-texto amarelo, sempre na linha de baixo
+      ofObsL.forEach((l, j) => {
+        const yy = y - 14 - (ofL.length + j) * 12, w = font.widthOfTextAtSize(safe(l), 9.5);
+        page.drawRectangle({ x: M + 5, y: yy - 3, width: w + 4, height: 12, color: rgb(1, 0.93, 0.15) });
+        T(l, M + 7, yy, 9.5, font, rgb(0, 0, 0));
+      });
       page.drawLine({ start: { x: M + 6, y: y - hOf }, end: { x: M + CW - 6, y: y - hOf }, thickness: 0.7, color: ACC, dashArray: [3, 3] });
       marcaL.forEach((l, j) => T(l, M + 7, y - hOf - 14 - j * 12, 9.5, font, ACCT));
       y -= hOf + hMarca;
