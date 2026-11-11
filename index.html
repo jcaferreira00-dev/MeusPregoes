@@ -1251,6 +1251,7 @@ html .pq-grid > .pcard.falta-dados { padding: 15px; }
 .pcard.tem-selo { position: relative; padding-bottom: 36px; }
 .selo-st { position: absolute; right: 10px; bottom: 8px; transform: rotate(-4deg); display: flex; flex-direction: column; align-items: center; line-height: 1.1; padding: 4px 12px 5px; border-radius: 10px; color: #fff; background: var(--sc-selo); border: 2px dashed rgba(255,255,255,.85); outline: 2px solid var(--sc-selo); box-shadow: 0 3px 8px rgba(0,0,0,.28); pointer-events: auto; z-index: 2; white-space: nowrap; }
 .selo-st b { font-size: 13px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+.selo-st.sel-env { --sc-selo: #2e75b6; }
 .selo-st.sel-jul { --sc-selo: #d99a1c; }
 .selo-st.sel-emp { --sc-selo: #0e8a8a; }
 .selo-st.sel-entregar { --sc-selo: #2e75b6; }
@@ -1573,7 +1574,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.156.1';
+  const APP_VERSION = '1.157.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   // Status do pregão (decisão do João, 11/11/2026): padrão da BLL + os dele (Falta dados, Analisando, Empenho, Concluído, Desisti).
   // O que muda nas contas e no Dashboard é ter ou não item Venci (pst.ganho), não o nome do status.
@@ -5561,10 +5562,10 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     // PC: só ícones, sempre nas mesmas posições (edital · modelo · proposta · licitação); o que não tem link fica apagado
     const ib = (u, ic, tip) => u ? `<a class="ib" href="${esc(u)}" target="_blank" rel="noopener noreferrer" data-act="link-externo" title="${tip}" aria-label="${tip}">${icon(ic)}</a>` : `<span class="ib off" title="${tip}: não cadastrado" aria-label="${tip}: não cadastrado">${icon(ic)}</span>`;
     const botoes = ib(url(p.link), 'pdf', 'Abrir o edital') + (p.linkModelo ? ib(url(p.linkModelo), 'copy', 'Modelo de proposta do órgão') : '') + ib(url(p.linkProposta), 'send', 'Enviar proposta e dar lances') + ib(url(p.linkLicitacao), 'globo', 'Ver a licitação no site') + `<button type="button" class="ib" data-act="export-pregao" data-id="${p.id}" title="Exportar o JSON só deste pregão" aria-label="Exportar o JSON só deste pregão">${icon('download')}</button>`;
-    const emSelo = pst.ganho || LEG(p.status) === 'Aguardando empenho';
+    const emSelo = pst.ganho || LEG(p.status) === 'Aguardando empenho' || enviada;   // enviada: selo "Enviada" quando a proposta já foi enviada (11/11/2026)
     // etapa depois de ganhar, numa palavra só: Julgamento → Empenho → Entregar → Receber → Pago
-    const selK = p.pagoEm ? 'pago' : p.entregueEm ? 'receber' : (po && po.etapa === 'parcial') ? 'parcial' : (p.empenhoData || p.entregaPrazo) ? 'entregar' : LEG(p.status) === 'Aguardando empenho' ? 'emp' : 'jul';
-    const SELO = { jul: [stTxt(p.status), 'Já tem item Venci; o pregão está em ' + p.status], emp: ['Empenho', 'Aguardando o empenho'], entregar: ['Entregar', 'Empenho recebido: falta entregar'], parcial: ['Parcial', po ? po.texto : 'Entrega parcial'], receber: ['Receber', 'Entregue: falta receber o pagamento'], pago: ['Pago', 'Pago'] }[selK];
+    const selK = p.pagoEm ? 'pago' : p.entregueEm ? 'receber' : (po && po.etapa === 'parcial') ? 'parcial' : (p.empenhoData || p.entregaPrazo) ? 'entregar' : LEG(p.status) === 'Aguardando empenho' ? 'emp' : (enviada && !pst.ganho) ? 'env' : 'jul';
+    const SELO = { env: ['Enviada', 'Proposta enviada: aguardando a disputa'], jul: [stTxt(p.status), 'Já tem item Venci; o pregão está em ' + p.status], emp: ['Empenho', 'Aguardando o empenho'], entregar: ['Entregar', 'Empenho recebido: falta entregar'], parcial: ['Parcial', po ? po.texto : 'Entrega parcial'], receber: ['Receber', 'Entregue: falta receber o pagamento'], pago: ['Pago', 'Pago'] }[selK];
     const selo = emSelo ? `<div class="selo-st sel-${selK}" title="${SELO[1]}"><b>${SELO[0]}</b></div>` : '';
     return `<article class="pcard${pzCls}${emSelo ? ' tem-selo' : ''}" style="--gc:${corDe(p.id)};--sc:${corSt(p.status) || '#2e75b6'}" data-act="abrir-pregao" data-id="${p.id}" tabindex="0" role="button">
       ${selo}
