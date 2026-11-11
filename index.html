@@ -1573,7 +1573,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.152.0';
+  const APP_VERSION = '1.152.1';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Julgamento', 'Aguardando empenho', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -5467,7 +5467,14 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
   }
 
   // alerta do cartão (guia Pregões): o que está mais urgente neste pregão. lane = vai para a raia "Atenção agora"
+  // pregão com item ganho em que TODOS os itens cotados já têm resultado (Venci / Não venci / desclassificado): "perto de ganhar", "posso ganhar" e os avisos âmbar
+  // não valem mais (pedido do João, 10/11/2026, v1.152.1); fica o borda verde. Só o vermelho (entrega/pagamento atrasado, pregão hoje) continua.
   function alertaPregao(pst) {
+    const a = alertaPregaoBruto(pst);
+    if (a && a.nivel !== 'bad' && pst.ganho && pst.nAguard === 0) return null;
+    return a;
+  }
+  function alertaPregaoBruto(pst) {
     const p = pst.p;
     if (C.INATIVOS.includes(p.status)) return null;
     const pre = ['Falta dados', 'Analisando', 'Proposta enviada'].includes(p.status);
