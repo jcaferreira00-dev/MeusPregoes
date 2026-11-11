@@ -224,7 +224,7 @@
   F('painel-vencedor', AR.pain, 3, 'manter', 'Painel: preço de quem ganhou',
     `Mostra, nos itens em que você anotou o valor do vencedor, quantos ficariam abaixo do seu custo, com margem menor ou com sua margem.`, { probe: 'vencedor', sel: ['.vstats'] });
   F('pdf-chavinhas', AR.pdf, 3, 'manter', 'Chavinhas do documento (dentro de “Avançado”)',
-    `FEITO na v1.124.0 (05/11/2026, Rodada 3): ficam dentro de “Avançado · o que aparece na proposta”, fechado por padrão. Na guia Proposta ficam à vista só: sem identificação, condições deste pregão (validade, pagamento, prazo, local, observações) e as frases que os pregões costumam pedir. Tudo o que muda nas chavinhas vira o padrão de todos os pregões.`, { sel: ['.pdf-avanc'] });
+    `FEITO na v1.124.0 (05/11/2026, Rodada 3): ficam dentro de “Avançado · o que aparece na proposta”, fechado por padrão. Na guia Proposta ficam à vista só: sem identificação, condições deste pregão (validade, pagamento, prazo, local, garantia, observações) e as frases que os pregões costumam pedir. Tudo o que muda nas chavinhas vira o padrão de todos os pregões.`, { sel: ['.pdf-avanc'] });
   F('pdf-cabecalho-marca', AR.pdf, 3, 'manter', 'Cabeçalho (imagem/nome) e marca d’água (dentro de “Avançado”)',
     `FEITO na v1.124.0 (05/11/2026, Rodada 3): os dois cartões ficam dentro de “Avançado · cabeçalho e marca d’água”, fechado por padrão.`, { sel: ['.pdf-avanc-vis'] });
   F('pdf-extenso', AR.pdf, 3, 'manter', 'Valor por extenso',

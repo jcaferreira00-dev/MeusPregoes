@@ -83,6 +83,9 @@ with sync_playwright() as p:
       const o=C.resolverPdfOpts(p,cfg,'inicial'), f=C.resolverPdfOpts(p,cfg,'final');
       return [o.pagamento,o.validade,o.prazoEntrega,o.desc.tabela,o.desc.tituloTexto,o.documentos.length,o.desc.blocos.map(b=>b.titulo).join('|'),o.anonima,f.anonima];}""")
     ok(rp == ['15 dias', 90, '5 dias', False, 'PROPOSTA DE PREÇOS', 0, 'Preços|Condições do edital|Produtos|Garantia|Entrega|Enquadramento|Representante legal', True, False], 'Proposta: modelo padrão para todos (só as condições do pregão valem; sem cláusulas/declarações do edital) %s' % rp)
+    gr = pg.evaluate("""()=>{const C=window.Core;const g=(po)=>C.resolverPdfOpts({id:'g',numero:'1/2026',pdfOpts:po},{proposta:{},empresa:{}},'inicial').desc.blocos.find(b=>b.titulo==='Garantia').texto;
+      return [g({garantia:'12 meses'}),g({})];}""")
+    ok('garantia de 12 meses' in gr[0] and 'garantia legal' in gr[1], 'Proposta: campo Garantia do pregão (12 meses) e frase padrão quando vazio')
     ok('pdf-previa' in open(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'index.html'), encoding='utf-8').read(), 'Proposta: botão Visualizar (rascunho) existe')
     # sincronização com duas fontes: config mais nova com a empresa vazia não apaga os dados da empresa/bancários (05/11/2026)
     m = pg.evaluate("""()=>{const C=window.Core;
