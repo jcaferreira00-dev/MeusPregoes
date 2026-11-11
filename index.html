@@ -1574,7 +1574,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.157.0';
+  const APP_VERSION = '1.157.1';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   // Status do pregão (decisão do João, 11/11/2026): padrão da BLL + os dele (Falta dados, Analisando, Empenho, Concluído, Desisti).
   // O que muda nas contas e no Dashboard é ter ou não item Venci (pst.ganho), não o nome do status.
@@ -7650,9 +7650,9 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
         const nome = String(pz.orgao || 'pregao').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/^(Prefeitura Municipal de|Prefeitura de|Municipio de)\s+/i, '').replace(/[^A-Za-z0-9]+/g, '-').replace(/^-|-$/g, '').toLowerCase();
         const blob = new Blob([JSON.stringify(out, null, 1)], { type: 'application/json' });
         const fnome = `pregao-${nome}-${String(pz.numero || '').replace(/[^0-9A-Za-z]+/g, '-')}-${C.hojeISO()}.json`;
-        try {   // celular: abre a folha de compartilhar (escolher o Claude); se cancelar ou não houver, baixa o arquivo
+        try {   // celular (toque): abre a folha de compartilhar (escolher o Claude); no PC sempre baixa o arquivo
           const arq = new File([blob], fnome, { type: 'application/json' });
-          if (navigator.canShare && navigator.canShare({ files: [arq] })) { navigator.share({ files: [arq], title: fnome }).catch(() => { /* cancelou */ }); break; }
+          if (window.matchMedia && matchMedia('(pointer: coarse)').matches && navigator.canShare && navigator.canShare({ files: [arq] })) { navigator.share({ files: [arq], title: fnome }).catch(() => { /* cancelou */ }); break; }
         } catch (er) { /* segue para o download */ }
         const el = document.createElement('a'); el.href = URL.createObjectURL(blob); el.download = `pregao-${nome}-${String(pz.numero || '').replace(/[^0-9A-Za-z]+/g, '-')}-${C.hojeISO()}.json`; document.body.appendChild(el); el.click(); el.remove();
         setTimeout(() => URL.revokeObjectURL(el.href), 4000); toast('JSON do pregão exportado (' + out.itens.length + ' itens)'); break;
