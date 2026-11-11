@@ -1573,7 +1573,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.154.0';
+  const APP_VERSION = '1.155.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   // Status do pregão (decisão do João, 11/11/2026): padrão da BLL + os dele (Falta dados, Analisando, Empenho, Concluído, Desisti).
   // O que muda nas contas e no Dashboard é ter ou não item Venci (pst.ganho), não o nome do status.
@@ -2283,6 +2283,12 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     const ls = capitalizarTitulos(txt).split(/\n+/).map((l) => l.trim()).filter(Boolean);
     return ls.map((l, i) => (i < ls.length - 1 && !/[.;:!?,]$/.test(l) ? l + ';' : l)).join(' ');
   }
+  // "OBSERVAÇÃO" no texto do edital: ela e tudo que vem depois saem destacadas (marca-texto) no PDF, sempre começando em linha nova
+  function separarObservacao(txt) {
+    const t = String(txt || ''), m = /observa(?:ç|c)(?:ã|a)o|observa(?:ç|c)(?:õ|o)es/i.exec(t);
+    if (!m) return { antes: t, obs: '' };
+    return { antes: t.slice(0, m.index).trim(), obs: t.slice(m.index).trim() };
+  }
   // "MARCA: x" e "MODELO: y" escritos no descritivo do item ofertado (linha própria ou separados por ; ou por outro TÍTULO:)
   function marcaModeloDoTexto(txt) {
     const r = {};
@@ -2638,7 +2644,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
   const api = {
     APP_VERSION, STATUS, INATIVOS, LEG, MIGRA_ST, FIM_RESULT, SEM_DISPUTA, PERDA_ST, fimP, faturadoP, PARTICIPOU, DECL_PADRAO, DECL_PROPOSTA, uid, n0, round2, ceil2, floor2, parseBR, brl, brl0, pct, numBR, qtdBR,
     fmtSessao, dataExtensa, hojeISO, defaultConfig, emptyState, migrate, custoViagem, localEntregaPadrao, calcItem, limiteMEI, isSRP, temEmpenho,
-    custoUnitOpc, embDe, tesouro, corTesouro, agora, setClockOffset, getClockOffset, pendenciasNuvem, computeAll, custoCompra, freteCompra, ordemLoteItem, padLE, dasMensal, mesesAtivos, previewItem, linhasProposta, faltasOferta, marcaModeloDoTexto, normMM, horizontal, capitalizarTitulos, unitProposta, resolverPdfOpts, camposModelo, pendenciasModelo, CAMPOS_MODELO, identificaEmpresa, COLUNAS_DESC, CAMPOS_FORNECEDOR, CAMPOS_BANCO, mergeState, diffState, paraNuvem, createStore, };
+    custoUnitOpc, embDe, tesouro, corTesouro, agora, setClockOffset, getClockOffset, pendenciasNuvem, computeAll, custoCompra, freteCompra, ordemLoteItem, padLE, dasMensal, mesesAtivos, previewItem, linhasProposta, faltasOferta, marcaModeloDoTexto, normMM, horizontal, separarObservacao, capitalizarTitulos, unitProposta, resolverPdfOpts, camposModelo, pendenciasModelo, CAMPOS_MODELO, identificaEmpresa, COLUNAS_DESC, CAMPOS_FORNECEDOR, CAMPOS_BANCO, mergeState, diffState, paraNuvem, createStore, };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   root.Core = api;
 })(typeof window !== 'undefined' ? window : globalThis);
@@ -3373,11 +3379,12 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
           for (const b of blocos) {
             if (b.rot) { out.push({ rot: b.rot, h: 13 }); continue; }
             const pars = b.segs ? [b.segs] : String(b.t || '').split(/\n+/).filter((p) => p.trim()).map((p) => [{ t: p.trim(), f: b.f || font }]);
-            pars.forEach((segs) => { const ls = wrapMixed(segs, b.size, txtW); ls.forEach((l, k) => out.push({ l, size: b.size, just: !b.segs && k < ls.length - 1, h: b.size + 3.4 })); out.push({ h: 3 }); });
+            pars.forEach((segs) => { const ls = wrapMixed(segs, b.size, txtW); ls.forEach((l, k) => out.push({ l, size: b.size, just: !b.segs && k < ls.length - 1, hl: !!b.hl, h: b.size + 3.4 })); out.push({ h: 3 }); });
           }
           return out;
         };
-        const LL = montar([{ t: C.horizontal(ln.descEdital) || '—', size: 9 }]);
+        const sepObs = C.separarObservacao(C.horizontal(ln.descEdital));
+        const LL = montar([{ t: sepObs.antes || (sepObs.obs ? '' : '—'), size: 9 }].concat(sepObs.obs ? [{ t: sepObs.obs, size: 9, hl: true }] : []));
         const RR = montar([
           { segs: [{ t: ln.modeloSo ? 'Marca: ' : 'Marca/modelo: ', f: bold }, { t: ln.modeloSo ? (ln.marcaSo || '—') + '     ' : (ln.marca || '—'), f: font }].concat(ln.modeloSo ? [{ t: 'Modelo: ', f: bold }, { t: ln.modeloSo, f: font }] : []), size: 9.5 },
           { segs: [{ t: 'Unidade: ', f: bold }, { t: ln.un + '     ', f: font }, { t: 'Quantidade: ', f: bold }, { t: new Intl.NumberFormat('pt-BR').format(ln.qtd), f: font }], size: 9.5 },
@@ -3407,7 +3414,10 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
             while (idx < arr.length && u + arr[idx].h <= avail) {
               const r = arr[idx];
               if (r.rot) T(r.rot, x0 + padX, y - u - 9, 7.8, bold, ACCT);
-              else if (r.l) drawJust(r.l, x0 + padX, y - u - r.size, r.size, txtW, r.just);
+              else if (r.l) {
+                if (r.hl) { const wl = r.just ? txtW : r.l.reduce((a, k) => a + k.f.widthOfTextAtSize(k.t, r.size), 0); page.drawRectangle({ x: x0 + padX - 1.5, y: y - u - r.size - 2.2, width: wl + 3, height: r.size + 3.4, color: rgb(1, 0.93, 0.15) }); }
+                drawJust(r.l, x0 + padX, y - u - r.size, r.size, txtW, r.just);
+              }
               u += r.h; idx += 1;
             }
             return [idx, u];
@@ -3556,11 +3566,13 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
 
     if (!L.linhas.length) { garantir(24); T('Nenhum item cadastrado neste pregão.', M + 8, y - 12, 10, ital, GRAY); y -= 24; }
     for (const ln of L.linhas) {
-      const descL = wrap('EXIGIDO NO EDITAL: ' + C.horizontal(ln.descEdital), font, 10, CW - 14);
+      const sepObs = C.separarObservacao(C.horizontal(ln.descEdital));
+      const descL = wrap('EXIGIDO NO EDITAL: ' + sepObs.antes, font, 10, CW - 14);
+      const obsL = sepObs.obs ? wrap(sepObs.obs, font, 10, CW - 14) : [];
       const marcaL = wrap(ln.marcaTxt, font, 9.5, CW - 14);
       const ofL = wrap('DESCRITIVO DO ITEM OFERTADO: ' + (ln.catalogoH || '—'), font, 9.5, CW - 14);
       const espL = ln.especificacoes ? wrap('ESPECIFICAÇÕES: ' + ln.especificacoes, font, 9.5, CW - 14) : [];
-      const hHead = 19, hRow = 24, hDesc = descL.length * 12.5 + 10, hMarca = marcaL.length * 12 + 8, hOf = ofL.length * 12 + 8, hEsp = espL.length ? espL.length * 12 + 8 : 0;
+      const hHead = 19, hRow = 24, hDesc = (descL.length + obsL.length) * 12.5 + 10, hMarca = marcaL.length * 12 + 8, hOf = ofL.length * 12 + 8, hEsp = espL.length ? espL.length * 12 + 8 : 0;
       const total = hHead + hRow + hDesc + hMarca + hOf + hEsp;
       garantir(total + 2);
       // faixa de cabeçalho
@@ -3586,6 +3598,12 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
       // descrição completa
       box(M, y - hDesc, CW, hDesc);
       descL.forEach((l, j) => T(l, M + 7, y - 15 - j * 12.5, 10, font, ACCT));
+      // OBSERVAÇÃO e o que vem depois: marca-texto amarelo, sempre na linha de baixo
+      obsL.forEach((l, j) => {
+        const yy = y - 15 - (descL.length + j) * 12.5, w = font.widthOfTextAtSize(safe(l), 10);
+        page.drawRectangle({ x: M + 5, y: yy - 3, width: w + 4, height: 12.5, color: rgb(1, 0.93, 0.15) });
+        T(l, M + 7, yy, 10, font, rgb(0, 0, 0));
+      });
       y -= hDesc;
       // descritivo do item ofertado (digitado por mim) e, abaixo, separada por linha tracejada, a marca/modelo
       box(M, y - hOf - hMarca, CW, hOf + hMarca);
