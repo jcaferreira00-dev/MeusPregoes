@@ -75,9 +75,9 @@ with sync_playwright() as p:
       const P=(id,tp,extra)=>Object.assign({id,numero:id,orgao:'O',cidadeUf:'A/PR',status:'Aguardando empenho',tipoCompra:tp,km:10,viagens:1,createdAt:t,updatedAt:t,deleted:false},extra||{});
       const I=(id,pid)=>({id,pregaoId:pid,itemEdital:'01',descricao:'x',unidade:'Un',qtd:10,custo:5,teto:10,frete:0,ganhou:true,semLance:false,alternativas:[],createdAt:t,updatedAt:t,deleted:false});
       const st={version:1,config:{fatFora:0},pregoes:[P('a','SRP'),P('b','SRP',{empenhoData:'2026-11-01'}),P('c','Aquisição'),P('d','Aquisição',{status:'Analisando'})],itens:[I('ia','a'),I('ib','b'),I('ic','c'),I('id','d')]};
-      st.itens[3].ganhou=undefined;
+      st.itens[3].ganhou=undefined; st.pregoes.push(P('e','SRP',{empenhoData:'2026-11-01',empenhoValor:50})); st.itens.push(I('ie','e'));
       const R=C.computeAll(C.migrate?C.migrate(st):st); return [R.mei.ataSemEmp, R.mei.aFaturar, R.mei.nAta, R.mei.lucroN.analise>0];}""")
-    ok(lm == [100, 200, 1, True], 'Limite do MEI: ata sem empenho fica fora do comprometido; com empenho e compra direta entram; análise não conta como ganho %s' % lm)
+    ok(lm == [150, 250, 2, True], 'Limite do MEI: ata sem empenho fica fora do comprometido; com empenho e compra direta entram; empenho parcial (valor empenhado) compromete só o valor informado; análise não conta como ganho %s' % lm)
     rp = pg.evaluate("""()=>{const C=window.Core;const cfg={pdfPadrao:{desc:{tituloTexto:'ANEXO VELHO',blocos:[{titulo:'X',texto:'y'}]}},proposta:{},empresa:{}};
       const p={id:'z',numero:'9/2026',pagamentoDias:15,pdfOpts:{validade:90,prazoEntrega:'5 dias',desc:{tabela:true,tituloTexto:'EDITAL',blocos:[{titulo:'CL',texto:'t'}]},documentos:[{titulo:'D'}],anonima:true}};
       const o=C.resolverPdfOpts(p,cfg,'inicial'), f=C.resolverPdfOpts(p,cfg,'final');

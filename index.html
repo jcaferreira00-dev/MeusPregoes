@@ -1573,7 +1573,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.151.0';
+  const APP_VERSION = '1.152.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Julgamento', 'Aguardando empenho', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -2034,13 +2034,17 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
       const s = pst.p.status;
       pst.srp = isSRP(pst.p);
       pst.firme = pst.ganho && (!pst.srp || temEmpenho(pst.p));
+      // registro de preços com "valor empenhado" informado: só esse valor é firme; o resto da ata continua a empenhar
+      const ev = n0(pst.p.empenhoValor);
+      pst.fracFirme = pst.firme ? (pst.srp && ev > 0 && pst.venda > 0 ? Math.min(1, ev / pst.venda) : 1) : 0;
       if (pst.ganho) {
-        if (pst.firme) { if (s === 'Faturado' || s === 'Concluído') somaFat += pst.venda; else aFaturar += pst.venda; }
-        else { ataSemEmp += pst.venda; nAta += 1; }
+        const vf = round2(pst.venda * pst.fracFirme), vr = round2(pst.venda - vf);
+        if (vf > 0) { if (s === 'Faturado' || s === 'Concluído') somaFat += vf; else aFaturar += vf; }
+        if (vr > 0) { ataSemEmp += vr; nAta += 1; }
       }
       else if (s === 'Proposta enviada' || s === 'Julgamento') emDisputa += pst.venda;
       if (INATIVOS.includes(s)) continue;
-      if (pst.ganho) lucroN[pst.firme ? 'garantido' : 'ata'] += pst.lucro;
+      if (pst.ganho) { lucroN.garantido += pst.lucro * pst.fracFirme; lucroN.ata += pst.lucro * (1 - pst.fracFirme); }
       else if (s === 'Proposta enviada' || s === 'Julgamento') lucroN.disputa += pst.lucro;
       else lucroN.analise += pst.lucro;
     }
@@ -4195,7 +4199,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
       link: p.link || '', linkProposta: p.linkProposta || '', linkLicitacao: p.linkLicitacao || '', obs: p.obs || '',
       modeloProprio: !!p.modeloProprio, linkModelo: p.linkModelo || '',
       entregaParcelada: !!p.entregaParcelada, entregaParceladaObs: p.entregaParceladaObs || '',
-      empenhoNum: p.empenhoNum || '', empenhoData: p.empenhoData || '', entregaPrazo: p.entregaPrazo || '', entregueEm: p.entregueEm || '',
+      empenhoNum: p.empenhoNum || '', empenhoData: p.empenhoData || '', empenhoValor: p.empenhoValor ? C.numBR(p.empenhoValor) : '', entregaPrazo: p.entregaPrazo || '', entregueEm: p.entregueEm || '',
       pagamentoDias: p.pagamentoDias == null ? '' : String(p.pagamentoDias), pagoEm: p.pagoEm || '',
     };
   }
@@ -4302,7 +4306,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     const cur = id ? store.get().pregoes.find((p) => p.id === id && !p.deleted) : null;
     const v = pregaoValues(cur || { status: 'Falta dados', viagens: 1 });
     v._noFocus = false;
-    const posAberto = (cur && ganhoDe(cur.id)) || !!(v.empenhoNum || v.empenhoData || v.entregaPrazo || v.entregueEm || v.pagoEm);
+    const posAberto = (cur && ganhoDe(cur.id)) || !!(v.empenhoNum || v.empenhoData || v.empenhoValor || v.entregaPrazo || v.entregueEm || v.pagoEm);
     const maisAberto = !!(window.matchMedia && window.matchMedia('(min-width: 700px)').matches);   // no PC já vem aberto; no celular fica recolhido
     const body = `
       <div class="formgrid">
@@ -4322,6 +4326,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
       <details class="acc"${posAberto ? ' open' : ''}><summary>Entrega e pagamento</summary><div class="acc-body"><div class="formgrid">
         ${field({ label: 'Nº do empenho / contrato', name: 'empenhoNum', value: v.empenhoNum, full: true })}
         ${field({ label: 'Data do empenho', name: 'empenhoData', type: 'date', value: v.empenhoData })}
+        ${field({ label: 'Valor empenhado (R$)', name: 'empenhoValor', value: v.empenhoValor, inputmode: 'decimal', hint: 'Só para registro de preços (ata): quanto o órgão realmente pediu. Vazio = o valor inteiro do pregão. Só esse valor entra no limite do MEI e no lucro garantido.' })}
         ${field({ label: 'Prazo de entrega (dias)', name: 'prazoEntregaDias', value: v.prazoEntregaDias, inputmode: 'numeric', hint: 'Conta a partir do empenho.' })}
         ${field({ label: 'Prazo final de entrega', name: 'entregaPrazo', type: 'date', value: v.entregaPrazo, full: true, hint: 'Opcional. Vazio = empenho + prazo em dias corridos. Se o edital usa dias úteis, informe a data aqui.' })}
         ${field({ label: 'Entregue em', name: 'entregueEm', type: 'date', value: v.entregueEm })}
@@ -4492,7 +4497,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
           link: x.link.trim(), linkProposta: (x.linkProposta || '').trim(), linkLicitacao: (x.linkLicitacao || '').trim(), obs: x.obs.trim(),
           modeloProprio: !!x.modeloProprio, linkModelo: (x.linkModelo || '').trim(),
           entregaParcelada: !!x.entregaParcelada, entregaParceladaObs: (x.entregaParceladaObs || '').trim(),
-          empenhoNum: (x.empenhoNum || '').trim(), empenhoData: x.empenhoData || '', entregaPrazo: x.entregaPrazo || '', entregueEm: x.entregueEm || '',
+          empenhoNum: (x.empenhoNum || '').trim(), empenhoData: x.empenhoData || '', empenhoValor: C.parseBR(x.empenhoValor) || 0, entregaPrazo: x.entregaPrazo || '', entregueEm: x.entregueEm || '',
           pagamentoDias: x.pagamentoDias ? (parseInt(x.pagamentoDias, 10) || null) : null, pagoEm: x.pagoEm || '',
         };
         if (x.entregaDiferente) { data.entregas = ent; data.locaisEntrega = ent.map((e) => e.local).join('\n'); }
