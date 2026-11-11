@@ -1573,7 +1573,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.153.0';
+  const APP_VERSION = '1.153.1';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   const STATUS = ['Falta dados', 'Analisando', 'Proposta enviada', 'Julgamento', 'Aguardando empenho', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
@@ -6173,7 +6173,8 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
           const u = (v) => { v = String(v || '').trim(); return v ? (/^https?:\/\//i.test(v) ? v : 'https://' + v) : ''; };
           const bt = (href, ic, txt, tip) => href ? `<a class="hero-lk" href="${esc(href)}" target="_blank" rel="noopener noreferrer" data-act="link-externo" title="${tip}">${icon(ic, 'sm')}<span class="tx">${txt}</span></a>` : '';
           const h = bt(u(p.link), 'pdf', 'Edital', 'Abrir o edital') + bt(u(p.linkProposta), 'link', '<span class="lg">Proposta / lances</span><span class="sm">Lances</span>', 'Site para enviar a proposta e dar lances') + bt(u(p.linkLicitacao), 'web', 'Licitação', 'Site que lista a licitação') + bt(u(p.linkModelo), 'pdf', 'Modelo', 'Modelo de proposta do órgão');
-          return h ? `<div class="hero-lks">${h}</div>` : `<button type="button" class="hero-lk vazio" data-act="editar-pregao" data-id="${p.id}">${icon('edit', 'sm')}<span>Cadastrar links</span></button>`;
+          const ex = `<button type="button" class="hero-lk" data-act="export-pregao" data-id="${p.id}" title="Exportar o JSON deste pregão (compartilhar com o Claude)" aria-label="Exportar o JSON deste pregão">${icon('share', 'sm')}</button>`;
+          return h ? `<div class="hero-lks">${h}${ex}</div>` : `<div class="hero-lks"><button type="button" class="hero-lk vazio" data-act="editar-pregao" data-id="${p.id}">${icon('edit', 'sm')}<span>Cadastrar links</span></button>${ex}</div>`;
         })()}</div>
       ${(() => {
         if (!p.modeloProprio && !p.linkModelo && !p.obs && !p.entregaParcelada) return '';
@@ -6189,7 +6190,6 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
         <div class="field" style="margin:0"><label for="tcsel">Tipo de compra</label>
         <select class="input" id="tcsel" data-tipo-pregao="${p.id}">${TIPO_COMPRA.map((o) => `<option value="${esc(o.v)}"${o.v === tipoCompraDe(p) ? ' selected' : ''}>${esc(o.l)}</option>`).join('')}</select></div></div>
       ${p.status === 'Proposta enviada' && pst.itens.length ? `<button type="button" class="btn block navy modo-pz" data-act="modo-pregao" data-id="${p.id}" title="Abre uma janela só com o nº do item, o piso sem prejuízo e o lucro do lance">${icon('acomp', 'sm')} Modo pregão</button>` : ''}
-      <button type="button" class="btn block" data-act="export-pregao" data-id="${p.id}" title="Baixa o JSON só deste pregão (serve para revisar ou importar com Mesclar)">${icon('download', 'sm')} Exportar JSON deste pregão</button>
       ${posCardHtml(pst)}
       ${ganhosCardHtml(pst)}
       <div class="kpis">
@@ -7594,6 +7594,11 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
         const out = { version: st.version, exportadoEm: new Date().toISOString(), referencia: ref, pregoes: [pz], itens: st.itens.filter((i) => i.pregaoId === id && !i.deleted) };
         const nome = String(pz.orgao || 'pregao').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/^(Prefeitura Municipal de|Prefeitura de|Municipio de)\s+/i, '').replace(/[^A-Za-z0-9]+/g, '-').replace(/^-|-$/g, '').toLowerCase();
         const blob = new Blob([JSON.stringify(out, null, 1)], { type: 'application/json' });
+        const fnome = `pregao-${nome}-${String(pz.numero || '').replace(/[^0-9A-Za-z]+/g, '-')}-${C.hojeISO()}.json`;
+        try {   // celular: abre a folha de compartilhar (escolher o Claude); se cancelar ou não houver, baixa o arquivo
+          const arq = new File([blob], fnome, { type: 'application/json' });
+          if (navigator.canShare && navigator.canShare({ files: [arq] })) { navigator.share({ files: [arq], title: fnome }).catch(() => { /* cancelou */ }); break; }
+        } catch (er) { /* segue para o download */ }
         const el = document.createElement('a'); el.href = URL.createObjectURL(blob); el.download = `pregao-${nome}-${String(pz.numero || '').replace(/[^0-9A-Za-z]+/g, '-')}-${C.hojeISO()}.json`; document.body.appendChild(el); el.click(); el.remove();
         setTimeout(() => URL.revokeObjectURL(el.href), 4000); toast('JSON do pregão exportado (' + out.itens.length + ' itens)'); break;
       }   // deixa o link abrir sem abrir o cartão
