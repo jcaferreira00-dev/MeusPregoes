@@ -487,6 +487,8 @@ input.input[type=datetime-local]::-webkit-date-and-time-value, input.input[type=
 .icard.venci { border: 2px solid var(--green); }
 .icard.nao-ganho { filter: grayscale(.85); opacity: .65; }
 .icard.fora h4 { font-size: 14px; color: var(--muted); }
+.icard.fora h4.i-desc { min-height: 0; }
+.icard.fora .motivo-fora { font-size: 12.5px; margin-top: -2px; }
 .badge.off { background: color-mix(in srgb, var(--muted) 14%, transparent); color: var(--muted); }
 .linkchip { display: flex; gap: 8px; }
 .linkchip .btn { min-height: 46px; text-decoration: none; color: var(--blue); justify-content: flex-start; min-width: 0; }
@@ -863,9 +865,16 @@ input.input[type=datetime-local]::-webkit-date-and-time-value, input.input[type=
 .falta-it { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 6px 10px; border-radius: 10px; background: color-mix(in srgb, var(--card) 70%, transparent); font-weight: 600; }
 .falta-it .btn { font-weight: 700; }
 .ib-wrap { display: grid; grid-template-columns: repeat(auto-fill, minmax(236px, 1fr)); gap: 10px; }
-.ibox { display: grid; grid-template-rows: 30px 2.6em auto 38px; align-content: start; gap: 8px; min-width: 0; padding: 10px 12px; border-radius: 14px; background: var(--card); border: 1px solid var(--line); border-top: 4px solid color-mix(in srgb, var(--gc) 70%, transparent); box-shadow: var(--shadow); }
+.ibox { display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: 30px 2.6em auto 38px; align-content: start; gap: 8px; min-width: 0; padding: 10px 12px; border-radius: 14px; background: var(--card); border: 1px solid var(--line); border-top: 4px solid color-mix(in srgb, var(--gc) 70%, transparent); box-shadow: var(--shadow); }
 .ibox.apagado { opacity: .5; }
-.ib-hd { display: flex; align-items: center; gap: 6px; height: 30px; }
+.ib-hd { display: flex; align-items: center; gap: 6px; height: 30px; min-width: 0; }
+.ib-hd > .badge, .ib-hd > .acp-tag, .ib-hd > .coloc-badge { flex: 0 1 auto; min-width: 0; max-width: 46%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ib-hd > .ic-btn { flex: none; }
+.ib-hd > .ib-ic { flex: none; max-width: none; padding: 3px 6px; display: inline-flex; align-items: center; }
+.ib-nm { min-width: 0; }
+.ib-nm .ib-nome { overflow-wrap: anywhere; word-break: break-word; }
+.ib-nm.fora .ib-nome { -webkit-line-clamp: 1; }
+.motivo-fora { margin: 1px 0 0; font-size: 11.5px; font-weight: 600; line-height: 1.25; color: var(--muted); opacity: .85; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .ib-num { flex: 1; min-width: 0; font-size: 11px; font-weight: 800; letter-spacing: .05em; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .ib-nome { margin: 0; font-size: 14px; line-height: 1.3; font-weight: 800; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
 .ib-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
@@ -1598,7 +1607,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.161.1';
+  const APP_VERSION = '1.162.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   // Status do pregão (decisão do João, 11/11/2026): padrão da BLL + os dele (Falta dados, Analisando, Empenho, Concluído, Desisti).
   // O que muda nas contas e no Dashboard é ter ou não item Venci (pst.ganho), não o nome do status.
@@ -5866,7 +5875,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     const btnEditar = `<button type="button" class="ic-btn i-edit" data-act="editar-item" data-id="${it.id}" title="Editar item" aria-label="Editar item">${icon('edit', 'sm')}</button>`;
     if (c.fora) {
       return `<article class="icard fora${temRevisar(it) ? ' revisar' : ''}" data-id="${it.id}">
-        <div class="i-hd">${tag}<div class="rcol"><span class="badge off">Fora da disputa</span>${btnEditar}</div></div>${desc}${revHtml(it)}
+        <div class="i-hd">${tag}<div class="rcol"><span class="badge off">Fora da disputa</span>${btnEditar}</div></div>${desc}${motivoForaHtml(it)}${revHtml(it)}
         <div class="icard-actions"><button type="button" class="btn sm ghost" data-act="item-fora" data-id="${it.id}">Voltar para a disputa</button></div></article>`;
     }
     const ganhoMode = false;
@@ -6063,8 +6072,8 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     // "Não venci": caixinha para eu digitar a minha colocação; marca não ganho e grava a colocação no item (vazio = só marca não ganho)
     function foi(it) {
       var old = document.getElementById('cxpos'); if (old) old.remove();
-      var o = document.createElement('div'); o.id = 'cxpos'; o.style.cssText = 'position:fixed;inset:0;z-index:50;background:rgba(15,23,42,.55);display:flex;align-items:center;justify-content:center;padding:16px';
-      o.innerHTML = '<div style="background:#fff;border-radius:14px;padding:16px;width:min(320px,100%);display:grid;gap:10px;box-shadow:0 10px 30px rgba(0,0,0,.35)"><b style="font-size:17px">Item ' + esc(it.n || '?') + ' · não venci</b><label style="font-size:13px;color:#667489">Minha colocação (1 = primeiro)</label><input id="posv" inputmode="numeric" maxlength="3" autocomplete="off" placeholder="ex.: 3" style="font:inherit;font-size:28px;font-weight:700;text-align:center;border:2px solid #d9dfe8;border-radius:12px;padding:8px"><div style="display:flex;gap:8px"><button type=button id="posc" style="flex:1;font:inherit;font-size:15px;border:1px solid #d9dfe8;background:#fff;border-radius:12px;padding:11px">Cancelar</button><button type=button id="poso" style="flex:1;font:inherit;font-size:15px;font-weight:700;border:0;background:#1f3a5f;color:#fff;border-radius:12px;padding:11px">Salvar</button></div></div>';
+      var o = document.createElement('div'); o.id = 'cxpos'; o.style.cssText = 'position:fixed;inset:0;z-index:50;background:rgba(15,23,42,.55);display:flex;align-items:center;justify-content:center;padding:16px;box-sizing:border-box';
+      o.innerHTML = '<div style="box-sizing:border-box;background:#fff;border-radius:14px;padding:16px;width:min(320px,100%);display:grid;grid-template-columns:minmax(0,1fr);gap:10px;box-shadow:0 10px 30px rgba(0,0,0,.35)"><b style="font-size:17px">Item ' + esc(it.n || '?') + ' · não venci</b><label style="font-size:13px;color:#667489">Minha colocação (1 = primeiro)</label><input id="posv" inputmode="numeric" maxlength="3" autocomplete="off" placeholder="ex.: 3" style="box-sizing:border-box;width:100%;min-width:0;font:inherit;font-size:28px;font-weight:700;text-align:center;border:2px solid #d9dfe8;border-radius:12px;padding:8px"><div style="display:flex;gap:8px"><button type=button id="posc" style="flex:1;min-width:0;font:inherit;font-size:15px;border:1px solid #d9dfe8;background:#fff;border-radius:12px;padding:11px">Cancelar</button><button type=button id="poso" style="flex:1;min-width:0;font:inherit;font-size:15px;font-weight:700;border:0;background:#1f3a5f;color:#fff;border-radius:12px;padding:11px">Salvar</button></div></div>';
       document.body.appendChild(o);
       var inp = o.querySelector('#posv'); inp.focus();
       function ok() {
@@ -6346,6 +6355,23 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     const tip = `Comprando por ${C.brl(t.rend / (Math.pow(1 + t.selic, t.dias / 365) - 1))}, o dinheiro fica fora ~${t.dias} dias${t.diasEst ? ' (prazo estimado: o pregão não tem prazo de entrega/pagamento)' : ''}. Na Selic (${C.pct(t.selic, 2)} a.a., bruto) renderia ${C.brl(t.rend)}. Seu lucro equivale a ${t.anual != null ? C.pct(t.anual, 0) : '—'} ao ano.`;
     return `<span class="tes" title="${esc(tip)}">vs Tesouro <b style="color:${C.corTesouro(t)}">${vz}</b>${!curto && t.anual != null && t.vezes > 0 ? ` (≈ ${C.pct(t.anual, 0)} a.a.)` : ''}${!curto && t.pisoUnit != null ? ` · empata em ${C.brl(t.pisoUnit)}/un` : ''}</span>`;
   }
+  // motivo curto (3 ou 4 palavras) do item que ficou de fora, tirado da observação; o texto inteiro vai no balão (pedido do João, 12/11/2026)
+  function motivoFora(it) {
+    const o = String(it.obs || '').replace(/\s+/g, ' ').trim();
+    if (!o) return '';
+    const pal = (t, n) => { const w = t.split(' ').filter(Boolean); return w.slice(0, n).join(' ') + (w.length > n ? '…' : ''); };
+    const cap = (t) => t.charAt(0).toUpperCase() + t.slice(1);
+    const mFC = /^falta cotar\s*[:\-–]\s*(.*)$/i.exec(o);
+    if (mFC) return 'Falta cotar' + (mFC[1] ? ': ' + pal(mFC[1].replace(/^(não achei|só achei)\s+/i, ''), 3) : '');
+    const i = o.search(/[:.;]/);
+    let head = (i > 0 ? o.slice(0, i) : o).trim();
+    if (head.split(' ').length > 5 && head.includes('/')) head = head.split('/').pop().trim();
+    return cap(pal(head, 4));
+  }
+  function motivoForaHtml(it) {
+    const m = motivoFora(it); if (!m) return '';
+    return `<div class="motivo-fora" title="${esc(it.obs)}">${esc(m)}</div>`;
+  }
   function itemBloco(it, c) {
     const lt = C.padLE(it.loteEdital), ie = C.padLE(it.itemEdital);
     const num = (lt || ie) ? (lt ? 'L' + esc(lt) + (ie ? ' · ' : '') : '') + (ie ? 'ITEM ' + esc(ie) : '') : 'S/Nº';
@@ -6356,8 +6382,8 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     const lucroCor = c.lucro == null ? '' : c.lucro < 0 ? 'var(--red)' : 'var(--green)';
     const kv = (l, v, cls) => `<div class="ib-kv${cls ? ' ' + cls : ''}"><span>${l}</span><b>${v}</b></div>`;
     return `<article class="ibox${c.fora || (c.naoGanhou && !it.possivelGanhar) ? ' apagado' : ''}${temRevisar(it) ? ' revisar' : ''}" data-id="${it.id}">
-      <div class="ib-hd"><span class="ib-num">${num}</span>${colocTag}${tag}${temRevisar(it) ? `<span class="badge warn" title="${esc('Revisar: ' + it.revisar)}">Revisar</span>` : ''}${!c.fora && !it.semLance && !(String(it.marca || '').trim() && String(it.modelo || '').trim()) ? '<span class="badge bad" title="Falta marca e/ou modelo: a proposta não é gerada sem eles">' + (!String(it.marca || '').trim() && !String(it.modelo || '').trim() ? 'Sem marca/modelo' : !String(it.marca || '').trim() ? 'Sem marca' : 'Sem modelo') + '</span>' : ''}${!c.fora && !it.semLance && !(Number(it.fotosN) > 0) ? '<span class="badge bad" title="Sem foto no catálogo">Sem foto</span>' : ''}<button type="button" class="ic-btn" data-act="editar-item" data-id="${it.id}" title="Editar item" aria-label="Editar item">${icon('edit', 'sm')}</button></div>
-      <h4 class="ib-nome" title="${esc(it.descricao)}">${esc(nomeCurto(it.descricao, 38))}</h4>
+      <div class="ib-hd"><span class="ib-num">${num}</span>${colocTag}${tag}${temRevisar(it) ? `<span class="badge warn" title="${esc('Revisar: ' + it.revisar)}">Revisar</span>` : ''}${!c.fora && !it.semLance && !(String(it.marca || '').trim() && String(it.modelo || '').trim()) ? '<span class="badge bad ib-ic" title="' + (!String(it.marca || '').trim() && !String(it.modelo || '').trim() ? 'Sem marca/modelo' : !String(it.marca || '').trim() ? 'Sem marca' : 'Sem modelo') + ': a proposta não é gerada sem eles">' + icon('alert', 'sm') + '</span>' : ''}${!c.fora && !it.semLance && !(Number(it.fotosN) > 0) ? '<span class="badge bad ib-ic" title="Sem foto no catálogo">' + icon('image', 'sm') + '</span>' : ''}<button type="button" class="ic-btn" data-act="editar-item" data-id="${it.id}" title="Editar item" aria-label="Editar item">${icon('edit', 'sm')}</button></div>
+      <div class="ib-nm${c.fora ? ' fora' : ''}"><h4 class="ib-nome" title="${esc(it.descricao)}">${esc(nomeCurto(it.descricao, 38))}</h4>${c.fora ? motivoForaHtml(it) : ''}</div>
       <div class="ib-grid">
         ${kv('Qtd', C.qtdBR(it.qtd) + (it.unidade ? ' <em>' + esc(String(it.unidade).toLowerCase()) + '</em>' : ''))}
         ${kv('Custo un.', C.brl(it.custo))}
