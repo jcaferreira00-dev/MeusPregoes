@@ -1598,7 +1598,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.161.0';
+  const APP_VERSION = '1.161.1';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   // Status do pregão (decisão do João, 11/11/2026): padrão da BLL + os dele (Falta dados, Analisando, Empenho, Concluído, Desisti).
   // O que muda nas contas e no Dashboard é ter ou não item Venci (pst.ganho), não o nome do status.
@@ -5692,6 +5692,10 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
       const ref = cols.find((r) => r[0] !== 'Atenção agora') || cols[0];
       cols = [[UI.filtro, UI.filtro === 'ganhei' ? 'Venci 🏆' : stTxt(UI.filtro.replace(/^g:/, '')), ref[2], cols.flatMap((r) => r[3])]];
     }
+    // celular, filtro "Todos" (pedido do João, 12/11/2026): uma coluna só com TODOS os pregões, na ordem de importância e com os encerrados
+    // (cinza) no fim; antes ficava uma coluna por grupo, uma por vez, e os encerrados escondidos no botão, então "Todos" não mostrava todos
+    const todosCel = window.innerWidth < 900 && UI.filtro === 'todos' && (cols.length > 1 || ina.length > 0);
+    if (todosCel) cols = [['Todos', 'Todos', '', cols.flatMap((r) => r[3]).concat(ina)]];
     if (UI.lane && !cols.some((r) => r[0] === UI.lane)) UI.lane = null;
     const chip = (x) => `<button type="button" class="enc-chip${LEG(x.p.status) === 'Concluído' ? ' conc' : ''}" data-act="abrir-pregao" data-id="${x.p.id}" title="${esc(x.p.orgao)} · ${esc(stTxt(x.p.status))}"><b>Nº ${esc(x.p.numero)}</b><span class="ell">${esc(x.p.orgao)}</span><i>${esc(stTxt(x.p.status))}</i></button>`;
     const fim = ina.length ? `<div class="enc-box"><button type="button" class="btn sm ghost enc-btn${UI.mostrarEnc ? ' on' : ''}" data-act="painel-encerrados" aria-expanded="${UI.mostrarEnc ? 'true' : 'false'}">${icon('archive', 'sm')} Encerrados e concluídos (${ina.length}) <span class="enc-seta">${UI.mostrarEnc ? '▴' : '▾'}</span></button>${UI.mostrarEnc ? `<div class="enc-chips">${ina.map(chip).join('')}</div>` : ''}</div>` : '';
@@ -5708,7 +5712,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
       return `<div class="lane-head"><button type="button" class="btn sm" data-act="lane-fechar">${icon('back', 'sm')} Todos os grupos</button><div class="pq-sec ${lk}"><span>${lt}</span><b>${larr.length}</b></div></div><div class="pq-grid pq-full">${larr.map(pregaoCard).join('')}</div>`;
     }
     const html = `<div class="board-nav"><button type="button" data-act="lane-prev" aria-label="Anterior">‹</button><button type="button" data-act="lane-next" aria-label="Próximo">›</button></div><div class="pq-board" style="--nl:${cols.length}">${cols.map(([key, t, k, arr]) => `<section class="pq-col"><div class="pq-sec pq-sec-bt ${k}" data-act="lane-abrir" data-k="${esc(key)}" role="button" tabindex="0" title="Ver só este grupo na tela toda"><span>${t}</span><b>${arr.length}</b></div><div class="pq-grid pq-stack">${arr.map(pregaoCard).join('')}</div></section>`).join('')}</div>`;
-    return html + fim;
+    return html + (todosCel ? '' : fim);
   }
 
   // seletor "filtrar por pregão" (guia Itens)
