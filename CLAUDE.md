@@ -123,7 +123,7 @@ O João baixa os documentos da plataforma (BLL, Compras.gov etc.), que vêm em v
    - prazo de entrega (ex.: Castro 157 = 48 h úteis);
    - locais de entrega (um endereço ou vários);
    - tipo de julgamento (item ou lote/grupo), tipo de compra (registro de preços ou aquisição → `tipoCompra`) e plataforma real (o PNCP às vezes erra: Castro 157 e 163 apareciam como IPM e são BLL).
-3. **Mostrar a conferência ao João** (o que veio, o que falta, os pontos acima) e só então cotar. Atestado ou balanço exigido = Desisti sem cotar (avisar; dá para pedir esclarecimento quando couber).
+3. **Mostrar a conferência ao João** (o que veio, o que falta, os pontos acima) e só então cotar. Atestado exigido = Desisti sem cotar (avisar). **Balanço exigido (decisão do João, 12/11/2026): NÃO descartar** — cotar normalmente e mandar no LEIA-ME o texto do pedido de esclarecimento (MEI dispensado de escrituração; aberto em 2026, sem exercício encerrado; aceitar CCMEI/DASN-SIMEI ou balanço de abertura), com o prazo.
 
 - `descEdital` ("Exigido no edital") é CÓPIA FIEL do edital (decisão de 30/10/2026): copiar e colar o texto do item exatamente como está no edital/TR, completo, sem resumir nem limpar (só tirar quebras de página e cabeçalhos de tabela que entraram no meio). O João confere tudo ao revisar as cotações.
 
@@ -146,7 +146,7 @@ O João baixa os documentos da plataforma (BLL, Compras.gov etc.), que vêm em v
   e, quando o item não puder ser vendido, `semLance: true`.
 - Certificação: procurar "Inmetro" no edital inteiro (inclusive execução/entrega). Ex.: balança do
   PE 87 de Ortigueira; capacete de skate exige EN1078; bola de tênis de mesa "oficial" pode exigir ITTF.
-- Habilitação: ainda não tem atestado de capacidade técnica; MEI não tem balanço (descartar se exigido).
+- Habilitação: ainda não tem atestado de capacidade técnica (descartar se exigido); MEI não tem balanço: se exigido, cotar e pedir esclarecimento (decisão de 12/11/2026).
   Tem SICAF.
 - Pregão inviável: avisar o motivo em 1–2 linhas; no JSON ele entra como Desisti com o motivo no `obs`, sem pasta no Drive.
 - Julgamento por LOTE/GRUPO (ter que comprar o grupo inteiro): descartar. Julgamento por item, ou edital em que
@@ -388,6 +388,7 @@ Vistos e descartados na busca de 05/11: Ortigueira 100 e 109; Mauá da Serra 65;
 Trazidos na busca PNCP de 12/11 (aguardando escolha): Telêmaco Borba 59 (= PCE 92); Ventania 19; Reserva Disp. 050; Ibaiti 242; Cândido de Abreu 80; Nova Santa Bárbara 29 e Disp. 28; Congonhinhas 13 (Fundo Municipal de Saúde); Cruzmaltina Disp. 022.
 Vistos e descartados na busca de 12/11: UTFPR 97 (entrega em Guarapuava) e 109; FAS Ponta Grossa 20; Arapoti PCE 50, 54, 56 e 57; Ponta Grossa 181, 182 e 184; Tamarana 063 a 065, 067 e 068; Castro PCE 164 a 172; Jaboti 46 e Disp. 29; Mauá da Serra 67 a 74 e Disp. 43 e 44; Cândido de Abreu 77; Telêmaco 58/PCE 91, 60/PCE 93 e 61/PCE 94 (tintas); Rio Branco do Ivaí 38, 39 e Disp. 39; Ipiranga 79 e Disp. 13 e 14; 5ª Brigada Disp. 6 e 97; Santo Antônio do Paraíso 39; Ortigueira 105 e 108; Imbaú 96; Ventania 20; Reserva 75 e 76; Figueira 16; Japira 37 e 40; Piraí do Sul 42 e 49 a 52; Carambeí PCE 64 a 66; Congonhinhas 12, 20 a 22; Conselheiro Mairinck 65, 69 e 70; Grandes Rios 47 a 49; Pinhalão 21 e 22; Cruzmaltina Disp. 6 e 21; São Jerônimo da Serra 7, 10, Consórcio 10 e Disp. 49 e 50; Tibagi 62, 69, 70 e Disp. 30; Nova Santa Bárbara DE 28 (Betha, mesmo objeto); UEPG 77, 79, 82 a 84, 87, 88 e SEAP 1662, 1666, 1687, 1688, 1709, 1720, 1724; UTFPR 10; Ponta Grossa 174, 175, 177, 179; FAS PG 17.
 Analisados em 12/11 (edital completo, JSON `buscas/meus-pregoes-analise-2026-11-12.json`, mesmos ids da busca): Desisti — Congonhinhas 13 (= PE 90.007; atestado + balanço), Ventania 19 (balanço), Reserva Disp. 050 (atestado + lote), Ibaiti 242 (= PE 46/2026, BLL e não Equiplano; atestado + balanço), Nova Santa Bárbara 29 (= PE 30/2026; atestado), Cândido de Abreu 80 (balanço com índices + BNC), Cruzmaltina Disp. 022 (atestado). Falta dados — Nova Santa Bárbara Disp. 28 (lote único de 2 itens; ficha = Fortlux Natal FTX201S e FTX80001S, sem preço público; pasta no Drive). Telêmaco 59 não veio no pacote.
+Reabertos em 12/11 por decisão do João (balanço não descarta mais), JSON `buscas/meus-pregoes-reabertos-2026-11-12.json`: Telêmaco 59 (= PE 92/2026; 78 itens, 28 cotados; Falta dados: 12, 13, 18, 19 e conexões pequenas de PVC), Ventania 19 (21 cotados; falta o item 6) e Cândido de Abreu 80 (BNC; 22 cotados; falta o item 3). Pastas no Drive com LEIA-ME e declarações. O arquivo do "Telêmaco" no pacote anterior era, na verdade, o Congonhinhas 13.
 (Quando o João mandar um backup do app ou os PDFs de um pregão, atualizar esta lista.)
 
 ### Orientações adicionais do João
