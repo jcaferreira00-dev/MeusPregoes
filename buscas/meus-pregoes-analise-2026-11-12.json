@@ -1,0 +1,175 @@
+{
+ "version": 1,
+ "pregoes": [
+  {
+   "id": "pz_congonhinhas_13_2026",
+   "updatedAt": 1794514261386,
+   "deleted": false,
+   "numero": "13/2026 (PE 90.007/2026)",
+   "status": "Desisti",
+   "plataforma": "Compras.gov.br",
+   "tipoCompra": "SRP",
+   "obs": "ANÁLISE 12/11 (edital completo): DESISTI — exige atestado de capacidade técnica (TR, Qualificação técnica: fornecimento anterior de bens compatíveis) e balanço dos 2 últimos exercícios (TR 9.24). Proposta até 25/11 07:59, sessão 08:00. Obs.: os arquivos vieram na pasta 'Telemaco Borba' do zip, mas são do Fundo Municipal de Saúde de Congonhinhas."
+  },
+  {
+   "id": "pz_ventania_19_2026",
+   "updatedAt": 1794514261386,
+   "deleted": false,
+   "numero": "19/2026",
+   "status": "Desisti",
+   "plataforma": "BLL",
+   "tipoCompra": "Aquisição",
+   "obs": "ANÁLISE 12/11 (edital completo): DESISTI — edital 12.4.1 exige balanço patrimonial e demonstrações contábeis (12.4.1.1: só o último exercício para empresa com menos de 2 anos). MEI aberto em 2026 não tem exercício encerrado nem balanço. Dá para pedir esclarecimento (texto no resumo da análise) até 13/11 no campo próprio da BLL; se aceitarem a dispensa para MEI, reabrir. Também: Inmetro em todos os brinquedos; Declaração Unificada (Anexo II); propostas até 19/11 08:00, lances 09:00; entrega 30 dias; pagamento 30 dias; validade 60 dias."
+  },
+  {
+   "id": "pz_reserva_disp50_2026",
+   "updatedAt": 1794514261386,
+   "deleted": false,
+   "numero": "Dispensa 050/2026",
+   "status": "Desisti",
+   "plataforma": "BLL",
+   "tipoCompra": "Aquisição",
+   "obs": "ANÁLISE 12/11 (edital completo): DESISTI — exige Atestado de Capacidade Técnica (habilitação, item IV-a) e o julgamento é menor preço por lote. TR e ETP vieram escaneados (sem texto), mas o edital já derruba."
+  },
+  {
+   "id": "pz_ibaiti_242_2026",
+   "updatedAt": 1794514261386,
+   "deleted": false,
+   "numero": "46/2026-PMI (PNCP 242)",
+   "status": "Desisti",
+   "plataforma": "BLL",
+   "tipoCompra": "SRP",
+   "obs": "ANÁLISE 12/11 (edital completo): DESISTI — Anexo de habilitação 1.4.2 exige balanço do último exercício com índices de liquidez e 1.5.1 exige atestado de capacidade técnica (privado só com nota fiscal). Julgamento por lote. Correção: a plataforma é a BLL (não Equiplano). Propostas até 27/11 09:00."
+  },
+  {
+   "id": "pz_nsbarbara_29_2026",
+   "updatedAt": 1794514261386,
+   "deleted": false,
+   "numero": "30/2026 (Compras.gov 29/2026)",
+   "status": "Desisti",
+   "plataforma": "Compras.gov.br",
+   "tipoCompra": "Aquisição",
+   "obs": "ANÁLISE 12/11 (edital completo): DESISTI — exige atestado de capacidade técnica (Anexo I item 3.1 e TR 10.3.1). O edital é o PE 30/2026 (no Compras.gov.br aparece como 985457-29/2026). Sessão 02/12 09:00."
+  },
+  {
+   "id": "pz_candido_80_2026",
+   "updatedAt": 1794514261386,
+   "deleted": false,
+   "numero": "80/2026",
+   "status": "Desisti",
+   "plataforma": "BNC",
+   "tipoCompra": "SRP",
+   "obs": "ANÁLISE 12/11 (edital completo): DESISTI — Anexo II 1.4.1 exige balanço com índices LG, SG e LC ≥ 1 já calculados e assinados por contador (1.4.1.6); empresa criada em 2026 pode usar balanço de abertura (1.4.1.3.1), mas ainda precisa de contador. Habilitação em 30 min após convocação. Plataforma BNC: precisa de cadastro e costuma cobrar taxa. CA em todos os EPIs. Reabrir só se você tiver contador para o balanço de abertura + cadastro na BNC até 25/11 08:00."
+  },
+  {
+   "id": "pz_cruzmaltina_disp22_2026",
+   "updatedAt": 1794514261386,
+   "deleted": false,
+   "numero": "Dispensa 022/2026",
+   "status": "Desisti",
+   "plataforma": "BLL",
+   "tipoCompra": "Aquisição",
+   "obs": "ANÁLISE 12/11 (edital completo): DESISTI — exige atestado de capacidade técnica (Anexo I 4.1 e TR 7: fornecimento de plotter/informática equivalente) e catálogo do fabricante. Propostas até 16/11 12:59."
+  },
+  {
+   "id": "pz_nsbarbara_disp28_2026",
+   "updatedAt": 1794514261386,
+   "deleted": false,
+   "numero": "Dispensa 28/2026",
+   "status": "Falta dados",
+   "plataforma": "Compras.gov.br",
+   "tipoCompra": "Aquisição",
+   "prazoPropostas": "2026-11-16T08:00",
+   "sessao": "2026-11-16T08:00",
+   "km": 216,
+   "viagens": 1,
+   "pedagio": 0,
+   "prazoEntregaDias": 10,
+   "pagamentoDias": 30,
+   "modeloProprio": false,
+   "entregaParcelada": false,
+   "entregaParceladaObs": "",
+   "regrasEdital": {
+    "observacoes": "Lote único (2 itens, lance pelo valor unitário, intervalo mínimo R$ 5,00). Disputa de 6 h a partir de 16/11 08:00, sem prorrogação. Proposta ajustada ao último lance quando solicitada."
+   },
+   "pdfOpts": {
+    "validade": "60 (sessenta) dias",
+    "pagamento": "Parcela única, em até 30 dias após entrega integral, recebimento definitivo e atesto da nota fiscal (TR 10)",
+    "prazoEntrega": "Entrega integral em até 10 dias corridos do recebimento da Nota de Empenho (TR 4)",
+    "localEntrega": "Nova Santa Bárbara/PR, local a confirmar pela Secretaria de Assistência Social (TR 4)",
+    "garantia": "90 dias"
+   },
+   "obs": "FALTA COTAR: itens 1 e 2 (pedir orçamento à Fortlux Natal, WhatsApp (19) 99615-2138). ANÁLISE 12/11: Dispensa eletrônica Compras.gov.br, exclusiva ME/EPP, LOTE ÚNICO com 2 itens de iluminação natalina (exceção à regra de lote: os 2 itens são do mesmo tipo, leves, mesmo fornecedor e mesma entrega). Sem atestado; MEI dispensado de balanço (6.6). A descrição do edital é cópia literal da ficha da Fortlux Natal (cordão 120 LED com estrobinhos 1,8 mm IP44 cód. FTX201S e cascata com estrobo 800 LEDs cód. FTX80001S); no varejo (Mercado Livre/Magalu) não há equivalente que atenda 90+30 LEDs e cascata de 800 LEDs em 10 m. Garantia mínima 90 dias (TR 6). Declarações: no sistema (3.9) + Declaração Unificada (Anexo III) e declaração ME/EPP por escrito (Anexo IV), .docx no Drive. CNAE: iluminação 4754-7/03 e festas 4789-0/99 (cobertos)."
+  }
+ ],
+ "itens": [
+  {
+   "createdAt": 1794514261386,
+   "updatedAt": 1794514261386,
+   "deleted": false,
+   "marca": "",
+   "modelo": "",
+   "margem": null,
+   "lanceFinal": null,
+   "loteEdital": "1",
+   "id": "it_nsbarbara_disp28_01",
+   "pregaoId": "pz_nsbarbara_disp28_2026",
+   "itemEdital": "01",
+   "descricao": "Cordão 120 LEDs branco frio c/ estrobo, fio verde, 10 m, 220 V, IP44",
+   "descEdital": "Cordão 120 LEDs branco frio com estrobo, fio verde, 10 m, 220 V, uso externo IP44. 120 LEDs, sendo 90 fixos e 30 com efeito estrobo, branco frio; fio de cobre revestido na cor verde, espessura de 1,8 mm; LEDs de 5 mm, espaçamento de 8 cm; comprimento luminoso de 9,5 m mais 0,5 m de cabo; conexão macho/fêmea para interligação de até 5 conjuntos; vedação na base dos LEDs; IP44; potência de 4,2 W; alimentação 220 V; fonte retificadora IP65.",
+   "unidade": "Un",
+   "qtd": 150,
+   "custo": 0,
+   "teto": 74.17,
+   "frete": 0,
+   "semLance": false,
+   "alternativas": [
+    {
+     "loja": "Fortlux Natal (fabricante, cód. FTX201S) — pedir preço no WhatsApp",
+     "link": "https://fortluxnatal.com.br/cordao-120-led-com-estrobinhos-18mm-ip44/",
+     "custo": 0,
+     "frete": 0
+    },
+    {
+     "loja": "Mercado Livre (só referência: 100 fixos + 20 estrobo, NÃO atende 90+30)",
+     "link": "https://www.mercadolivre.com.br/up/MLBU4681169338",
+     "custo": 62.84,
+     "frete": 0
+    }
+   ],
+   "revisar": "Sem custo: falta orçamento da Fortlux (FTX201S, 150 un.). Lance mínimo só depois do preço.",
+   "obs": "FALTA COTAR. Ficha idêntica à Fortlux FTX201S (120 LEDs: 90 fixos + 30 estrobos, 9,5 m + 0,5 m, fio 1,8 mm, até 5 conjuntos, fonte IP65, 4,2 W). Pedir à Fortlux: preço de 150 un., estoque, prazo até Telêmaco e frete. O anúncio do ML (R$ 62,84) tem 100+20 LEDs: risco de recusa (TR 5); usar só se o órgão aceitar. Peso estimado ~0,3 kg/un. (~45 kg no total), cabe no carro."
+  },
+  {
+   "createdAt": 1794514261386,
+   "updatedAt": 1794514261386,
+   "deleted": false,
+   "marca": "",
+   "modelo": "",
+   "margem": null,
+   "lanceFinal": null,
+   "loteEdital": "1",
+   "id": "it_nsbarbara_disp28_02",
+   "pregaoId": "pz_nsbarbara_disp28_2026",
+   "itemEdital": "02",
+   "descricao": "Cascata 800 LEDs branco frio c/ estrobo, 10 m, bivolt, IP44",
+   "descEdital": "Cascata 800 LEDs branco frio com estrobo, 10 m, bivolt, uso externo IP44. 800 LEDs, sendo 600 fixos e 200 com efeito estrobo, branco frio; 10 m de comprimento; espaçamento de 10 cm; LEDs de 5 mm; fio de cobre revestido branco, espessura de 1,5 mm; quedas de 80 cm, 100 cm e 50 cm; conexão macho/fêmea para interligação de até 4 cascatas; IP44; potência de 24 W; alimentação bivolt.",
+   "unidade": "Un",
+   "qtd": 12,
+   "custo": 0,
+   "teto": 332.84,
+   "frete": 0,
+   "semLance": false,
+   "alternativas": [
+    {
+     "loja": "Fortlux Natal (fabricante, cód. FTX80001S) — pedir preço no WhatsApp",
+     "link": "https://fortluxnatal.com.br/cascata-com-estrobo-ip44-uso-externo/",
+     "custo": 0,
+     "frete": 0
+    }
+   ],
+   "revisar": "Sem custo: falta orçamento da Fortlux (FTX80001S, 12 un.).",
+   "obs": "FALTA COTAR. Ficha idêntica à Fortlux FTX80001S (800 LEDs: 600 fixos + 200 estrobos, quedas 80/100/50 cm, fio branco 1,5 mm, até 4 conjuntos, 24 W, bivolt). No varejo só há cascata de 400 LEDs em 10 m (R$ 66–155) ou 800 LEDs em 20 m: não atendem. Só uma loja encontrada."
+  }
+ ]
+}
