@@ -104,13 +104,13 @@
    "margem": null,
    "lanceFinal": null,
    "createdAt": 1794518238076,
-   "updatedAt": 1794518238076,
+   "updatedAt": 1794521141376,
    "deleted": false,
    "custo": 0,
    "frete": 0,
    "semLance": true,
    "alternativas": [],
-   "obs": "Barra de 6 m / louça / item pesado ou frágil: fora (regra de entrega)."
+   "obs": "Pesado ou frágil: barra de 6 m / louça, fora pela regra de entrega."
   },
   {
    "id": "it_telemaco_59_02",
@@ -127,13 +127,13 @@
    "margem": null,
    "lanceFinal": null,
    "createdAt": 1794518238076,
-   "updatedAt": 1794518238076,
+   "updatedAt": 1794521141376,
    "deleted": false,
    "custo": 0,
    "frete": 0,
    "semLance": true,
    "alternativas": [],
-   "obs": "Barra de 6 m / louça / item pesado ou frágil: fora (regra de entrega)."
+   "obs": "Pesado ou frágil: barra de 6 m / louça, fora pela regra de entrega."
   },
   {
    "id": "it_telemaco_59_03",
@@ -150,13 +150,13 @@
    "margem": null,
    "lanceFinal": null,
    "createdAt": 1794518238076,
-   "updatedAt": 1794518238076,
+   "updatedAt": 1794521141376,
    "deleted": false,
    "custo": 0,
    "frete": 0,
    "semLance": true,
    "alternativas": [],
-   "obs": "Barra de 6 m / louça / item pesado ou frágil: fora (regra de entrega)."
+   "obs": "Pesado ou frágil: barra de 6 m / louça, fora pela regra de entrega."
   },
   {
    "id": "it_telemaco_59_04",
@@ -173,13 +173,13 @@
    "margem": null,
    "lanceFinal": null,
    "createdAt": 1794518238076,
-   "updatedAt": 1794518238076,
+   "updatedAt": 1794521141376,
    "deleted": false,
    "custo": 0,
    "frete": 0,
    "semLance": true,
    "alternativas": [],
-   "obs": "Barra de 6 m / louça / item pesado ou frágil: fora (regra de entrega)."
+   "obs": "Pesado ou frágil: barra de 6 m / louça, fora pela regra de entrega."
   },
   {
    "id": "it_telemaco_59_05",
@@ -196,13 +196,13 @@
    "margem": null,
    "lanceFinal": null,
    "createdAt": 1794518238076,
-   "updatedAt": 1794518238076,
+   "updatedAt": 1794521141376,
    "deleted": false,
    "custo": 0,
    "frete": 0,
    "semLance": true,
    "alternativas": [],
-   "obs": "Barra de 6 m / louça / item pesado ou frágil: fora (regra de entrega)."
+   "obs": "Pesado ou frágil: barra de 6 m / louça, fora pela regra de entrega."
   },
   {
    "id": "it_telemaco_59_06",
@@ -219,13 +219,13 @@
    "margem": null,
    "lanceFinal": null,
    "createdAt": 1794518238076,
-   "updatedAt": 1794518238076,
+   "updatedAt": 1794521141376,
    "deleted": false,
    "custo": 0,
    "frete": 0,
    "semLance": true,
    "alternativas": [],
-   "obs": "Barra de 6 m / louça / item pesado ou frágil: fora (regra de entrega)."
+   "obs": "Pesado ou frágil: barra de 6 m / louça, fora pela regra de entrega."
   },
   {
    "id": "it_telemaco_59_07",
@@ -318,13 +318,13 @@
    "margem": null,
    "lanceFinal": null,
    "createdAt": 1794518238076,
-   "updatedAt": 1794518238076,
+   "updatedAt": 1794521141376,
    "deleted": false,
    "custo": 0,
    "frete": 0,
    "semLance": true,
    "alternativas": [],
-   "obs": "Barra de 6 m / louça / item pesado ou frágil: fora (regra de entrega)."
+   "obs": "Pesado ou frágil: barra de 6 m / louça, fora pela regra de entrega."
   },
   {
    "id": "it_telemaco_59_10",
@@ -341,13 +341,13 @@
    "margem": null,
    "lanceFinal": null,
    "createdAt": 1794518238076,
-   "updatedAt": 1794518238076,
+   "updatedAt": 1794521141376,
    "deleted": false,
    "custo": 0,
    "frete": 0,
    "semLance": true,
    "alternativas": [],
-   "obs": "Barra de 6 m / louça / item pesado ou frágil: fora (regra de entrega)."
+   "obs": "Pesado ou frágil: barra de 6 m / louça, fora pela regra de entrega."
   },
   {
    "id": "it_telemaco_59_11",
@@ -364,13 +364,13 @@
    "margem": null,
    "lanceFinal": null,
    "createdAt": 1794518238076,
-   "updatedAt": 1794518238076,
+   "updatedAt": 1794521141376,
    "deleted": false,
    "custo": 0,
    "frete": 0,
    "semLance": true,
    "alternativas": [],
-   "obs": "FALTA COTAR: conexão/peça pequena de PVC de valor baixo; cotar no balcão de distribuidor de Telêmaco junto com as outras (lista no LEIA-ME).",
+   "obs": "Peça pequena, falta cotar: conexão/peça pequena de PVC de valor baixo; cotar no balcão de distribuidor de Telêmaco junto com as outras (lista no LEIA-ME).",
    "revisar": "Falta cotar (ver observação)."
   },
   {
@@ -388,13 +388,13 @@
    "margem": null,
    "lanceFinal": null,
    "createdAt": 1794518238076,
-   "updatedAt": 1794518238076,
+   "updatedAt": 1794521141376,
    "deleted": false,
    "custo": 0,
    "frete": 0,
    "semLance": true,
    "alternativas": [],
-   "obs": "FALTA COTAR: não achei chuveiro 127 V com ducha manual + redutor dentro do teto (R$ 121).",
+   "obs": "Falta chuveiro no teto: não achei chuveiro 127 V com ducha manual + redutor dentro do teto (R$ 121).",
    "revisar": "Falta cotar (ver observação)."
   },
   {
@@ -412,13 +412,13 @@
    "margem": null,
    "lanceFinal": null,
    "createdAt": 1794518238076,
-   "updatedAt": 1794518238076,
+   "updatedAt": 1794521141376,
    "deleted": false,
    "custo": 0,
    "frete": 0,
    "semLance": true,
    "alternativas": [],
-   "obs": "FALTA COTAR: não achei chuveiro 220 V 4.400 W com ducha manual + redutor dentro do teto (R$ 146,77).",
+   "obs": "Falta chuveiro no teto: não achei chuveiro 220 V 4.400 W com ducha manual + redutor dentro do teto (R$ 146,77).",
    "revisar": "Falta cotar (ver observação)."
   },
   {
@@ -436,13 +436,13 @@
    "margem": null,
    "lanceFinal": null,
    "createdAt": 1794518238076,
-   "updatedAt": 1794518238076,
+   "updatedAt": 1794521141376,
    "deleted": false,
    "custo": 0,
    "frete": 0,
    "semLance": true,
    "alternativas": [],
-   "obs": "Curva 45° galvanizada sem diâmetro no edital: não dá para cotar (pedir esclarecimento)."
+   "obs": "Sem diâmetro no edital: curva 45° galvanizada, não dá para cotar (pedir esclarecimento)."
   },
   {
    "id": "it_telemaco_59_15",
@@ -541,13 +541,13 @@
    "margem": null,
    "lanceFinal": null,
    "createdAt": 1794518238076,
-   "updatedAt": 1794518238076,
+   "updatedAt": 1794521141376,
    "deleted": false,
    "custo": 0,
    "frete": 0,
    "semLance": true,
    "alternativas": [],
-   "obs": "FALTA COTAR: só achei fita inox 3/4\" (19 mm); o edital pede 6,3 mm x 30 m. Teto R$ 414 é alto: vale buscar em distribuidor de fixação.",
+   "obs": "Falta fita 6,3 mm: só achei fita inox 3/4\" (19 mm); o edital pede 6,3 mm x 30 m. Teto R$ 414 é alto: vale buscar em distribuidor de fixação.",
    "revisar": "Falta cotar (ver observação)."
   },
   {
@@ -565,13 +565,13 @@
    "margem": null,
    "lanceFinal": null,
    "createdAt": 1794518238076,
-   "updatedAt": 1794518238076,
+   "updatedAt": 1794521141376,
    "deleted": false,
    "custo": 0,
    "frete": 0,
    "semLance": true,
    "alternativas": [],
-   "obs": "FALTA COTAR: rolo 18 mm x 20 m em caixa (1.586 rolos). No ML só achei avulso (Censi R$ 14,78, margem 6%) ou rolos de 50 m. Pedir preço de caixa Tigre/Amanco/Censi em distribuidor.",
+   "obs": "Falta preço em caixa: rolo 18 mm x 20 m em caixa (1.586 rolos). No ML só achei avulso (Censi R$ 14,78, margem 6%) ou rolos de 50 m. Pedir preço de caixa Tigre/Amanco/Censi em distribuidor.",
    "revisar": "Falta cotar (ver observação)."
   },
   {
@@ -702,13 +702,13 @@
    "margem": null,
    "lanceFinal": null,
    "createdAt": 1794518238076,
-   "updatedAt": 1794518238076,
+   "updatedAt": 1794521141376,
    "deleted": false,
    "custo": 0,
    "frete": 0,
    "semLance": true,
    "alternativas": [],
-   "obs": "FALTA COTAR: conexão/peça pequena de PVC de valor baixo; cotar no balcão de distribuidor de Telêmaco junto com as outras (lista no LEIA-ME).",
+   "obs": "Peça pequena, falta cotar: conexão/peça pequena de PVC de valor baixo; cotar no balcão de distribuidor de Telêmaco junto com as outras (lista no LEIA-ME).",
    "revisar": "Falta cotar (ver observação)."
   },
   {
@@ -726,13 +726,13 @@
    "margem": null,
    "lanceFinal": null,
    "createdAt": 1794518238076,
-   "updatedAt": 1794518238076,
+   "updatedAt": 1794521141376,
    "deleted": false,
    "custo": 0,
    "frete": 0,
    "semLance": true,
    "alternativas": [],
-   "obs": "FALTA COTAR: conexão/peça pequena de PVC de valor baixo; cotar no balcão de distribuidor de Telêmaco junto com as outras (lista no LEIA-ME).",
+   "obs": "Peça pequena, falta cotar: conexão/peça pequena de PVC de valor baixo; cotar no balcão de distribuidor de Telêmaco junto com as outras (lista no LEIA-ME).",
    "revisar": "Falta cotar (ver observação)."
   },
   {
@@ -824,13 +824,13 @@
    "margem": null,
    "lanceFinal": null,
    "createdAt": 1794518238076,
-   "updatedAt": 1794518238076,
+   "updatedAt": 1794521141376,
    "deleted": false,
    "custo": 0,
    "frete": 0,
    "semLance": true,
    "alternativas": [],
-   "obs": "Margem ~13% (kit 10 R$ 16,14 vs teto 18,60)."
+   "obs": "Margem baixa ~13%: (kit 10 R$ 16,14 vs teto 18,60)"
   },
   {
    "id": "it_telemaco_59_28",
@@ -885,13 +885,13 @@
    "margem": null,
    "lanceFinal": null,
    "createdAt": 1794518238076,
-   "updatedAt": 1794518238076,
+   "updatedAt": 1794521141376,
    "deleted": false,
    "custo": 0,
    "frete": 0,
    "semLance": true,
    "alternativas": [],
-   "obs": "FALTA COTAR: conexão/peça pequena de PVC de valor baixo; cotar no balcão de distribuidor de Telêmaco junto com as outras (lista no LEIA-ME).",
+   "obs": "Peça pequena, falta cotar: conexão/peça pequena de PVC de valor baixo; cotar no balcão de distribuidor de Telêmaco junto com as outras (lista no LEIA-ME).",
    "revisar": "Falta cotar (ver observação)."
   },
   {
@@ -909,13 +909,13 @@
    "margem": null,
    "lanceFinal": null,
    "createdAt": 1794518238076,
-   "updatedAt": 1794518238076,
+   "updatedAt": 1794521141376,
    "deleted": false,
    "custo": 0,
    "frete": 0,
    "semLance": true,
    "alternativas": [],
-   "obs": "FALTA COTAR: conexão/peça pequena de PVC de valor baixo; cotar no balcão de distribuidor de Telêmaco junto com as outras (lista no LEIA-ME).",
+   "obs": "Peça pequena, falta cotar: conexão/peça pequena de PVC de valor baixo; cotar no balcão de distribuidor de Telêmaco junto com as outras (lista no LEIA-ME).",
    "revisar": "Falta cotar (ver observação)."
   },
   {
@@ -933,13 +933,13 @@
    "margem": null,
    "lanceFinal": null,
    "createdAt": 1794518238076,
-   "updatedAt": 1794518238076,
+   "updatedAt": 1794521141376,
    "deleted": false,
    "custo": 0,
    "frete": 0,
    "semLance": true,
    "alternativas": [],
-   "obs": "Barra de 6 m / louça / item pesado ou frágil: fora (regra de entrega)."
+   "obs": "Pesado ou frágil: barra de 6 m / louça, fora pela regra de entrega."
   },
   {
    "id": "it_telemaco_59_32",
@@ -956,13 +956,13 @@
    "margem": null,
    "lanceFinal": null,
    "createdAt": 1794518238076,
-   "updatedAt": 1794518238076,
+   "updatedAt": 1794521141376,
    "deleted": false,
    "custo": 0,
    "frete": 0,
    "semLance": true,
    "alternativas": [],
-   "obs": "FALTA COTAR: conexão/peça pequena de PVC de valor baixo; cotar no balcão de distribuidor de Telêmaco junto com as outras (lista no LEIA-ME).",
+   "obs": "Peça pequena, falta cotar: conexão/peça pequena de PVC de valor baixo; cotar no balcão de distribuidor de Telêmaco junto com as outras (lista no LEIA-ME).",
    "revisar": "Falta cotar (ver observação)."
   },
   {
@@ -980,13 +980,13 @@
    "margem": null,
    "lanceFinal": null,
    "createdAt": 1794518238076,
-   "updatedAt": 1794518238076,
+   "updatedAt": 1794521141376,
    "deleted": false,
    "custo": 0,
    "frete": 0,
    "semLance": true,
    "alternativas": [],
-   "obs": "FALTA COTAR: conexão/peça pequena de PVC de valor baixo; cotar no balcão de distribuidor de Telêmaco junto com as outras (lista no LEIA-ME).",
+   "obs": "Peça pequena, falta cotar: conexão/peça pequena de PVC de valor baixo; cotar no balcão de distribuidor de Telêmaco junto com as outras (lista no LEIA-ME).",
    "revisar": "Falta cotar (ver observação)."
   },
   {
@@ -1004,13 +1004,13 @@
    "margem": null,
    "lanceFinal": null,
    "createdAt": 1794518238076,
-   "updatedAt": 1794518238076,
+   "updatedAt": 1794521141376,
    "deleted": false,
    "custo": 0,
    "frete": 0,
    "semLance": true,
    "alternativas": [],
-   "obs": "FALTA COTAR: conexão/peça pequena de PVC de valor baixo; cotar no balcão de distribuidor de Telêmaco junto com as outras (lista no LEIA-ME).",
+   "obs": "Peça pequena, falta cotar: conexão/peça pequena de PVC de valor baixo; cotar no balcão de distribuidor de Telêmaco junto com as outras (lista no LEIA-ME).",
    "revisar": "Falta cotar (ver observação)."
   },
   {
@@ -1051,13 +1051,13 @@
    "margem": null,
    "lanceFinal": null,
    "createdAt": 1794518238076,
-   "updatedAt": 1794518238076,
+   "updatedAt": 1794521141376,
    "deleted": false,
    "custo": 0,
    "frete": 0,
    "semLance": true,
    "alternativas": [],
-   "obs": "Margem ~12% (R$ 290 vs 328) e o edital não informa o diâmetro (1.1/2\" ou 2.1/2\")."
+   "obs": "Margem baixa, sem diâmetro: ~12% (R$ 290 vs 328) e o edital não informa o diâmetro (1.1/2\" ou 2.1/2\")."
   },
   {
    "id": "it_telemaco_59_37",
@@ -1074,13 +1074,13 @@
    "margem": null,
    "lanceFinal": null,
    "createdAt": 1794518238076,
-   "updatedAt": 1794518238076,
+   "updatedAt": 1794521141376,
    "deleted": false,
    "custo": 0,
    "frete": 0,
    "semLance": true,
    "alternativas": [],
-   "obs": "FALTA COTAR: conexão/peça pequena de PVC de valor baixo; cotar no balcão de distribuidor de Telêmaco junto com as outras (lista no LEIA-ME).",
+   "obs": "Peça pequena, falta cotar: conexão/peça pequena de PVC de valor baixo; cotar no balcão de distribuidor de Telêmaco junto com as outras (lista no LEIA-ME).",
    "revisar": "Falta cotar (ver observação)."
   },
   {
@@ -1098,13 +1098,13 @@
    "margem": null,
    "lanceFinal": null,
    "createdAt": 1794518238076,
-   "updatedAt": 1794518238076,
+   "updatedAt": 1794521141376,
    "deleted": false,
    "custo": 0,
    "frete": 0,
    "semLance": true,
    "alternativas": [],
-   "obs": "FALTA COTAR: conexão/peça pequena de PVC de valor baixo; cotar no balcão de distribuidor de Telêmaco junto com as outras (lista no LEIA-ME).",
+   "obs": "Peça pequena, falta cotar: conexão/peça pequena de PVC de valor baixo; cotar no balcão de distribuidor de Telêmaco junto com as outras (lista no LEIA-ME).",
    "revisar": "Falta cotar (ver observação)."
   },
   {
@@ -1122,13 +1122,13 @@
    "margem": null,
    "lanceFinal": null,
    "createdAt": 1794518238076,
-   "updatedAt": 1794518238076,
+   "updatedAt": 1794521141376,
    "deleted": false,
    "custo": 0,
    "frete": 0,
    "semLance": true,
    "alternativas": [],
-   "obs": "FALTA COTAR: conexão/peça pequena de PVC de valor baixo; cotar no balcão de distribuidor de Telêmaco junto com as outras (lista no LEIA-ME).",
+   "obs": "Peça pequena, falta cotar: conexão/peça pequena de PVC de valor baixo; cotar no balcão de distribuidor de Telêmaco junto com as outras (lista no LEIA-ME).",
    "revisar": "Falta cotar (ver observação)."
   },
   {
@@ -1280,13 +1280,13 @@
    "margem": null,
    "lanceFinal": null,
    "createdAt": 1794518238076,
-   "updatedAt": 1794518238076,
+   "updatedAt": 1794521141376,
    "deleted": false,
    "custo": 0,
    "frete": 0,
    "semLance": true,
    "alternativas": [],
-   "obs": "Margem ~11% (R$ 154 vs 173,47)."
+   "obs": "Margem baixa ~11%: (R$ 154 vs 173,47)"
   },
   {
    "id": "it_telemaco_59_45",
@@ -1303,13 +1303,13 @@
    "margem": null,
    "lanceFinal": null,
    "createdAt": 1794518238076,
-   "updatedAt": 1794518238076,
+   "updatedAt": 1794521141376,
    "deleted": false,
    "custo": 0,
    "frete": 0,
    "semLance": true,
    "alternativas": [],
-   "obs": "FALTA COTAR: conexão/peça pequena de PVC de valor baixo; cotar no balcão de distribuidor de Telêmaco junto com as outras (lista no LEIA-ME).",
+   "obs": "Peça pequena, falta cotar: conexão/peça pequena de PVC de valor baixo; cotar no balcão de distribuidor de Telêmaco junto com as outras (lista no LEIA-ME).",
    "revisar": "Falta cotar (ver observação)."
   },
   {
@@ -1327,13 +1327,13 @@
    "margem": null,
    "lanceFinal": null,
    "createdAt": 1794518238076,
-   "updatedAt": 1794518238076,
+   "updatedAt": 1794521141376,
    "deleted": false,
    "custo": 0,
    "frete": 0,
    "semLance": true,
    "alternativas": [],
-   "obs": "Acima do teto (R$ 292,89 vs 201,75)."
+   "obs": "Acima do teto: (R$ 292,89 vs 201,75)."
   },
   {
    "id": "it_telemaco_59_47",
@@ -1350,13 +1350,13 @@
    "margem": null,
    "lanceFinal": null,
    "createdAt": 1794518238076,
-   "updatedAt": 1794518238076,
+   "updatedAt": 1794521141376,
    "deleted": false,
    "custo": 0,
    "frete": 0,
    "semLance": true,
    "alternativas": [],
-   "obs": "FALTA COTAR: conexão/peça pequena de PVC de valor baixo; cotar no balcão de distribuidor de Telêmaco junto com as outras (lista no LEIA-ME).",
+   "obs": "Peça pequena, falta cotar: conexão/peça pequena de PVC de valor baixo; cotar no balcão de distribuidor de Telêmaco junto com as outras (lista no LEIA-ME).",
    "revisar": "Falta cotar (ver observação)."
   },
   {
@@ -1758,13 +1758,13 @@
    "margem": null,
    "lanceFinal": null,
    "createdAt": 1794518238076,
-   "updatedAt": 1794518238076,
+   "updatedAt": 1794521141376,
    "deleted": false,
    "custo": 0,
    "frete": 0,
    "semLance": true,
    "alternativas": [],
-   "obs": "FALTA COTAR: conexão/peça pequena de PVC de valor baixo; cotar no balcão de distribuidor de Telêmaco junto com as outras (lista no LEIA-ME).",
+   "obs": "Peça pequena, falta cotar: conexão/peça pequena de PVC de valor baixo; cotar no balcão de distribuidor de Telêmaco junto com as outras (lista no LEIA-ME).",
    "revisar": "Falta cotar (ver observação)."
   },
   {
@@ -1849,13 +1849,13 @@
    "margem": null,
    "lanceFinal": null,
    "createdAt": 1794518238076,
-   "updatedAt": 1794518238076,
+   "updatedAt": 1794521141376,
    "deleted": false,
    "custo": 0,
    "frete": 0,
    "semLance": true,
    "alternativas": [],
-   "obs": "Barra de 6 m / louça / item pesado ou frágil: fora (regra de entrega)."
+   "obs": "Pesado ou frágil: barra de 6 m / louça, fora pela regra de entrega."
   },
   {
    "id": "it_telemaco_59_63",
@@ -1872,13 +1872,13 @@
    "margem": null,
    "lanceFinal": null,
    "createdAt": 1794518238076,
-   "updatedAt": 1794518238076,
+   "updatedAt": 1794521141376,
    "deleted": false,
    "custo": 0,
    "frete": 0,
    "semLance": true,
    "alternativas": [],
-   "obs": "Barra de 6 m / louça / item pesado ou frágil: fora (regra de entrega)."
+   "obs": "Pesado ou frágil: barra de 6 m / louça, fora pela regra de entrega."
   },
   {
    "id": "it_telemaco_59_64",
@@ -1895,13 +1895,13 @@
    "margem": null,
    "lanceFinal": null,
    "createdAt": 1794518238076,
-   "updatedAt": 1794518238076,
+   "updatedAt": 1794521141376,
    "deleted": false,
    "custo": 0,
    "frete": 0,
    "semLance": true,
    "alternativas": [],
-   "obs": "Barra de 6 m / louça / item pesado ou frágil: fora (regra de entrega)."
+   "obs": "Pesado ou frágil: barra de 6 m / louça, fora pela regra de entrega."
   },
   {
    "id": "it_telemaco_59_65",
@@ -1918,13 +1918,13 @@
    "margem": null,
    "lanceFinal": null,
    "createdAt": 1794518238076,
-   "updatedAt": 1794518238076,
+   "updatedAt": 1794521141376,
    "deleted": false,
    "custo": 0,
    "frete": 0,
    "semLance": true,
    "alternativas": [],
-   "obs": "Barra de 6 m / louça / item pesado ou frágil: fora (regra de entrega)."
+   "obs": "Pesado ou frágil: barra de 6 m / louça, fora pela regra de entrega."
   },
   {
    "id": "it_telemaco_59_66",
@@ -1941,13 +1941,13 @@
    "margem": null,
    "lanceFinal": null,
    "createdAt": 1794518238076,
-   "updatedAt": 1794518238076,
+   "updatedAt": 1794521141376,
    "deleted": false,
    "custo": 0,
    "frete": 0,
    "semLance": true,
    "alternativas": [],
-   "obs": "Barra de 6 m / louça / item pesado ou frágil: fora (regra de entrega)."
+   "obs": "Pesado ou frágil: barra de 6 m / louça, fora pela regra de entrega."
   },
   {
    "id": "it_telemaco_59_67",
@@ -1964,13 +1964,13 @@
    "margem": null,
    "lanceFinal": null,
    "createdAt": 1794518238076,
-   "updatedAt": 1794518238076,
+   "updatedAt": 1794521141376,
    "deleted": false,
    "custo": 0,
    "frete": 0,
    "semLance": true,
    "alternativas": [],
-   "obs": "Barra de 6 m / louça / item pesado ou frágil: fora (regra de entrega)."
+   "obs": "Pesado ou frágil: barra de 6 m / louça, fora pela regra de entrega."
   },
   {
    "id": "it_telemaco_59_68",
@@ -2023,13 +2023,13 @@
    "margem": null,
    "lanceFinal": null,
    "createdAt": 1794518238076,
-   "updatedAt": 1794518238076,
+   "updatedAt": 1794521141376,
    "deleted": false,
    "custo": 0,
    "frete": 0,
    "semLance": true,
    "alternativas": [],
-   "obs": "FALTA COTAR: conexão/peça pequena de PVC de valor baixo; cotar no balcão de distribuidor de Telêmaco junto com as outras (lista no LEIA-ME).",
+   "obs": "Peça pequena, falta cotar: conexão/peça pequena de PVC de valor baixo; cotar no balcão de distribuidor de Telêmaco junto com as outras (lista no LEIA-ME).",
    "revisar": "Falta cotar (ver observação)."
   },
   {
@@ -2083,13 +2083,13 @@
    "margem": null,
    "lanceFinal": null,
    "createdAt": 1794518238076,
-   "updatedAt": 1794518238076,
+   "updatedAt": 1794521141376,
    "deleted": false,
    "custo": 0,
    "frete": 0,
    "semLance": true,
    "alternativas": [],
-   "obs": "Barra de 6 m / louça / item pesado ou frágil: fora (regra de entrega)."
+   "obs": "Pesado ou frágil: barra de 6 m / louça, fora pela regra de entrega."
   },
   {
    "id": "it_telemaco_59_72",
@@ -2106,13 +2106,13 @@
    "margem": null,
    "lanceFinal": null,
    "createdAt": 1794518238076,
-   "updatedAt": 1794518238076,
+   "updatedAt": 1794521141376,
    "deleted": false,
    "custo": 0,
    "frete": 0,
    "semLance": true,
    "alternativas": [],
-   "obs": "Valor irrisório (R$ 0,31)."
+   "obs": "Valor irrisório: (R$ 0,31)."
   },
   {
    "id": "it_telemaco_59_73",
@@ -2129,13 +2129,13 @@
    "margem": null,
    "lanceFinal": null,
    "createdAt": 1794518238076,
-   "updatedAt": 1794518238076,
+   "updatedAt": 1794521141376,
    "deleted": false,
    "custo": 0,
    "frete": 0,
    "semLance": true,
    "alternativas": [],
-   "obs": "Valor irrisório (R$ 0,29)."
+   "obs": "Valor irrisório: (R$ 0,29)."
   },
   {
    "id": "it_telemaco_59_74",
@@ -2152,13 +2152,13 @@
    "margem": null,
    "lanceFinal": null,
    "createdAt": 1794518238076,
-   "updatedAt": 1794518238076,
+   "updatedAt": 1794521141376,
    "deleted": false,
    "custo": 0,
    "frete": 0,
    "semLance": true,
    "alternativas": [],
-   "obs": "FALTA COTAR: conexão/peça pequena de PVC de valor baixo; cotar no balcão de distribuidor de Telêmaco junto com as outras (lista no LEIA-ME).",
+   "obs": "Peça pequena, falta cotar: conexão/peça pequena de PVC de valor baixo; cotar no balcão de distribuidor de Telêmaco junto com as outras (lista no LEIA-ME).",
    "revisar": "Falta cotar (ver observação)."
   },
   {
@@ -2176,13 +2176,13 @@
    "margem": null,
    "lanceFinal": null,
    "createdAt": 1794518238076,
-   "updatedAt": 1794518238076,
+   "updatedAt": 1794521141376,
    "deleted": false,
    "custo": 0,
    "frete": 0,
    "semLance": true,
    "alternativas": [],
-   "obs": "FALTA COTAR: conexão/peça pequena de PVC de valor baixo; cotar no balcão de distribuidor de Telêmaco junto com as outras (lista no LEIA-ME).",
+   "obs": "Peça pequena, falta cotar: conexão/peça pequena de PVC de valor baixo; cotar no balcão de distribuidor de Telêmaco junto com as outras (lista no LEIA-ME).",
    "revisar": "Falta cotar (ver observação)."
   },
   {
@@ -2238,13 +2238,13 @@
    "margem": null,
    "lanceFinal": null,
    "createdAt": 1794518238076,
-   "updatedAt": 1794518238076,
+   "updatedAt": 1794521141376,
    "deleted": false,
    "custo": 0,
    "frete": 0,
    "semLance": true,
    "alternativas": [],
-   "obs": "FALTA COTAR: conexão/peça pequena de PVC de valor baixo; cotar no balcão de distribuidor de Telêmaco junto com as outras (lista no LEIA-ME).",
+   "obs": "Peça pequena, falta cotar: conexão/peça pequena de PVC de valor baixo; cotar no balcão de distribuidor de Telêmaco junto com as outras (lista no LEIA-ME).",
    "revisar": "Falta cotar (ver observação)."
   },
   {
@@ -2262,13 +2262,13 @@
    "margem": null,
    "lanceFinal": null,
    "createdAt": 1794518238076,
-   "updatedAt": 1794518238076,
+   "updatedAt": 1794521141376,
    "deleted": false,
    "custo": 0,
    "frete": 0,
    "semLance": true,
    "alternativas": [],
-   "obs": "FALTA COTAR: conexão/peça pequena de PVC de valor baixo; cotar no balcão de distribuidor de Telêmaco junto com as outras (lista no LEIA-ME).",
+   "obs": "Peça pequena, falta cotar: conexão/peça pequena de PVC de valor baixo; cotar no balcão de distribuidor de Telêmaco junto com as outras (lista no LEIA-ME).",
    "revisar": "Falta cotar (ver observação)."
   },
   {
@@ -2359,13 +2359,13 @@
    "margem": null,
    "lanceFinal": null,
    "createdAt": 1794518238076,
-   "updatedAt": 1794518238076,
+   "updatedAt": 1794521141376,
    "deleted": false,
    "custo": 0,
    "frete": 0,
    "semLance": true,
    "alternativas": [],
-   "obs": "Margem ~12% (Buba R$ 46,49 vs teto 52,67)."
+   "obs": "Margem baixa ~12%: (Buba R$ 46,49 vs teto 52,67)"
   },
   {
    "id": "it_ventania_19_04",
@@ -2382,13 +2382,13 @@
    "margem": null,
    "lanceFinal": null,
    "createdAt": 1794518238076,
-   "updatedAt": 1794518238076,
+   "updatedAt": 1794521141376,
    "deleted": false,
    "custo": 0,
    "frete": 0,
    "semLance": true,
    "alternativas": [],
-   "obs": "Não achei boneca de 17 cm com roupa dentro do teto com margem (R$ 43–50)."
+   "obs": "Sem opção no teto: não achei boneca de 17 cm com roupa dentro do teto com margem (R$ 43–50)."
   },
   {
    "id": "it_ventania_19_05",
@@ -2442,13 +2442,13 @@
    "margem": null,
    "lanceFinal": null,
    "createdAt": 1794518238076,
-   "updatedAt": 1794518238076,
+   "updatedAt": 1794521141376,
    "deleted": false,
    "custo": 0,
    "frete": 0,
    "semLance": true,
    "alternativas": [],
-   "obs": "FALTA COTAR: não achei boneca bebê com banheira e acessórios de banho.",
+   "obs": "Falta boneca com banheira: não achei boneca bebê com banheira e acessórios de banho.",
    "revisar": "Falta cotar (ver observação)."
   },
   {
@@ -2466,13 +2466,13 @@
    "margem": null,
    "lanceFinal": null,
    "createdAt": 1794518238076,
-   "updatedAt": 1794518238076,
+   "updatedAt": 1794521141376,
    "deleted": false,
    "custo": 0,
    "frete": 0,
    "semLance": true,
    "alternativas": [],
-   "obs": "Acima do teto (R$ 119,90 vs 60,29)."
+   "obs": "Acima do teto: (R$ 119,90 vs 60,29)."
   },
   {
    "id": "it_ventania_19_08",
@@ -2630,13 +2630,13 @@
    "margem": null,
    "lanceFinal": null,
    "createdAt": 1794518238076,
-   "updatedAt": 1794518238076,
+   "updatedAt": 1794521141376,
    "deleted": false,
    "custo": 0,
    "frete": 0,
    "semLance": true,
    "alternativas": [],
-   "obs": "Não achei escavadeira de plástico sem controle remoto dentro do teto."
+   "obs": "Sem opção no teto: não achei escavadeira de plástico sem controle remoto dentro do teto."
   },
   {
    "id": "it_ventania_19_13",
@@ -2720,13 +2720,13 @@
    "margem": null,
    "lanceFinal": null,
    "createdAt": 1794518238076,
-   "updatedAt": 1794518238076,
+   "updatedAt": 1794521141376,
    "deleted": false,
    "custo": 0,
    "frete": 0,
    "semLance": true,
    "alternativas": [],
-   "obs": "Cozinha de ~93 cm custa R$ 289+ (acima do teto) e é volumosa."
+   "obs": "Acima do teto, volumosa: cozinha de ~93 cm custa R$ 289+ (acima do teto) e é volumosa."
   },
   {
    "id": "it_ventania_19_16",
@@ -2780,13 +2780,13 @@
    "margem": null,
    "lanceFinal": null,
    "createdAt": 1794518238076,
-   "updatedAt": 1794518238076,
+   "updatedAt": 1794521141376,
    "deleted": false,
    "custo": 0,
    "frete": 0,
    "semLance": true,
    "alternativas": [],
-   "obs": "Margem ~14% e volumosa (30 gangorras)."
+   "obs": "Margem baixa e volumoso: ~14% e volumoso (30 gangorras)."
   },
   {
    "id": "it_ventania_19_18",
@@ -2803,13 +2803,13 @@
    "margem": null,
    "lanceFinal": null,
    "createdAt": 1794518238076,
-   "updatedAt": 1794518238076,
+   "updatedAt": 1794521141376,
    "deleted": false,
    "custo": 0,
    "frete": 0,
    "semLance": true,
    "alternativas": [],
-   "obs": "Só achei mini geladeira; a de 61 cm não apareceu."
+   "obs": "Modelo não achado: só achei mini geladeira; a de 61 cm não apareceu."
   },
   {
    "id": "it_ventania_19_19",
@@ -3115,13 +3115,13 @@
    "margem": null,
    "lanceFinal": null,
    "createdAt": 1794518238076,
-   "updatedAt": 1794518238076,
+   "updatedAt": 1794521141376,
    "deleted": false,
    "custo": 0,
    "frete": 0,
    "semLance": true,
    "alternativas": [],
-   "obs": "Margem ~14%."
+   "obs": "Margem baixa ~14%:"
   },
   {
    "id": "it_ventania_19_28",
@@ -3138,13 +3138,13 @@
    "margem": null,
    "lanceFinal": null,
    "createdAt": 1794518238076,
-   "updatedAt": 1794518238076,
+   "updatedAt": 1794521141376,
    "deleted": false,
    "custo": 0,
    "frete": 0,
    "semLance": true,
    "alternativas": [],
-   "obs": "Margem ~15% e volumoso (30 triciclos)."
+   "obs": "Margem baixa e volumoso: ~15% e volumoso (30 triciclos)."
   },
   {
    "id": "it_ventania_19_29",
@@ -3161,13 +3161,13 @@
    "margem": null,
    "lanceFinal": null,
    "createdAt": 1794518238076,
-   "updatedAt": 1794518238076,
+   "updatedAt": 1794521141376,
    "deleted": false,
    "custo": 0,
    "frete": 0,
    "semLance": true,
    "alternativas": [],
-   "obs": "Acima do teto (R$ 38 vs 20,76)."
+   "obs": "Acima do teto: (R$ 38 vs 20,76)."
   },
   {
    "id": "it_ventania_19_30",
@@ -3215,13 +3215,13 @@
    "margem": null,
    "lanceFinal": null,
    "createdAt": 1794518238076,
-   "updatedAt": 1794518238076,
+   "updatedAt": 1794521141376,
    "deleted": false,
    "custo": 0,
    "frete": 0,
    "semLance": true,
    "alternativas": [],
-   "obs": "Margem ~16% (R$ 38,90)."
+   "obs": "Margem baixa ~16%: (R$ 38,90)"
   },
   {
    "id": "it_ventania_19_32",
@@ -3349,13 +3349,13 @@
    "margem": null,
    "lanceFinal": null,
    "createdAt": 1794518238076,
-   "updatedAt": 1794518238076,
+   "updatedAt": 1794521141376,
    "deleted": false,
    "custo": 0,
    "frete": 0,
    "semLance": true,
    "alternativas": [],
-   "obs": "Acima do teto (Ledan R$ 58,90 vs 52,84)."
+   "obs": "Acima do teto: (Ledan R$ 58,90 vs 52,84)."
   },
   {
    "id": "it_candido_80_03",
@@ -3372,13 +3372,13 @@
    "margem": null,
    "lanceFinal": null,
    "createdAt": 1794518238076,
-   "updatedAt": 1794518238076,
+   "updatedAt": 1794521141376,
    "deleted": false,
    "custo": 0,
    "frete": 0,
    "semLance": true,
    "alternativas": [],
-   "obs": "FALTA COTAR: avental térmico de cozinha (aramida/silicone) não pesquisado.",
+   "obs": "Falta pesquisar avental: avental térmico de cozinha (aramida/silicone) não pesquisado.",
    "revisar": "Falta cotar (ver observação)."
   },
   {
@@ -3470,13 +3470,13 @@
    "margem": null,
    "lanceFinal": null,
    "createdAt": 1794518238076,
-   "updatedAt": 1794518238076,
+   "updatedAt": 1794521141376,
    "deleted": false,
    "custo": 0,
    "frete": 0,
    "semLance": true,
    "alternativas": [],
-   "obs": "5 un, valor baixo: não cotado."
+   "obs": "Pouca qtd, não cotado: 5 un, valor baixo."
   },
   {
    "id": "it_candido_80_07",
@@ -3493,13 +3493,13 @@
    "margem": null,
    "lanceFinal": null,
    "createdAt": 1794518238076,
-   "updatedAt": 1794518238076,
+   "updatedAt": 1794521141376,
    "deleted": false,
    "custo": 0,
    "frete": 0,
    "semLance": true,
    "alternativas": [],
-   "obs": "Bota branca: margem baixa (galocha ~R$ 45–48 vs 52,02) ou acima (Vulcabras R$ 78,90)."
+   "obs": "Sem margem ou teto: bota branca, margem baixa (galocha ~R$ 45–48 vs 52,02) ou acima (Vulcabras R$ 78,90)."
   },
   {
    "id": "it_candido_80_08",
@@ -3662,13 +3662,13 @@
    "margem": null,
    "lanceFinal": null,
    "createdAt": 1794518238076,
-   "updatedAt": 1794518238076,
+   "updatedAt": 1794521141376,
    "deleted": false,
    "custo": 0,
    "frete": 0,
    "semLance": true,
    "alternativas": [],
-   "obs": "Acima do teto (R$ 89,30 vs 71,95)."
+   "obs": "Acima do teto: (R$ 89,30 vs 71,95)."
   },
   {
    "id": "it_candido_80_13",
@@ -3716,13 +3716,13 @@
    "margem": null,
    "lanceFinal": null,
    "createdAt": 1794518238076,
-   "updatedAt": 1794518238076,
+   "updatedAt": 1794521141376,
    "deleted": false,
    "custo": 0,
    "frete": 0,
    "semLance": true,
    "alternativas": [],
-   "obs": "Acima do teto (Bracol ~R$ 75 vs 50,82)."
+   "obs": "Acima do teto: (Bracol ~R$ 75 vs 50,82)."
   },
   {
    "id": "it_candido_80_15",
@@ -3739,13 +3739,13 @@
    "margem": null,
    "lanceFinal": null,
    "createdAt": 1794518238076,
-   "updatedAt": 1794518238076,
+   "updatedAt": 1794521141376,
    "deleted": false,
    "custo": 0,
    "frete": 0,
    "semLance": true,
    "alternativas": [],
-   "obs": "Margem ~7% (R$ 75,23 vs 80,63)."
+   "obs": "Margem baixa ~7%: (R$ 75,23 vs 80,63)"
   },
   {
    "id": "it_candido_80_16",
@@ -3836,13 +3836,13 @@
    "margem": null,
    "lanceFinal": null,
    "createdAt": 1794518238076,
-   "updatedAt": 1794518238076,
+   "updatedAt": 1794521141376,
    "deleted": false,
    "custo": 0,
    "frete": 0,
    "semLance": true,
    "alternativas": [],
-   "obs": "Acima do teto (R$ 23,99 vs 17,50)."
+   "obs": "Acima do teto: (R$ 23,99 vs 17,50)."
   },
   {
    "id": "it_candido_80_19",
@@ -3895,13 +3895,13 @@
    "margem": null,
    "lanceFinal": null,
    "createdAt": 1794518238076,
-   "updatedAt": 1794518238076,
+   "updatedAt": 1794521141376,
    "deleted": false,
    "custo": 0,
    "frete": 0,
    "semLance": true,
    "alternativas": [],
-   "obs": "Acima do teto (R$ 33,54 vs 24)."
+   "obs": "Acima do teto: (R$ 33,54 vs 24)."
   },
   {
    "id": "it_candido_80_21",
@@ -3955,13 +3955,13 @@
    "margem": null,
    "lanceFinal": null,
    "createdAt": 1794518238076,
-   "updatedAt": 1794518238076,
+   "updatedAt": 1794521141376,
    "deleted": false,
    "custo": 0,
    "frete": 0,
    "semLance": true,
    "alternativas": [],
-   "obs": "Não achei conjunto nylon/PVC com capuz dentro do teto."
+   "obs": "Sem opção no teto: não achei conjunto nylon/PVC com capuz dentro do teto."
   },
   {
    "id": "it_candido_80_23",
@@ -3978,13 +3978,13 @@
    "margem": null,
    "lanceFinal": null,
    "createdAt": 1794518238076,
-   "updatedAt": 1794518238076,
+   "updatedAt": 1794521141376,
    "deleted": false,
    "custo": 0,
    "frete": 0,
    "semLance": true,
    "alternativas": [],
-   "obs": "Acima do teto (R$ 149,90+ vs 137,39)."
+   "obs": "Acima do teto: (R$ 149,90+ vs 137,39)."
   },
   {
    "id": "it_candido_80_24",
@@ -4001,13 +4001,13 @@
    "margem": null,
    "lanceFinal": null,
    "createdAt": 1794518238076,
-   "updatedAt": 1794518238076,
+   "updatedAt": 1794521141376,
    "deleted": false,
    "custo": 0,
    "frete": 0,
    "semLance": true,
    "alternativas": [],
-   "obs": "5 un: não cotado."
+   "obs": "Pouca qtd, não cotado: 5 un."
   },
   {
    "id": "it_candido_80_25",
@@ -4062,13 +4062,13 @@
    "margem": null,
    "lanceFinal": null,
    "createdAt": 1794518238076,
-   "updatedAt": 1794518238076,
+   "updatedAt": 1794521141376,
    "deleted": false,
    "custo": 0,
    "frete": 0,
    "semLance": true,
    "alternativas": [],
-   "obs": "Acima do teto (R$ 120,24 vs 90,35)."
+   "obs": "Acima do teto: (R$ 120,24 vs 90,35)."
   },
   {
    "id": "it_candido_80_27",
@@ -4085,13 +4085,13 @@
    "margem": null,
    "lanceFinal": null,
    "createdAt": 1794518238076,
-   "updatedAt": 1794518238076,
+   "updatedAt": 1794521141376,
    "deleted": false,
    "custo": 0,
    "frete": 0,
    "semLance": true,
    "alternativas": [],
-   "obs": "Kit dengue com muitos itens específicos: não cotado."
+   "obs": "Muitos itens específicos: kit dengue com muitos itens específicos: não cotado."
   },
   {
    "id": "it_candido_80_28",
@@ -4138,13 +4138,13 @@
    "margem": null,
    "lanceFinal": null,
    "createdAt": 1794518238076,
-   "updatedAt": 1794518238076,
+   "updatedAt": 1794521141376,
    "deleted": false,
    "custo": 0,
    "frete": 0,
    "semLance": true,
    "alternativas": [],
-   "obs": "Luva de látex de procedimento/cirúrgica: produto para saúde (ANVISA) — MEI sem AFE."
+   "obs": "Produto ANVISA, sem AFE: luva de látex de procedimento/cirúrgica (MEI sem AFE)."
   },
   {
    "id": "it_candido_80_30",
@@ -4161,13 +4161,13 @@
    "margem": null,
    "lanceFinal": null,
    "createdAt": 1794518238076,
-   "updatedAt": 1794518238076,
+   "updatedAt": 1794521141376,
    "deleted": false,
    "custo": 0,
    "frete": 0,
    "semLance": true,
    "alternativas": [],
-   "obs": "Luva de látex de procedimento/cirúrgica: produto para saúde (ANVISA) — MEI sem AFE."
+   "obs": "Produto ANVISA, sem AFE: luva de látex de procedimento/cirúrgica (MEI sem AFE)."
   },
   {
    "id": "it_candido_80_31",
@@ -4184,13 +4184,13 @@
    "margem": null,
    "lanceFinal": null,
    "createdAt": 1794518238076,
-   "updatedAt": 1794518238076,
+   "updatedAt": 1794521141376,
    "deleted": false,
    "custo": 0,
    "frete": 0,
    "semLance": true,
    "alternativas": [],
-   "obs": "Luva de látex de procedimento/cirúrgica: produto para saúde (ANVISA) — MEI sem AFE."
+   "obs": "Produto ANVISA, sem AFE: luva de látex de procedimento/cirúrgica (MEI sem AFE)."
   },
   {
    "id": "it_candido_80_32",
@@ -4207,13 +4207,13 @@
    "margem": null,
    "lanceFinal": null,
    "createdAt": 1794518238076,
-   "updatedAt": 1794518238076,
+   "updatedAt": 1794521141376,
    "deleted": false,
    "custo": 0,
    "frete": 0,
    "semLance": true,
    "alternativas": [],
-   "obs": "Luva de látex de procedimento/cirúrgica: produto para saúde (ANVISA) — MEI sem AFE."
+   "obs": "Produto ANVISA, sem AFE: luva de látex de procedimento/cirúrgica (MEI sem AFE)."
   },
   {
    "id": "it_candido_80_33",
@@ -4230,13 +4230,13 @@
    "margem": null,
    "lanceFinal": null,
    "createdAt": 1794518238076,
-   "updatedAt": 1794518238076,
+   "updatedAt": 1794521141376,
    "deleted": false,
    "custo": 0,
    "frete": 0,
    "semLance": true,
    "alternativas": [],
-   "obs": "Luva de látex de procedimento/cirúrgica: produto para saúde (ANVISA) — MEI sem AFE."
+   "obs": "Produto ANVISA, sem AFE: luva de látex de procedimento/cirúrgica (MEI sem AFE)."
   },
   {
    "id": "it_candido_80_34",
@@ -4253,13 +4253,13 @@
    "margem": null,
    "lanceFinal": null,
    "createdAt": 1794518238076,
-   "updatedAt": 1794518238076,
+   "updatedAt": 1794521141376,
    "deleted": false,
    "custo": 0,
    "frete": 0,
    "semLance": true,
    "alternativas": [],
-   "obs": "Luva de látex de procedimento/cirúrgica: produto para saúde (ANVISA) — MEI sem AFE."
+   "obs": "Produto ANVISA, sem AFE: luva de látex de procedimento/cirúrgica (MEI sem AFE)."
   },
   {
    "id": "it_candido_80_35",
@@ -4276,13 +4276,13 @@
    "margem": null,
    "lanceFinal": null,
    "createdAt": 1794518238076,
-   "updatedAt": 1794518238076,
+   "updatedAt": 1794521141376,
    "deleted": false,
    "custo": 0,
    "frete": 0,
    "semLance": true,
    "alternativas": [],
-   "obs": "Luva de látex de procedimento/cirúrgica: produto para saúde (ANVISA) — MEI sem AFE."
+   "obs": "Produto ANVISA, sem AFE: luva de látex de procedimento/cirúrgica (MEI sem AFE)."
   },
   {
    "id": "it_candido_80_36",
@@ -4299,13 +4299,13 @@
    "margem": null,
    "lanceFinal": null,
    "createdAt": 1794518238076,
-   "updatedAt": 1794518238076,
+   "updatedAt": 1794521141376,
    "deleted": false,
    "custo": 0,
    "frete": 0,
    "semLance": true,
    "alternativas": [],
-   "obs": "Luva de látex de procedimento/cirúrgica: produto para saúde (ANVISA) — MEI sem AFE."
+   "obs": "Produto ANVISA, sem AFE: luva de látex de procedimento/cirúrgica (MEI sem AFE)."
   },
   {
    "id": "it_candido_80_37",
@@ -4322,13 +4322,13 @@
    "margem": null,
    "lanceFinal": null,
    "createdAt": 1794518238076,
-   "updatedAt": 1794518238076,
+   "updatedAt": 1794521141376,
    "deleted": false,
    "custo": 0,
    "frete": 0,
    "semLance": true,
    "alternativas": [],
-   "obs": "Luva de látex de procedimento/cirúrgica: produto para saúde (ANVISA) — MEI sem AFE."
+   "obs": "Produto ANVISA, sem AFE: luva de látex de procedimento/cirúrgica (MEI sem AFE)."
   },
   {
    "id": "it_candido_80_38",
@@ -4345,13 +4345,13 @@
    "margem": null,
    "lanceFinal": null,
    "createdAt": 1794518238076,
-   "updatedAt": 1794518238076,
+   "updatedAt": 1794521141376,
    "deleted": false,
    "custo": 0,
    "frete": 0,
    "semLance": true,
    "alternativas": [],
-   "obs": "Acima do teto (60 cm R$ 43,12 vs 42,82)."
+   "obs": "Acima do teto: (60 cm R$ 43,12 vs 42,82)."
   },
   {
    "id": "it_candido_80_39",
@@ -4368,13 +4368,13 @@
    "margem": null,
    "lanceFinal": null,
    "createdAt": 1794518238076,
-   "updatedAt": 1794518238076,
+   "updatedAt": 1794521141376,
    "deleted": false,
    "custo": 0,
    "frete": 0,
    "semLance": true,
    "alternativas": [],
-   "obs": "Margem ~7%."
+   "obs": "Margem baixa ~7%:"
   },
   {
    "id": "it_candido_80_40",
@@ -4469,13 +4469,13 @@
    "margem": null,
    "lanceFinal": null,
    "createdAt": 1794518238076,
-   "updatedAt": 1794518238076,
+   "updatedAt": 1794521141376,
    "deleted": false,
    "custo": 0,
    "frete": 0,
    "semLance": true,
    "alternativas": [],
-   "obs": "8 un: não cotado."
+   "obs": "Pouca qtd, não cotado: 8 un."
   },
   {
    "id": "it_candido_80_43",
@@ -4492,13 +4492,13 @@
    "margem": null,
    "lanceFinal": null,
    "createdAt": 1794518238076,
-   "updatedAt": 1794518238076,
+   "updatedAt": 1794521141376,
    "deleted": false,
    "custo": 0,
    "frete": 0,
    "semLance": true,
    "alternativas": [],
-   "obs": "Margem ~10%."
+   "obs": "Margem baixa ~10%:"
   },
   {
    "id": "it_candido_80_44",
@@ -4515,13 +4515,13 @@
    "margem": null,
    "lanceFinal": null,
    "createdAt": 1794518238076,
-   "updatedAt": 1794518238076,
+   "updatedAt": 1794521141376,
    "deleted": false,
    "custo": 0,
    "frete": 0,
    "semLance": true,
    "alternativas": [],
-   "obs": "Margem ~4%."
+   "obs": "Margem baixa ~4%:"
   },
   {
    "id": "it_candido_80_45",
@@ -4538,13 +4538,13 @@
    "margem": null,
    "lanceFinal": null,
    "createdAt": 1794518238076,
-   "updatedAt": 1794518238076,
+   "updatedAt": 1794521141376,
    "deleted": false,
    "custo": 0,
    "frete": 0,
    "semLance": true,
    "alternativas": [],
-   "obs": "15 pares: não cotado."
+   "obs": "Pouca qtd, não cotado: 15 pares."
   },
   {
    "id": "it_candido_80_46",
@@ -4561,13 +4561,13 @@
    "margem": null,
    "lanceFinal": null,
    "createdAt": 1794518238076,
-   "updatedAt": 1794518238076,
+   "updatedAt": 1794521141376,
    "deleted": false,
    "custo": 0,
    "frete": 0,
    "semLance": true,
    "alternativas": [],
-   "obs": "Só achei luva de silicone; o edital pede tecido para alta temperatura."
+   "obs": "Material diferente: só achei luva de silicone; o edital pede tecido para alta temperatura."
   },
   {
    "id": "it_candido_80_47",
@@ -4584,13 +4584,13 @@
    "margem": null,
    "lanceFinal": null,
    "createdAt": 1794518238076,
-   "updatedAt": 1794518238076,
+   "updatedAt": 1794521141376,
    "deleted": false,
    "custo": 0,
    "frete": 0,
    "semLance": true,
    "alternativas": [],
-   "obs": "Acima do teto (R$ 37,32 vs 24,70)."
+   "obs": "Acima do teto: (R$ 37,32 vs 24,70)."
   },
   {
    "id": "it_candido_80_48",
@@ -4607,13 +4607,13 @@
    "margem": null,
    "lanceFinal": null,
    "createdAt": 1794518238076,
-   "updatedAt": 1794518238076,
+   "updatedAt": 1794521141376,
    "deleted": false,
    "custo": 0,
    "frete": 0,
    "semLance": true,
    "alternativas": [],
-   "obs": "40 pares a R$ 6,81: não cotado (valor baixo)."
+   "obs": "Valor baixo, não cotado: 40 pares a R$ 6,81."
   },
   {
    "id": "it_candido_80_49",
@@ -4630,13 +4630,13 @@
    "margem": null,
    "lanceFinal": null,
    "createdAt": 1794518238076,
-   "updatedAt": 1794518238076,
+   "updatedAt": 1794521141376,
    "deleted": false,
    "custo": 0,
    "frete": 0,
    "semLance": true,
    "alternativas": [],
-   "obs": "15 un: não cotado."
+   "obs": "Pouca qtd, não cotado: 15 un."
   },
   {
    "id": "it_candido_80_50",
@@ -4753,13 +4753,13 @@
    "margem": null,
    "lanceFinal": null,
    "createdAt": 1794518238076,
-   "updatedAt": 1794518238076,
+   "updatedAt": 1794521141376,
    "deleted": false,
    "custo": 0,
    "frete": 0,
    "semLance": true,
    "alternativas": [],
-   "obs": "10 un: não cotado."
+   "obs": "Pouca qtd, não cotado: 10 un."
   },
   {
    "id": "it_candido_80_54",
@@ -4843,13 +4843,13 @@
    "margem": null,
    "lanceFinal": null,
    "createdAt": 1794518238076,
-   "updatedAt": 1794518238076,
+   "updatedAt": 1794521141376,
    "deleted": false,
    "custo": 0,
    "frete": 0,
    "semLance": true,
    "alternativas": [],
-   "obs": "Acima do teto (R$ 91 vs 31,69)."
+   "obs": "Acima do teto: (R$ 91 vs 31,69)."
   },
   {
    "id": "it_candido_80_57",
@@ -4866,13 +4866,13 @@
    "margem": null,
    "lanceFinal": null,
    "createdAt": 1794518238076,
-   "updatedAt": 1794518238076,
+   "updatedAt": 1794521141376,
    "deleted": false,
    "custo": 0,
    "frete": 0,
    "semLance": true,
    "alternativas": [],
-   "obs": "Margem 6–17%."
+   "obs": "Margem baixa (6–17%): ."
   },
   {
    "id": "it_candido_80_58",
@@ -4889,13 +4889,13 @@
    "margem": null,
    "lanceFinal": null,
    "createdAt": 1794518238076,
-   "updatedAt": 1794518238076,
+   "updatedAt": 1794521141376,
    "deleted": false,
    "custo": 0,
    "frete": 0,
    "semLance": true,
    "alternativas": [],
-   "obs": "Descartável de TNT (área de saúde): não cotado."
+   "obs": "Área de saúde: descartável de TNT, não cotado."
   },
   {
    "id": "it_candido_80_59",
@@ -4949,13 +4949,13 @@
    "margem": null,
    "lanceFinal": null,
    "createdAt": 1794518238076,
-   "updatedAt": 1794518238076,
+   "updatedAt": 1794521141376,
    "deleted": false,
    "custo": 0,
    "frete": 0,
    "semLance": true,
    "alternativas": [],
-   "obs": "Descartável de TNT (área de saúde): não cotado."
+   "obs": "Área de saúde: descartável de TNT, não cotado."
   },
   {
    "id": "it_candido_80_61",
@@ -4972,13 +4972,13 @@
    "margem": null,
    "lanceFinal": null,
    "createdAt": 1794518238076,
-   "updatedAt": 1794518238076,
+   "updatedAt": 1794521141376,
    "deleted": false,
    "custo": 0,
    "frete": 0,
    "semLance": true,
    "alternativas": [],
-   "obs": "Acima do teto (R$ 24,56 vs 23,34)."
+   "obs": "Acima do teto: (R$ 24,56 vs 23,34)."
   },
   {
    "id": "it_candido_80_62",
@@ -4995,13 +4995,13 @@
    "margem": null,
    "lanceFinal": null,
    "createdAt": 1794518238076,
-   "updatedAt": 1794518238076,
+   "updatedAt": 1794521141376,
    "deleted": false,
    "custo": 0,
    "frete": 0,
    "semLance": true,
    "alternativas": [],
-   "obs": "Vestimenta para agrotóxico: não cotada."
+   "obs": "Não cotado: vestimenta para agrotóxico."
   }
  ]
 }
