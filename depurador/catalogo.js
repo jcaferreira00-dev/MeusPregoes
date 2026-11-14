@@ -167,6 +167,9 @@
   F('agenda-mobile', AR.pain, 4, 'manter', 'Agenda do celular (hoje, amanhã, próximos)',
     `Cartão no topo do Painel só no celular: o que acontece hoje, amanhã e nos próximos dias, mais os ganhos com botão “Proposta”. Foi pensado para o uso rápido no iPhone.`,
     { sel: ['.agm'] });
+  F('painel-celular', AR.pain, 4, 'manter', 'Painel do celular: caixa + status 4 × 2 + abas',
+    `FEITO na v1.163.0 (14/11/2026, opção “B” da prévia): só no celular (até 600 px) o Painel abre com o Caixa resumido (sobra/falta, barra, firme, ata e pode sair; tocar abre a aba Números), os quadros de status em grade 4 × 2 sem rolar para o lado (os 6 grupos + Encerrados + Venci 🏆, com o valor) e três abas: Agenda (separada em Atenção, Hoje, Amanhã, Próximos dias e Ganhei), Pendências (com Entregas e recebimentos; órgão sem “Prefeitura Municipal de”) e Números (Limite do MEI, Lucro garantido, Resultado, Caixa completo e Capital de giro). Nenhum bloco ou cálculo saiu. O PC não mudou.`,
+    { sel: ['.pm-hero', '.pm-sg', '.pm-seg'], ev: 'renderPainelM.' });
   F('capital-giro', AR.pain, 4, 'manter', 'Capital de giro (cartão do Painel + aviso por pregão)',
     `Mostra quanto dinheiro sai antes de receber (pior caso: pedirem tudo de uma vez) e compara com o capital informado na Config. No pregão de entrega parcelada repete a conta só para aquele pregão.`,
     { sel: ['.card .meter'], para: 'Manter; o aviso por pregão e o cartão geral respondem a perguntas diferentes.' });

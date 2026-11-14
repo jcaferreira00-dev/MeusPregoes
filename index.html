@@ -248,6 +248,32 @@ input[type=range] { width: 100%; accent-color: var(--blue); }
 .agm-r.warn { border: 2px solid var(--amber); } .agm-r.warn .agm-d { background: var(--amber); color: #fff; }
 .agm-r.ok { border: 2px solid var(--green); } .agm-r.ok .agm-d { background: var(--green); color: #fff; }
 .agm-r.gold { border: 2px solid #c98a12; } .agm-r.gold .agm-d { background: #c98a12; color: #fff; }
+/* Painel do celular (v1.163.0): caixa no topo, status 4 × 2, abas Agenda · Pendências · Números */
+.agm-g { font-size: 11px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin: 10px 0 6px; } .agm-g:first-of-type { margin-top: 0; }
+.agm-go { width: 30px; text-align: center; font-size: 20px; color: var(--muted); }
+.pm-hero { background: linear-gradient(135deg, #1f3864, #2e75b6); color: #fff; padding: 12px 14px; cursor: pointer; border: 0; }
+.pm-hero.pm-bad { background: linear-gradient(135deg, #7a1f17, #c0392b); } .pm-hero.pm-warn { background: linear-gradient(135deg, #7a4a0c, #b7791f); }
+.pm-h { display: flex; gap: 8px; font-size: 11.5px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; opacity: .8; margin-bottom: 4px; }
+.pm-big { font-size: 28px; font-weight: 300; letter-spacing: -.4px; line-height: 1.1; font-variant-numeric: tabular-nums; } .pm-big b { font-weight: 800; }
+.pm-hero .pm-sub { font-size: 12.5px; color: rgba(255,255,255,.88) !important; margin-top: 2px; }
+.pm-bar { display: flex; height: 8px; border-radius: 99px; overflow: hidden; background: rgba(255,255,255,.22); margin: 10px 0 8px; } .pm-bar i { display: block; height: 100%; }
+.pm-hero i.ata { background: repeating-linear-gradient(135deg, #9ec5e8 0 4px, #cfe3f6 4px 8px); }
+.pm-trio { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin-top: 8px; }
+.pm-trio div { background: rgba(255,255,255,.13); border-radius: 10px; padding: 6px 8px; min-width: 0; }
+.pm-trio span { display: block; font-size: 10px; font-weight: 800; letter-spacing: .03em; text-transform: uppercase; opacity: .85; white-space: nowrap; }
+.pm-trio span i { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 4px; vertical-align: 0; }
+.pm-trio b { display: block; font-size: 14px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.pm-sg { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; margin-bottom: 12px; }
+.pm-st { display: flex; flex-direction: column; align-items: center; min-width: 0; padding: 7px 2px 6px; border-radius: 12px; border: 1px solid var(--line); border-top: 3px solid var(--sc); background: var(--card); color: var(--ink); font: inherit; cursor: pointer; }
+.pm-st b { font-size: 20px; line-height: 1.1; color: var(--sc); font-variant-numeric: tabular-nums; }
+.pm-st span { font-size: 10.5px; font-weight: 700; white-space: nowrap; } .pm-st em { font-style: normal; font-size: 10px; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.pm-st.zero { opacity: .5; }
+.pm-seg { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); background: var(--line); border-radius: 12px; padding: 3px; margin-bottom: 12px; position: sticky; top: 0; z-index: 5; }
+.pm-seg button { border: 0; background: none; font: inherit; font-size: 13.5px; font-weight: 700; color: var(--muted); padding: 8px 0; border-radius: 9px; cursor: pointer; }
+.pm-seg button.on { background: var(--card); color: var(--ink); box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+.pm-seg sup { background: var(--red); color: #fff; border-radius: 99px; padding: 0 5px; font-size: 10px; margin-left: 4px; vertical-align: 2px; }
+.pm .pend-lista { max-height: none; overflow: visible; }
+.pm .posrow { padding-left: 4px; } .pm .posrow .tiny { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .pm .posrow .grow { min-width: 0; }
 .pm-it { border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; margin-bottom: 8px; background: var(--card); }
 .pm-it.bad { border: 2px solid var(--red); }
 .pm-n { font-weight: 800; font-size: 14px; } .pm-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
@@ -1607,7 +1633,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.162.0';
+  const APP_VERSION = '1.163.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   // Status do pregão (decisão do João, 11/11/2026): padrão da BLL + os dele (Falta dados, Analisando, Empenho, Concluído, Desisti).
   // O que muda nas contas e no Dashboard é ter ou não item Venci (pst.ganho), não o nome do status.
@@ -5152,6 +5178,9 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     if (k === 'Aguardando empenho') return LEG(x.p.status) === k && !C.faturadoP(x.p);
     return LEG(x.p.status) === k;
   };
+  // Painel do celular (v1.163.0): órgão sem "Prefeitura Municipal de" nas linhas de pendências/entregas
+  let PN_M = false;
+  const orgPn = (p) => { const o = String(p.orgao || ''); return (PN_M ? o.replace(/^(Prefeitura Municipal de|Prefeitura de|Município de|Municipio de)\s+/i, '') : o).toLocaleUpperCase('pt-BR'); };
   function painelStatusStrip(R) {
     const vis = [...R.pMap.values()];
     const L = [['Julgamento', 'Julgamento'], ['Aguardando empenho', 'Empenho'], ['Proposta enviada', 'Enviadas'], ['Analisando', 'Analisando'], ['Falta dados', 'Incompletos'], ['Faturado', 'Faturados']];
@@ -5166,19 +5195,19 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
   function painelPendenciasHtml(R) {
     const ps = [...R.pMap.values()].filter((x) => !painelOculto(x.p) && !inat(x.p));
     const L = [];   // [nivel, título, detalhe, ação]
-    ps.filter((x) => LEG(x.p.status) === 'Falta dados').forEach((x) => L.push(['bad', 'Completar dados', 'Nº ' + x.p.numero + ' · ' + String(x.p.orgao || '').toLocaleUpperCase('pt-BR'), `data-act="abrir-pregao" data-id="${x.p.id}"`]));
+    ps.filter((x) => LEG(x.p.status) === 'Falta dados').forEach((x) => L.push(['bad', 'Completar dados', 'Nº ' + x.p.numero + ' · ' + orgPn(x.p), `data-act="abrir-pregao" data-id="${x.p.id}"`]));
     ps.filter((x) => ['Falta dados', 'Analisando'].includes(LEG(x.p.status))).forEach((x) => {
       const pz = prazoInfo(x.p);
-      if (pz && (pz.nivel === 'bad' || pz.nivel === 'warn')) L.push([pz.nivel, 'Enviar proposta · ' + pz.curto, 'Nº ' + x.p.numero + ' · ' + String(x.p.orgao || '').toLocaleUpperCase('pt-BR'), `data-act="abrir-pregao" data-id="${x.p.id}"`]);
-      else if (LEG(x.p.status) === 'Analisando' && (!pz || pz.nivel !== 'off')) L.push(['info', 'Proposta por enviar' + (pz ? ' · até ' + pz.curto : ''), 'Nº ' + x.p.numero + ' · ' + String(x.p.orgao || '').toLocaleUpperCase('pt-BR'), `data-act="abrir-pregao" data-id="${x.p.id}"`]);
+      if (pz && (pz.nivel === 'bad' || pz.nivel === 'warn')) L.push([pz.nivel, 'Enviar proposta · ' + pz.curto, 'Nº ' + x.p.numero + ' · ' + orgPn(x.p), `data-act="abrir-pregao" data-id="${x.p.id}"`]);
+      else if (LEG(x.p.status) === 'Analisando' && (!pz || pz.nivel !== 'off')) L.push(['info', 'Proposta por enviar' + (pz ? ' · até ' + pz.curto : ''), 'Nº ' + x.p.numero + ' · ' + orgPn(x.p), `data-act="abrir-pregao" data-id="${x.p.id}"`]);
     });
-    [...R.pMap.values()].filter((x) => pregaoSemKm(x.p)).forEach((x) => L.push(['bad', 'Informar km da entrega', 'Nº ' + x.p.numero + ' · ' + String(x.p.orgao || '').toLocaleUpperCase('pt-BR') + ' · sem km a viagem não entra no custo', `data-act="editar-pregao" data-id="${x.p.id}"`]));
-    [...R.pMap.values()].forEach((x) => { const rv = x.todosItens.filter(temRevisar); if (rv.length) L.push(['warn', 'Revisar ' + rv.length + (rv.length === 1 ? ' item' : ' itens'), 'Nº ' + x.p.numero + ' · ' + String(x.p.orgao || '').toLocaleUpperCase('pt-BR'), `data-act="abrir-pregao" data-id="${x.p.id}"`]); });
-    ps.filter((x) => x.nItens === 0).forEach((x) => L.push(['warn', 'Cadastrar os itens', 'Nº ' + x.p.numero + ' · ' + String(x.p.orgao || '').toLocaleUpperCase('pt-BR'), `data-act="abrir-pregao" data-id="${x.p.id}"`]));
+    [...R.pMap.values()].filter((x) => pregaoSemKm(x.p)).forEach((x) => L.push(['bad', 'Informar km da entrega', 'Nº ' + x.p.numero + ' · ' + orgPn(x.p) + ' · sem km a viagem não entra no custo', `data-act="editar-pregao" data-id="${x.p.id}"`]));
+    [...R.pMap.values()].forEach((x) => { const rv = x.todosItens.filter(temRevisar); if (rv.length) L.push(['warn', 'Revisar ' + rv.length + (rv.length === 1 ? ' item' : ' itens'), 'Nº ' + x.p.numero + ' · ' + orgPn(x.p), `data-act="abrir-pregao" data-id="${x.p.id}"`]); });
+    ps.filter((x) => x.nItens === 0).forEach((x) => L.push(['warn', 'Cadastrar os itens', 'Nº ' + x.p.numero + ' · ' + orgPn(x.p), `data-act="abrir-pregao" data-id="${x.p.id}"`]));
     // sessão passou há 2+ dias e nenhum item tem resultado: lembrar de registrar (senão a previsão conta o pregão inteiro)
     ps.filter((x) => ['Proposta enviada', 'Julgamento'].includes(LEG(x.p.status)) && x.p.sessao && (diasDesde(x.p.sessao) || 0) >= 2).forEach((x) => {
       const algum = x.todosItens.some((i) => typeof i.ganhou === 'boolean' || i.desclassPedida);
-      if (!algum) L.push(['warn', 'Registrar resultado do pregão', 'Nº ' + x.p.numero + ' · ' + String(x.p.orgao || '').toLocaleUpperCase('pt-BR') + ' · sessão há ' + diasDesde(x.p.sessao) + ' dias', `data-act="abrir-pregao" data-id="${x.p.id}"`]);
+      if (!algum) L.push(['warn', 'Registrar resultado do pregão', 'Nº ' + x.p.numero + ' · ' + orgPn(x.p) + ' · sessão há ' + diasDesde(x.p.sessao) + ' dias', `data-act="abrir-pregao" data-id="${x.p.id}"`]);
     });
     // catálogo incompleto: itens sem foto e/ou sem descrição detalhada (por pregão); toque leva ao 1º item pendente
     ps.filter((x) => ['Falta dados', 'Analisando', 'Proposta enviada', 'Julgamento'].includes(LEG(x.p.status))).forEach((x) => {
@@ -5187,7 +5216,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
       const pend = x.itens.find((i) => !(Number(i.fotosN) > 0) || !String(i.catalogoDesc || '').trim());
       if (!pend) return;
       const partes = [semFoto.length ? semFoto.length + ' sem foto' : '', semDesc.length ? semDesc.length + ' sem detalhamento' : ''].filter(Boolean).join(' · ');
-      L.push(['info', 'Completar catálogo · ' + partes, 'Nº ' + x.p.numero + ' · ' + String(x.p.orgao || '').toLocaleUpperCase('pt-BR') + ' · ' + x.itens.length + (x.itens.length === 1 ? ' item' : ' itens'), `data-act="cat-ir" data-id="${pend.id}"`]);
+      L.push(['info', 'Completar catálogo · ' + partes, 'Nº ' + x.p.numero + ' · ' + orgPn(x.p) + ' · ' + x.itens.length + (x.itens.length === 1 ? ' item' : ' itens'), `data-act="cat-ir" data-id="${pend.id}"`]);
     });
     certidoes().forEach((c) => { const ci = certInfo(c); if (ci.nivel === 'bad' || ci.nivel === 'warn') L.push([ci.nivel, 'Certidão: ' + String(c.nome).split(' (')[0], ci.texto, 'data-act="tab" data-v="certidoes"']); });
     const peso = { bad: 0, warn: 1, info: 2 };
@@ -5205,7 +5234,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     lista.sort((a, b) => (peso[a.po.nivel] - peso[b.po.nivel]) || (dd(a) - dd(b)));
     const aEnt = lista.filter((o) => !o.x.p.entregueEm), aRec = lista.filter((o) => o.x.p.entregueEm);
     const soma = (arr) => arr.reduce((s, o) => s + (o.x.venda || 0), 0);
-    const rows = lista.map((o) => `<div class="posrow ${o.po.nivel}" data-act="abrir-pregao" data-id="${o.x.p.id}" tabindex="0" role="button"><i class="posdot"></i><div class="grow"><b class="org">${esc(o.x.p.orgao)}</b><span class="tiny muted">Nº ${esc(o.x.p.numero)} · ${esc(o.po.texto)}</span></div><b class="posval">${C.brl0(o.x.venda)}</b></div>`).join('');
+    const rows = lista.map((o) => `<div class="posrow ${o.po.nivel}" data-act="abrir-pregao" data-id="${o.x.p.id}" tabindex="0" role="button"><i class="posdot"></i><div class="grow"><b class="org">${esc(orgPn(o.x.p))}</b><span class="tiny muted">Nº ${esc(o.x.p.numero)} · ${esc(o.po.texto)}</span></div><b class="posval">${C.brl0(o.x.venda)}</b></div>`).join('');
     return `<div class="card"><h3>${icon('calendar', 'sm')}<span class="grow">Entregas e recebimentos</span></h3>
       <div class="possum"><span class="chip">A entregar: <b>${aEnt.length}</b> · ${C.brl0(soma(aEnt))}</span><span class="chip">A receber: <b>${aRec.length}</b> · ${C.brl0(soma(aRec))}</span></div>${rows}</div>`;
   }
@@ -5550,8 +5579,57 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     }
     out.sort((a, b) => (a.rank - b.rank) || (a.t - b.t));
     const org = (p) => String(p.orgao || '').replace(/^(Prefeitura Municipal de|Prefeitura de|Município de)\s+/i, '');
-    return `<div class="card m-only agm"><h3>${icon('calendar', 'sm')}<span class="grow">Agenda</span></h3>${out.length ? out.slice(0, 8).map((e) => `<div class="agm-r ${e.cls}" data-act="abrir-pregao" data-id="${e.p.id}" role="button" tabindex="0"><div class="agm-d"><span>${esc(e.tag)}</span><b>${esc(e.big)}</b></div><div class="agm-t"><b>${esc(org(e.p))} · ${esc(e.p.numero)}</b><small>${esc(e.txt)}</small></div>${e.btn ? `<button type="button" class="btn sm primary" data-act="ir-proposta-final" data-id="${e.p.id}">Proposta</button>` : ''}</div>`).join('') : '<p class="muted small" style="margin:0">Nada urgente nos próximos dias.</p>'}</div>`;
+    const linha = (e) => `<div class="agm-r ${e.cls}" data-act="abrir-pregao" data-id="${e.p.id}" role="button" tabindex="0"><div class="agm-d"><span>${esc(e.tag)}</span><b>${esc(e.big)}</b></div><div class="agm-t"><b>${esc(org(e.p))} · ${esc(e.p.numero)}</b><small>${esc(e.txt)}</small></div>${e.btn ? `<button type="button" class="btn sm primary" data-act="ir-proposta-final" data-id="${e.p.id}">Proposta</button>` : '<span class="agm-go" aria-hidden="true">›</span>'}</div>`;
+    // v1.163.0: a mesma lista (mesma ordem e os mesmos 8), separada por Atenção · Hoje · Amanhã · Próximos dias · Ganhei
+    const sel = out.slice(0, 8), G = [['at', 'Atenção'], ['hj', 'Hoje'], ['am', 'Amanhã'], ['px', 'Próximos dias'], ['gh', 'Ganhei']];
+    const grp = (e) => { if (e.tag === 'GANHEI') return 'gh'; const ds = diasDesde(e.p.sessao); return ds === 0 ? 'hj' : ds === -1 ? 'am' : (ds !== null && ds > 0) || (e.cls === 'bad' && ds === null) ? 'at' : 'px'; };
+    const corpo = G.map(([k, t]) => { const L = sel.filter((e) => grp(e) === k); return L.length ? `<div class="agm-g">${t}</div>${L.map(linha).join('')}` : ''; }).join('');
+    return `<div class="card m-only agm"><h3>${icon('calendar', 'sm')}<span class="grow">Agenda</span></h3>${out.length ? corpo : '<p class="muted small" style="margin:0">Nada urgente nos próximos dias.</p>'}</div>`;
   }
+
+  /* ---------- Painel do celular (pedido do João, 14/11/2026, v1.163.0; opção "B" da prévia) ----------
+     Caixa resumido no topo + quadros de status em grade 4 × 2 (sem rolar para o lado) e, embaixo, três abas:
+     Agenda · Pendências (com entregas) · Números (limite do MEI, lucro, resultado, caixa completo e capital de giro).
+     Nada saiu: são os mesmos blocos e cálculos do Painel, só reorganizados. O PC não muda. */
+  function caixaHeroM(R) {
+    const k = R.mei.caixa, cap = k.cap, tot = k.total;
+    const scale = Math.max(cap, tot) || 1, w = (x) => (Math.max(0, x) / scale * 100).toFixed(2) + '%';
+    const cls = !(cap > 0) ? 'info' : k.sobra < 0 || k.sobraFirme < 0 ? 'bad' : tot / cap >= 0.85 ? 'warn' : 'ok';
+    const big = !(cap > 0) ? `Pode sair <b>${C.brl0(tot)}</b>` : k.sobra < 0 ? `Faltam <b>${C.brl0(-k.sobra)}</b>` : `Sobram <b>${C.brl0(k.sobra)}</b>`;
+    const sub = cap > 0 ? `de ${C.brl0(cap)} de capital de giro` : 'Informe o capital de giro em Config';
+    return `<div class="card pm-hero pm-${cls}" data-act="pn-aba" data-v="num" role="button" tabindex="0" aria-label="Caixa: abrir os números">
+      <div class="pm-h"><span class="grow">Caixa · se todos pedirem juntos</span><span aria-hidden="true">›</span></div>
+      <div class="pm-big">${big}</div><div class="pm-sub">${sub}</div>
+      ${cap > 0 ? `<div class="pm-bar"><i style="width:${w(k.firme)};background:#fff"></i><i class="ata" style="width:${w(k.ata)}"></i></div>` : ''}
+      <div class="pm-trio"><div><span><i style="background:#fff"></i>Firme</span><b>${C.brl0(k.firme)}</b></div><div><span><i class="ata"></i>Ata</span><b>${C.brl0(k.ata)}</b></div><div><span>Pode sair</span><b>${C.brl0(tot)}</b></div></div>
+    </div>`;
+  }
+  function statusGridM(R) {
+    const vis = [...R.pMap.values()], vend = (arr) => arr.reduce((a, x) => a + (x.venda || 0), 0);
+    const L = [['Julgamento', 'Julgam.'], ['Aguardando empenho', 'Empenho'], ['Proposta enviada', 'Enviadas'], ['Analisando', 'Analisando'], ['Falta dados', 'Incompl.'], ['Faturado', 'Faturados']];
+    const enc = vis.filter((x) => C.fimP(x.p.status, x.ganho)), gh = vis.filter((x) => x.ganho);
+    const tile = (n, t, v, cor, attrs) => `<button type="button" class="pm-st${n ? '' : ' zero'}" style="--sc:${cor}" ${attrs}><b>${n}</b><span>${t}</span><em>${C.brl0(v)}</em></button>`;
+    return `<div class="pm-sg" role="group" aria-label="Pregões por status">${L.map(([k, t]) => { const arr = vis.filter((x) => noGrupo(x, k)); return tile(arr.length, t, vend(arr), COR_STATUS[k] || '#2e75b6', `data-act="ir-status" data-v="g:${esc(k)}"`); }).join('')}${tile(enc.length, 'Encerrados', vend(enc), '#7a8699', 'data-act="ir-encerrados"')}${tile(gh.length, 'Venci 🏆', vend(gh), '#2f8f3a', 'data-act="ir-status" data-v="ganhei"')}</div>`;
+  }
+  function renderPainelM(R, st, drafts) {
+    const aba = ['agenda', 'pend', 'num'].includes(UI.pnAba) ? UI.pnAba : 'agenda';
+    PN_M = true;
+    const pend = painelPendenciasHtml(R), ent = painelEntregasHtml(R) || `<div class="card"><h3>${icon('calendar', 'sm')}<span class="grow">Entregas e recebimentos</span></h3><p class="muted small">Nenhuma entrega ou recebimento pendente.</p></div>`;
+    PN_M = false;
+    const nPend = (/<span class="prazo [a-z]+">(\d+)<\/span>/.exec(pend) || [])[1];
+    const tab = (k, t, extra) => `<button type="button" class="${aba === k ? 'on' : ''}" data-act="pn-aba" data-v="${k}" role="tab" aria-selected="${aba === k}">${t}${extra || ''}</button>`;
+    const corpo = aba === 'agenda' ? agendaMobileHtml(R)
+      : aba === 'pend' ? pend + ent
+      : painelTopoHtml(R, st) + ganhoProvavelHtml(R, st) + painelCapitalHtml(R, st);
+    return `<div class="page pm">
+      ${caixaHeroM(R)}
+      ${statusGridM(R)}
+      ${drafts.length ? `<div class="alert warn">${icon('alert', 'sm')}<div class="grow">Você tem preenchimento não salvo: ${esc(drafts.slice(0, 2).map((x) => draftDesc(x.key)).join(', '))}.</div><button class="btn sm" data-act="rascunho" data-key="${esc(drafts[0].key)}">Continuar</button></div>` : ''}
+      <div class="pm-seg" role="tablist">${tab('agenda', 'Agenda')}${tab('pend', 'Pendências', nPend ? `<sup>${nPend}</sup>` : '')}${tab('num', 'Números')}</div>
+      <div class="pm-body">${corpo}</div>
+    </div>`;
+  }
+  const painelCelular = () => !!(window.matchMedia && window.matchMedia('(max-width: 600px)').matches);
 
   // bloco do topo (v1.161.0): CAIXA. Quanto pode sair do caixa para comprar o que ganhei (custo, não nota/faturamento) se todos os órgãos pedirem ao mesmo tempo,
   // comparado ao capital de giro da Config. Serve para avaliar as próximas propostas; o cartão "Limite do MEI" continua igual.
@@ -5584,6 +5662,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     if (!st.pregoes.some((p) => !p.deleted)) return emptyWelcome();
     const R = C.computeAll(st);
     const drafts = Draft.all();
+    if (painelCelular()) return renderPainelM(R, st, drafts);
     return `<div class="page">
       ${ganhoProvavelHtml(R, st)}
       ${agendaMobileHtml(R)}
@@ -7514,8 +7593,9 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     const h = Math.max(...cs.map((c) => c.offsetHeight));
     if (h > 0) cs.forEach((c) => { c.style.minHeight = h + 'px'; });
   }
-  let ultLarg = window.innerWidth >= 900;
+  let ultLarg = window.innerWidth >= 900, ultCel = window.innerWidth <= 600;
   window.addEventListener('resize', () => { clearTimeout(igualarCartoes._t); igualarCartoes._t = setTimeout(() => {
+    if (UI.tab === 'painel') { const m = window.innerWidth <= 600; if (m !== ultCel) { ultCel = m; UI.keepScroll = true; render(); } return; }
     if (UI.tab !== 'pregoes' || UI.detailId) return;
     const lg = window.innerWidth >= 900; if (lg !== ultLarg) { ultLarg = lg; UI.keepScroll = true; render(); } else igualarCartoes();
   }, 150); });
@@ -7761,6 +7841,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
       case 'lane-fechar': { UI.lane = null; UI.lastCard = null; render(); window.scrollTo(0, 0); break; }
       case 'abrir-pregao': UI.lastCard = id; UI.tab = 'pregoes'; UI.detailId = id; history.pushState({ detail: id }, ''); saveUI(); render(); window.scrollTo(0, 0); break;
       case 'ir-status': UI.filtro = t.dataset.v; UI.detailId = null; setTab('pregoes'); break;
+      case 'pn-aba': UI.pnAba = t.dataset.v; UI.keepScroll = true; render(); { const sg = $('.pm-seg'); if (sg && sg.getBoundingClientRect().top < 0) sg.scrollIntoView({ block: 'start' }); } break;
       case 'ir-encerrados': UI.filtro = 'todos'; UI.lane = null; UI.mostrarEnc = true; UI.detailId = null; setTab('pregoes'); break;
       case 'lane-prev': case 'lane-next': { const ln = document.querySelector('.pq-board'); if (ln) { const c1 = ln.querySelector('.pq-col'); ln.scrollBy({ left: (a === 'lane-next' ? 1 : -1) * ((c1 ? c1.offsetWidth : ln.clientWidth) + 14), behavior: 'smooth' }); } break; }
       case 'dash-periodo': UI.dash.periodo = t.dataset.v; UI.dash.mes = null; UI.keepScroll = true; render(); break;
