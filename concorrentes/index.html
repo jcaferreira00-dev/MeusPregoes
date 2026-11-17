@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#14213d">
+<title>Concorrentes — análise de propostas</title>
+<link rel="icon" href="../icons/favicon-32.png">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Concorrentes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<style>
+:root { --bg:#f3f5f9; --card:#fff; --ink:#14213d; --muted:#667489; --line:#e3e8f0; --blue:#1d5fbf; --blue-soft:#e3edfb;
+  --green:#2f7d3a; --green-soft:#e6f4ea; --red:#c0392b; --red-soft:#fdeaea; --amber:#b7791f; --amber-soft:#fff4dc; --shadow:0 1px 3px rgba(20,33,61,.08); }
+@media (prefers-color-scheme: dark) { :root { --bg:#0d1420; --card:#162031; --ink:#e8edf6; --muted:#95a3ba; --line:#25314a; --blue:#6aa2ec; --blue-soft:#1b2c47;
+  --green:#5fbf6e; --green-soft:#16301d; --red:#ef7b6e; --red-soft:#3a1c1a; --amber:#e8b04a; --amber-soft:#38290e; --shadow:none; } }
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { margin: 0; background: var(--bg); color: var(--ink); font: 14px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+button, input, select, textarea { font: inherit; color: inherit; }
+.top { position: sticky; top: 0; z-index: 20; background: var(--card); border-bottom: 1px solid var(--line); padding: calc(10px + env(safe-area-inset-top)) 16px 0; }
+.top-row { display: flex; align-items: center; gap: 10px; }
+.top h1 { font-size: 17px; margin: 0; flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.top h1 small { color: var(--muted); font-weight: 600; font-size: 12px; }
+.sync { font-size: 12px; font-weight: 700; padding: 3px 10px; border-radius: 99px; background: var(--line); color: var(--muted); white-space: nowrap; }
+.sync.ok { background: var(--green-soft); color: var(--green); } .sync.err { background: var(--red-soft); color: var(--red); } .sync.run { background: var(--amber-soft); color: var(--amber); }
+.tabs { display: flex; gap: 4px; margin-top: 8px; overflow-x: auto; scrollbar-width: none; }
+.tabs button { border: 0; background: none; padding: 8px 14px; font-weight: 700; color: var(--muted); border-bottom: 3px solid transparent; cursor: pointer; white-space: nowrap; }
+.tabs button.on { color: var(--blue); border-bottom-color: var(--blue); }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 36px; padding: 6px 12px; border: 1px solid var(--line); background: var(--card); border-radius: 10px; font-weight: 700; cursor: pointer; text-decoration: none; }
+.btn.pri { background: var(--blue); border-color: var(--blue); color: #fff; } .btn.sm { min-height: 30px; padding: 3px 10px; font-size: 12.5px; }
+.btn.danger { color: var(--red); border-color: color-mix(in srgb, var(--red) 40%, var(--line)); }
+.input { width: 100%; min-height: 38px; padding: 7px 11px; border: 1px solid var(--line); border-radius: 10px; background: var(--card); }
+textarea.input { min-height: 80px; resize: vertical; }
+main { padding: 14px 16px 60px; }
+.layout > div { min-width: 0; }
+.layout { display: grid; grid-template-columns: 250px minmax(0, 1fr); gap: 14px; align-items: start; }
+.side { position: sticky; top: 100px; background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 8px; box-shadow: var(--shadow); }
+.side button { display: flex; width: 100%; justify-content: space-between; gap: 8px; border: 0; background: none; text-align: left; padding: 8px 10px; border-radius: 9px; cursor: pointer; font-weight: 600; }
+.side button b { color: var(--muted); font-size: 12px; } .side button.on { background: var(--blue-soft); color: var(--blue); } .side button.on b { color: var(--blue); }
+.bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 12px; }
+.bar .input { width: auto; flex: 1 1 220px; } .bar select.input { flex: 0 1 220px; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 14px; box-shadow: var(--shadow); margin-bottom: 14px; }
+.card h2 { font-size: 15px; margin: 0 0 10px; display: flex; align-items: center; gap: 8px; }
+.card h2 .cnt { font-size: 12px; color: var(--muted); font-weight: 700; }
+.kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-bottom: 14px; }
+.kpi { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 10px 14px; box-shadow: var(--shadow); }
+.kpi .l { font-size: 12px; color: var(--muted); font-weight: 700; } .kpi .v { font-size: 20px; font-weight: 800; }
+.tbl { width: 100%; border-collapse: collapse; }
+.tbl th { text-align: left; font-size: 11.5px; color: var(--muted); font-weight: 800; text-transform: uppercase; letter-spacing: .02em; padding: 6px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+.tbl td { padding: 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.tbl tr:last-child td { border-bottom: 0; } .tbl tr.row { cursor: pointer; } .tbl tr.row:hover td { background: var(--blue-soft); }
+.r { text-align: right; white-space: nowrap; } .muted { color: var(--muted); } .tiny { font-size: 12px; } .b { font-weight: 700; }
+.tag { display: inline-block; font-size: 11.5px; font-weight: 700; padding: 1px 8px; border-radius: 99px; background: var(--line); color: var(--muted); white-space: nowrap; }
+.tag.ini { background: var(--blue-soft); color: var(--blue); } .tag.fin { background: var(--green-soft); color: var(--green); } .tag.warn { background: var(--amber-soft); color: var(--amber); } .tag.bad { background: var(--red-soft); color: var(--red); }
+.down { color: var(--green); font-weight: 800; }
+.grid-e { display: grid; grid-template-columns: repeat(auto-fill, minmax(420px, 1fr)); gap: 14px; }
+.grid-e .card { margin: 0; display: flex; flex-direction: column; gap: 8px; }
+.grid-e .card > .acts { margin-top: auto !important; }
+.kv { display: grid; grid-template-columns: 110px minmax(0, 1fr); gap: 4px 10px; font-size: 13px; }
+.kv dt { color: var(--muted); font-weight: 700; } .kv dd { margin: 0; }
+.note { background: var(--amber-soft); border-radius: 10px; padding: 8px 10px; font-size: 13px; white-space: pre-wrap; }
+.lic { display: flex; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--line); } .lic:last-child { border-bottom: 0; }
+.lic p { margin: 0; flex: 1; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chips button { border: 1px solid var(--line); background: var(--card); border-radius: 99px; padding: 4px 11px; font-weight: 700; font-size: 12.5px; cursor: pointer; }
+.chips button.on { background: var(--blue); color: #fff; border-color: var(--blue); }
+.dlg { position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 50; display: flex; align-items: center; justify-content: center; padding: 16px; }
+.dlg-box { background: var(--card); border-radius: 18px; width: min(900px, 100%); max-height: 94vh; overflow: auto; padding: 18px; }
+.dlg-box h3 { margin: 0 0 12px; }
+.fg { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.fg .f { display: flex; flex-direction: column; gap: 4px; } .fg .f label { font-size: 12px; font-weight: 700; color: var(--muted); }
+.fg .w2 { grid-column: span 2; } .fg .w4 { grid-column: 1 / -1; }
+.acts { display: flex; gap: 8px; justify-content: flex-end; margin-top: 14px; flex-wrap: wrap; } .acts .sp { margin-right: auto; }
+.mcards { display: none; }
+.empty { text-align: center; color: var(--muted); padding: 30px; }
+.login { max-width: 380px; margin: 40px auto; }
+@media (max-width: 899px) {
+  .layout { grid-template-columns: 1fr; } .side { display: none; }
+  .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .grid-e { grid-template-columns: 1fr; }
+}
+@media (max-width: 699px) {
+  main { padding: 10px 10px 60px; } .top { padding: 8px 10px 0; }
+  .tbl.it { display: none; } .mcards { display: block; }
+  .mc { border-bottom: 1px solid var(--line); padding: 10px 0; cursor: pointer; } .mc:last-child { border-bottom: 0; }
+  .mc .l1 { display: flex; justify-content: space-between; gap: 8px; } .mc .l2 { font-size: 12.5px; color: var(--muted); margin-top: 2px; }
+  .fg { grid-template-columns: repeat(2, minmax(0, 1fr)); } .fg .w2 { grid-column: span 2; }
+  .kv { grid-template-columns: 90px minmax(0, 1fr); }
+  .bar { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .bar .input, .bar select.input { width: 100%; min-width: 0; min-height: 36px; font-size: 13px; }
+  .bar #q { grid-column: 1 / -1; } .bar .btn.pri { min-height: 36px; }
+  .top h1 small { display: none; }
+  .kpi .v { font-size: 17px; } .kpi .l { font-size: 11px; }
+  .mc .l1 b:last-child { white-space: nowrap; }
+  .cat-sel { display: block !important; }
+}
+.cat-sel { display: none; }
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="top-row"><h1>Concorrentes <small>· propostas e catálogos dos vencedores</small></h1><span id="sync" class="sync">Conectando…</span><button class="btn sm" id="btnConta">Sair</button></div>
+  <nav class="tabs" id="tabs"></nav>
+</header>
+<main id="app"></main>
+<div id="dlg"></div>
+<script>
+'use strict';
+/* =====================================================================
+ * Concorrentes (sub-app do Meus Pregões, pasta /concorrentes/)
+ * - NENHUM dado no repositório: o app só abre com login (mesma conta do Meus Pregões) e os dados
+ *   entram por "Importar JSON"; ficam no aparelho e na nuvem (Firestore, coleção própria
+ *   concorrentes_dados/{uid}), registro a registro por updatedAt, com lápide deleted:true.
+ * ===================================================================== */
+const $ = (s, r = document) => r.querySelector(s), $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const esc = (v) => String(v == null ? '' : v).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const brl = (v) => v == null || v === '' || isNaN(v) ? '—' : Number(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+const num = (v) => { if (v === '' || v == null) return null; const n = Number(String(v).replace(/\./g, '').replace(',', '.')); return isNaN(n) ? null : n; };
+const COLS = ['itens', 'empresas', 'pregoes', 'licoes'];
+const CATS = ['Móveis', 'Eletrodomésticos', 'Informática e escritório', 'Saúde / hospitalar', 'Instrumentos musicais e áudio', 'Brinquedos e pedagógicos', 'Artesanato, tecidos e papelaria', 'Iluminação e pilhas', 'Limpeza e descartáveis', 'Ferramentas e ferragens', 'Esportes', 'Outros'];
+const FASES = { inicial: 'Inicial', readequada: 'Readequada/final', '': '?' };
+const LS = 'cc.over.v1', LSUI = 'cc.ui.v1';
+let BASE = { itens: {}, empresas: {}, pregoes: {}, licoes: {} };
+let OVER = load(LS, { itens: {}, empresas: {}, pregoes: {}, licoes: {}, at: 0 });
+let UI = Object.assign({ tab: 'itens', cat: '', q: '', pz: '', emp: '', fase: '' }, load(LSUI, {}));
+function load(k, d) { try { return Object.assign(d, JSON.parse(localStorage.getItem(k) || 'null') || {}); } catch (e) { return d; } }
+function save() { try { localStorage.setItem(LS, JSON.stringify(OVER)); } catch (e) { /* cheio */ } }
+function saveUI() { try { localStorage.setItem(LSUI, JSON.stringify({ tab: UI.tab, cat: UI.cat, pz: UI.pz, emp: UI.emp, fase: UI.fase })); } catch (e) { /* */ } }
+
+// visão final = base + o que foi editado/criado (sem as excluídas)
+function lista(col) {
+  const m = Object.assign({}, BASE[col]);
+  Object.entries(OVER[col] || {}).forEach(([id, r]) => { m[id] = Object.assign({}, m[id] || {}, r, { id }); });
+  return Object.values(m).filter((r) => !r.deleted);
+}
+function get(col, id) { return lista(col).find((r) => r.id === id) || null; }
+function gravar(col, id, dados) {
+  OVER[col][id] = Object.assign({}, OVER[col][id] || {}, dados, { id, updatedAt: Date.now() });
+  OVER.at = Date.now(); save(); render(); Nuvem.agendar();
+}
+const novoId = (p) => p + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+
+/* ---------- cálculos ---------- */
+const desc = (it) => it.final != null && it.teto ? 1 - it.final / it.teto : (it.fase === 'readequada' && it.teto ? 1 - it.preco / it.teto : null);
+const precoReal = (it) => it.final != null ? it.final : (it.fase === 'readequada' ? it.preco : null);
+const pzNome = (id) => { const p = get('pregoes', id); return p ? (p.cidade || '').replace('/PR', '') + ' ' + (p.numero || '').replace('PE ', '') : id || '—'; };
+const empNome = (id) => { const e = get('empresas', id); return e ? e.nome.replace(/ Ltda.*| \(.*$/i, '') : id || '—'; };
+function faseTag(it) {
+  if (it.final != null) return '<span class="tag fin">Final conhecido</span>';
+  return it.fase === 'readequada' ? '<span class="tag fin">Readequada/final</span>' : it.fase === 'inicial' ? '<span class="tag ini">Inicial (≈ teto)</span>' : '<span class="tag">?</span>';
+}
+const temAlerta = (it) => /abaixo|anvisa|inconsist|diverg/i.test(it.obs || '');
+
+/* ---------- telas ---------- */
+const TABS = [['itens', 'Itens por categoria'], ['empresas', 'Empresas e formatos'], ['licoes', 'Lições'], ['pregoes', 'Pregões'], ['dados', 'Dados e nuvem']];
+function render() {
+  if (!Nuvem.liberado()) { $('#tabs').innerHTML = ''; $('#app').innerHTML = telaLogin(); return; }
+  $('#tabs').innerHTML = TABS.map(([k, l]) => `<button data-tab="${k}" class="${UI.tab === k ? 'on' : ''}">${l}</button>`).join('');
+  const f = { itens: telaItens, empresas: telaEmpresas, licoes: telaLicoes, pregoes: telaPregoes, dados: telaDados }[UI.tab] || telaItens;
+  const y = window.scrollY; $('#app').innerHTML = f(); window.scrollTo(0, y);
+}
+function filtrar() {
+  const q = UI.q.trim().toLowerCase();
+  return lista('itens').filter((it) => (!UI.cat || it.categoria === UI.cat) && (!UI.pz || it.pregao === UI.pz) && (!UI.emp || it.empresa === UI.emp)
+    && (!UI.fase || (UI.fase === 'real' ? precoReal(it) != null : UI.fase === 'alerta' ? temAlerta(it) : it.fase === UI.fase))
+    && (!q || [it.nome, it.marca, it.modelo, it.obs, it.sub, it.nota, empNome(it.empresa), pzNome(it.pregao)].join(' ').toLowerCase().includes(q)));
+}
+function telaItens() {
+  const todos = lista('itens'), its = filtrar();
+  const cats = CATS.filter((c) => todos.some((i) => i.categoria === c)).concat([...new Set(todos.map((i) => i.categoria))].filter((c) => !CATS.includes(c)));
+  const side = `<aside class="side"><button data-cat="" class="${!UI.cat ? 'on' : ''}">Todas <b>${todos.length}</b></button>${cats.map((c) => `<button data-cat="${esc(c)}" class="${UI.cat === c ? 'on' : ''}">${esc(c)} <b>${todos.filter((i) => i.categoria === c).length}</b></button>`).join('')}</aside>`;
+  const sel = (id, v, opts, ph) => `<select class="input" id="${id}"><option value="">${ph}</option>${opts.map(([k, l]) => `<option value="${esc(k)}"${v === k ? ' selected' : ''}>${esc(l)}</option>`).join('')}</select>`;
+  const bar = `<div class="bar"><input class="input" id="q" placeholder="Buscar item, marca, modelo, empresa…" value="${esc(UI.q)}">
+    <select class="input cat-sel" id="catSel"><option value="">Todas as categorias</option>${cats.map((c) => `<option${UI.cat === c ? ' selected' : ''}>${esc(c)}</option>`).join('')}</select>
+    ${sel('pzSel', UI.pz, lista('pregoes').map((p) => [p.id, pzNome(p.id)]), 'Todos os pregões')}
+    ${sel('empSel', UI.emp, lista('empresas').filter((e) => todos.some((i) => i.empresa === e.id)).map((e) => [e.id, empNome(e.id)]), 'Todas as empresas')}
+    ${sel('faseSel', UI.fase, [['real', 'Só com preço real (final)'], ['inicial', 'Só proposta inicial'], ['alerta', 'Com alerta (spec/ANVISA)']], 'Todas as fases')}
+    <button class="btn pri" data-act="novo-item">+ Item</button></div>`;
+  const reais = its.filter((i) => desc(i) != null), dm = reais.length ? reais.reduce((s, i) => s + desc(i), 0) / reais.length : null;
+  const kp = `<div class="kpis"><div class="kpi"><div class="l">Itens</div><div class="v">${its.length}</div></div>
+    <div class="kpi"><div class="l">Marcas diferentes</div><div class="v">${new Set(its.map((i) => (i.marca || '').toUpperCase())).size}</div></div>
+    <div class="kpi"><div class="l">Com preço final</div><div class="v">${its.filter((i) => precoReal(i) != null).length}</div></div>
+    <div class="kpi"><div class="l">Desconto médio do vencedor sobre o teto</div><div class="v">${dm == null ? '—' : Math.round(dm * 100) + '%'}</div></div></div>`;
+  const grupos = cats.map((c) => [c, its.filter((i) => i.categoria === c)]).filter(([, l]) => l.length);
+  const blocos = grupos.map(([c, l]) => {
+    l.sort((a, b) => (a.sub || '').localeCompare(b.sub || '') || (a.nome || '').localeCompare(b.nome || ''));
+    const rows = l.map((it) => { const d = desc(it); return `<tr class="row" data-edit="${it.id}"><td><b>${esc(it.nome)}</b>${it.sub ? ` <span class="tag">${esc(it.sub)}</span>` : ''}${temAlerta(it) ? ' <span class="tag bad">alerta</span>' : ''}<div class="tiny muted">${esc(it.obs || '')}</div>${it.nota ? `<div class="note tiny">${esc(it.nota)}</div>` : ''}</td>
+      <td><b>${esc(it.marca)}</b><div class="tiny muted">${esc(it.modelo)}</div></td><td class="r">${brl(it.preco)}<div class="tiny muted">${it.qtd ? esc(it.qtd) + ' ' + esc(it.unid || '') : ''}</div></td>
+      <td class="r">${brl(it.teto)}</td><td class="r">${precoReal(it) != null ? '<b>' + brl(precoReal(it)) + '</b>' : '—'}${d != null ? `<div class="down tiny">−${Math.round(d * 100)}%</div>` : ''}</td>
+      <td>${faseTag(it)}</td><td>${esc(empNome(it.empresa))}<div class="tiny muted">${esc(pzNome(it.pregao))}${it.item ? ' · item ' + esc(it.item) : ''}</div></td></tr>`; }).join('');
+    const mc = l.map((it) => { const d = desc(it); return `<div class="mc" data-edit="${it.id}"><div class="l1"><b>${esc(it.nome)}</b><b>${brl(precoReal(it) != null ? precoReal(it) : it.preco)}</b></div>
+      <div class="l2">${esc(it.marca)} · ${esc(it.modelo)}${d != null ? ` · <span class="down">−${Math.round(d * 100)}% do teto</span>` : ''}</div><div class="l2">${esc(empNome(it.empresa))} · ${esc(pzNome(it.pregao))} ${faseTag(it)}${temAlerta(it) ? ' <span class="tag bad">alerta</span>' : ''}</div></div>`; }).join('');
+    return `<section class="card"><h2>${esc(c)} <span class="cnt">${l.length}</span></h2>
+      <table class="tbl it"><thead><tr><th>Item</th><th>Marca / modelo</th><th class="r">Preço proposta</th><th class="r">Teto</th><th class="r">Preço final</th><th>Fase</th><th>Empresa · pregão</th></tr></thead><tbody>${rows}</tbody></table>
+      <div class="mcards">${mc}</div></section>`;
+  }).join('') || (todos.length ? '<div class="card empty">Nada com esses filtros.</div>' : '<div class="card empty">Ainda não há dados. Vá em <b>Dados e nuvem › Importar JSON</b> e escolha o arquivo da análise.</div>');
+  return `<div class="layout">${side}<div>${bar}${kp}${blocos}</div></div>`;
+}
+function telaEmpresas() {
+  const its = lista('itens');
+  const cards = lista('empresas').filter((e) => its.some((i) => i.empresa === e.id) || e.criada).map((e) => {
+    const l = its.filter((i) => i.empresa === e.id), cats = [...new Set(l.map((i) => i.categoria))], pzs = [...new Set(l.map((i) => i.pregao))];
+    return `<div class="card"><h2>${esc(e.nome)}</h2>
+      <dl class="kv"><dt>CNPJ</dt><dd>${esc(e.cnpj)}</dd><dt>Cidade</dt><dd>${esc(e.cidade)}${e.porte && e.porte !== '—' ? ' · ' + esc(e.porte) : ''}</dd><dt>Perfil</dt><dd>${esc(e.perfil)}</dd>
+      <dt>Ramos</dt><dd>${cats.map((c) => `<span class="tag">${esc(c)}</span>`).join(' ')}</dd><dt>Pregões</dt><dd>${pzs.map((p) => esc(pzNome(p))).join(', ')} · ${l.length} itens</dd>
+      <dt>Marcas</dt><dd>${esc([...new Set(l.map((i) => i.marca))].join(', '))}</dd>
+      <dt>Proposta</dt><dd>${esc(e.proposta)}</dd><dt>Catálogo</dt><dd>${esc(e.catalogo)}</dd></dl>
+      ${e.nota ? `<div class="note">${esc(e.nota)}</div>` : ''}
+      <div class="acts" style="margin-top:4px"><button class="btn sm" data-filtro-emp="${e.id}">Ver itens</button><button class="btn sm" data-edit-emp="${e.id}">Editar / anotar</button></div></div>`;
+  }).join('');
+  return `<div class="bar"><span class="muted">Como cada empresa monta a proposta e o catálogo, de onde compra e em que ramo atua.</span><button class="btn pri" data-act="nova-emp" style="margin-left:auto">+ Empresa</button></div><div class="grid-e">${cards}</div>`;
+}
+function telaLicoes() {
+  const L = lista('licoes'), temas = [...new Set(L.map((l) => l.tema))];
+  return `<div class="bar"><span class="muted">O que aprendemos com as propostas vencedoras. Toque numa lição para editar.</span><button class="btn pri" data-act="nova-licao" style="margin-left:auto">+ Lição</button></div>` +
+    temas.map((t) => `<section class="card"><h2>${esc(t)} <span class="cnt">${L.filter((l) => l.tema === t).length}</span></h2>${L.filter((l) => l.tema === t).map((l) => `<div class="lic"><p>${esc(l.texto)}</p><button class="btn sm" data-edit-lic="${l.id}">Editar</button></div>`).join('')}</section>`).join('');
+}
+function telaPregoes() {
+  const its = lista('itens');
+  return `<div class="card"><table class="tbl"><thead><tr><th>Pregão</th><th>Objeto</th><th class="r">Itens</th><th>Empresas</th><th class="r">Com preço final</th></tr></thead><tbody>${lista('pregoes').map((p) => {
+    const l = its.filter((i) => i.pregao === p.id);
+    return `<tr class="row" data-filtro-pz="${p.id}"><td><b>${esc(p.orgao)}</b><div class="tiny muted">${esc(p.numero)} · ${esc(p.plataforma || '')}</div></td><td>${esc(p.objeto)}</td><td class="r">${l.length}</td><td>${esc([...new Set(l.map((i) => empNome(i.empresa)))].join(', '))}</td><td class="r">${l.filter((i) => precoReal(i) != null).length}</td></tr>`;
+  }).join('')}</tbody></table></div><button class="btn" data-act="novo-pz">+ Pregão</button>`;
+}
+function telaLogin() {
+  const st = Nuvem.estado();
+  if (st === 'carregando') return '<div class="card empty login">Conectando…</div>';
+  if (st === 'offline') return '<div class="card login"><h2>Sem internet</h2><p class="muted">Não consegui falar com a nuvem e este aparelho não tem dados guardados. Tente de novo com internet.</p></div>';
+  return `<div class="card login"><h2>Entrar</h2><p class="muted">Use o mesmo e-mail e senha do Meus Pregões.</p>
+    <form id="fLogin" class="fg"><div class="f w4"><label>E-mail</label><input class="input" name="email" type="email" autocomplete="username"></div>
+    <div class="f w4"><label>Senha</label><input class="input" name="senha" type="password" autocomplete="current-password"></div></form>
+    <div class="acts"><button class="btn pri" data-act="login">Entrar</button></div></div>`;
+}
+function telaDados() {
+  const n = COLS.reduce((s, c) => s + Object.keys(OVER[c] || {}).length, 0);
+  return `<div class="card"><h2>Nuvem</h2><p class="muted">Usa a mesma conta do Meus Pregões (mesmo login). Os dados ficam só neste aparelho e na sua nuvem (${n} registros); nada fica no GitHub.</p>
+    <div class="acts" style="justify-content:flex-start"><button class="btn" data-act="sync">Sincronizar agora</button></div></div>
+    <div class="card"><h2>Importar / exportar</h2><p class="muted">Importar um JSON novo (de outra rodada de análise) junta os registros pelo id, sem apagar o que já existe.</p>
+    <div class="acts" style="justify-content:flex-start"><label class="btn">Importar JSON<input type="file" accept=".json" id="imp" hidden></label><button class="btn" data-act="exportar">Exportar tudo (JSON)</button></div></div>`;
+}
+
+/* ---------- formulários ---------- */
+function abrir(html) { $('#dlg').innerHTML = `<div class="dlg"><div class="dlg-box">${html}</div></div>`; }
+function fechar() { $('#dlg').innerHTML = ''; }
+const fi = (n, l, v, cls = '', tipo = 'text') => `<div class="f ${cls}"><label>${l}</label>${tipo === 'area' ? `<textarea class="input" name="${n}">${esc(v)}</textarea>` : `<input class="input" name="${n}" value="${esc(v)}">`}</div>`;
+const fs = (n, l, v, opts, cls = '') => `<div class="f ${cls}"><label>${l}</label><select class="input" name="${n}">${opts.map(([k, t]) => `<option value="${esc(k)}"${String(v) === String(k) ? ' selected' : ''}>${esc(t)}</option>`).join('')}</select></div>`;
+function formItem(id) {
+  const it = id ? get('itens', id) : { categoria: UI.cat || CATS[0], fase: 'readequada', pregao: UI.pz, empresa: UI.emp };
+  const cats = [...new Set(CATS.concat(lista('itens').map((i) => i.categoria)))];
+  abrir(`<h3>${id ? 'Item' : 'Novo item'}</h3><form id="fItem" class="fg" data-id="${esc(id || '')}">
+    ${fi('nome', 'Item', it.nome, 'w2')}${fs('categoria', 'Categoria', it.categoria, cats.map((c) => [c, c]))}${fi('sub', 'Tipo (ex.: Cadeira)', it.sub)}
+    ${fi('marca', 'Marca', it.marca)}${fi('modelo', 'Modelo', it.modelo)}${fi('preco', 'Preço na proposta (R$)', it.preco == null ? '' : String(it.preco).replace('.', ','))}${fi('qtd', 'Qtd', it.qtd)}
+    ${fi('teto', 'Teto do edital (R$)', it.teto == null ? '' : String(it.teto).replace('.', ','))}${fi('final', 'Preço final do vencedor (R$)', it.final == null ? '' : String(it.final).replace('.', ','))}${fs('fase', 'Fase da proposta', it.fase || '', [['inicial', 'Inicial (≈ teto)'], ['readequada', 'Readequada / final'], ['', 'Não sei']])}${fi('unid', 'Unidade', it.unid)}
+    ${fs('empresa', 'Empresa', it.empresa, [['', '—']].concat(lista('empresas').map((e) => [e.id, empNome(e.id)])), 'w2')}${fs('pregao', 'Pregão', it.pregao, [['', '—']].concat(lista('pregoes').map((p) => [p.id, pzNome(p.id)])))}${fi('item', 'Nº do item', it.item)}
+    ${fi('obs', 'Observação da análise', it.obs, 'w4', 'area')}${fi('nota', 'Minha anotação', it.nota, 'w4', 'area')}</form>
+    <div class="acts">${id ? '<button class="btn danger sp" data-act="excluir-item">Excluir</button>' : ''}<button class="btn" data-act="fechar">Cancelar</button><button class="btn pri" data-act="salvar-item">Salvar</button></div>`);
+}
+function formEmp(id) {
+  const e = id ? get('empresas', id) : {};
+  abrir(`<h3>${id ? 'Empresa' : 'Nova empresa'}</h3><form id="fEmp" class="fg" data-id="${esc(id || '')}">${fi('nome', 'Razão social', e.nome, 'w2')}${fi('cnpj', 'CNPJ', e.cnpj)}${fi('cidade', 'Cidade/UF', e.cidade)}
+    ${fi('perfil', 'Perfil (fabricante, distribuidora…)', e.perfil, 'w2')}${fi('porte', 'Porte', e.porte)}${fi('email', 'E-mail de licitação', e.email)}
+    ${fi('proposta', 'Como monta a proposta', e.proposta, 'w4', 'area')}${fi('catalogo', 'Como monta o catálogo', e.catalogo, 'w4', 'area')}${fi('nota', 'Minha anotação', e.nota, 'w4', 'area')}</form>
+    <div class="acts"><button class="btn" data-act="fechar">Cancelar</button><button class="btn pri" data-act="salvar-emp">Salvar</button></div>`);
+}
+function formLic(id) {
+  const l = id ? get('licoes', id) : { tema: 'Preço' };
+  abrir(`<h3>${id ? 'Lição' : 'Nova lição'}</h3><form id="fLic" class="fg" data-id="${esc(id || '')}">${fi('tema', 'Tema', l.tema, 'w4')}${fi('texto', 'Lição', l.texto, 'w4', 'area')}</form>
+    <div class="acts">${id ? '<button class="btn danger sp" data-act="excluir-lic">Excluir</button>' : ''}<button class="btn" data-act="fechar">Cancelar</button><button class="btn pri" data-act="salvar-lic">Salvar</button></div>`);
+}
+function formPz() {
+  abrir(`<h3>Novo pregão</h3><form id="fPz" class="fg">${fi('orgao', 'Órgão', '', 'w2')}${fi('numero', 'Número (PE 00/2026)', '')}${fi('cidade', 'Cidade/UF', '')}${fi('objeto', 'Objeto', '', 'w4')}${fi('plataforma', 'Plataforma', 'BLL')}</form>
+    <div class="acts"><button class="btn" data-act="fechar">Cancelar</button><button class="btn pri" data-act="salvar-pz">Salvar</button></div>`);
+}
+const ler = (f) => Object.fromEntries(new FormData(f).entries());
+
+/* ---------- eventos ---------- */
+document.addEventListener('click', (ev) => {
+  const t = ev.target.closest('[data-tab],[data-cat],[data-edit],[data-edit-emp],[data-edit-lic],[data-filtro-emp],[data-filtro-pz],[data-act],#btnConta');
+  if (!t) { if (ev.target.classList.contains('dlg')) fechar(); return; }
+  if (t.id === 'btnConta') return Nuvem.conta();
+  if (t.dataset.tab) { UI.tab = t.dataset.tab; saveUI(); window.scrollTo(0, 0); return render(); }
+  if (t.dataset.cat != null && t.closest('.side')) { UI.cat = t.dataset.cat; saveUI(); return render(); }
+  if (t.dataset.edit) return formItem(t.dataset.edit);
+  if (t.dataset.editEmp) return formEmp(t.dataset.editEmp);
+  if (t.dataset.editLic) return formLic(t.dataset.editLic);
+  if (t.dataset.filtroEmp) { Object.assign(UI, { tab: 'itens', emp: t.dataset.filtroEmp, cat: '', pz: '' }); saveUI(); window.scrollTo(0, 0); return render(); }
+  if (t.dataset.filtroPz) { Object.assign(UI, { tab: 'itens', pz: t.dataset.filtroPz, cat: '', emp: '' }); saveUI(); window.scrollTo(0, 0); return render(); }
+  const a = t.dataset.act;
+  if (a === 'fechar') return fechar();
+  if (a === 'novo-item') return formItem(null);
+  if (a === 'nova-emp') return formEmp(null);
+  if (a === 'nova-licao') return formLic(null);
+  if (a === 'novo-pz') return formPz();
+  if (a === 'salvar-item') { const f = $('#fItem'), d = ler(f); ['preco', 'teto', 'final'].forEach((k) => { d[k] = num(d[k]); }); d.qtd = num(d.qtd); if (!d.nome) return alert('Informe o item.'); gravar('itens', f.dataset.id || novoId('u'), d); return fechar(); }
+  if (a === 'excluir-item') { if (confirm('Excluir este item?')) { gravar('itens', $('#fItem').dataset.id, { deleted: true }); fechar(); } return; }
+  if (a === 'salvar-emp') { const f = $('#fEmp'), d = ler(f); if (!d.nome) return alert('Informe a razão social.'); if (!f.dataset.id) d.criada = true; gravar('empresas', f.dataset.id || novoId('e'), d); return fechar(); }
+  if (a === 'salvar-lic') { const f = $('#fLic'), d = ler(f); if (!d.texto) return; gravar('licoes', f.dataset.id || novoId('l'), d); return fechar(); }
+  if (a === 'excluir-lic') { if (confirm('Excluir esta lição?')) { gravar('licoes', $('#fLic').dataset.id, { deleted: true }); fechar(); } return; }
+  if (a === 'salvar-pz') { const d = ler($('#fPz')); if (!d.orgao) return; gravar('pregoes', novoId('p'), d); return fechar(); }
+  if (a === 'sync') return Nuvem.sync(true);
+  if (a === 'login') return Nuvem.entrar(ler($('#fLogin')));
+  if (a === 'exportar') { const out = { versao: 1, exportadoEm: new Date().toISOString() }; COLS.forEach((c) => { out[c] = lista(c); }); const b = new Blob([JSON.stringify(out, null, 1)], { type: 'application/json' }); const l = document.createElement('a'); l.href = URL.createObjectURL(b); l.download = 'concorrentes-' + new Date().toISOString().slice(0, 10) + '.json'; l.click(); }
+});
+document.addEventListener('input', (ev) => { if (ev.target.id === 'q') { UI.q = ev.target.value; const p = ev.target.selectionStart; render(); const q = $('#q'); q.focus(); q.setSelectionRange(p, p); } });
+document.addEventListener('change', (ev) => {
+  const id = ev.target.id, v = ev.target.value;
+  if (id === 'catSel') UI.cat = v; else if (id === 'pzSel') UI.pz = v; else if (id === 'empSel') UI.emp = v; else if (id === 'faseSel') UI.fase = v;
+  else if (id === 'imp') return importar(ev.target.files[0]); else return;
+  saveUI(); render();
+});
+async function importar(file) {
+  if (!file) return;
+  try {
+    const d = JSON.parse(await file.text()); let n = 0;
+    COLS.forEach((c) => { let arr = d[c]; if (arr && !Array.isArray(arr)) arr = Object.entries(arr).map(([id, x]) => Object.assign({ id }, x)); (arr || []).forEach((r) => { if (!r.id) r.id = novoId(c[0]); OVER[c][r.id] = Object.assign({}, OVER[c][r.id] || {}, r, { updatedAt: Date.now() }); n++; }); });
+    OVER.at = Date.now(); save(); render(); Nuvem.agendar(); alert(n + ' registros importados.');
+  } catch (e) { alert('Arquivo inválido: ' + e.message); }
+}
+
+/* ---------- nuvem (Firestore do Meus Pregões, coleção própria) ---------- */
+const Nuvem = (() => {
+  const BASEURL = 'https://www.gstatic.com/firebasejs/12.15.0/', COL = 'concorrentes_dados';
+  const cfg = { apiKey: 'AIzaSyCQBwZU8NK9YTGrnI-1-XDUhRGcmn3vMHs', authDomain: 'ajuste-financeiro.firebaseapp.com', projectId: 'ajuste-financeiro', storageBucket: 'ajuste-financeiro.firebasestorage.app', messagingSenderId: '1084264963597', appId: '1:1084264963597:web:fbf369dfa8e5dcb1d1bf44' };
+  let F = null, user = null, tmr = null, ouvindo = null, estado = 'carregando';
+  const temLocal = () => COLS.some((c) => Object.keys(OVER[c] || {}).length);
+  const st = (t, c) => { const e = $('#sync'); e.textContent = t; e.className = 'sync ' + (c || ''); };
+  async function init() {
+    try {
+      const [a, au, fs] = await Promise.all([import(BASEURL + 'firebase-app.js'), import(BASEURL + 'firebase-auth.js'), import(BASEURL + 'firebase-firestore.js')]);
+      const app = a.initializeApp(cfg), auth = au.getAuth(app), db = fs.getFirestore(app);
+      F = { au, fs, auth, db };
+      au.onAuthStateChanged(auth, (u) => { user = u; estado = u ? 'ok' : 'login'; $('#btnConta').hidden = !u; render(); if (u) { sync(false); ouvir(); } else { if (ouvindo) ouvindo(); ouvindo = null; st('Fora da conta'); } });
+    } catch (e) { estado = temLocal() ? 'semnet' : 'offline'; st('Sem internet', 'err'); render(); }
+  }
+  // junta dois conjuntos de registros: vence o updatedAt mais novo (lápide deleted:true também conta)
+  function mesclar(a, b) {
+    const out = { at: Math.max(a.at || 0, b.at || 0) }; let mudouA = false, mudouB = false;
+    COLS.forEach((c) => { out[c] = {}; const ids = new Set([...Object.keys(a[c] || {}), ...Object.keys(b[c] || {})]);
+      ids.forEach((id) => { const x = (a[c] || {})[id], y = (b[c] || {})[id]; const w = !x ? y : !y ? x : ((y.updatedAt || 0) > (x.updatedAt || 0) ? y : x); out[c][id] = w;
+        if (w !== x && JSON.stringify(w) !== JSON.stringify(x)) mudouA = true; if (w !== y && JSON.stringify(w) !== JSON.stringify(y)) mudouB = true; }); });
+    return { out, mudouA, mudouB };
+  }
+  const ref = () => F.fs.doc(F.db, COL, user.uid);
+  async function sync(avisar) {
+    if (!F || !user) { if (avisar) alert('Entre com a conta do Meus Pregões para sincronizar.'); return; }
+    st('Sincronizando…', 'run');
+    try {
+      const r = await F.fs.runTransaction(F.db, async (tx) => {
+        const s = await tx.get(ref()), rem = s.exists() ? JSON.parse(s.data().json || '{}') : {};
+        const m = mesclar(OVER, rem); if (m.mudouB || !s.exists()) tx.set(ref(), { json: JSON.stringify(m.out), at: Date.now() }); return m;
+      });
+      if (r.mudouA) { OVER = Object.assign({ itens: {}, empresas: {}, pregoes: {}, licoes: {} }, r.out); save(); render(); }
+      st('Na nuvem ✓', 'ok');
+    } catch (e) { st('Erro na nuvem', 'err'); console.warn(e); if (avisar) alert('Não consegui sincronizar: ' + e.message); }
+  }
+  function ouvir() {
+    if (ouvindo) return;
+    ouvindo = F.fs.onSnapshot(ref(), (s) => { if (!s.exists() || s.metadata.hasPendingWrites) return; const rem = JSON.parse(s.data().json || '{}'), m = mesclar(OVER, rem);
+      if (m.mudouA) { OVER = Object.assign({ itens: {}, empresas: {}, pregoes: {}, licoes: {} }, m.out); save(); render(); } if (m.mudouB) agendar(); }, () => {});
+  }
+  function agendar() { if (!user) return; clearTimeout(tmr); st('Alterado…', 'run'); tmr = setTimeout(() => sync(false), 1500); }
+  function conta() {
+    if (!F || !user) return;
+    if (confirm('Sair da conta? Os dados deste aparelho são apagados (continuam na sua nuvem).')) {
+      OVER = { itens: {}, empresas: {}, pregoes: {}, licoes: {}, at: 0 }; try { localStorage.removeItem(LS); } catch (e) { /* */ }
+      F.au.signOut(F.auth);
+    }
+  }
+  async function entrar(d) {
+    if (!F) return alert('Sem conexão com a nuvem agora.');
+    try { await F.au.signInWithEmailAndPassword(F.auth, (d.email || '').trim(), d.senha || ''); } catch (e) { alert('Não entrou: confira o e-mail e a senha (' + e.code + ').'); }
+  }
+  // sem internet, abre com o que já está no aparelho (como o Meus Pregões)
+  const liberado = () => estado === 'ok' || estado === 'semnet';
+  return { init, sync, agendar, conta, entrar, liberado, estado: () => estado };
+})();
+
+$('#btnConta').hidden = true; $('#btnConta').textContent = 'Sair';
+render(); Nuvem.init();
+</script>
+</body>
+</html>

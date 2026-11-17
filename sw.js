@@ -2,7 +2,7 @@
  * Estratégia "servidor primeiro": HTML, JS, CSS e manifesto vêm SEMPRE da rede (ignorando o cache HTTP);
  * o cache só é usado se estiver offline. Ícones e a biblioteca de PDF ficam em cache.
  * >>> A cada publicação, mude VERSION abaixo (e APP_VERSION dentro do index.html) para os aparelhos atualizarem. <<< */
-const VERSION = '1.163.0';
+const VERSION = '1.164.1';
 const CACHE = 'pregoes-mei-' + VERSION;
 const BASE = self.registration.scope;
 const u = (p) => new URL(p, BASE).toString();
@@ -58,7 +58,12 @@ self.addEventListener('fetch', (event) => {
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
   if (url.origin !== self.location.origin) return;           // Firebase etc.: passa direto
-  if (req.mode === 'navigate') { event.respondWith(networkFirst(new Request(u('index.html')), 'index.html')); return; }
+  // só a página do app; subpastas com página própria (depurador/, concorrentes/) seguem direto para a rede
+  if (req.mode === 'navigate') {
+    const raiz = new URL(BASE).pathname, rel = url.pathname.slice(raiz.length);
+    if (url.pathname.startsWith(raiz) && rel.includes('/')) return;
+    event.respondWith(networkFirst(new Request(u('index.html')), 'index.html')); return;
+  }
   if (isCore(url)) { event.respondWith(networkFirst(req, null)); return; }
   event.respondWith(cacheFirst(req));
 });
