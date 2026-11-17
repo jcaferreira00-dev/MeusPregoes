@@ -1621,6 +1621,15 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
 .sheet-wide .opc-slot .altc-t { max-width: 80px; font-size: 12px; }
 .sheet-wide .opc-slot { margin-left: 0; }
 .sheet-wide .opc-slot #linkBox { gap: 0; }
+/* celular/tela estreita (pedido do João, 17/11/2026): nada rola "por dentro" do app, só a página; o quadro de Pregões deixa de ter altura fixa/rolagem própria e os filtros quebram de linha em vez de deslizar para o lado (cartões iguais) */
+@media (max-width: 899px) {
+  .pq-board { display: block; height: auto; min-height: 0; overflow: visible; scroll-snap-type: none; overscroll-behavior: auto; padding: 2px 0 8px; }
+  .pq-col { display: block; width: 100%; max-width: 100%; }
+  .pq-grid.pq-stack { overflow: visible; overscroll-behavior: auto; flex: none; height: auto; }
+  .board-nav { display: none !important; }
+  .filters { flex-wrap: wrap; overflow: visible; }
+  .pend-lista { max-height: none; overflow: visible; }
+}
 </style>
 </head>
 <body>
@@ -1633,7 +1642,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.165.0';
+  const APP_VERSION = '1.165.1';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   // Status do pregão (decisão do João, 11/11/2026): padrão da BLL + os dele (Falta dados, Analisando, Empenho, Concluído, Desisti).
   // O que muda nas contas e no Dashboard é ter ou não item Venci (pst.ganho), não o nome do status.
