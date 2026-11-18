@@ -1692,6 +1692,10 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
   html body .pcard .obsline .obs-tx { display: none; }
   html body .pcard .obsline .obs-ic { display: inline-flex; }
 }
+.obs-pen > summary { list-style: none; display: inline-grid; place-items: center; width: 34px; height: 34px; border-radius: 10px; border: 1px solid var(--line, #dde3ec); cursor: pointer; color: var(--muted); user-select: none; }
+.obs-pen > summary::-webkit-details-marker { display: none; }
+.obs-pen.tem > summary { color: var(--amber); border-color: var(--amber); background: var(--amber-soft); }
+.obs-pen[open] > summary { color: var(--blue); border-color: var(--blue); margin-bottom: 6px; }
 </style>
 </head>
 <body>
@@ -1704,7 +1708,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.165.7';
+  const APP_VERSION = '1.165.8';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   // Status do pregão (decisão do João, 11/11/2026): padrão da BLL + os dele (Falta dados, Analisando, Empenho, Concluído, Desisti).
   // O que muda nas contas e no Dashboard é ter ou não item Venci (pst.ganho), não o nome do status.
@@ -4900,7 +4904,8 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
           <div class="formgrid">${ALTS.map(altFields).join('')}</div>
           <div class="hint" style="margin-bottom:12px">Compare quantos fornecedores quiser. Marque ✓ as opções que vai usar para comprar.<br>Se marcar mais de uma, preencha “Comprar aqui” em cada uma (a que ficar em branco leva o resto): o app calcula o custo médio e soma o frete de cada fornecedor.</div>
           <button type="button" class="btn primary block" data-alt="fechar">OK</button></div></div>
-        ${field({ label: 'Anotações (só para mim)', name: 'obs', type: 'textarea', rows: 1, value: v.obs, full: true, ph: 'O que conferir neste item…' })}
+        <details class="full obs-pen${String(v.obs || '').trim() ? ' tem' : ''}"><summary title="Anotações do item" aria-label="Anotações do item">${icon('edit', 'sm')}</summary>
+          ${field({ label: 'Anotações (só para mim)', name: 'obs', type: 'textarea', rows: 3, value: v.obs, full: true, ph: 'O que conferir neste item…' })}</details>
         <div class="full"><label class="switch"><span>Posso ganhar<small class="hint" style="display:block;font-weight:500">Marque se ficou perto do 1º colocado neste item e ainda é possível ganhar. Dá para filtrar no Dashboard.</small></span><input type="checkbox" name="possivelGanhar"${v.possivelGanhar ? ' checked' : ''}></label></div>
         <input type="hidden" name="margem" value="${esc(v.margem)}">
         ${field({ label: 'Minha colocação na disputa', name: 'colocacao', value: v.colocacao, inputmode: 'numeric', ph: 'ex.: 3', hint: 'Em que lugar você ficou neste item (1 = primeiro).' })}
