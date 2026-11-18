@@ -1695,7 +1695,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.165.5';
+  const APP_VERSION = '1.165.6';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   // Status do pregão (decisão do João, 11/11/2026): padrão da BLL + os dele (Falta dados, Analisando, Empenho, Concluído, Desisti).
   // O que muda nas contas e no Dashboard é ter ou não item Venci (pst.ganho), não o nome do status.
@@ -3513,22 +3513,24 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
         const hT = tit.length * 13 + 8;
         // o item inteiro (texto + fotos) cabe numa página nova mas não no resto desta? começa na próxima, para a foto não ficar longe do texto
         // duas colunas lado a lado: o que o edital exige x o que você (fornecedor) oferece
-        const colW = CW / 2, padX = 6, txtW = colW - padX * 2;
+        const colW = CW, padX = 6, txtW = colW - padX * 2;
         const montar = (blocos) => {
           const out = [];
           for (const b of blocos) {
-            if (b.rot) { out.push({ rot: b.rot, h: 13 }); continue; }
+            if (b.rot) { if (b.dest) out.push({ h: 4 }); out.push({ rot: b.rot, dest: !!b.dest, h: b.dest ? 17 : 13 }); continue; }
             const pars = b.segs ? [b.segs] : String(b.t || '').split(/\n+/).filter((p) => p.trim()).map((p) => [{ t: p.trim(), f: b.f || font }]);
-            pars.forEach((segs) => { const ls = wrapMixed(segs, b.size, txtW); ls.forEach((l, k) => out.push({ l, size: b.size, just: !b.segs && k < ls.length - 1, hl: !!b.hl, h: b.size + 3.4 })); out.push({ h: 3 }); });
+            pars.forEach((segs) => { const ls = wrapMixed(segs, b.size, txtW); ls.forEach((l, k) => out.push({ l, size: b.size, just: !b.segs && k < ls.length - 1, hl: !!b.hl, h: b.size + 3.4 })); if (!b.junto) out.push({ h: 3 }); });
           }
           return out;
         };
-        const LL = montar([{ t: C.horizontal(ln.descEdital) || '—', size: 9 }]);
+        // catálogo: só o produto ofertado (sem o "exigido no edital"); marca, modelo, unidade e quantidade um abaixo do outro, como no anúncio do Mercado Livre
+        const LL = [];
+        const kv1 = (rot, val) => ({ segs: [{ t: rot, f: bold }, { t: val, f: font }], size: 9.5, junto: true });
         const RR = montar([
-          { segs: [{ t: ln.modeloSo ? 'Marca: ' : 'Marca/modelo: ', f: bold }, { t: ln.modeloSo ? (ln.marcaSo || '—') + '     ' : (ln.marca || '—'), f: font }].concat(ln.modeloSo ? [{ t: 'Modelo: ', f: bold }, { t: ln.modeloSo, f: font }] : []), size: 9.5 },
-          { segs: [{ t: 'Unidade: ', f: bold }, { t: ln.un + '     ', f: font }, { t: 'Quantidade: ', f: bold }, { t: new Intl.NumberFormat('pt-BR').format(ln.qtd), f: font }], size: 9.5 },
+          ...(ln.modeloSo ? [kv1('Marca: ', ln.marcaSo || '—'), kv1('Modelo: ', ln.modeloSo)] : [kv1('Marca/modelo: ', ln.marca || '—')]),
+          kv1('Unidade: ', ln.un), kv1('Quantidade: ', new Intl.NumberFormat('pt-BR').format(ln.qtd)),
         ].concat(ln.especificacoes ? [{ rot: 'ESPECIFICAÇÕES' }, { t: ln.especificacoes, size: 9.5 }] : [])
-         .concat(ln.catalogo ? (() => { const so = C.separarObservacao(ln.catalogoH); return [{ rot: 'DESCRIÇÃO DETALHADA DO PRODUTO' }].concat(so.antes ? [{ t: so.antes, size: 9.5 }] : []).concat(so.obs ? [{ t: so.obs, size: 9.5, hl: true }] : []); })() : []));
+         .concat(ln.catalogo ? (() => { const so = C.separarObservacao(ln.catalogoH); return [{ rot: 'DESCRITIVO DO ITEM OFERTADO', dest: true }].concat(so.antes ? [{ t: so.antes, size: 9.5 }] : []).concat(so.obs ? [{ t: so.obs, size: 9.5, hl: true }] : []); })() : []));
         const soma = (arr) => arr.reduce((a, x) => a + x.h, 0);
         const fH = fotos.length ? Math.min((CW - 12 - 10 * (fotos.length - 1)) / fotos.length, fotos.length === 1 ? 230 : fotos.length === 2 ? 210 : 160) + 12 : 0;
         const est = hT + 8 + 18 + Math.max(soma(LL), soma(RR)) + 10 + fH;
@@ -3543,8 +3545,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
           garantir(60);
           const yTop = y, hH = 16;
           page.drawRectangle({ x: M, y: y - hH, width: CW, height: hH, color: ACC, opacity: 0.1 });
-          T('EXIGIDO NO EDITAL' + (primeira ? '' : ' (continuação)'), M + padX, y - 11.5, 8, bold, ACCT);
-          T('PRODUTO COTADO' + (primeira ? '' : ' (continuação)'), M + colW + padX, y - 11.5, 8, bold, ACCT);
+          T('PRODUTO COTADO' + (primeira ? '' : ' (continuação)'), M + padX, y - 11.5, 8, bold, ACCT);
           y -= hH;
           primeira = false;
           const avail = y - BOTTOM - 6;
@@ -3552,7 +3553,8 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
             let u = 5;
             while (idx < arr.length && u + arr[idx].h <= avail) {
               const r = arr[idx];
-              if (r.rot) T(r.rot, x0 + padX, y - u - 9, 7.8, bold, ACCT);
+              if (r.rot && r.dest) { const wr = bold.widthOfTextAtSize(safe(r.rot), 8.4); page.drawRectangle({ x: x0 + padX - 3, y: y - u - 12.5, width: wr + 8, height: 14, color: ACC }); T(r.rot, x0 + padX + 1, y - u - 9, 8.4, bold, WHITE); }
+              else if (r.rot) T(r.rot, x0 + padX, y - u - 9, 7.8, bold, ACCT);
               else if (r.l) {
                 if (r.hl) { const wl = r.just ? txtW : r.l.reduce((a, k) => a + k.f.widthOfTextAtSize(k.t, r.size), 0); page.drawRectangle({ x: x0 + padX - 1.5, y: y - u - r.size - 2.2, width: wl + 3, height: r.size + 3.4, color: rgb(1, 0.93, 0.15) }); }
                 drawJust(r.l, x0 + padX, y - u - r.size, r.size, txtW, r.just);
@@ -3563,11 +3565,10 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
           };
           let uL, uR;
           [iL, uL] = coluna(LL, iL, M);
-          [iR, uR] = coluna(RR, iR, M + colW);
+          [iR, uR] = coluna(RR, iR, M);
           const segH = Math.max(uL, uR) + 4;
           y -= segH;
           page.drawRectangle({ x: M, y, width: CW, height: yTop - y, borderColor: ACC, borderWidth: 0.8 });
-          page.drawLine({ start: { x: M + colW, y }, end: { x: M + colW, y: yTop }, thickness: 0.8, color: ACC });
           if (iL < LL.length || iR < RR.length) novaPagina();
         }
         y -= 4;
@@ -3705,13 +3706,14 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
 
     if (!L.linhas.length) { garantir(24); T('Nenhum item cadastrado neste pregão.', M + 8, y - 12, 10, ital, GRAY); y -= 24; }
     for (const ln of L.linhas) {
-      const descL = wrap('EXIGIDO NO EDITAL: ' + C.horizontal(ln.descEdital), font, 10, CW - 14);
+      const descL = wrap(C.horizontal(ln.descEdital), font, 10, CW - 14);   // o título "EXIGIDO NO EDITAL:" sai destacado numa linha própria
       const marcaL = wrap(ln.marcaTxt, font, 9.5, CW - 14);
       const sepOf = C.separarObservacao(ln.catalogoH);
-      const ofL = wrap('DESCRITIVO DO ITEM OFERTADO: ' + (sepOf.antes || (sepOf.obs ? '' : '—')), font, 9.5, CW - 14);
+      const ofL = wrap(sepOf.antes || (sepOf.obs ? '' : '—'), font, 9.5, CW - 14);   // idem "DESCRITIVO DO ITEM OFERTADO:"
+      const hTit = 17;
       const ofObsL = sepOf.obs ? wrap(sepOf.obs, font, 9.5, CW - 14) : [];
       const espL = ln.especificacoes ? wrap('ESPECIFICAÇÕES: ' + ln.especificacoes, font, 9.5, CW - 14) : [];
-      const hHead = 19, hRow = 24, hDesc = descL.length * 12.5 + 10, hMarca = marcaL.length * 12 + 8, hOf = (ofL.length + ofObsL.length) * 12 + 8, hEsp = espL.length ? espL.length * 12 + 8 : 0;
+      const hHead = 19, hRow = 24, hDesc = descL.length * 12.5 + 10 + hTit, hMarca = marcaL.length * 12 + 8, hOf = (ofL.length + ofObsL.length) * 12 + 8 + hTit, hEsp = espL.length ? espL.length * 12 + 8 : 0;
       const total = hHead + hRow + hDesc + hMarca + hOf + hEsp;
       garantir(total + 2);
       // faixa de cabeçalho
@@ -3736,14 +3738,17 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
       y -= hRow;
       // descrição completa
       box(M, y - hDesc, CW, hDesc);
-      descL.forEach((l, j) => T(l, M + 7, y - 15 - j * 12.5, 10, font, ACCT));
+      const titDest = (rot, yy) => { const wr = bold.widthOfTextAtSize(safe(rot), 9); page.drawRectangle({ x: M + 4, y: yy - 14, width: wr + 10, height: 14, color: ACC }); T(rot, M + 9, yy - 10.5, 9, bold, WHITE); };
+      titDest('EXIGIDO NO EDITAL:', y - 3);
+      descL.forEach((l, j) => T(l, M + 7, y - 15 - hTit - j * 12.5 + 2, 10, font, ACCT));
       y -= hDesc;
       // descritivo do item ofertado (digitado por mim) e, abaixo, separada por linha tracejada, a marca/modelo
       box(M, y - hOf - hMarca, CW, hOf + hMarca);
-      ofL.forEach((l, j) => T(l, M + 7, y - 14 - j * 12, 9.5, font, ACCT));
+      titDest('DESCRITIVO DO ITEM OFERTADO:', y - 3);
+      ofL.forEach((l, j) => T(l, M + 7, y - 14 - hTit - j * 12, 9.5, font, ACCT));
       // OBSERVAÇÃO (do descritivo ofertado) e o que vem depois: marca-texto amarelo, sempre na linha de baixo
       ofObsL.forEach((l, j) => {
-        const yy = y - 14 - (ofL.length + j) * 12, w = font.widthOfTextAtSize(safe(l), 9.5);
+        const yy = y - 14 - hTit - (ofL.length + j) * 12, w = font.widthOfTextAtSize(safe(l), 9.5);
         page.drawRectangle({ x: M + 5, y: yy - 3, width: w + 4, height: 12, color: rgb(1, 0.93, 0.15) });
         T(l, M + 7, yy, 9.5, font, rgb(0, 0, 0));
       });
