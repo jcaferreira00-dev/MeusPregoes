@@ -1683,6 +1683,15 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
   html body .pq-grid .pcard .m-count.perto { color: #b7791f; border-color: #d99a1c; } html body .pq-grid .pcard .m-count.urg { color: #fff; background: var(--red); border-color: var(--red); } html body .pq-grid .pcard .m-count.passou { opacity: .7; }
   .pq-grid.pq-full { grid-template-columns: 1fr; }
 }
+.obs-row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.obsline.item.mini, .pcard .obsline.item.mini { display: inline-flex; align-items: center; width: auto; padding: 4px 8px; cursor: help; }
+.selo-chk { color: var(--amber); background: var(--amber-soft); font-weight: 700; }
+@media (min-width: 700px) {
+  /* observação do pregão no cartão (PC): só o ícone; o texto vai no balão e na página do pregão (pedido do João, 18/11/2026) */
+  html body .pcard .obsline, html body .pq-grid .pcard .obsline { display: inline-flex; align-items: center; align-self: flex-start; width: auto; max-width: none; padding: 4px 8px; white-space: nowrap; overflow: visible; -webkit-line-clamp: unset; cursor: help; }
+  html body .pcard .obsline .obs-tx { display: none; }
+  html body .pcard .obsline .obs-ic { display: inline-flex; }
+}
 </style>
 </head>
 <body>
@@ -1695,7 +1704,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.165.6';
+  const APP_VERSION = '1.165.7';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   // Status do pregão (decisão do João, 11/11/2026): padrão da BLL + os dele (Falta dados, Analisando, Empenho, Concluído, Desisti).
   // O que muda nas contas e no Dashboard é ter ou não item Venci (pst.ganho), não o nome do status.
@@ -4509,7 +4518,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
         ${field({ label: 'Site que lista a licitação (ex.: PNCP)', name: 'linkLicitacao', type: 'url', value: v.linkLicitacao, full: true, ph: 'https://…', hint: 'Aparece como botão no cartão da guia Pregões.' })}
         ${field({ label: 'Data e hora final para envio das propostas', name: 'prazoPropostas', type: 'datetime-local', value: v.prazoPropostas, full: true, hint: 'Na lista, o cartão fica amarelo faltando 2 dias e vermelho faltando 1 dia.' })}
         ${field({ label: 'Data e hora da sessão', name: 'sessao', type: 'datetime-local', value: v.sessao, full: true })}
-        ${field({ label: 'Observações e exigências', name: 'obs', type: 'textarea', value: v.obs, full: true, ph: 'Ex.: enviar amostra, ligar para o pregoeiro, prazo para esclarecimentos; exigências: SICAF, CND estadual…', hint: 'Anotações para não esquecer, junto com as exigências do edital (o antigo campo Exigências foi juntado aqui). Aparecem em destaque no início do pregão.' })}
+        ${field({ label: 'Anotações (só para mim)', name: 'obs', type: 'textarea', rows: 1, value: v.obs, full: true, ph: 'Amostra, exigências, o que conferir…' })}
       </div>
       <details class="acc"${posAberto ? ' open' : ''}><summary>Entrega e pagamento</summary><div class="acc-body"><div class="formgrid">
         ${field({ label: 'Nº do empenho / contrato', name: 'empenhoNum', value: v.empenhoNum, full: true })}
@@ -4891,7 +4900,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
           <div class="formgrid">${ALTS.map(altFields).join('')}</div>
           <div class="hint" style="margin-bottom:12px">Compare quantos fornecedores quiser. Marque ✓ as opções que vai usar para comprar.<br>Se marcar mais de uma, preencha “Comprar aqui” em cada uma (a que ficar em branco leva o resto): o app calcula o custo médio e soma o frete de cada fornecedor.</div>
           <button type="button" class="btn primary block" data-alt="fechar">OK</button></div></div>
-        ${field({ label: 'Observações do item', name: 'obs', type: 'textarea', value: v.obs, full: true, ph: 'Ex.: cotar o frete amanhã; não consegui cotar com o fornecedor Y', hint: 'Aparece no cartão do pregão (guia Pregões) e no cartão do item.' })}
+        ${field({ label: 'Anotações (só para mim)', name: 'obs', type: 'textarea', rows: 1, value: v.obs, full: true, ph: 'O que conferir neste item…' })}
         <div class="full"><label class="switch"><span>Posso ganhar<small class="hint" style="display:block;font-weight:500">Marque se ficou perto do 1º colocado neste item e ainda é possível ganhar. Dá para filtrar no Dashboard.</small></span><input type="checkbox" name="possivelGanhar"${v.possivelGanhar ? ' checked' : ''}></label></div>
         <input type="hidden" name="margem" value="${esc(v.margem)}">
         ${field({ label: 'Minha colocação na disputa', name: 'colocacao', value: v.colocacao, inputmode: 'numeric', ph: 'ex.: 3', hint: 'Em que lugar você ficou neste item (1 = primeiro).' })}
@@ -5776,6 +5785,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     const p = pst.p;
     if (inat(p)) return miniPregao(p, pst.nPode > 0);
     const nObsIt = pst.itens.filter((i) => String(i.obs || '').trim()).length;
+    const nSelo = pst.itens.filter((i) => !i.semLance && temSelo(i)).length;
     const pz = prazoInfo(p), po = posInfo(p), alr = alertaPregao(pst);
     const enviada = LEG(p.status) === 'Proposta enviada';
     const pzCls = (alr ? ' al-' + alr.nivel : '') + (pst.ganho ? ' p-venci' : '') + (!pst.ganho && !enviada && pz && (pz.nivel === 'warn' || pz.nivel === 'bad') ? ' prz-' + pz.nivel : '') + (LEG(p.status) === 'Falta dados' ? ' falta-dados' : '') + (enviada ? ' enviada' : '');
@@ -5805,6 +5815,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
       mSemKm && ['warn', 'pin', 'Sem km da entrega'],
       p.modeloProprio && ['warn', 'alert', 'Modelo próprio de proposta'],
       p.entregaParcelada && ['warn', 'pin', 'Entrega parcelada'],
+      nSelo && ['warn', 'alert', `${nSelo} ${nSelo === 1 ? 'item com selo a conferir' : 'itens com selo a conferir'}`],
       nObsIt && ['info', 'info', `${nObsIt} ${nObsIt === 1 ? 'item com observação' : 'itens com observação'}`],
     ].filter(Boolean);
     const mPrim = alr ? [alr.nivel === 'gold' ? 'good' : alr.nivel, alr.nivel === 'gold' ? 'check' : 'alert', alr.texto] : mT[0];
@@ -5834,11 +5845,12 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
           p.modeloProprio ? `<span class="prazo warn">${icon('alert', 'sm')}Modelo próprio de proposta</span>` : '',
           p.entregaParcelada ? `<span class="prazo warn">${icon('pin', 'sm')}Entrega parcelada</span>` : '',
           pst.nSoloPreju ? `<span class="prazo bad" title="Se você ganhar só ${pst.nSoloPreju === 1 ? 'esse item' : 'um desses itens'}, a viagem de entrega fica toda nele e dá prejuízo no ${pst.nSoloPreju === 1 ? 'lance' : 'lance'} atual. Veja o mínimo em cada item.">${icon('truck', 'sm')}${pst.nSoloPreju} ${pst.nSoloPreju === 1 ? 'item dá' : 'itens dão'} prejuízo se ganhar só ${pst.nSoloPreju === 1 ? 'ele' : 'eles'}</span>` : '',
-          nObsIt ? `<span class="prazo info p-obsit" title="Observações nos itens: abra o pregão para ver">${icon('info', 'sm')}${nObsIt} ${nObsIt === 1 ? 'item com observação' : 'itens com observação'}</span>` : '',
+          nSelo ? `<span class="prazo warn p-selo" title="${nSelo === 1 ? 'Um item cita' : nSelo + ' itens citam'} registro/selo (Inmetro, CA, Anatel...) nas anotações: abra o pregão e confira">${icon('alert', 'sm')}${nSelo} ${nSelo === 1 ? 'selo a conferir' : 'selos a conferir'}</span>` : '',
+          nObsIt ? `<span class="prazo info p-obsit" title="${nObsIt} ${nObsIt === 1 ? 'item com observação' : 'itens com observação'}: abra o pregão para ler">${icon('info', 'sm')}${nObsIt}</span>` : '',
         ].filter(Boolean).map((t) => (/ title="/.test(t.slice(0, 80)) ? t : t.replace('<span class="prazo', '<span title="' + esc(t.replace(/<[^>]+>/g, '').trim()) + '" class="prazo'))).join('');
         return tags ? `<div class="p-tags">${tags}</div>` : '';
       })()}
-      ${p.obs ? `<div class="obsline"><span class="obs-ic">${icon('alert', 'sm')}</span><span class="obs-tx">${esc(p.obs)}</span></div>` : ''}
+      ${p.obs ? `<div class="obsline" title="${esc(p.obs)}"><span class="obs-ic">${icon('alert', 'sm')}</span><span class="obs-tx">${esc(p.obs)}</span></div>` : ''}
       <div class="p-itens">${pst.itens.length ? pst.itens.length + (pst.itens.length === 1 ? ' item' : ' itens') : 'Sem itens ainda'}</div>
       <div class="nums"><div>Venda<b>${C.brl0(pst.venda)}</b></div><div>Lucro<b>${C.brl0(pst.lucro)}</b></div><div>Margem<b>${C.pct(pst.margem, 0)}</b></div></div>
       <div class="row lkrow lkrow-ic${url(p.link) ? ' has-ed' : ''}">${botoes}</div>${mFoot}</article>`;
@@ -6002,6 +6014,8 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
 
   // alerta "Revisar" (campo revisar = motivo); some com o botão "Revisado"
   const temRevisar = (it) => !!String((it && it.revisar) || '').trim();
+  // registro/selo citado nas anotações do item (Inmetro, CA, Anatel...): vira etiqueta visível no lugar do texto da observação (pedido do João, 18/11/2026)
+  const temSelo = (it) => /\b(inmetro|anvisa|anatel|ibama|marinha)\b|\bCA\b/i.test(String((it && it.obs) || ''));
   const revHtml = (it) => temRevisar(it) ? `<div class="rev-item">${icon('alert', 'sm')}<span class="grow"><b>REVISAR:</b> ${esc(it.revisar)}</span><button type="button" class="btn sm" data-act="item-revisado" data-id="${it.id}" title="Já conferi: tirar o alerta">${icon('check', 'sm')} Revisado</button></div>` : '';
   // detalhamento de custos e lucros do item (botão ao lado do "Venci"): tudo o que saiu do cartão, sem repetir
   function detalhesItemHtml(it, c) {
@@ -6058,7 +6072,8 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
         : `<span class="chip${cp.usada ? ' usada' : ''}">${icon('pin', 'sm')}${esc(cp.nome)}${custo}</span>`;
     }).join('')}</div>` : '';
     const venc = Number(it.vencedor) > 0 ? `<div><span class="chip venc">${icon('alert', 'sm')}Venceu por ${C.brl(it.vencedor)}</span></div>` : '';
-    const obs = String(it.obs || '').trim() ? `<div class="obsline item">${esc(it.obs)}</div>` : '';
+    const obsT = String(it.obs || '').trim();
+    const obs = obsT ? `<div class="obs-row"><div class="obsline item mini" title="${esc(obsT)}">${icon('info', 'sm')}</div>${temSelo(it) ? `<span class="chip selo-chk" title="${esc('Registro/selo citado nas anotações: conferir. ' + obsT)}">${icon('alert', 'sm')}Conferir selo</span>` : ''}</div>` : '';
     // celular: valor do meu lance (lance final; vazio = teto do edital) e mínimo pela margem
     const meuLance = C.unitProposta(c, 'auto').unit;   // mesma regra do PDF: lance final prevalece; sem lance, o teto do edital
     const acimaT = c.lance !== null && c.teto != null && c.lance > c.teto + 0.004;
@@ -6819,7 +6834,6 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
           ${fp(o, 'garantia', 'Garantia', { ph: 'ex.: 12 meses (conforme o edital)', hint: 'Em branco = frase padrão ("conforme o edital"). Preenchido, a frase da Garantia sai com este prazo.' })}
           ${fp(o, 'localEntrega', 'Local de entrega', { ph: C.localEntregaPadrao(pz, store.get().itens.filter((i) => i.pregaoId === pz.id && !i.deleted)) || 'local do pregão', hint: 'Em branco = usa o local do pregão. Escreva aqui só para mudar.' })}
         </div>
-        ${fp(o, 'observacoes', 'Observações deste pregão (saem no PDF)', { area: true, rows: 2, full: true })}
         <p class="tiny muted" style="margin:6px 0 0">Tudo aqui vale só para este pregão (vem do edital). Em branco: prazo de entrega e pagamento saem do cadastro do pregão; validade, do padrão da Config.</p>
       </details>
       <details class="card pd-blk pd-b4 pdf-avanc" data-k="pdfB4"${UI.pdfB4 === false ? '' : ' open'}><summary><h3>4 · O que os pregões costumam pedir</h3></summary>
@@ -6834,7 +6848,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
       acc('acc-forn', 'Dados do fornecedor', `${swp(o, 'desc.fornecedor', 'Mostrar o quadro “Dados do fornecedor”')}<div class="swgrid">${campos}</div><p class="tiny muted">Aqui só escolhe o que aparece. Os dados ficam em Config › Meus dados. Campo desligado some do quadro.</p>`),
       acc('acc-banco', 'Dados bancários', `${swp(o, 'com.bancarios', 'Mostrar o quadro “Dados bancários”')}<div class="swgrid">${camposBanco}</div>`),
       acc('acc-itens', 'Itens da proposta (um bloco por item)', `${swp(o, 'com.itens', 'Mostrar os itens em blocos, com descrição e marca')}`),
-      acc('acc-resumo', 'Valor total', `${swp(o, 'com.resumo', 'Resumo comercial (valor global)')}${swp(o, 'com.extenso', 'Valor por extenso')}${swp(o, 'com.observacoes', 'Observações deste pregão no PDF')}`),
+      acc('acc-resumo', 'Valor total', `${swp(o, 'com.resumo', 'Resumo comercial (valor global)')}${swp(o, 'com.extenso', 'Valor por extenso')}${fp(o, 'observacoes', 'Texto extra da proposta (opcional, sai no PDF)', { area: true, rows: 1, full: true })}`),
       acc('acc-fim', 'Local, data e assinatura',
         `${swp(o, 'desc.localData', 'Local e data')}<div class="seg-ctl" style="margin:4px 0 10px">${[['preenchido', 'Preenchido'], ['branco', 'Em branco']].map(([v, l]) => `<button type="button" data-act="pdf-datamodo" data-v="${v}" class="${D.localDataModo === v ? 'on' : ''}">${l}</button>`).join('')}</div>
          <div class="field"><label>Data do documento</label><input class="input" type="date" data-ui="data" value="${esc(UI.pdf.data)}"></div>
