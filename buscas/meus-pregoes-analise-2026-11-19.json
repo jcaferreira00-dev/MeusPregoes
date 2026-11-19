@@ -584,10 +584,10 @@
      "frete": 0
     }
    ],
-   "obs": "Cadeira presidente em couro sintético (ML, 19/11/2026). Margem ~35%. Entregar MONTADA na Câmara (TR 3.9.4), em 10 dias.",
+   "obs": "Cadeira presidente em couro sintético (ML, 19/11/2026). Margem ~35%. Entregar MONTADA na Câmara (TR 3.9.4), em 10 dias. Estoque suficiente em 19/11/2026. A ficha do anúncio não mostra o apoio de cabeça.",
    "revisar": "Conferir na ficha: encosto alto com apoio de cabeça, braços FIXOS, base preta, rodízios de PU/silicone, corino preto, e estoque para 18 un.",
    "createdAt": 1795097296080,
-   "updatedAt": 1795097296080,
+   "updatedAt": 1795102940271,
    "deleted": false,
    "semLance": false
   },
@@ -693,10 +693,10 @@
      "frete": 0
     }
    ],
-   "obs": "Garrafa térmica inox 1,8 L de pressão (ML, 19/11/2026).",
+   "obs": "Garrafa térmica inox 1,8 L de pressão (ML, 19/11/2026). Estoque conferido em 19/11/2026: suficiente.",
    "revisar": "",
    "createdAt": 1795097296080,
-   "updatedAt": 1795097296080,
+   "updatedAt": 1795102940271,
    "deleted": false,
    "semLance": false
   },
@@ -730,10 +730,10 @@
      "frete": 0
     }
    ],
-   "obs": "Faqueiro 24 peças todo inox (ML, 19/11/2026).",
+   "obs": "Faqueiro 24 peças todo inox (ML, 19/11/2026). Estoque conferido em 19/11/2026: suficiente.",
    "revisar": "Conferir se o faqueiro tem colheres de chá (edital: garfos, facas, colheres de mesa e chá).",
    "createdAt": 1795097296080,
-   "updatedAt": 1795097296080,
+   "updatedAt": 1795102940271,
    "deleted": false,
    "semLance": false
   },
@@ -815,10 +815,10 @@
      "frete": 0
     }
    ],
-   "obs": "Cafeteira de cápsulas automática, cor preta (ML, 19/11/2026).",
+   "obs": "Cafeteira de cápsulas automática, cor preta (ML, 19/11/2026). Estoque conferido em 19/11/2026: suficiente.",
    "revisar": "Conferir 15 bar, reservatório 0,6–1,0 L, 127 V e selo Inmetro.",
    "createdAt": 1795097296080,
-   "updatedAt": 1795097296080,
+   "updatedAt": 1795102940271,
    "deleted": false,
    "semLance": false
   },
@@ -1182,10 +1182,10 @@
      "frete": 0
     }
    ],
-   "obs": "Batedeira planetária Philco 5 L 900 W (ML, 19/11/2026). Margem ~49%. Só uma loja.",
-   "revisar": "Conferir 127 V e estoque para 22 un. (registro de preços: pedidos parcelados).",
+   "obs": "Batedeira planetária Philco 5 L 900 W (ML, 19/11/2026). Margem ~49%. Só uma loja. Inmetro: não localizado na base oficial (registro.inmetro.gov.br) por marca/modelo/fornecedor em 19/11/2026; a batedeira Philco é registrada em nome da Britânia, mas o modelo PBP90A não aparece na busca. Estoque suficiente em 19/11/2026.",
+   "revisar": "Conferir 127 V e estoque para 22 un. (registro de preços: pedidos parcelados). Inmetro da batedeira PBP90A não confirmado na base oficial.",
    "createdAt": 1795097296080,
-   "updatedAt": 1795097296080,
+   "updatedAt": 1795102940271,
    "deleted": false,
    "semLance": false
   },
@@ -2341,10 +2341,10 @@
      "frete": 0
     }
    ],
-   "obs": "Caldeirão de alumínio N34, 27 L (edital: 26 L) (ML, 19/11/2026). Margem ~17%.",
-   "revisar": "Conferir capacidade e se aceita 27 L para o item de 26 L.",
+   "obs": "Caldeirão de alumínio N34, 27 L (edital: 26 L) (ML, 19/11/2026). Margem ~17%. Estoque +10 em 19/11/2026 (preciso de 40; registro de preços, pedidos parcelados).",
+   "revisar": "Conferir capacidade e se aceita 27 L para o item de 26 L. Estoque +10 para 40 un.",
    "createdAt": 1795097296080,
-   "updatedAt": 1795097296080,
+   "updatedAt": 1795102940271,
    "deleted": false,
    "semLance": false
   },
@@ -2396,10 +2396,10 @@
      "frete": 0
     }
    ],
-   "obs": "Caldeirão linha hotel N35, 30 L (ML, 19/11/2026). Margem ~36%. Volumoso: 40 un. empilham.",
-   "revisar": "",
+   "obs": "Caldeirão linha hotel N35, 30 L (ML, 19/11/2026). Margem ~36%. Volumoso: 40 un. empilham. Estoque +5 em 19/11/2026 (preciso de 40). O anúncio classifica a peça como \"Wok\": conferir se é caçarola.",
+   "revisar": "Estoque +5 para 40 e anúncio com tipo \"Wok\": confirmar modelo caçarola 30 L.",
    "createdAt": 1795097296080,
-   "updatedAt": 1795097296080,
+   "updatedAt": 1795102940271,
    "deleted": false,
    "semLance": false
   },
@@ -2745,10 +2745,10 @@
      "frete": 0
     }
    ],
-   "obs": "Tábua de bambu 50x30 (ML, 19/11/2026). Margem ~60%.",
-   "revisar": "Conferir estoque para 57 un.",
+   "obs": "Tábua de bambu 50x30 (ML, 19/11/2026). Margem ~60%. Estoque +10 em 19/11/2026 (preciso de 57). A opção Lyor é 40x30 (edital 50x30): não serve como base.",
+   "revisar": "Conferir estoque para 57 un. Estoque +10 para 57 un.",
    "createdAt": 1795097296080,
-   "updatedAt": 1795097296080,
+   "updatedAt": 1795102940271,
    "deleted": false,
    "semLance": false
   },
@@ -2950,10 +2950,10 @@
      "frete": 0
     }
    ],
-   "obs": "Guincho de alavanca 3,2 t com 20 m de cabo (ML, 19/11/2026). Margem ~19%. Peso ~55 kg: 1 viagem.",
+   "obs": "Guincho de alavanca 3,2 t com 20 m de cabo (ML, 19/11/2026). Margem ~19%. Peso ~55 kg: 1 viagem. Estoque conferido em 19/11/2026: suficiente.",
    "revisar": "Conferir: cabo Ø16 mm, carcaça em alumínio fundido, operação vertical e horizontal.",
    "createdAt": 1795097296080,
-   "updatedAt": 1795097296080,
+   "updatedAt": 1795102940271,
    "deleted": false,
    "semLance": false
   },
@@ -4955,10 +4955,10 @@
      "frete": 0
     }
    ],
-   "obs": "Kit circuito (o edital aceita 10 cones + 10 pratos + 5 bambolês OU 1 escada) (ML, 19/11/2026). Margem ~71%.",
-   "revisar": "O item pede \"selo de conformidade aplicável a brinquedos\": conferir se o kit tem selo/registro Inmetro (artigo esportivo pode não ter).",
+   "obs": "Kit circuito (o edital aceita 10 cones + 10 pratos + 5 bambolês OU 1 escada) (ML, 19/11/2026). Margem ~71%. Estoque +50 em 19/11/2026. A alternativa SP Sports anuncia selo Inmetro, mas o nº não foi informado nem localizado na base.",
+   "revisar": "O item pede \"selo de conformidade aplicável a brinquedos\": conferir se o kit tem selo/registro Inmetro (artigo esportivo pode não ter). Edital exige selo de brinquedo: kit sem registro localizado; pedir o nº ao vendedor.",
    "createdAt": 1795097296080,
-   "updatedAt": 1795097296080,
+   "updatedAt": 1795102940271,
    "deleted": false,
    "semLance": false
   },
@@ -4992,10 +4992,10 @@
      "frete": 0
     }
    ],
-   "obs": "Kit bandinha com 11 instrumentos e bolsa (ML, 19/11/2026). Margem ~62%.",
-   "revisar": "Instrumento infantil é brinquedo (Portaria Inmetro 302/2021): conferir registro na base oficial do Inmetro e faixa etária (a partir de 2 anos).",
+   "obs": "Kit bandinha com 11 instrumentos e bolsa (ML, 19/11/2026). Margem ~62%. Estoque +5 em 19/11/2026 (preciso de 4). Faixa etária 2 a 4 anos (edital: a partir de 2). Inmetro: não localizado na base oficial (registro.inmetro.gov.br) por marca/modelo/fornecedor em 19/11/2026; buscado por \"vanguarda\", \"bandinha\" e \"kit bandinha\".",
+   "revisar": "Instrumento infantil é brinquedo (Portaria Inmetro 302/2021): conferir registro na base oficial do Inmetro e faixa etária (a partir de 2 anos). Bandinha Vanguarda sem registro Inmetro localizado: produto sem prova de certificação; pedir o nº ao vendedor ou trocar.",
    "createdAt": 1795097296080,
-   "updatedAt": 1795097296080,
+   "updatedAt": 1795102940271,
    "deleted": false,
    "semLance": false
   },
@@ -5149,10 +5149,10 @@
      "frete": 0
     }
    ],
-   "obs": "Tapete sensorial com 5 texturas (ML, 19/11/2026). Margem ~58%.",
-   "revisar": "Conferir selo Inmetro, material EVA/tecido/borracha antiderrapante e bolsa de TNT.",
+   "obs": "Tapete sensorial com 5 texturas (ML, 19/11/2026). Margem ~58%. Faixa etária 6 meses. Inmetro: não localizado na base oficial (registro.inmetro.gov.br) por marca/modelo/fornecedor em 19/11/2026; buscado por \"tapete sensorial\". Estoque suficiente.",
+   "revisar": "Conferir selo Inmetro, material EVA/tecido/borracha antiderrapante e bolsa de TNT. Edital exige selo de brinquedo: tapete sem registro localizado; pedir o nº ao vendedor.",
    "createdAt": 1795097296080,
-   "updatedAt": 1795097296080,
+   "updatedAt": 1795102940271,
    "deleted": false,
    "semLance": false
   },
@@ -5522,10 +5522,10 @@
      "frete": 0
     }
    ],
-   "obs": "Quintotom Gonzaga MB500 a R$ 1.679 (ML, 19/11/2026). Catálogo obrigatório; amostra pode ser pedida em 5 dias úteis. Só achei a Gonzaga.",
+   "obs": "Quintotom Gonzaga MB500 a R$ 1.679 (ML, 19/11/2026). Catálogo obrigatório; amostra pode ser pedida em 5 dias úteis. Só achei a Gonzaga. Estoque conferido em 19/11/2026: suficiente.",
    "revisar": "Conferir a ficha do Gonzaga MB500 contra o edital (6 lâminas de birch 7 mm, aros 2,3 mm, peles 175 microns, colete branco com EVA 20 mm) e o estoque para 2 un.",
    "createdAt": 1795097296080,
-   "updatedAt": 1795097296080,
+   "updatedAt": 1795102940271,
    "deleted": false,
    "semLance": false
   },
@@ -5589,10 +5589,10 @@
      "frete": 0
     }
    ],
-   "obs": "Pele batedeira 14\" leitosa (ML, 19/11/2026).",
+   "obs": "Pele batedeira 14\" leitosa (ML, 19/11/2026). Estoque conferido em 19/11/2026: suficiente.",
    "revisar": "O edital pede \"leitosa e porosa\": conferir se a pele escolhida é porosa (coated).",
    "createdAt": 1795097296080,
-   "updatedAt": 1795097296080,
+   "updatedAt": 1795102940271,
    "deleted": false,
    "semLance": false
   },
@@ -5626,10 +5626,10 @@
      "frete": 0
     }
    ],
-   "obs": "DIVERGÊNCIA: o TR (item 7) pede 20 PAR; o quadro do edital (Lote 6) diz 20 UN. Cotado pelo anúncio (par). Pedido de esclarecimento no LEIA-ME. ML 19/11/2026.",
+   "obs": "DIVERGÊNCIA: o TR (item 7) pede 20 PAR; o quadro do edital (Lote 6) diz 20 UN. Cotado pelo anúncio (par). Pedido de esclarecimento no LEIA-ME. ML 19/11/2026. Estoque conferido em 19/11/2026: suficiente.",
    "revisar": "Unidade divergente (par x unidade): confirmar com o pregoeiro antes do lance; conferir se o anúncio Quasar é par.",
    "createdAt": 1795097296080,
-   "updatedAt": 1795097296080,
+   "updatedAt": 1795102940271,
    "deleted": false,
    "semLance": false
   },
@@ -5663,10 +5663,10 @@
      "frete": 0
     }
    ],
-   "obs": "Par de baquetas de feltro para bombo de marcha (ML, 19/11/2026).",
+   "obs": "Par de baquetas de feltro para bombo de marcha (ML, 19/11/2026). Estoque conferido em 19/11/2026: suficiente.",
    "revisar": "Conferir feltro de alta densidade e indicação para bombo 22\".",
    "createdAt": 1795097296080,
-   "updatedAt": 1795097296080,
+   "updatedAt": 1795102940271,
    "deleted": false,
    "semLance": false
   },
@@ -5700,10 +5700,10 @@
      "frete": 0
     }
    ],
-   "obs": "Pele batedeira 22\" leitosa Luen (ML, 19/11/2026). Só achei a Luen com preço bom.",
+   "obs": "Pele batedeira 22\" leitosa Luen (ML, 19/11/2026). Só achei a Luen com preço bom. Estoque conferido em 19/11/2026: suficiente.",
    "revisar": "",
    "createdAt": 1795097296080,
-   "updatedAt": 1795097296080,
+   "updatedAt": 1795102940271,
    "deleted": false,
    "semLance": false
   },
@@ -5737,10 +5737,10 @@
      "frete": 0
     }
    ],
-   "obs": "Penalty 8.0 Pro microfibra, selo FIVB (ML, 19/11/2026). Margem ~25%.",
+   "obs": "Penalty 8.0 Pro microfibra, selo FIVB (ML, 19/11/2026). Margem ~25%. Estoque conferido em 19/11/2026: suficiente.",
    "revisar": "O PNCP (CATMAT) diz \"aplicação: vôlei de praia\" e o Anexo I diz quadra: o Penalty 8.0 é de quadra. Confirmar.",
    "createdAt": 1795097296080,
-   "updatedAt": 1795097296080,
+   "updatedAt": 1795102940271,
    "deleted": false,
    "semLance": false
   },
@@ -5774,10 +5774,10 @@
      "frete": 0
     }
    ],
-   "obs": "Penalty Pro X praia, PU (ML, 19/11/2026). Margem ~18%.",
+   "obs": "Penalty Pro X praia, PU (ML, 19/11/2026). Margem ~18%. Estoque conferido em 19/11/2026: suficiente. Alternativa Penalty 541590 também é PU (+50 disponíveis).",
    "revisar": "",
    "createdAt": 1795097296080,
-   "updatedAt": 1795097296080,
+   "updatedAt": 1795102940271,
    "deleted": false,
    "semLance": false
   },
@@ -5811,10 +5811,10 @@
      "frete": 0
     }
    ],
-   "obs": "Base: Penalty S11 R1 (PU, câmara butil) a R$ 207,80 (margem 9%). Topper Ultra R$ 69,90 como opção só se for PU (a Topper \"22\" do ML é PVC: não serve). ML 19/11/2026.",
+   "obs": "Base: Penalty S11 R1 (PU, câmara butil) a R$ 207,80 (margem 9%). Topper Ultra R$ 69,90 como opção só se for PU (a Topper \"22\" do ML é PVC: não serve). ML 19/11/2026. Estoque conferido em 19/11/2026: suficiente.",
    "revisar": "Margem só 9% com a Penalty. Conferir se a Topper Ultra é PU com câmara butil e miolo substituível (aí a margem sobe para ~69%).",
    "createdAt": 1795097296080,
-   "updatedAt": 1795097296080,
+   "updatedAt": 1795102940271,
    "deleted": false,
    "semLance": false
   },
@@ -5848,10 +5848,10 @@
      "frete": 0
     }
    ],
-   "obs": "Cinto de tração duplo com 4 elásticos (ML, 19/11/2026). Margem ~55%.",
-   "revisar": "Conferir: cinto abdominal ajustável, empunhadura (manopla/alça) e peças de ancoragem, como pede o Anexo I.",
+   "obs": "Cinto de tração duplo com 4 elásticos (ML, 19/11/2026). Margem ~55%. Estoque do anúncio: +5 disponíveis em 19/11/2026 (preciso de 8).",
+   "revisar": "Conferir: cinto abdominal ajustável, empunhadura (manopla/alça) e peças de ancoragem, como pede o Anexo I. Estoque +5 para 8 un.: não fecha com um vendedor só; procurar 2ª loja antes do lance.",
    "createdAt": 1795097296080,
-   "updatedAt": 1795097296080,
+   "updatedAt": 1795102940271,
    "deleted": false,
    "semLance": false
   },
@@ -5885,10 +5885,10 @@
      "frete": 0
     }
    ],
-   "obs": "Kit 5 mini bands (ML, 19/11/2026). DIVERGÊNCIA: o Anexo I pede kit de 5 faixas (≥50 cm de circunferência, ≥5 cm de largura); o PNCP diz conjunto de 3 faixas 60 x 1,30.",
+   "obs": "Kit 5 mini bands (ML, 19/11/2026). DIVERGÊNCIA: o Anexo I pede kit de 5 faixas (≥50 cm de circunferência, ≥5 cm de largura); o PNCP diz conjunto de 3 faixas 60 x 1,30. Estoque conferido em 19/11/2026: suficiente.",
    "revisar": "Conferir medidas (circunferência ≥50 cm e largura ≥5 cm) e 5 níveis de resistência.",
    "createdAt": 1795097296080,
-   "updatedAt": 1795097296080,
+   "updatedAt": 1795102940271,
    "deleted": false,
    "semLance": false
   },
@@ -5922,10 +5922,10 @@
      "frete": 0
     }
    ],
-   "obs": "ML 19/11/2026. A totalmente bordada (R$ 341,47) passa do teto R$ 339,58; a de R$ 179,45 tem só o contorno do escudo bordado.",
-   "revisar": "O edital pede BORDADA (letras e estrelas), 12 m de cordão nylon tipo 06, tarja com entretela e ilhós de latão. Pedir orçamento a fábrica de bandeiras para as 4 juntas.",
+   "obs": "ML 19/11/2026. A totalmente bordada (R$ 341,47) passa do teto R$ 339,58; a de R$ 179,45 tem só o contorno do escudo bordado. Estoque +25 em 19/11/2026 (preciso de 30). Na ficha, só o contorno do escudo é bordado (o resto estampado).",
+   "revisar": "O edital pede BORDADA (letras e estrelas), 12 m de cordão nylon tipo 06, tarja com entretela e ilhós de latão. Pedir orçamento a fábrica de bandeiras para as 4 juntas. Estoque +25 para 30 e bordado parcial (só contorno do escudo): o edital pede bordada; risco de desclassificação. A totalmente bordada passa do teto.",
    "createdAt": 1795097296080,
-   "updatedAt": 1795097296080,
+   "updatedAt": 1795102940271,
    "deleted": false,
    "semLance": false
   },
@@ -5953,10 +5953,10 @@
      "frete": 0
     }
    ],
-   "obs": "Paraná 1,92x1,35 bordada dupla face (ML, 19/11/2026). Só uma loja.",
-   "revisar": "Conferir cordão de 12 m, entretela e ilhós de latão.",
+   "obs": "Paraná 1,92x1,35 bordada dupla face (ML, 19/11/2026). Só uma loja. Estoque +10 em 19/11/2026 (preciso de 30).",
+   "revisar": "Conferir cordão de 12 m, entretela e ilhós de latão. Estoque +10 para 30: precisa de mais vendedores ou pedido à fábrica.",
    "createdAt": 1795097296080,
-   "updatedAt": 1795097296080,
+   "updatedAt": 1795102940271,
    "deleted": false,
    "semLance": false
   },
@@ -5990,10 +5990,10 @@
      "frete": 0
     }
    ],
-   "obs": "Personalizada: custo de referência de bandeira municipal 3 panos bordada da mesma fábrica (ML, 19/11/2026).",
+   "obs": "Personalizada: custo de referência de bandeira municipal 3 panos bordada da mesma fábrica (ML, 19/11/2026). Estoque conferido em 19/11/2026: suficiente.",
    "revisar": "Pedir orçamento e prazo da bandeira de CARAMBEÍ bordada 1,35x1,92 (50 un.) antes do lance.",
    "createdAt": 1795097296080,
-   "updatedAt": 1795097296080,
+   "updatedAt": 1795102940271,
    "deleted": false,
    "semLance": false
   },
@@ -6021,10 +6021,10 @@
      "frete": 0
     }
    ],
-   "obs": "Mercosul 1,35x1,95 (ML, 19/11/2026). Só uma loja.",
-   "revisar": "Conferir se é bordada (estrelas) e se vem com cordão e ilhós.",
+   "obs": "Mercosul 1,35x1,95 (ML, 19/11/2026). Só uma loja. Estoque conferido em 19/11/2026. O anúncio não diz se as estrelas são bordadas.",
+   "revisar": "Conferir se é bordada (estrelas) e se vem com cordão e ilhós. O anúncio não informa bordado: perguntar ao vendedor antes do lance.",
    "createdAt": 1795097296080,
-   "updatedAt": 1795097296080,
+   "updatedAt": 1795102940271,
    "deleted": false,
    "semLance": false
   },
@@ -11740,10 +11740,10 @@
      "frete": 0
     }
    ],
-   "obs": "Refletor LED 100 W IP66 Blumenau (ML, 19/11/2026). Margem ~50%.",
-   "revisar": "Conferir ficha: ≥11.000 lm, ≥110 lm/W, IRC ≥80, garantia 2 anos e Inmetro.",
+   "obs": "Refletor LED 100 W IP66 Blumenau (ML, 19/11/2026). Margem ~50%. Estoque +25 a +50 por anúncio em 19/11/2026 (preciso de 300): comprar de distribuidor. O título do anúncio Blumenau 100 W diz IP65 (edital IP66).",
+   "revisar": "Conferir ficha: ≥11.000 lm, ≥110 lm/W, IRC ≥80, garantia 2 anos e Inmetro. 300 un. com estoque de +25/+50: precisa distribuidor. Anúncio diz IP65 no título: confirmar IP66.",
    "createdAt": 1795097296080,
-   "updatedAt": 1795097296080,
+   "updatedAt": 1795102940271,
    "deleted": false,
    "semLance": false
   },
@@ -11777,10 +11777,10 @@
      "frete": 0
     }
    ],
-   "obs": "Refletor LED 200 W IP66 (ML, 19/11/2026). Margem ~49%; 300 un. por registro de preços.",
-   "revisar": "Conferir ficha: ≥22.000 lm, ≥110 lm/W, IRC ≥80, FP ≥0,90, garantia 2 anos e Inmetro. Refletor barato costuma ter lúmen bem abaixo: pedir ficha ao fabricante.",
+   "obs": "Refletor LED 200 W IP66 (ML, 19/11/2026). Margem ~49%; 300 un. por registro de preços. Estoque +25 a +50 em 19/11/2026 (preciso de 300). Modelo Empalux RL52006; lúmens não informados no anúncio.",
+   "revisar": "Conferir ficha: ≥22.000 lm, ≥110 lm/W, IRC ≥80, FP ≥0,90, garantia 2 anos e Inmetro. Refletor barato costuma ter lúmen bem abaixo: pedir ficha ao fabricante. 300 un. com estoque de +25/+50: precisa distribuidor. Lúmens do RL52006 não informados.",
    "createdAt": 1795097296080,
-   "updatedAt": 1795097296080,
+   "updatedAt": 1795102940271,
    "deleted": false,
    "semLance": false
   },
@@ -11838,10 +11838,10 @@
      "frete": 0
     }
    ],
-   "obs": "Refletor LED 50 W IP66 (ML, 19/11/2026). Margem ~17%. (O Avant é IP65: não serve, edital pede IP66.)",
-   "revisar": "Conferir ficha: ≥5.500 lm e garantia 2 anos.",
+   "obs": "Refletor LED 50 W IP66 (ML, 19/11/2026). Margem ~17%. (O Avant é IP65: não serve, edital pede IP66.) Estoque +25 a +50 em 19/11/2026 (preciso de 300).",
+   "revisar": "Conferir ficha: ≥5.500 lm e garantia 2 anos. 300 un. com estoque de +25/+50: precisa distribuidor.",
    "createdAt": 1795097296080,
-   "updatedAt": 1795097296080,
+   "updatedAt": 1795102940271,
    "deleted": false,
    "semLance": false
   },
@@ -14371,10 +14371,10 @@
      "frete": 0
     }
    ],
-   "obs": "Micro-ondas Electrolux 23 L (ML, 19/11/2026). Margem ~26%.",
-   "revisar": "Conferir 127 V e potência de entrada ≥1.100 W.",
+   "obs": "Micro-ondas Electrolux 23 L (ML, 19/11/2026). Margem ~26%. O anúncio cita o registro Inmetro 006477/2022; na base oficial (conferido em 19/11/2026) esse número é da Electrolux, mas de micro-ondas de 12 L (Portaria 268/2021), não do modelo de 23 L.",
+   "revisar": "Conferir 127 V e potência de entrada ≥1.100 W. Registro do anúncio é de outro micro-ondas (12 L): registro do 23 L não confirmado na base oficial.",
    "createdAt": 1795097296080,
-   "updatedAt": 1795097296080,
+   "updatedAt": 1795102940271,
    "deleted": false,
    "semLance": false
   },
@@ -14480,10 +14480,10 @@
      "frete": 0
     }
    ],
-   "obs": "Epson EcoTank L5590 colorida com fax e ADF (ML, 19/11/2026). Margem ~33%.",
+   "obs": "Epson EcoTank L5590 colorida com fax e ADF (ML, 19/11/2026). Margem ~33%. Estoque conferido em 19/11/2026: suficiente.",
    "revisar": "Conferir: 15 ppm ISO preto / 8 ppm cor, ADF ≥20 folhas, fax, Wi-Fi Direct.",
    "createdAt": 1795097296080,
-   "updatedAt": 1795097296080,
+   "updatedAt": 1795102940271,
    "deleted": false,
    "semLance": false
   },
@@ -14517,10 +14517,10 @@
      "frete": 0
     }
    ],
-   "obs": "Epson EcoTank M3170 mono com fax, duplex e ADF (ML, 19/11/2026). Margem ~20%.",
+   "obs": "Epson EcoTank M3170 mono com fax, duplex e ADF (ML, 19/11/2026). Margem ~20%. Anúncio principal com 4 unidades e alternativa com +50 em 19/11/2026 (preciso de 1).",
    "revisar": "Conferir: ≥20 ppm ISO, ADF ≥35 folhas, bandeja ≥250 folhas, Ethernet.",
    "createdAt": 1795097296080,
-   "updatedAt": 1795097296080,
+   "updatedAt": 1795102940271,
    "deleted": false,
    "semLance": false
   },
@@ -14602,10 +14602,10 @@
      "frete": 0
     }
    ],
-   "obs": "Túnel centopeia de bagum 3 m (ML, 19/11/2026). Margem ~38%.",
-   "revisar": "Conferir diâmetro ≥50 cm e Inmetro (quando exigido).",
+   "obs": "Túnel centopeia de bagum 3 m (ML, 19/11/2026). Margem ~38%. Inmetro: não localizado na base oficial (registro.inmetro.gov.br) por marca/modelo/fornecedor em 19/11/2026; buscado por \"bagun\", \"centopeia\" e \"túnel\". Estoque suficiente.",
+   "revisar": "Conferir diâmetro ≥50 cm e Inmetro (quando exigido). Túnel sem certificado Inmetro localizado; o edital pede Inmetro quando exigido (brinquedo).",
    "createdAt": 1795097296080,
-   "updatedAt": 1795097296080,
+   "updatedAt": 1795102940271,
    "deleted": false,
    "semLance": false
   },
