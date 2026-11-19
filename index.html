@@ -1718,7 +1718,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.166.2';
+  const APP_VERSION = '1.166.3';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   // Status do pregão (decisão do João, 11/11/2026): padrão da BLL + os dele (Falta dados, Analisando, Empenho, Concluído, Desisti).
   // O que muda nas contas e no Dashboard é ter ou não item Venci (pst.ganho), não o nome do status.
@@ -4413,6 +4413,8 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     return /dispensa|\bdisp\.?\s*\d/i.test([p.numero, p.orgao, String(p.obs || '').slice(0, 160)].join(' ')) ? 'Dispensa' : 'Pregão';
   }
   // padronizado (19/11/2026, v1.166.2): UM selo com 3 tipos — Registro de preços, Aquisição ou Dispensa (a dispensa grava modalidade 'Dispensa' + tipoCompra 'Aquisição', para os cálculos de compra direta seguirem iguais)
+  // rótulo do número que NÃO confunde Pregão 45/2026 com Dispensa 45/2026 (o mesmo órgão pode ter os dois)
+  function numTxt(p) { return (modalidadeDe(p) === 'Dispensa' ? 'Dispensa ' : 'Nº ') + p.numero; }
   function tipoVisual(p) { return modalidadeDe(p) === 'Dispensa' ? 'Dispensa' : tipoCompraDe(p); }
   function tipoGravar(v) { return v === 'Dispensa' ? { tipoCompra: 'Aquisição', modalidade: 'Dispensa' } : { tipoCompra: v || '', modalidade: 'Pregão' }; }
   function tipoChip(p, cls) {
@@ -5309,19 +5311,19 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
   function painelPendenciasHtml(R) {
     const ps = [...R.pMap.values()].filter((x) => !painelOculto(x.p) && !inat(x.p));
     const L = [];   // [nivel, título, detalhe, ação]
-    ps.filter((x) => LEG(x.p.status) === 'Falta dados').forEach((x) => L.push(['bad', 'Completar dados', 'Nº ' + x.p.numero + ' · ' + orgPn(x.p), `data-act="abrir-pregao" data-id="${x.p.id}"`]));
+    ps.filter((x) => LEG(x.p.status) === 'Falta dados').forEach((x) => L.push(['bad', 'Completar dados', numTxt(x.p) + ' · ' + orgPn(x.p), `data-act="abrir-pregao" data-id="${x.p.id}"`]));
     ps.filter((x) => ['Falta dados', 'Analisando'].includes(LEG(x.p.status))).forEach((x) => {
       const pz = prazoInfo(x.p);
-      if (pz && (pz.nivel === 'bad' || pz.nivel === 'warn')) L.push([pz.nivel, 'Enviar proposta · ' + pz.curto, 'Nº ' + x.p.numero + ' · ' + orgPn(x.p), `data-act="abrir-pregao" data-id="${x.p.id}"`]);
-      else if (LEG(x.p.status) === 'Analisando' && (!pz || pz.nivel !== 'off')) L.push(['info', 'Proposta por enviar' + (pz ? ' · até ' + pz.curto : ''), 'Nº ' + x.p.numero + ' · ' + orgPn(x.p), `data-act="abrir-pregao" data-id="${x.p.id}"`]);
+      if (pz && (pz.nivel === 'bad' || pz.nivel === 'warn')) L.push([pz.nivel, 'Enviar proposta · ' + pz.curto, numTxt(x.p) + ' · ' + orgPn(x.p), `data-act="abrir-pregao" data-id="${x.p.id}"`]);
+      else if (LEG(x.p.status) === 'Analisando' && (!pz || pz.nivel !== 'off')) L.push(['info', 'Proposta por enviar' + (pz ? ' · até ' + pz.curto : ''), numTxt(x.p) + ' · ' + orgPn(x.p), `data-act="abrir-pregao" data-id="${x.p.id}"`]);
     });
-    [...R.pMap.values()].filter((x) => pregaoSemKm(x.p)).forEach((x) => L.push(['bad', 'Informar km da entrega', 'Nº ' + x.p.numero + ' · ' + orgPn(x.p) + ' · sem km a viagem não entra no custo', `data-act="editar-pregao" data-id="${x.p.id}"`]));
-    [...R.pMap.values()].filter((x) => !inat(x.p)).forEach((x) => { const rv = x.todosItens.filter(temRevisar); if (rv.length) L.push(['warn', 'Revisar ' + rv.length + (rv.length === 1 ? ' item' : ' itens'), 'Nº ' + x.p.numero + ' · ' + orgPn(x.p), `data-act="abrir-pregao" data-id="${x.p.id}"`]); });
-    ps.filter((x) => x.nItens === 0).forEach((x) => L.push(['warn', 'Cadastrar os itens', 'Nº ' + x.p.numero + ' · ' + orgPn(x.p), `data-act="abrir-pregao" data-id="${x.p.id}"`]));
+    [...R.pMap.values()].filter((x) => pregaoSemKm(x.p)).forEach((x) => L.push(['bad', 'Informar km da entrega', numTxt(x.p) + ' · ' + orgPn(x.p) + ' · sem km a viagem não entra no custo', `data-act="editar-pregao" data-id="${x.p.id}"`]));
+    [...R.pMap.values()].filter((x) => !inat(x.p)).forEach((x) => { const rv = x.todosItens.filter(temRevisar); if (rv.length) L.push(['warn', 'Revisar ' + rv.length + (rv.length === 1 ? ' item' : ' itens'), numTxt(x.p) + ' · ' + orgPn(x.p), `data-act="abrir-pregao" data-id="${x.p.id}"`]); });
+    ps.filter((x) => x.nItens === 0).forEach((x) => L.push(['warn', 'Cadastrar os itens', numTxt(x.p) + ' · ' + orgPn(x.p), `data-act="abrir-pregao" data-id="${x.p.id}"`]));
     // sessão passou há 2+ dias e nenhum item tem resultado: lembrar de registrar (senão a previsão conta o pregão inteiro)
     ps.filter((x) => ['Proposta enviada', 'Julgamento'].includes(LEG(x.p.status)) && x.p.sessao && (diasDesde(x.p.sessao) || 0) >= 2).forEach((x) => {
       const algum = x.todosItens.some((i) => typeof i.ganhou === 'boolean' || i.desclassPedida);
-      if (!algum) L.push(['warn', 'Registrar resultado do pregão', 'Nº ' + x.p.numero + ' · ' + orgPn(x.p) + ' · sessão há ' + diasDesde(x.p.sessao) + ' dias', `data-act="abrir-pregao" data-id="${x.p.id}"`]);
+      if (!algum) L.push(['warn', 'Registrar resultado do pregão', numTxt(x.p) + ' · ' + orgPn(x.p) + ' · sessão há ' + diasDesde(x.p.sessao) + ' dias', `data-act="abrir-pregao" data-id="${x.p.id}"`]);
     });
     // catálogo incompleto: itens sem foto e/ou sem descrição detalhada (por pregão); toque leva ao 1º item pendente
     ps.filter((x) => ['Falta dados', 'Analisando', 'Proposta enviada', 'Julgamento'].includes(LEG(x.p.status))).forEach((x) => {
@@ -5330,7 +5332,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
       const pend = x.itens.find((i) => !(Number(i.fotosN) > 0) || !String(i.catalogoDesc || '').trim());
       if (!pend) return;
       const partes = [semFoto.length ? semFoto.length + ' sem foto' : '', semDesc.length ? semDesc.length + ' sem detalhamento' : ''].filter(Boolean).join(' · ');
-      L.push(['info', 'Completar catálogo · ' + partes, 'Nº ' + x.p.numero + ' · ' + orgPn(x.p) + ' · ' + x.itens.length + (x.itens.length === 1 ? ' item' : ' itens'), `data-act="cat-ir" data-id="${pend.id}"`]);
+      L.push(['info', 'Completar catálogo · ' + partes, numTxt(x.p) + ' · ' + orgPn(x.p) + ' · ' + x.itens.length + (x.itens.length === 1 ? ' item' : ' itens'), `data-act="cat-ir" data-id="${pend.id}"`]);
     });
     certidoes().forEach((c) => { const ci = certInfo(c); if (ci.nivel === 'bad' || ci.nivel === 'warn') L.push([ci.nivel, 'Certidão: ' + String(c.nome).split(' (')[0], ci.texto, 'data-act="tab" data-v="certidoes"']); });
     const peso = { bad: 0, warn: 1, info: 2 };
@@ -5901,7 +5903,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     else if (/^g:/.test(UI.filtro)) list = list.filter((x) => noGrupo(x, UI.filtro.slice(2)));
     else if (UI.filtro !== 'todos') list = list.filter((x) => x.p.status === UI.filtro);
     const q = UI.busca.trim().toLowerCase();
-    if (q) list = list.filter((x) => (x.p.numero + ' ' + x.p.orgao + ' ' + (x.p.cidadeUf || '') + ' ' + x.itens.map((i) => i.descricao).join(' ')).toLowerCase().includes(q));
+    if (q) list = list.filter((x) => (x.p.numero + ' ' + (modalidadeDe(x.p) === 'Dispensa' ? 'dispensa ' : 'pregão ') + x.p.orgao + ' ' + (x.p.cidadeUf || '') + ' ' + x.itens.map((i) => i.descricao).join(' ')).toLowerCase().includes(q));
     // mesma ordem do Painel: por status e, dentro de cada status, a data mais próxima primeiro
     list.sort((a, b) => (rankStatus(a.p.status) - rankStatus(b.p.status)) || ordemPainel(a, b));
     if (!list.length) return `<div class="card empty"><p class="muted">Nenhum pregão encontrado.</p></div>`;
