@@ -122,7 +122,13 @@ with sync_playwright() as p:
     ok(pg.evaluate("()=>window.__app.store.get().itens.find(x=>x.id==='a').ganhou") is None, 'Modo pregão: Reabrir volta o item para aguardando')
     pg.evaluate("(s)=>{localStorage.setItem('mp.state.v1',s)}", json.dumps(st)); pg.reload(); pg.wait_for_timeout(500)
     pg.evaluate("()=>document.querySelector('[data-act=abrir-pregao][data-id=p1]').click()"); pg.wait_for_timeout(600)
-    ok(pg.query_selector('[data-act=modo-pregao]') is None, 'Modo pregão: botão não aparece fora de Proposta enviada')
+    ok(pg.query_selector('[data-act=modo-pregao]') is not None, 'Modo pregão: botão aparece em pregão viável de qualquer status ativo')
+    std = json.loads(json.dumps(st))
+    for _i in std['itens']:
+        if _i['pregaoId'] == 'p1': _i['semLance'] = True
+    pg.evaluate("(s)=>{localStorage.setItem('mp.state.v1',s)}", json.dumps(std)); pg.reload(); pg.wait_for_timeout(500)
+    pg.evaluate("()=>document.querySelector('[data-act=abrir-pregao][data-id=p1]').click()"); pg.wait_for_timeout(600)
+    ok(pg.query_selector('[data-act=modo-pregao]') is None, 'Modo pregão: botão não aparece sem nenhum item na disputa')
     b.close()
 ok(not erros, 'Sem erro de JavaScript em nenhuma guia (PC, tela dividida e celular)' + ('' if not erros else ': ' + erros[0][:120]))
 print('\n' + ('TUDO OK' if not falhas else str(len(falhas)) + ' FALHA(S): NÃO PUBLICAR'))
