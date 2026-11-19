@@ -121,6 +121,7 @@ button.pill { border: 0; font: inherit; cursor: pointer; }
 .badge.warn, .st-Julgamento { background: var(--amber-soft); color: var(--amber); }
 .badge.bad { background: var(--red-soft); color: var(--red); }
 .st-Proposta-enviada { background: color-mix(in srgb, #2e75b6 16%, transparent); color: #1f5f99; }
+.st-Inabilitado { background: color-mix(in srgb, #ad1457 14%, transparent); color: #ad1457; }
 .st-Perdeu { background: color-mix(in srgb, #8d6e63 18%, transparent); color: #6d4c41; }
 .st-Desclassificado { background: color-mix(in srgb, #ad1457 14%, transparent); color: #ad1457; }
 .st-Faturado { background: color-mix(in srgb, #3f51b5 14%, transparent); color: #3f51b5; }
@@ -994,6 +995,12 @@ input[type=color].input { padding: 4px; height: 46px; }
 .tipo-chip.srp { background: color-mix(in srgb, #6b46c1 16%, var(--card)); color: color-mix(in srgb, #6b46c1 80%, var(--ink)); border-color: color-mix(in srgb, #6b46c1 35%, transparent); }
 .tipo-chip.aq { background: color-mix(in srgb, #0f766e 16%, var(--card)); color: color-mix(in srgb, #0f766e 80%, var(--ink)); border-color: color-mix(in srgb, #0f766e 35%, transparent); }
 .tipo-chip.nd { color: var(--muted); border: 1px dashed color-mix(in srgb, var(--muted) 45%, transparent); font-weight: 600; }
+.mod-chip { display: inline-flex; align-items: center; font-size: 10.5px; font-weight: 800; letter-spacing: .02em; padding: 2px 7px; border-radius: 6px; white-space: nowrap; line-height: 1.4; border: 1px solid transparent; }
+.mod-chip.preg { background: color-mix(in srgb, #2e75b6 16%, var(--card)); color: color-mix(in srgb, #2e75b6 80%, var(--ink)); border-color: color-mix(in srgb, #2e75b6 35%, transparent); }
+.mod-chip.disp { background: color-mix(in srgb, #d97706 18%, var(--card)); color: color-mix(in srgb, #b45309 85%, var(--ink)); border-color: color-mix(in srgb, #d97706 40%, transparent); }
+.mod-chip.hero { font-size: 11.5px; padding: 2px 9px; margin-left: 6px; vertical-align: middle; }
+.mod-pc { display: none; }
+@media (min-width: 900px) { .mod-pc { display: inline-flex; margin-left: 6px; } }
 .tipo-chip.hero { font-size: 11.5px; padding: 2px 9px; }
 .tipo-chip.hero.nd { color: inherit; opacity: .8; border-color: currentColor; }
 .tipo-chip.mini { font-size: 9.5px; padding: 1px 5px; margin-left: 4px; flex: none; }
@@ -1708,26 +1715,30 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.165.9';
+  const APP_VERSION = '1.166.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   // Status do pregão (decisão do João, 11/11/2026): padrão da BLL + os dele (Falta dados, Analisando, Empenho, Concluído, Desisti).
   // O que muda nas contas e no Dashboard é ter ou não item Venci (pst.ganho), não o nome do status.
-  const STATUS = ['Falta dados', 'Analisando', 'Gravado', 'Publicado', 'Em retificação', 'Recepção de propostas', 'Aguardando disputa', 'Disputa', 'Suspenso',
-    'Análise de propostas', 'Julgamento', 'Habilitação', 'Adjudicado', 'Homologado', 'Resultado final', 'Empenho', 'Concluído', 'Deserto', 'Fracassado', 'Cancelado', 'Revogado', 'Anulado', 'Desisti'];
+  // Lista do seletor (decisão do João, 19/11/2026, v1.166.0): Falta dados (= Incompleto), Cotando (antigo Analisando), Julgamento, Habilitação, Homologado, Inabilitado, Anulado, Desisti.
+  const STATUS_SEL = ['Falta dados', 'Cotando', 'Julgamento', 'Habilitação', 'Homologado', 'Inabilitado', 'Anulado', 'Desisti'];
+  // STATUS = todos os nomes válidos (os fora do seletor só existem em pregões que já os têm: Recepção/Aguardando disputa/Disputa, Empenho, Concluído)
+  const STATUS = STATUS_SEL.concat(['Recepção de propostas', 'Aguardando disputa', 'Disputa', 'Empenho', 'Concluído', 'Resultado final', 'Adjudicado']);
   // cada status novo pertence a um "grupo" com o nome antigo (as regras do app continuam por grupo)
   const GRUPO_ST = {
-    'Gravado': 'Analisando', 'Publicado': 'Analisando', 'Em retificação': 'Analisando', 'Suspenso': 'Analisando',
+    'Cotando': 'Analisando', 'Inabilitado': 'Perdeu',
     'Recepção de propostas': 'Proposta enviada', 'Aguardando disputa': 'Proposta enviada', 'Disputa': 'Proposta enviada',
-    'Análise de propostas': 'Julgamento', 'Habilitação': 'Julgamento', 'Adjudicado': 'Julgamento', 'Homologado': 'Julgamento', 'Resultado final': 'Julgamento',
+    'Habilitação': 'Julgamento', 'Adjudicado': 'Julgamento', 'Homologado': 'Julgamento', 'Resultado final': 'Julgamento',
     'Empenho': 'Aguardando empenho',
-    'Deserto': 'Perdeu', 'Fracassado': 'Perdeu', 'Cancelado': 'Perdeu', 'Revogado': 'Perdeu', 'Anulado': 'Perdeu',
+    'Anulado': 'Perdeu',
   };
   const LEG = (st) => GRUPO_ST[st] || st;
   // nomes antigos que o app converte sozinho ao abrir
-  const MIGRA_ST = { 'Proposta enviada': 'Aguardando disputa', 'Aguardando empenho': 'Empenho', 'Faturado': 'Empenho', 'Ganhou': 'Empenho', 'Perdeu': 'Resultado final', 'Desclassificado': 'Resultado final', 'Em disputa': 'Julgamento' };
+  const MIGRA_ST = { 'Proposta enviada': 'Aguardando disputa', 'Aguardando empenho': 'Empenho', 'Faturado': 'Empenho', 'Ganhou': 'Empenho', 'Perdeu': 'Homologado', 'Desclassificado': 'Homologado', 'Em disputa': 'Julgamento',
+    'Analisando': 'Cotando', 'Gravado': 'Cotando', 'Publicado': 'Cotando', 'Em retificação': 'Cotando', 'Suspenso': 'Cotando', 'Análise de propostas': 'Julgamento',
+    'Resultado final': 'Homologado', 'Adjudicado': 'Homologado', 'Deserto': 'Anulado', 'Fracassado': 'Anulado', 'Cancelado': 'Anulado', 'Revogado': 'Anulado' };
   const FIM_RESULT = ['Adjudicado', 'Homologado', 'Resultado final'];   // sem item Venci = terminou sem ganhar (vai para Encerrados)
   const SEM_DISPUTA = ['Deserto', 'Fracassado', 'Cancelado', 'Revogado', 'Anulado'];
-  const PERDA_ST = ['Adjudicado', 'Homologado', 'Resultado final', 'Perdeu', 'Desclassificado'];
+  const PERDA_ST = ['Adjudicado', 'Homologado', 'Resultado final', 'Perdeu', 'Desclassificado', 'Inabilitado'];
   const INATIVOS = ['Perdeu', 'Desclassificado', 'Desisti', 'Concluído'];
   const fimP = (st, ganho) => INATIVOS.includes(LEG(st)) || (FIM_RESULT.includes(st) && !ganho);
   const faturadoP = (p) => !!(p && (p.faturado || p.entregueEm || p.pagoEm)) || LEG(p && p.status) === 'Concluído' || (p && p.status) === 'Faturado';
@@ -2217,7 +2228,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     // firme = compra direta ou ata com empenho (fração firme); ata = o resto da ata, que só sai se o órgão pedir. Não é faturamento: não usa o valor de venda.
     const caixa = { firme: 0, ata: 0, total: 0, nAta: 0, cap: n0(cfg.capitalGiro) };
     for (const pst of pMap.values()) {
-      if (!pst.ganho || pst.p.pagoEm || !(pst.custo > 0) || ['Desisti', 'Deserto', 'Fracassado', 'Cancelado', 'Revogado', 'Anulado'].includes(pst.p.status)) continue;
+      if (!pst.ganho || pst.p.pagoEm || !(pst.custo > 0) || ['Desisti', 'Inabilitado', 'Deserto', 'Fracassado', 'Cancelado', 'Revogado', 'Anulado'].includes(pst.p.status)) continue;
       const fr = pst.fracFirme || 0;
       caixa.firme += pst.custo * fr; caixa.ata += pst.custo * (1 - fr);
       if (fr < 1) caixa.nAta += 1;
@@ -2795,7 +2806,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
   /* ---------- dados de exemplo (os mesmos da planilha) ---------- */
 
   const api = {
-    APP_VERSION, STATUS, INATIVOS, LEG, MIGRA_ST, FIM_RESULT, SEM_DISPUTA, PERDA_ST, fimP, faturadoP, PARTICIPOU, DECL_PADRAO, DECL_PROPOSTA, uid, n0, round2, ceil2, floor2, parseBR, brl, brl0, pct, numBR, qtdBR,
+    APP_VERSION, STATUS, STATUS_SEL, INATIVOS, LEG, MIGRA_ST, FIM_RESULT, SEM_DISPUTA, PERDA_ST, fimP, faturadoP, PARTICIPOU, DECL_PADRAO, DECL_PROPOSTA, uid, n0, round2, ceil2, floor2, parseBR, brl, brl0, pct, numBR, qtdBR,
     fmtSessao, dataExtensa, hojeISO, defaultConfig, emptyState, migrate, custoViagem, localEntregaPadrao, calcItem, limiteMEI, isSRP, temEmpenho,
     custoUnitOpc, embDe, tesouro, corTesouro, agora, setClockOffset, getClockOffset, pendenciasNuvem, computeAll, custoCompra, freteCompra, ordemLoteItem, padLE, dasMensal, mesesAtivos, previewItem, linhasProposta, faltasOferta, marcaModeloDoTexto, normMM, horizontal, separarObservacao, capitalizarTitulos, unitProposta, resolverPdfOpts, camposModelo, pendenciasModelo, CAMPOS_MODELO, identificaEmpresa, COLUNAS_DESC, CAMPOS_FORNECEDOR, CAMPOS_BANCO, mergeState, diffState, paraNuvem, createStore, };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
@@ -4392,6 +4403,16 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     const t = [p.obs, p.exigencias, p.entregaParceladaObs, p.numero, p.orgao].join(' ');
     return /registro\s+de\s+pre[çc]os?|\bSRP\b|ata\s+de\s+registro/i.test(t) ? 'SRP' : '';
   }
+  // modalidade (19/11/2026, v1.166.0): Pregão ou Dispensa, ao lado do nº no topo; vazio = reconhece "dispensa" no nº/órgão/obs, senão Pregão
+  const MODALIDADES = [{ v: 'Pregão', l: 'Pregão eletrônico' }, { v: 'Dispensa', l: 'Dispensa eletrônica' }];
+  function modalidadeDe(p) {
+    if (p.modalidade === 'Pregão' || p.modalidade === 'Dispensa') return p.modalidade;
+    return /dispensa|\bdisp\.?\s*\d/i.test([p.numero, p.orgao, String(p.obs || '').slice(0, 160)].join(' ')) ? 'Dispensa' : 'Pregão';
+  }
+  function modChip(p, cls) {
+    const d = modalidadeDe(p) === 'Dispensa';
+    return `<span class="mod-chip ${d ? 'disp' : 'preg'} ${cls || ''}" title="${d ? 'Dispensa eletrônica' : 'Pregão eletrônico'}">${d ? 'Dispensa' : 'Pregão'}</span>`;
+  }
   function tipoChip(p, cls) {
     const t = tipoCompraDe(p);
     const c = cls === 'curto';   // cartão do quadro: rótulo curto para não cortar o nº do pregão
@@ -4401,7 +4422,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
   }
   function pregaoValues(p) {
     return {
-      numero: p.numero || '', orgao: p.orgao || '', plataforma: p.plataforma || '', tipoCompra: tipoCompraDe(p), cidadeUf: p.cidadeUf || '', sessao: p.sessao || '', prazoPropostas: p.prazoPropostas || '',
+      numero: p.numero || '', orgao: p.orgao || '', plataforma: p.plataforma || '', tipoCompra: tipoCompraDe(p), modalidade: modalidadeDe(p), cidadeUf: p.cidadeUf || '', sessao: p.sessao || '', prazoPropostas: p.prazoPropostas || '',
       prazoEntregaDias: p.prazoEntregaDias == null ? '' : String(p.prazoEntregaDias), exigencias: p.exigencias || '', status: p.status || 'Falta dados',
       km: p.km ? C.numBR(p.km, 1) : '', viagens: p.viagens == null ? '1' : String(p.viagens), pedagio: p.pedagio ? C.numBR(p.pedagio) : '',
       entregaDiferente: !!p.entregaDiferente, locaisEntrega: p.locaisEntrega || '',
@@ -4520,9 +4541,10 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     const body = `
       <div class="formgrid">
         ${field({ label: 'Nº do pregão *', name: 'numero', value: v.numero, ph: 'ex.: 90001/2026', inputmode: 'text', hint: 'Só números e . - / (a proposta já escreve “Pregão nº” antes).' })}
-        ${field({ label: 'Status', name: 'status', type: 'select', value: v.status, options: (C.STATUS.includes(v.status) ? C.STATUS : [v.status].concat(C.STATUS)).map((s) => ({ v: s, l: s })), hint: 'Padrão da BLL. Itens ganhos: marque “Venci” no item (com Venci o pregão ganha selo e borda verde em qualquer status). Concluído = terminou (sai do painel).' })}
+        ${field({ label: 'Status', name: 'status', type: 'select', value: v.status, options: (C.STATUS_SEL.includes(v.status) || !v.status ? C.STATUS_SEL : [v.status].concat(C.STATUS_SEL)).map((s) => ({ v: s, l: s })), hint: 'Padrão da BLL. Itens ganhos: marque “Venci” no item (com Venci o pregão ganha selo e borda verde em qualquer status). Concluído = terminou (sai do painel).' })}
         ${field({ label: 'Órgão / entidade *', name: 'orgao', value: v.orgao, full: true, ph: 'ex.: Universidade de Londrina' })}
         ${field({ label: 'Plataforma do pregão', name: 'plataforma', value: v.plataforma, ph: 'ex.: BLL, Compras.gov.br', list: PLATAFORMAS, hint: 'Onde a disputa acontece. Se ficar vazio, o app tenta reconhecer pelo site da proposta.' })}
+        ${field({ label: 'Modalidade', name: 'modalidade', type: 'select', value: v.modalidade, options: MODALIDADES, hint: 'Pregão eletrônico ou Dispensa eletrônica: aparece ao lado do número, no topo.' })}
         ${field({ label: 'Tipo de compra', name: 'tipoCompra', type: 'select', value: v.tipoCompra, options: TIPO_COMPRA, hint: 'Registro de preços = ata, pedidos conforme a demanda. Aquisição = compra direta. Aparece como selo no cartão.' })}
         ${field({ label: 'Local do pregão (cidade/UF)', name: 'cidadeUf', value: v.cidadeUf, full: true, ph: 'Londrina/PR', hint: 'Ao preencher, o trajeto de ida e volta a partir do endereço da sua empresa é calculado sozinho.' })}
         ${field({ label: 'Link do edital', name: 'link', type: 'url', value: v.link, full: true, ph: 'https://…' })}
@@ -4700,7 +4722,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
         if (!x.entregaDiferente && !(km > 0) && !PREG_SEM_KM_OK.includes(LEG(x.status)) && !C.FIM_RESULT.includes(x.status)) { $('[name=km]', form).classList.add('err'); $('[name=km]', form).scrollIntoView({ block: 'center' }); return 'Informe o km da entrega (ida e volta). Toque em “Recalcular trajeto” para o app calcular pela cidade.'; }
         if (x.entregaDiferente && ent.some((e) => !(C.n0(e.km) > 0)) && !PREG_SEM_KM_OK.includes(LEG(x.status)) && !C.FIM_RESULT.includes(x.status)) return 'Informe o km de cada local de entrega.';
         const data = {
-          numero: x.numero.trim(), orgao: x.orgao.trim(), plataforma: (x.plataforma || '').trim(), tipoCompra: x.tipoCompra || '', cidadeUf: x.cidadeUf.trim(), sessao: x.sessao || '', prazoPropostas: x.prazoPropostas || '',
+          numero: x.numero.trim(), orgao: x.orgao.trim(), plataforma: (x.plataforma || '').trim(), tipoCompra: x.tipoCompra || '', modalidade: x.modalidade || modalidadeDe(x), cidadeUf: x.cidadeUf.trim(), sessao: x.sessao || '', prazoPropostas: x.prazoPropostas || '',
           entregaDiferente: !!x.entregaDiferente, kmManual: form.dataset.kmManual === '1',
           prazoEntregaDias: x.prazoEntregaDias ? parseInt(x.prazoEntregaDias, 10) : null, exigencias: '', status: x.status,
           link: x.link.trim(), linkProposta: (x.linkProposta || '').trim(), linkLicitacao: (x.linkLicitacao || '').trim(), obs: x.obs.trim(),
@@ -5140,7 +5162,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     return m ? nome + '/' + m[2].toUpperCase() : nome;
   }
   // nome curto (uma palavra) de cada status, só na tela; o valor salvo continua o mesmo
-  const ST_CURTO = { 'Falta dados': 'Incompleto', 'Proposta enviada': 'Enviada', 'Julgamento': 'Julgamento', 'Aguardando empenho': 'Empenho', 'Recepção de propostas': 'Recepção', 'Aguardando disputa': 'Aguardando', 'Análise de propostas': 'Análise', 'Em retificação': 'Retificação', 'Resultado final': 'Resultado' };
+  const ST_CURTO = { 'Falta dados': 'Incompleto', 'Analisando': 'Cotando', 'Proposta enviada': 'Enviada', 'Julgamento': 'Julgamento', 'Aguardando empenho': 'Empenho', 'Recepção de propostas': 'Recepção', 'Aguardando disputa': 'Aguardando', 'Análise de propostas': 'Análise', 'Em retificação': 'Retificação', 'Resultado final': 'Resultado' };
   const stTxt = (s) => ST_CURTO[s] || s;
   const badgeStatus = (s) => `<span class="badge st-${slugClass(LEG(s))}" title="${esc(s)}">${esc(stTxt(s))}</span>`;
 
@@ -5273,7 +5295,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
   const orgPn = (p) => { const o = String(p.orgao || ''); return (PN_M ? o.replace(/^(Prefeitura Municipal de|Prefeitura de|Município de|Municipio de)\s+/i, '') : o).toLocaleUpperCase('pt-BR'); };
   function painelStatusStrip(R) {
     const vis = [...R.pMap.values()];
-    const L = [['Julgamento', 'Julgamento'], ['Aguardando empenho', 'Empenho'], ['Proposta enviada', 'Enviadas'], ['Analisando', 'Analisando'], ['Falta dados', 'Incompletos'], ['Faturado', 'Faturados']];
+    const L = [['Julgamento', 'Julgamento'], ['Aguardando empenho', 'Empenho'], ['Proposta enviada', 'Enviadas'], ['Analisando', 'Cotando'], ['Falta dados', 'Incompletos'], ['Faturado', 'Faturados']];
     // v1.122.0 (Rodada 2, F89): o valor de cada status (antes no cartão "Pregões por status") vai no próprio botão
     const vend = (arr) => arr.reduce((a, x) => a + (x.venda || 0), 0);
     const enc = vis.filter((x) => C.fimP(x.p.status, x.ganho)), vEnc = vend(enc), nEnc = enc.length;
@@ -5696,7 +5718,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
   }
   function statusGridM(R) {
     const vis = [...R.pMap.values()], vend = (arr) => arr.reduce((a, x) => a + (x.venda || 0), 0);
-    const L = [['Julgamento', 'Julgam.'], ['Aguardando empenho', 'Empenho'], ['Proposta enviada', 'Enviadas'], ['Analisando', 'Analisando'], ['Falta dados', 'Incompl.'], ['Faturado', 'Faturados']];
+    const L = [['Julgamento', 'Julgam.'], ['Aguardando empenho', 'Empenho'], ['Proposta enviada', 'Enviadas'], ['Analisando', 'Cotando'], ['Falta dados', 'Incompl.'], ['Faturado', 'Faturados']];
     const enc = vis.filter((x) => C.fimP(x.p.status, x.ganho)), gh = vis.filter((x) => x.ganho);
     const tile = (n, t, v, cor, attrs) => `<button type="button" class="pm-st${n ? '' : ' zero'}" style="--sc:${cor}" ${attrs}><b>${n}</b><span>${t}</span><em>${C.brl0(v)}</em></button>`;
     return `<div class="pm-sg" role="group" aria-label="Pregões por status">${L.map(([k, t]) => { const arr = vis.filter((x) => noGrupo(x, k)); return tile(arr.length, t, vend(arr), COR_STATUS[k] || '#2e75b6', `data-act="ir-status" data-v="g:${esc(k)}"`); }).join('')}${tile(enc.length, 'Encerrados', vend(enc), '#7a8699', 'data-act="ir-encerrados"')}${tile(gh.length, 'Venci 🏆', vend(gh), '#2f8f3a', 'data-act="ir-status" data-v="ganhei"')}</div>`;
@@ -5840,7 +5862,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
       ${selo}${mCount}
       ${alr ? `<div class="p-alert ${alr.nivel}">${icon(alr.nivel === 'gold' ? 'check' : 'alert', 'sm')}<span>${esc(alr.texto)}</span></div>` : ''}
       ${alr && alr.pergunta ? `<div class="p-ask"><button type="button" class="btn sm" data-act="sessao-continua" data-id="${p.id}">Continua amanhã</button><button type="button" class="btn sm" data-act="sessao-mais" data-id="${p.id}">Mais dias</button><button type="button" class="btn sm ghost" data-act="sessao-fim" data-id="${p.id}">Encerrou</button></div>` : ''}
-      <div class="row between p-hd"><span class="num" style="color:var(--gc)" title="Pregão nº ${esc(p.numero)}">${/^preg/i.test(String(p.numero).trim()) ? esc(p.numero) : 'Nº ' + esc(p.numero)}</span><span class="m-acts">${url(p.link) ? `<a class="ic-btn" href="${esc(url(p.link))}" target="_blank" rel="noopener noreferrer" data-act="link-externo" title="Abrir edital" aria-label="Abrir edital">${icon('pdf', 'sm')}</a>` : '<span class="ic-btn ic-vazio" aria-hidden="true"></span>'}${url(p.linkProposta) ? `<a class="ic-btn" href="${esc(url(p.linkProposta))}" target="_blank" rel="noopener noreferrer" data-act="link-externo" title="Enviar proposta" aria-label="Enviar proposta">${icon('link', 'sm')}</a>` : '<span class="ic-btn ic-vazio" aria-hidden="true"></span>'}</span><span class="p-hd-r">${tipoChip(p, 'curto')}${badgeStatus(p.status)}</span></div>
+      <div class="row between p-hd"><span class="num" style="color:var(--gc)" title="Pregão nº ${esc(p.numero)}">${/^(preg|disp)/i.test(String(p.numero).trim()) ? esc(p.numero) : 'Nº ' + esc(p.numero)}</span><span class="mod-pc">${modChip(p, 'curto')}</span><span class="m-acts">${url(p.link) ? `<a class="ic-btn" href="${esc(url(p.link))}" target="_blank" rel="noopener noreferrer" data-act="link-externo" title="Abrir edital" aria-label="Abrir edital">${icon('pdf', 'sm')}</a>` : '<span class="ic-btn ic-vazio" aria-hidden="true"></span>'}${url(p.linkProposta) ? `<a class="ic-btn" href="${esc(url(p.linkProposta))}" target="_blank" rel="noopener noreferrer" data-act="link-externo" title="Enviar proposta" aria-label="Enviar proposta">${icon('link', 'sm')}</a>` : '<span class="ic-btn ic-vazio" aria-hidden="true"></span>'}</span><span class="p-hd-r">${tipoChip(p, 'curto')}${badgeStatus(p.status)}</span></div>
       <h4>${esc(p.orgao).replace(/^(Prefeitura Municipal de|Prefeitura de|Município de)\s+/i, '<span class="org-pre">$1 </span>')}</h4>
       <div class="small muted row wrap" style="gap:4px 14px;align-items:center">${url(p.linkProposta) ? `<a class="btn sm lk p-prop" href="${esc(url(p.linkProposta))}" target="_blank" rel="noopener noreferrer" data-act="link-externo">${icon('link', 'sm')} Proposta</a>` : ''}${p.cidadeUf ? `<span class="row" style="gap:4px">${icon('pin', 'sm')}${esc(cidadeFmt(p.cidadeUf))}</span>` : ''}${p.sessao && (!pz || String(p.sessao) !== String(p.prazoPropostas || '')) ? `<span class="row" style="gap:4px">${icon('calendar', 'sm')}${esc(C.fmtSessao(p.sessao))}</span>` : ''}<span class="row p-nit" style="gap:4px">${icon('itens', 'sm')}${pst.itens.length ? pst.itens.length + (pst.itens.length === 1 ? ' item' : ' itens') : 'sem itens'}</span><span class="m-meta">${pst.itens.length ? pst.itens.length + (pst.itens.length === 1 ? ' item' : ' itens') : 'sem itens'}</span>${(p.obs || pst.itens.some((i) => String(i.obs || '').trim())) ? `<span class="m-meta m-obs" title="Tem observação">${icon('info', 'sm')}</span>` : ''}</div>
       ${(() => {
@@ -5883,7 +5905,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     if (!list.length) return `<div class="card empty"><p class="muted">Nenhum pregão encontrado.</p></div>`;
     // raias por status: cada uma é uma fileira que desliza para o lado (PC e celular); encerrados e concluídos num botão só
     const gh = UI.filtro === 'ganhei', atvAll = list.filter((x) => gh || !inat(x.p)), ina = gh ? [] : list.filter((x) => inat(x.p)).sort(descPrimeiro);
-    const raias = [['Atenção agora', 'Atenção agora', 'atn'], ['Julgamento', 'Julgamento', 'jul'], ['Venci', 'Venci 🏆', 'venci'], ['Enviadas', 'Enviadas', 'env'], ['Analisando', 'Analisando', 'ana'], ['Incompletos', 'Incompletos', 'inc'], ['Outros', 'Outros', '']].map((r) => r.concat([[]]));
+    const raias = [['Atenção agora', 'Atenção agora', 'atn'], ['Julgamento', 'Julgamento', 'jul'], ['Venci', 'Venci 🏆', 'venci'], ['Enviadas', 'Enviadas', 'env'], ['Analisando', 'Cotando', 'ana'], ['Incompletos', 'Incompletos', 'inc'], ['Outros', 'Outros', '']].map((r) => r.concat([[]]));
     const gDe = (x) => { const a = alertaPregao(x); if (a && a.lane) return 0; return 1 + ((LEG(x.p.status) === 'Aguardando empenho' || x.ganho) ? 1 : LEG(x.p.status) === 'Julgamento' ? 0 : LEG(x.p.status) === 'Proposta enviada' ? 2 : LEG(x.p.status) === 'Analisando' ? 3 : LEG(x.p.status) === 'Falta dados' ? 4 : 5); };
     atvAll.forEach((x) => raias[gDe(x)][3].push(x));
     raias[0][3].sort((a, b) => { const A = alertaPregao(a), B = alertaPregao(b); return (A.rank - B.rank) || (A.t - B.t); });
@@ -6499,7 +6521,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     return `<div class="page">
       <div class="detail-top"><button class="back" data-act="voltar">${icon('back')} Pregões</button>
         <button type="button" class="icon-btn" data-act="pdf-pregao" data-id="${p.id}" title="Proposta PDF" aria-label="Proposta PDF">${icon('pdf')}</button></div>
-      <div class="hero"><div class="hero-info"><span class="num">${/^preg/i.test(String(p.numero).trim()) ? esc(p.numero) : 'PREGÃO Nº ' + esc(p.numero)}</span><h2>${esc(p.orgao)}</h2>
+      <div class="hero"><div class="hero-info"><span class="num">${/^(preg|disp)/i.test(String(p.numero).trim()) ? esc(p.numero) : (modalidadeDe(p) === 'Dispensa' ? 'DISPENSA' : 'PREGÃO') + ' Nº ' + esc(p.numero)}</span> ${modChip(p, 'hero')}<h2>${esc(p.orgao)}</h2>
         <div class="m">${tipoChip(p, 'hero')}${p.cidadeUf ? `<span>${esc(cidadeFmt(p.cidadeUf))}</span>` : ''}${p.sessao ? `<span>Sessão ${esc(C.fmtSessao(p.sessao))}</span>` : ''}</div></div>
         ${(() => {   // atalhos do pregão no cabeçalho: edital, site da proposta/lances, licitação e modelo
           const u = (v) => { v = String(v || '').trim(); return v ? (/^https?:\/\//i.test(v) ? v : 'https://' + v) : ''; };
@@ -6518,7 +6540,9 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
           ${p.obs ? `<div class="obstxt">${esc(p.obs)}</div>` : ''}</div>`;
       })()}
       <div class="card st-tipo"><div class="field" style="margin:0"><label for="stsel">Status do pregão</label>
-        <select class="input" id="stsel" data-status-pregao="${p.id}">${C.STATUS.map((s) => `<option value="${esc(s)}"${s === p.status ? ' selected' : ''}>${esc(s)}</option>`).join('')}</select></div>
+        <select class="input" id="stsel" data-status-pregao="${p.id}">${(C.STATUS_SEL.includes(p.status) ? C.STATUS_SEL : [p.status].concat(C.STATUS_SEL)).map((s) => `<option value="${esc(s)}"${s === p.status ? ' selected' : ''}>${esc(s)}</option>`).join('')}</select></div>
+        <div class="field" style="margin:0"><label for="mdsel">Modalidade</label>
+        <select class="input" id="mdsel" data-mod-pregao="${p.id}">${MODALIDADES.map((o) => `<option value="${esc(o.v)}"${o.v === modalidadeDe(p) ? ' selected' : ''}>${esc(o.l)}</option>`).join('')}</select></div>
         <div class="field" style="margin:0"><label for="tcsel">Tipo de compra</label>
         <select class="input" id="tcsel" data-tipo-pregao="${p.id}">${TIPO_COMPRA.map((o) => `<option value="${esc(o.v)}"${o.v === tipoCompraDe(p) ? ' selected' : ''}>${esc(o.l)}</option>`).join('')}</select></div></div>
       ${LEG(p.status) === 'Proposta enviada' && pst.itens.length ? `<button type="button" class="btn block navy modo-pz" data-act="modo-pregao" data-id="${p.id}" title="Abre uma janela só com o nº do item, o piso sem prejuízo e o lucro do lance">${icon('acomp', 'sm')} Modo pregão</button>` : ''}
@@ -6641,7 +6665,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
   function ajustarStatusAoGanhar(pid, temGanho) {
     const p = store.get().pregoes.find((x) => x.id === pid); if (!p) return;
     let st = p.status;
-    if (temGanho && (['Perdeu', 'Desclassificado', 'Desisti', 'Deserto', 'Fracassado', 'Cancelado', 'Revogado', 'Anulado'].includes(st) || st === 'Ganhou')) st = 'Julgamento';
+    if (temGanho && (['Perdeu', 'Desclassificado', 'Inabilitado', 'Desisti', 'Deserto', 'Fracassado', 'Cancelado', 'Revogado', 'Anulado'].includes(st) || st === 'Ganhou')) st = 'Julgamento';
     if (!temGanho && st === 'Ganhou') st = 'Julgamento';
     store.patchPregao(pid, (x) => { x.status = st; });   // grava e redesenha
   }
@@ -8073,6 +8097,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     if (t.dataset.ui) { UI.pdf[t.dataset.ui] = t.value; return; }
     if (t.dataset.pdf || t.dataset.bloco !== undefined) { commitPdf(t); return; }
     if (t.dataset.cfg) { commitCfg(t); return; }
+    if (t.dataset.modPregao) { store.upsertPregao({ id: t.dataset.modPregao, modalidade: t.value }); toast('Modalidade: ' + t.value); render(); return; }
     if (t.dataset.tipoPregao) { store.upsertPregao({ id: t.dataset.tipoPregao, tipoCompra: t.value }); toast(t.value ? 'Tipo: ' + (t.value === 'SRP' ? 'Registro de preços' : t.value) : 'Tipo de compra limpo'); render(); return; }
     if (t.dataset.statusPregao) { const idp = t.dataset.statusPregao, antes = (store.get().pregoes.find((x) => x.id === idp) || {}).status; store.upsertPregao({ id: idp, status: t.value }); toast('Status: ' + t.value); perguntarItensGanhos(idp, antes); return; }
     if (t.dataset.coloc) {
