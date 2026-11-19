@@ -1758,6 +1758,12 @@ html.cwb .kpi-mei { display: none; }   /* limite do MEI é do CNPJ do João, nã
   .ac-row .ac-n, .ac-row .ac-s { grid-column: 1 / -1; }
   .ac-row > span[data-l]::before { content: attr(data-l) ' '; color: var(--muted); font-size: 11.5px; }
 }
+/* cabeçalho do cartão no celular (v1.169.1): número/título longo encolhe com reticências e o status nunca sai do cartão */
+@media (max-width: 899px) {
+  html body .pq-grid .pcard .p-hd .num { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  html body .pq-grid .pcard .p-hd .p-hd-r { flex: none; }
+  html body .pq-grid .pcard .p-hd { min-width: 0; }
+}
 </style>
 </head>
 <body>
@@ -1770,7 +1776,7 @@ html.cwb .kpi-mei { display: none; }   /* limite do MEI é do CNPJ do João, nã
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.169.0';
+  const APP_VERSION = '1.169.1';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   // Status do pregão (decisão do João, 11/11/2026): padrão da BLL + os dele (Falta dados, Analisando, Empenho, Concluído, Desisti).
   // O que muda nas contas e no Dashboard é ter ou não item Venci (pst.ganho), não o nome do status.
