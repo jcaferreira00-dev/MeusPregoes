@@ -350,6 +350,7 @@ input[type=range] { width: 100%; accent-color: var(--blue); }
 .pd-blk > h3[style*="inline"] + .tiny { display: block; padding-top: 10px; }
 .pd-blk > summary { padding: 0; } .pd-blk > summary > h3 { display: block !important; margin: -16px -16px 0; }
 .pd-blk > summary > .tiny { display: block; padding-top: 10px; }
+.page:has(> details.pd-blk) { gap: 18px; } .page > .m-hide:has(> details.pd-blk) { display: flex; flex-direction: column; gap: 18px; } .page > .m-hide:has(> details.pd-blk)[hidden] { display: none; } details.pd-blk:not([open]) { padding-bottom: 0; } details.pd-blk:not([open]) > summary > h3 { border-bottom: 0; margin-bottom: 0; }
 .pd-b1 { --bc: #2e75b6; } .pd-b2 { --bc: #5b5fc7; } .pd-b3 { --bc: #2f7d3a; } .pd-b4 { --bc: #b7791f; } .pd-b5 { --bc: #6b7a90; } .pd-b6 { --bc: #8e44ad; } .pd-b7 { --bc: #1f3864; }
 .pd-b8 { --bc: #c0392b; }
 .pd-b7 > h3 { background: var(--bc); color: #fff; }
@@ -1718,7 +1719,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.166.3';
+  const APP_VERSION = '1.167.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   // Status do pregão (decisão do João, 11/11/2026): padrão da BLL + os dele (Falta dados, Analisando, Empenho, Concluído, Desisti).
   // O que muda nas contas e no Dashboard é ter ou não item Venci (pst.ganho), não o nome do status.
@@ -3740,7 +3741,8 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     const heads = ['Item', 'Descrição', 'Unid', 'Qtd', 'Valor Unit. (R$)', 'Valor Total (R$)'];
 
     if (!L.linhas.length) { garantir(24); T('Nenhum item cadastrado neste pregão.', M + 8, y - 12, 10, ital, GRAY); y -= 24; }
-    for (const ln of L.linhas) {
+    L.linhas.forEach((ln, iLn) => {
+      if (iLn > 0) y -= 16;   // espaço em branco entre um item e o próximo (pedido do João, 19/11/2026)
       const descL = wrap(C.horizontal(ln.descEdital), font, 10, CW - 14);   // o título "EXIGIDO NO EDITAL:" sai destacado numa linha própria
       const marcaL = wrap(ln.marcaTxt, font, 9.5, CW - 14);
       const sepOf = C.separarObservacao(ln.catalogoH);
@@ -3795,7 +3797,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
         espL.forEach((l, j) => T(l, M + 7, y - 14 - j * 12, 9.5, font, ACCT));
         y -= hEsp;
       }
-    }
+    });
 
     }
     // --- tabela de especificações técnicas (cada coluna liga/desliga)
@@ -4831,7 +4833,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     if (!alvo) return;
     if (Guard.pending.size) commitAllPending();
     UI.pdf.pregaoId = alvo.pregaoId; UI.pdf.result = null;
-    UI.tab = 'pdf'; UI.detailId = null; saveUI(); render();
+    UI.pdfB6 = true; UI.tab = 'pdf'; UI.detailId = null; saveUI(); render();
     setTimeout(() => {
       const el = document.getElementById('cat-' + alvo.itemId) || document.getElementById('catCard');
       if (!el) return;
@@ -6220,7 +6222,14 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
       if (it.revisar) riscos.push('Marcado para revisar: ' + String(it.revisar).slice(0, 90));
       itens.push({ riscos, id: it.id, n: C.padLE(it.itemEdital) || '', lote: C.padLE(it.loteEdital) || '', nome: nomeCurto(it.descricao, 34), qtd: C.n0(it.qtd), teto: c.teto, piso, meta, custoSolo: s ? s.custoTotal : c.custoTotal, custoJunto: c.custoTotal, res: c.resultado === 'desc' ? 'desc' : (c.resultado === 'venci' || c.resultado === 'perdi' ? c.resultado : ''), lanceApp: c.lance });
     }
-    return { pid: pst.p.id, titulo: (/^preg/i.test(String(pst.p.numero).trim()) ? '' : 'Pregão ') + pst.p.numero, orgao: String(pst.p.orgao || '').toLocaleUpperCase('pt-BR'), imp: impPct, fila: FILA_MODO, itens };
+    // destaca o número que muda no edital (pedido do João, 19/11/2026): lote variando com o item sempre igual (ex.: Ventania 19, Lote 1..33 e Item 1) = destaque no LOTE; senão, no ITEM
+    const _lts = new Set(itens.map((x) => x.lote).filter(Boolean)), _ns = new Set(itens.map((x) => x.n));
+    const porLote = _lts.size > 1 && _lts.size > _ns.size;
+    itens.forEach((x) => {
+      if (porLote) { x.big = x.lote || x.n || '?'; x.rot = (x.n ? 'LOTE · item ' + x.n : 'LOTE'); x.rotN = 'Lote ' + x.big; }
+      else { x.big = x.n || '?'; x.rot = x.lote && _lts.size > 1 ? 'LOTE ' + x.lote + ' · ITEM' : 'ITEM'; x.rotN = 'Item ' + x.big; }
+    });
+    return { pid: pst.p.id, titulo: (/^preg/i.test(String(pst.p.numero).trim()) ? '' : 'Pregão ') + pst.p.numero, orgao: String(pst.p.orgao || '').toLocaleUpperCase('pt-BR'), imp: impPct, fila: FILA_MODO, porLote, itens };
   }
   // código que roda DENTRO da janela (sem usar nada do app): vira texto com toString()
   function modoPregaoJanela(D) {
@@ -6250,9 +6259,9 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     function def(it) { return it.lanceApp > 0 ? it.lanceApp : (it.teto != null ? fl2(it.teto) : null); }   // sem nada digitado: o lance do cadastro; sem lance, o teto
     function ef(it) { return V[it.id] > 0 ? V[it.id] : def(it); }
     function res(it) { return S[it.id] !== undefined ? S[it.id] : it.res; }   // o que foi marcado aqui vale; senão, o que já estava no app
-    function envia(it, r, lance, coloc) {
+    function envia(it, r, lance, coloc, venc) {
       var q = []; try { q = JSON.parse(localStorage.getItem(D.fila) || '[]') || []; } catch (e) {}
-      q.push({ k: Date.now() + '-' + it.id, id: it.id, res: r, lance: lance || null, coloc: coloc || null });
+      q.push({ k: Date.now() + '-' + it.id, id: it.id, res: r, lance: lance || null, coloc: coloc || null, venc: venc || null });
       try { localStorage.setItem(D.fila, JSON.stringify(q)); } catch (e) {}
     }
     function rodape() {
@@ -6290,7 +6299,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     }
     function step(it, d) { var base = ef(it); if (base == null) return; var n = C2(base + d); if (it.piso != null && n < it.piso) n = it.piso; if (it.teto != null && n > it.teto) n = fl2(it.teto); set(it, n, true); }
     function venci(it) {
-      var v = ef(it), e = est(it, v), nome = 'Item ' + (it.n || '?');
+      var v = ef(it), e = est(it, v), nome = it.rotN;
       if (v > 0 && e === 'bad') { alert('O lance digitado está fora dos limites (piso ' + R(it.piso) + ', teto ' + T(it.teto) + '). Corrija antes de marcar Venci.'); return; }
       var msg = v > 0 ? nome + ': venci por '  + R(v) + '?\n\nIsso grava ' + R(v) + ' como lance final no app e leva o item para a proposta final.'
         : nome + ': venci sem lance digitado aqui?\n\nO item vai para a proposta final pelo valor que já está no app (' + (it.lanceApp != null ? 'lance gravado ' + R(it.lanceApp) : 'o teto ' + T(it.teto)) + ').';
@@ -6301,21 +6310,25 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     function foi(it) {
       var old = document.getElementById('cxpos'); if (old) old.remove();
       var o = document.createElement('div'); o.id = 'cxpos'; o.style.cssText = 'position:fixed;inset:0;z-index:50;background:rgba(15,23,42,.55);display:flex;align-items:center;justify-content:center;padding:16px;box-sizing:border-box';
-      o.innerHTML = '<div style="box-sizing:border-box;background:#fff;border-radius:14px;padding:16px;width:min(320px,100%);display:grid;grid-template-columns:minmax(0,1fr);gap:10px;box-shadow:0 10px 30px rgba(0,0,0,.35)"><b style="font-size:17px">Item ' + esc(it.n || '?') + ' · não venci</b><label style="font-size:13px;color:#667489">Minha colocação (1 = primeiro)</label><input id="posv" inputmode="numeric" maxlength="3" autocomplete="off" placeholder="ex.: 3" style="box-sizing:border-box;width:100%;min-width:0;font:inherit;font-size:28px;font-weight:700;text-align:center;border:2px solid #d9dfe8;border-radius:12px;padding:8px"><div style="display:flex;gap:8px"><button type=button id="posc" style="flex:1;min-width:0;font:inherit;font-size:15px;border:1px solid #d9dfe8;background:#fff;border-radius:12px;padding:11px">Cancelar</button><button type=button id="poso" style="flex:1;min-width:0;font:inherit;font-size:15px;font-weight:700;border:0;background:#1f3a5f;color:#fff;border-radius:12px;padding:11px">Salvar</button></div></div>';
+      o.innerHTML = '<div style="box-sizing:border-box;background:#fff;border-radius:14px;padding:16px;width:min(320px,100%);display:grid;grid-template-columns:minmax(0,1fr);gap:10px;box-shadow:0 10px 30px rgba(0,0,0,.35)"><b style="font-size:17px">' + esc(it.rotN) + ' · não venci</b><label style="font-size:13px;color:#667489">Minha colocação (1 = primeiro)</label><input id="posv" inputmode="numeric" maxlength="3" autocomplete="off" placeholder="ex.: 3" style="box-sizing:border-box;width:100%;min-width:0;font:inherit;font-size:28px;font-weight:700;text-align:center;border:2px solid #d9dfe8;border-radius:12px;padding:8px"><label style="font-size:13px;color:#667489">Preço de quem ganhou (R$ unit., para a estatística)</label><input id="posw" inputmode="decimal" autocomplete="off" placeholder="ex.: 12,50" style="box-sizing:border-box;width:100%;min-width:0;font:inherit;font-size:24px;font-weight:700;text-align:center;border:2px solid #d9dfe8;border-radius:12px;padding:8px"><div style="display:flex;gap:8px"><button type=button id="posc" style="flex:1;min-width:0;font:inherit;font-size:15px;border:1px solid #d9dfe8;background:#fff;border-radius:12px;padding:11px">Cancelar</button><button type=button id="poso" style="flex:1;min-width:0;font:inherit;font-size:15px;font-weight:700;border:0;background:#1f3a5f;color:#fff;border-radius:12px;padding:11px">Salvar</button></div></div>';
       document.body.appendChild(o);
-      var inp = o.querySelector('#posv'); inp.focus();
+      var inp = o.querySelector('#posv'), inw = o.querySelector('#posw'); inp.focus();
       function ok() {
         var t = String(inp.value).replace(/\D/g, ''), n = parseInt(t, 10);
         if (t && !(n >= 1 && n <= 999)) { inp.style.borderColor = '#c0392b'; return; }
-        S[it.id] = 'perdi'; if (n >= 1) Q[it.id] = n; else delete Q[it.id]; sv(); envia(it, 'perdi', null, n >= 1 ? n : null); o.remove(); tudo();
+        var wv = String(inw.value).trim().replace(/[^\d,.]/g, ''); if (wv.indexOf(',') >= 0) wv = wv.replace(/\./g, '').replace(',', '.');
+        var vw = wv ? parseFloat(wv) : null;
+        if (wv && !(vw > 0)) { inw.style.borderColor = '#c0392b'; return; }
+        S[it.id] = 'perdi'; if (n >= 1) Q[it.id] = n; else delete Q[it.id]; sv(); envia(it, 'perdi', null, n >= 1 ? n : null, vw > 0 ? Math.round(vw * 100) / 100 : null); o.remove(); tudo();
       }
       o.querySelector('#poso').onclick = ok; o.querySelector('#posc').onclick = function () { o.remove(); };
-      inp.addEventListener('keydown', function (e) { if (e.key === 'Enter') ok(); else if (e.key === 'Escape') o.remove(); });
+      inp.addEventListener('keydown', function (e) { if (e.key === 'Enter') inw.focus(); else if (e.key === 'Escape') o.remove(); });
+      inw.addEventListener('keydown', function (e) { if (e.key === 'Enter') ok(); else if (e.key === 'Escape') o.remove(); });
     }
-    function reabre(it) { if (!confirm('Item ' + (it.n || '?') + ': reabrir (voltar para aguardando resultado)?')) return; S[it.id] = ''; delete W[it.id]; delete Q[it.id]; sv(); envia(it, '', null); tudo(); }
+    function reabre(it) { if (!confirm(it.rotN + ': reabrir (voltar para aguardando resultado)?')) return; S[it.id] = ''; delete W[it.id]; delete Q[it.id]; sv(); envia(it, '', null); tudo(); }
     function box(it) {
-      var s = document.createElement('section'); s.id = 'c' + it.id; s.dataset.n = (it.n || '').replace(/^0+/, '');
-      s.innerHTML = '<div class=top><div class=num><small>' + (it.lote ? 'LOTE ' + it.lote + ' · ITEM' : 'ITEM') + '</small>' + (it.n || '?') + '</div><div class=nm>' + esc(it.nome) + ' · ' + it.qtd + ' un.</div>' + (it.riscos && it.riscos.length ? '<button type=button class=rk data-k=1 aria-label="Alertas do item"><svg viewBox="0 0 24 24" width="22" height="22"><path d="M12 3 2 21h20z" fill="#f3b73b" stroke="#b7791f" stroke-width="1.6" stroke-linejoin="round"/><path d="M12 10v5M12 17.6v.2" stroke="#5c3d00" stroke-width="2" stroke-linecap="round"/></svg></button>' : '') + '<div class=fim></div></div>'
+      var s = document.createElement('section'); s.id = 'c' + it.id; s.dataset.n = String(it.big || '').replace(/^0+/, '');
+      s.innerHTML = '<div class=top><div class=num><small>' + esc(it.rot) + '</small>' + esc(it.big) + '</div><div class=nm>' + esc(it.nome) + ' · ' + it.qtd + ' un.</div>' + (it.riscos && it.riscos.length ? '<button type=button class=rk data-k=1 aria-label="Alertas do item"><svg viewBox="0 0 24 24" width="22" height="22"><path d="M12 3 2 21h20z" fill="#f3b73b" stroke="#b7791f" stroke-width="1.6" stroke-linejoin="round"/><path d="M12 10v5M12 17.6v.2" stroke="#5c3d00" stroke-width="2" stroke-linecap="round"/></svg></button>' : '') + '<div class=fim></div></div>'
         + '<div class="ref cx"><div><span>Teto</span><b>' + T(it.teto) + '</b></div><div class=piso><span>Piso (mínimo)</span><b>' + R(it.piso) + '</b></div><div><span>Posso baixar</span><b>' + (it.teto != null && it.piso != null && it.piso <= it.teto + 0.004 ? R(C2(fl2(it.teto) - it.piso)) : '—') + '</b></div></div>'
         + '<div class="in cx" id=w' + it.id + '><button type=button data-s=-1>−</button><input id=i' + it.id + ' inputmode=decimal autocomplete=off placeholder="Meu lance (unit.)"><button type=button data-s=1>+</button></div>'
         + '<div class="st cx"><button type=button data-d=-0.01>−0,01</button><button type=button data-d=-0.1>−0,10</button><button type=button data-d=-1>−1,00</button><button class=pz type=button data-p=1>Piso</button></div><div class="res cx" id=r' + it.id + '></div>'
@@ -6338,7 +6351,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     document.getElementById('hora').textContent = 'Dados do app de ' + new Date().toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) + ' · lances digitados aqui não são gravados; só Venci / Não venci';
     document.getElementById('q').addEventListener('input', function (e) {
       var q = e.target.value.replace(/\D/g, '').replace(/^0+/, '');
-      D.itens.forEach(function (it) { var el = document.getElementById('c' + it.id); el.style.display = !q || el.dataset.n === q || (it.lote && it.lote.replace(/^0+/, '') === q) ? '' : 'none'; });
+      D.itens.forEach(function (it) { var el = document.getElementById('c' + it.id); el.style.display = !q || el.dataset.n === q || (it.lote && it.lote.replace(/^0+/, '') === q) || (it.n && it.n.replace(/^0+/, '') === q) ? '' : 'none'; });
     });
     document.getElementById('lt').addEventListener('click', function () {
       if (!confirm('Voltar todos os lances ao valor do cadastro (ou ao teto)? (Venci / Não venci já enviados ao app não mudam.)')) return;
@@ -6369,7 +6382,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
 + '#encT{grid-column:1/-1;order:999;margin:6px 2px 0;font-size:13px;font-weight:700;color:var(--mut);text-transform:uppercase;letter-spacing:.05em}'
 + 'footer{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--line);padding:8px 14px calc(8px + env(safe-area-inset-bottom));font-size:14px}footer .a{display:flex;justify-content:space-between;gap:10px}footer b{font-size:18px}footer small{display:block;color:var(--mut);min-height:14px}'
 + '.vazio{grid-column:1/-1;text-align:center;color:var(--mut);padding:30px}'
-+ '</style></head><body><header><b>' + esc(D.titulo) + ' · ' + esc(D.orgao) + '</b><span id="hora"></span><div class="bar"><input id="q" inputmode="numeric" placeholder="Ir para o item nº" autocomplete="off"><button id="lt" type="button">Restaurar lances</button></div></header><main id="m"><div id="encT" style="display:none"></div></main>'
++ '</style></head><body><header><b>' + esc(D.titulo) + ' · ' + esc(D.orgao) + '</b><span id="hora"></span><div class="bar"><input id="q" inputmode="numeric" placeholder="Ir para o ' + (D.porLote ? 'lote' : 'item') + ' nº" autocomplete="off"><button id="lt" type="button">Restaurar lances</button></div></header><main id="m"><div id="encT" style="display:none"></div></main>'
 + '<footer><div class="a"><span>Venci: <b id="fn">0</b></span><span>Lucro dos vencidos: <b id="fl">R$ 0,00</b></span></div><small id="fa"></small></footer><script>('
 + modoPregaoJanela.toString() + ')(' + dados + ');<\/script></body></html>';
   }
@@ -6384,7 +6397,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
         const v = Number(e.lance);
         if (v > 0 && (it.teto == null || v <= it.teto + 0.004)) store.upsertItem({ id: e.id, lanceFinal: Math.round(v * 100) / 100 });
         marcarGanho(e.id, true);
-      } else if (e.res === 'perdi') { definirResultado(e.id, 'perdi'); const n = parseInt(e.coloc, 10); if (n >= 1 && n <= 999) store.upsertItem({ id: e.id, colocacao: n }); }
+      } else if (e.res === 'perdi') { definirResultado(e.id, 'perdi'); const n = parseInt(e.coloc, 10); if (n >= 1 && n <= 999) store.upsertItem({ id: e.id, colocacao: n }); const vw = Number(e.venc); if (vw > 0) store.upsertItem({ id: e.id, vencedor: Math.round(vw * 100) / 100 }); }
       else if (e.res === '') definirResultado(e.id, '');
     }
   }
@@ -6863,14 +6876,14 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     const camposBanco = C.CAMPOS_BANCO.map(([id, nome]) => swp(o, 'bancoCampos.' + id, nome)).join('');
     const decl = C.DECL_PROPOSTA.map(([k, t, x]) => swp(o, 'decl.' + k, t, k === 'representante' ? 'Nome, CPF, RG, estado civil, e-mail e telefone do titular (só o que estiver preenchido em Config › Meus dados). Sai fora da proposta sem identificação.' : esc(x.replace('{numero}', pz.numero || '…')))).join('');
     const cab = `
-      <details class="card pd-blk pd-b2 pdf-avanc" data-k="pdfB2"${UI.pdfB2 === false ? '' : ' open'}><summary><h3>2 · Documento da proposta <span class="grow"></span><span class="saved-ind" id="savedInd">Salvo</span></h3></summary>
+      <details class="card pd-blk pd-b2 pdf-avanc" data-k="pdfB2"${UI.pdfB2 ? ' open' : ''}><summary><h3>2 · Documento da proposta <span class="grow"></span><span class="saved-ind" id="savedInd">Salvo</span></h3></summary>
         <p class="tiny muted" style="margin:0 0 8px">Todos os pregões saem no seu modelo padrão. Aqui você só ajusta as condições deste edital e, se ele pedir, a versão sem identificação. As declarações do edital são feitas à parte, conforme cada pregão pede.</p>
         ${(() => { if (UI.pdf.tipo === 'final') return ''; const pz = store.get().pregoes.find((x) => x.id === UI.pdf.pregaoId), k = confereIdent(pz, o); if (!k) return '';
           return `<div class="alert ${k.ok ? 'ok' : 'bad'}" style="margin:0 0 10px">${icon(k.ok ? 'check' : 'alert', 'sm')}<div class="grow">Edital: ${regraIdentTxt(k.r)}. ${k.ok ? 'A proposta está configurada assim.' : '<b>A chavinha abaixo está diferente do edital.</b> O app não gera assim sem você confirmar.'}${k.r.observacoes ? '<br><span class="tiny">' + esc(k.r.observacoes) + '</span>' : ''}</div>${k.ok ? '' : '<button type="button" class="btn sm" data-act="pdf-ident-edital">Ajustar</button>'}</div>`; })()}
         ${UI.pdf.tipo === 'final' ? '' : swp(o, 'anonima', 'Proposta inicial sem identificação da empresa', 'Para o edital que proíbe identificar o licitante. Sai sem nome, CNPJ, cabeçalho, dados bancários, local, assinatura, declarações e cláusulas com dados da empresa. Vale só para este pregão; a proposta final sai identificada.')}
         ${o.anonima ? `<div class="alert warn" style="margin:4px 0 10px">${icon('alert', 'sm')}<div class="grow">Sem identificação: ao gerar, o app confere se o nome, CNPJ, CPF, e-mail ou telefone aparecem no PDF. Confira também as fotos do catálogo (logo ou etiqueta da empresa).</div></div>` : ''}
       </details>
-      <details class="card pd-blk pd-b3 pdf-avanc" data-k="pdfB3"${UI.pdfB3 === false ? '' : ' open'}><summary><h3>3 · Condições deste pregão</h3></summary>
+      <details class="card pd-blk pd-b3 pdf-avanc" data-k="pdfB3"${UI.pdfB3 ? ' open' : ''}><summary><h3>3 · Condições deste pregão</h3></summary>
         <div class="formgrid">
           ${fp(o, 'validade', 'Validade (dias)', { type: 'int', im: 'numeric' })}
           ${fp(o, 'pagamento', 'Prazo de pagamento', { ph: pz.pagamentoDias ? pz.pagamentoDias + ' dias (do pregão)' : 'ex.: 30 dias' })}
@@ -6880,7 +6893,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
         </div>
         <p class="tiny muted" style="margin:6px 0 0">Tudo aqui vale só para este pregão (vem do edital). Em branco: prazo de entrega e pagamento saem do cadastro do pregão; validade, do padrão da Config.</p>
       </details>
-      <details class="card pd-blk pd-b4 pdf-avanc" data-k="pdfB4"${UI.pdfB4 === false ? '' : ' open'}><summary><h3>4 · O que os pregões costumam pedir</h3></summary>
+      <details class="card pd-blk pd-b4 pdf-avanc" data-k="pdfB4"${UI.pdfB4 ? ' open' : ''}><summary><h3>4 · O que os pregões costumam pedir</h3></summary>
         <p class="tiny muted" style="margin:0 0 8px">Frases fixas que saem no fim da proposta, antes do local e da assinatura. Desligue a que não quiser; a escolha vira o padrão dos próximos pregões.</p>
         <div class="swgrid sw1">${decl}</div>
       </details>`;
@@ -6976,7 +6989,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     const cf = (path, type, val, extra) => `data-cfg="${path}" data-type="${type}" value="${esc(val)}" ${extra || ''}`;
     const empOk = !!(e.nome && e.cnpj);
     return `<div class="page">
-      <details class="card pd-blk pd-b1 pdf-avanc" data-k="pdfB1"${UI.pdfB1 === false ? '' : ' open'}><summary><h3>1 · Qual pregão?</h3></summary>
+      <details class="card pd-blk pd-b1 pdf-avanc" data-k="pdfB1"${UI.pdfB1 ? ' open' : ''}><summary><h3>1 · Qual pregão?</h3></summary>
         <div class="field pdfp-field"><label for="pdfp">Pregão</label><select class="input" id="pdfp" data-ui="pregaoId">${list.map((x) => `<option value="${x.id}"${x.id === UI.pdf.pregaoId ? ' selected' : ''}>${esc(pregaoLabel(x))}</option>`).join('')}</select></div>
         ${tipoHtml}
         ${(pz0.modeloProprio || pz0.linkModelo) ? `<div class="alert warn" style="margin-bottom:12px">${icon('alert', 'sm')}<div class="grow">Este edital tem modelo próprio de proposta.${pz0.obs ? '<br><span style="font-weight:600;white-space:pre-wrap">' + esc(pz0.obs) + '</span>' : ''}</div>${pz0.linkModelo ? `<a class="btn sm" href="${esc(/^https?:\/\//i.test(pz0.linkModelo) ? pz0.linkModelo : 'https://' + pz0.linkModelo)}" target="_blank" rel="noopener noreferrer">Abrir modelo</a>` : ''}</div>` : ''}
@@ -7193,7 +7206,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     const bloq = falt.length ? `<div class="alert bad" style="margin-bottom:10px">${icon('alert', 'sm')}<div class="grow"><b>Não dá para gerar a proposta ainda.</b> Em cada item precisa ter a marca e o modelo (no item, iguais aos do descritivo) e o descritivo do item ofertado (no catálogo, logo acima):<div class="falta-lista">${falt.map((x) => `<div class="falta-it"><span class="grow"><b>${esc(x.rotulo)}</b> · ${esc(x.descricao)}<br><span class="tiny muted">falta: ${esc(x.falta.join('; '))}</span></span>${x.falta.some((f) => f !== 'descritivo do item ofertado') ? `<button type="button" class="btn sm" data-act="editar-item" data-id="${esc(x.id)}">${icon('edit', 'sm')} Marca/modelo</button>` : ''}${x.falta.includes('descritivo do item ofertado') ? `<button type="button" class="btn sm" data-act="cat-foco" data-id="${esc(x.id)}">${icon('image', 'sm')} Descritivo</button>` : ''}</div>`).join('')}</div></div></div>` : '';
     const aviso = pend.length ? `<div class="alert warn" style="margin-bottom:10px">${icon('alert', 'sm')}<div class="grow"><b>Confira antes de gerar:</b><br>${pend.map((x) => esc(x)).join('<br>')}</div></div>` : (falt.length ? '' : `<div class="alert ok" style="margin-bottom:10px">${icon('check', 'sm')}<span>Dados conferidos: nenhum campo em branco, todos os itens com marca, modelo, descritivo e valor.</span></div>`);
     const off = UI.pdf.busy || falt.length ? 'disabled' : '';
-    return `<details class="card pd-blk pd-b7 pdf-avanc" data-k="pdfB7" id="gerarCard" style="scroll-margin-top:80px"${UI.pdfB7 === false ? '' : ' open'}><summary><h3>${icon('pdf', 'sm')} Gerar</h3></summary>
+    return `<details class="card pd-blk pd-b7 pdf-avanc" data-k="pdfB7" id="gerarCard" style="scroll-margin-top:80px"${UI.pdfB7 ? ' open' : ''}><summary><h3>${icon('pdf', 'sm')} Gerar</h3></summary>
       ${bloq}${aviso}
       ${L.linhas.length ? `<label class="switch m-hide" style="margin-bottom:10px"><span>Anexar o catálogo ao final da proposta<small class="hint" style="display:block;font-weight:500">Ligado: o botão “Gerar PDF da proposta” já sai com o catálogo nas últimas páginas, num arquivo só.</small></span><input type="checkbox" data-cfg="proposta.catalogoJunto" data-type="check" ${st.config.proposta.catalogoJunto ? 'checked' : ''}></label>` : ''}
       <button class="btn primary block" data-act="pdf-gerar" ${off}>${icon('pdf')} ${UI.pdf.busy ? 'Gerando…' : 'Gerar PDF da proposta'}</button>
@@ -7222,7 +7235,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
       </div>`; }).join('');
     setTimeout(preencherFotosCatalogo, 0);
     const dl = `<datalist id="catTitList">${catTitulosOrdem().map((t) => `<option value="${esc(t)}">`).join('')}</datalist>`;
-    return `<details class="card pd-blk pd-b6 pdf-avanc" data-k="pdfB6" id="catCard" style="scroll-margin-top:80px"${UI.pdfB6 === false ? '' : ' open'}><summary><h3>${icon('image', 'sm')} Catálogo dos produtos</h3></summary>${dl}
+    return `<details class="card pd-blk pd-b6 pdf-avanc" data-k="pdfB6" id="catCard" style="scroll-margin-top:80px"${UI.pdfB6 ? ' open' : ''}><summary><h3>${icon('image', 'sm')} Catálogo dos produtos</h3></summary>${dl}
         <p class="tiny muted" style="margin:0 0 10px">Para o pregoeiro confrontar o edital com o que você oferece. Cada item sai com o que o edital exige, a marca/modelo, as especificações, a sua descrição detalhada e as fotos (até 4 por item). As fotos são reduzidas e sincronizadas com a sua conta (Config › Nuvem), para aparecerem nos outros aparelhos.</p>
         ${itens}
       </details>`;
@@ -8483,6 +8496,19 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     main.addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target.dataset && e.target.dataset.coloc) { e.preventDefault(); e.target.blur(); } });
   }
 
+  // aviso ao abrir o app (pedido do João, 19/11/2026): certidão que vence em até 3 dias (ou já vencida) abre um popup, uma vez por abertura
+  function avisoCertidoes(tent) {
+    tent = tent || 0;
+    const g = document.getElementById('gate');
+    if ((g && !g.hidden) || document.querySelector('.dlg-wrap')) { if (tent < 90) setTimeout(() => avisoCertidoes(tent + 1), 2000); return; }   // espera a tela de entrada fechar
+    if (!tent) { setTimeout(() => avisoCertidoes(1), 1500); return; }   // deixa a nuvem carregar as certidões
+    let L = [];
+    try { L = certidoes().map((c) => ({ c, ci: certInfo(c) })).filter((x) => x.ci.d != null && x.ci.d <= 3).sort((a, b) => a.ci.d - b.ci.d); } catch (e) { return; }
+    if (!L.length) return;
+    const linhas = L.map((x) => '• ' + String(x.c.nome).split(' (')[0] + ': ' + x.ci.texto).join('\n');
+    dialog({ title: L.length === 1 ? 'Certidão vencendo' : L.length + ' certidões vencendo', text: linhas + '\n\nEmita a nova certidão e marque ✓ na guia Certidões.', buttons: [{ label: 'Abrir Certidões', value: true, cls: 'primary' }, { label: 'Depois', value: false, cls: 'ghost' }] })
+      .then((v) => { if (v) setTab('certidoes'); });
+  }
   function boot() {
     buildShell();
     try { if (!localStorage.getItem('mp.cloud.uid') && navigator.onLine) Gate.mostrar('Conectando…'); } catch (e) { /* ignora */ }
@@ -8509,6 +8535,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     iniciarNuvem(false);                                   // carrega o Firebase sem travar a abertura
     atualizarSelic();                                      // Selic do Banco Central (meta Copom), uma vez por dia
     Backup.iniciar();                                      // backup automático na pasta do PC (diário + semanal)
+    avisoCertidoes();                                      // popup ao abrir: certidão vencida ou vencendo em até 3 dias
     window.addEventListener('online', () => { if (!Cloud.ligado) iniciarNuvem(false); else sincronizarImagens(); });
   }
 
