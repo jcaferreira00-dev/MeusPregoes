@@ -1708,7 +1708,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.165.8';
+  const APP_VERSION = '1.165.9';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   // Status do pregão (decisão do João, 11/11/2026): padrão da BLL + os dele (Falta dados, Analisando, Empenho, Concluído, Desisti).
   // O que muda nas contas e no Dashboard é ter ou não item Venci (pst.ganho), não o nome do status.
@@ -3623,10 +3623,18 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
       const bytes = await doc.save();
       return { bytes, filename: `Catalogo_${slug(preg.numero) || 'compra'}_${slug(preg.orgao) || 'orgao'}.pdf`, total: L.total, linhas: L.linhas.length, semValor: 0, paginas: pages.length, catalogo: true };
     }
+    // Validade: aceita número (60) ou texto vindo do JSON/edital ("60 (sessenta) dias") e nunca repete "dias" (18/11/2026)
+    const validadeTxt = (v, comExtenso) => {
+      const t = String(v === null || v === undefined ? '' : v).trim();
+      const n = parseInt(t, 10);
+      if (!t) return '60 dias';
+      if (/^\d+$/.test(t)) return comExtenso ? `${n} (${inteiroExtenso(n)}) dias` : `${n} dias`;
+      return /dias?\s*$/i.test(t) ? t.replace(/(dias?)(\s+dias?)+\s*$/i, '$1') : t + ' dias';
+    };
     const fN = (n) => new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n);
     const bT = (n) => (n === null || n === undefined) ? '—' : 'R$ ' + fN(n);
     const subst = (t, c) => safe(t)
-      .replace(/\{validade\}/g, `${op.validade} (${inteiroExtenso(Number(op.validade) || 0)}) dias`)
+      .replace(/\{validade\}/g, validadeTxt(op.validade, true))
       .replace(/\{prorrogacao\}/g, `${op.prorrogacao} (${inteiroExtenso(Number(op.prorrogacao) || 0)}) dias`)
       .replace(/\{numero\}/g, preg.numero || '').replace(/\{orgao\}/g, preg.orgao || '').replace(/\{pai\}/g, (c && c.paiRotulo) || '4')
       .replace(/\{([a-zA-Z]+)\}/g, (m, k) => (Object.prototype.hasOwnProperty.call(CM, k) ? (String(CM[k] || '').trim() ? safe(String(CM[k])) : '__________') : m));
@@ -3671,7 +3679,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     if (op.com.grade) {
       grade([
         ['ÓRGÃO / CLIENTE', preg.orgao], ['PROCESSO', preg.numero],
-        ['VALIDADE DA PROPOSTA', (o.validadeDias || 60) + ' dias'], ['PRAZO DE PAGAMENTO', o.condPagamento || 'Conforme edital'],
+        ['VALIDADE DA PROPOSTA', validadeTxt(o.validadeDias)], ['PRAZO DE PAGAMENTO', o.condPagamento || 'Conforme edital'],
         ['LOCAL DE ENTREGA', o.localEntrega || C.localEntregaPadrao(preg, itensPdf)], ['PRAZO DE ENTREGA', prazoEnt],
       ]);
       y -= 10;
