@@ -75,7 +75,7 @@
     `Mostra quanto falta para o fim do envio das propostas: amarelo com 2 dias, vermelho com 1 dia ou menos, “encerrado” depois. Só avisa enquanto o pregão está Incompleto ou Analisando.`,
     { sel: ['.prazo.warn', '.prazo.bad'], ev: 'prazoInfo.' });
   F('pregao-form', AR.preg, 5, 'manter', 'Cadastro e edição do pregão',
-    `Janela com número, órgão, status, plataforma, tipo de compra, cidade/UF, links (edital, enviar proposta, licitação, modelo), prazo de propostas, sessão, observações, entrega e pagamento, modelo próprio, entrega parcelada e entrega de carro (km, viagens, pedágio). Rascunho automático e trava de número (só dígitos e . - /).`,
+    `Janela com número, órgão, status, plataforma, tipo de compra, cidade/UF, links (edital, enviar proposta, licitação, modelo), prazo de propostas, sessão, observações, entrega e pagamento, modelo próprio, entrega parcelada e entrega de carro (km, viagens, pedágio). Rascunho automático e trava de número (só dígitos e . - /). Status "Pronto" (v1.168.0): cotado e revisado, falta enviar; grupo Analisando, cor laranja.`,
     { sel: ['[data-act=editar-pregao]', '[data-act=novo-pregao]'] });
   F('cartao-quadro', AR.quad, 5, 'enxugar', 'Quadro de pregões por raias (guia Pregões)',
     `É a tela principal de trabalho: colunas por importância — Atenção agora (vermelha), Julgamento, Venci 🏆, Enviadas, Analisando, Incompletos — com encerrados/concluídos num botão só. No celular uma coluna por vez; no PC as colunas cabem na tela e rolam por dentro. v1.125.0 (05/11/2026): no PC, cartões compactos e todos do mesmo tamanho; 3 colunas por tela até 1600 px; cores novas dos status (enviada azul, falta dados vermelho, analisando roxo).`,

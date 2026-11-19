@@ -127,8 +127,9 @@ button.pill { border: 0; font: inherit; cursor: pointer; }
 .st-Faturado { background: color-mix(in srgb, #3f51b5 14%, transparent); color: #3f51b5; }
 .st-Desisti { background: var(--line); color: var(--muted); }
 .st-Analisando { background: color-mix(in srgb, #7b3fbf 15%, transparent); color: #6a32a8; }
+.st-Pronto { background: color-mix(in srgb, #e8590c 15%, transparent); color: #c2410c; }
 .st-Falta-dados { background: color-mix(in srgb, #c0392b 15%, var(--card)); color: #b03024; }
-@media (prefers-color-scheme: dark) { .st-Falta-dados { color: #ff8a7a; } .st-Analisando { color: #c39bf0; } .st-Proposta-enviada { color: #7fb3e6; } .st-Aguardando-empenho { color: #5fd0d0; } }
+@media (prefers-color-scheme: dark) { .st-Falta-dados { color: #ff8a7a; } .st-Analisando { color: #c39bf0; } .st-Pronto { color: #ffa36b; } .st-Proposta-enviada { color: #7fb3e6; } .st-Aguardando-empenho { color: #5fd0d0; } }
 .chip { display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px; padding: 3px 9px; border-radius: 8px; background: var(--bg); color: var(--ink); border: 1px solid var(--line); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .chip.org { background: var(--blue-soft); color: var(--blue); border-color: transparent; font-weight: 600; }
 .chips { display: flex; flex-wrap: wrap; gap: 6px; }
@@ -1719,17 +1720,17 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.167.0';
+  const APP_VERSION = '1.168.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   // Status do pregão (decisão do João, 11/11/2026): padrão da BLL + os dele (Falta dados, Analisando, Empenho, Concluído, Desisti).
   // O que muda nas contas e no Dashboard é ter ou não item Venci (pst.ganho), não o nome do status.
   // Lista do seletor (decisão do João, 19/11/2026, v1.166.0): Falta dados (= Incompleto), Cotando (antigo Analisando), Julgamento, Habilitação, Homologado, Inabilitado, Anulado, Desisti.
-  const STATUS_SEL = ['Falta dados', 'Cotando', 'Julgamento', 'Habilitação', 'Homologado', 'Inabilitado', 'Anulado', 'Desisti'];
+  const STATUS_SEL = ['Falta dados', 'Cotando', 'Pronto', 'Julgamento', 'Habilitação', 'Homologado', 'Inabilitado', 'Anulado', 'Desisti'];
   // STATUS = todos os nomes válidos (os fora do seletor só existem em pregões que já os têm: Recepção/Aguardando disputa/Disputa, Empenho, Concluído)
   const STATUS = STATUS_SEL.concat(['Recepção de propostas', 'Aguardando disputa', 'Disputa', 'Empenho', 'Concluído', 'Resultado final', 'Adjudicado']);
   // cada status novo pertence a um "grupo" com o nome antigo (as regras do app continuam por grupo)
   const GRUPO_ST = {
-    'Cotando': 'Analisando', 'Inabilitado': 'Perdeu',
+    'Cotando': 'Analisando', 'Pronto': 'Analisando', 'Inabilitado': 'Perdeu',   // Pronto (v1.168.0): cotei e revisei, falta enviar; regras do grupo Analisando, cor própria
     'Recepção de propostas': 'Proposta enviada', 'Aguardando disputa': 'Proposta enviada', 'Disputa': 'Proposta enviada',
     'Habilitação': 'Julgamento', 'Adjudicado': 'Julgamento', 'Homologado': 'Julgamento', 'Resultado final': 'Julgamento',
     'Empenho': 'Aguardando empenho',
@@ -4143,7 +4144,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
 
   const C = window.Core, S = window.Sync;
   const LEG = C.LEG;   // grupo do status (nome antigo): as regras da tela seguem por grupo
-  const corSt = (st) => COR_STATUS[LEG(st)] || '#7b8798';
+  const corSt = (st) => COR_STATUS[st] || COR_STATUS[LEG(st)] || '#7b8798';
   // pregão terminou? (encerrado por status, ou terminou sem item Venci)
   const inat = (p) => C.fimP(p.status, ganhoDe(p.id));
   const store = C.createStore(window.localStorage, 'mp.state.v1');
@@ -5170,7 +5171,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
   // nome curto (uma palavra) de cada status, só na tela; o valor salvo continua o mesmo
   const ST_CURTO = { 'Falta dados': 'Incompleto', 'Analisando': 'Cotando', 'Proposta enviada': 'Enviada', 'Julgamento': 'Julgamento', 'Aguardando empenho': 'Empenho', 'Recepção de propostas': 'Recepção', 'Aguardando disputa': 'Aguardando', 'Análise de propostas': 'Análise', 'Em retificação': 'Retificação', 'Resultado final': 'Resultado' };
   const stTxt = (s) => ST_CURTO[s] || s;
-  const badgeStatus = (s) => `<span class="badge st-${slugClass(LEG(s))}" title="${esc(s)}">${esc(stTxt(s))}</span>`;
+  const badgeStatus = (s) => `<span class="badge st-${slugClass(s === 'Pronto' ? s : LEG(s))}" title="${esc(s)}">${esc(stTxt(s))}</span>`;
 
   function draftDesc(key) {
     const [kind, id] = key.split(':');
@@ -5196,7 +5197,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
   const ORDEM_STATUS = ['Julgamento', 'Aguardando empenho', 'Falta dados', 'Analisando', 'Proposta enviada', 'Ganhou', 'Faturado', 'Concluído', 'Perdeu', 'Desclassificado', 'Desisti'];
   const rankStatus = (s) => { const i = ORDEM_STATUS.indexOf(LEG(s)); return (i < 0 ? ORDEM_STATUS.length : i) + Math.max(0, C.STATUS.indexOf(s)) / 100; };
   // cores dos status (pedido do João, 05/11/2026): enviada = azul, falta dados = vermelho, analisando = roxo; julgamento e venci como estavam
-  const COR_STATUS = { 'Concluído': '#607d8b', 'Falta dados': '#c0392b', 'Analisando': '#7b3fbf', 'Proposta enviada': '#2e75b6', 'Julgamento': '#d99a1c', 'Aguardando empenho': '#0e8a8a', 'Ganhou': '#2f8f3a', 'Faturado': '#3f51b5', 'Perdeu': '#8d6e63', 'Desclassificado': '#ad1457', 'Desisti': '#7b8798' };
+  const COR_STATUS = { 'Pronto': '#e8590c', 'Concluído': '#607d8b', 'Falta dados': '#c0392b', 'Analisando': '#7b3fbf', 'Proposta enviada': '#2e75b6', 'Julgamento': '#d99a1c', 'Aguardando empenho': '#0e8a8a', 'Ganhou': '#2f8f3a', 'Faturado': '#3f51b5', 'Perdeu': '#8d6e63', 'Desclassificado': '#ad1457', 'Desisti': '#7b8798' };
   /* ---------- datas "AAAA-MM-DD" (entrega, pagamento e validade das certidões) ---------- */
   const isoParts = (s) => { const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(s || ''); return m ? new Date(+m[1], +m[2] - 1, +m[3]) : null; };
   const isoDe = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -5317,7 +5318,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     ps.filter((x) => ['Falta dados', 'Analisando'].includes(LEG(x.p.status))).forEach((x) => {
       const pz = prazoInfo(x.p);
       if (pz && (pz.nivel === 'bad' || pz.nivel === 'warn')) L.push([pz.nivel, 'Enviar proposta · ' + pz.curto, numTxt(x.p) + ' · ' + orgPn(x.p), `data-act="abrir-pregao" data-id="${x.p.id}"`]);
-      else if (LEG(x.p.status) === 'Analisando' && (!pz || pz.nivel !== 'off')) L.push(['info', 'Proposta por enviar' + (pz ? ' · até ' + pz.curto : ''), numTxt(x.p) + ' · ' + orgPn(x.p), `data-act="abrir-pregao" data-id="${x.p.id}"`]);
+      else if (LEG(x.p.status) === 'Analisando' && (!pz || pz.nivel !== 'off')) L.push(['info', (x.p.status === 'Pronto' ? 'Pronto · falta enviar' : 'Proposta por enviar') + (pz ? ' · até ' + pz.curto : ''), numTxt(x.p) + ' · ' + orgPn(x.p), `data-act="abrir-pregao" data-id="${x.p.id}"`]);
     });
     [...R.pMap.values()].filter((x) => pregaoSemKm(x.p)).forEach((x) => L.push(['bad', 'Informar km da entrega', numTxt(x.p) + ' · ' + orgPn(x.p) + ' · sem km a viagem não entra no custo', `data-act="editar-pregao" data-id="${x.p.id}"`]));
     [...R.pMap.values()].filter((x) => !inat(x.p)).forEach((x) => { const rv = x.todosItens.filter(temRevisar); if (rv.length) L.push(['warn', 'Revisar ' + rv.length + (rv.length === 1 ? ' item' : ' itens'), numTxt(x.p) + ' · ' + orgPn(x.p), `data-act="abrir-pregao" data-id="${x.p.id}"`]); });
