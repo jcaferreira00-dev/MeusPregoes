@@ -1000,6 +1000,9 @@ input[type=color].input { padding: 4px; height: 46px; }
 .mod-chip.disp { background: color-mix(in srgb, #d97706 18%, var(--card)); color: color-mix(in srgb, #b45309 85%, var(--ink)); border-color: color-mix(in srgb, #d97706 40%, transparent); }
 .mod-chip.hero { font-size: 11.5px; padding: 2px 9px; margin-left: 6px; vertical-align: middle; }
 .mod-pc { display: none; }
+.tipo-chip.disp { background: color-mix(in srgb, #d97706 18%, var(--card)); color: color-mix(in srgb, #b45309 85%, var(--ink)); border-color: color-mix(in srgb, #d97706 40%, transparent); }
+.tipo-chip.hero { margin-left: 6px; vertical-align: middle; }
+@media (min-width: 900px) { .tipo-mob { display: none; } }
 @media (min-width: 900px) { .mod-pc { display: inline-flex; margin-left: 6px; } }
 .tipo-chip.hero { font-size: 11.5px; padding: 2px 9px; }
 .tipo-chip.hero.nd { color: inherit; opacity: .8; border-color: currentColor; }
@@ -1715,7 +1718,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.166.1';
+  const APP_VERSION = '1.166.2';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   // Status do pregão (decisão do João, 11/11/2026): padrão da BLL + os dele (Falta dados, Analisando, Empenho, Concluído, Desisti).
   // O que muda nas contas e no Dashboard é ter ou não item Venci (pst.ganho), não o nome do status.
@@ -4397,7 +4400,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     return hit ? hit[1] : '';
   }
   // tipo de compra: Registro de preços (SRP, ata — compra conforme a demanda) ou Aquisição (compra direta, tudo de uma vez)
-  const TIPO_COMPRA = [{ v: '', l: 'Não informado' }, { v: 'SRP', l: 'Registro de preços (ata)' }, { v: 'Aquisição', l: 'Aquisição (compra direta)' }];
+  const TIPO_COMPRA = [{ v: '', l: 'Não informado' }, { v: 'SRP', l: 'Registro de preços (ata)' }, { v: 'Aquisição', l: 'Aquisição (compra direta)' }, { v: 'Dispensa', l: 'Dispensa (compra direta)' }];
   function tipoCompraDe(p) {
     if (p.tipoCompra === 'SRP' || p.tipoCompra === 'Aquisição') return p.tipoCompra;
     const t = [p.obs, p.exigencias, p.entregaParceladaObs, p.numero, p.orgao].join(' ');
@@ -4409,20 +4412,20 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     if (p.modalidade === 'Pregão' || p.modalidade === 'Dispensa') return p.modalidade;
     return /dispensa|\bdisp\.?\s*\d/i.test([p.numero, p.orgao, String(p.obs || '').slice(0, 160)].join(' ')) ? 'Dispensa' : 'Pregão';
   }
-  function modChip(p, cls) {
-    const d = modalidadeDe(p) === 'Dispensa';
-    return `<span class="mod-chip ${d ? 'disp' : 'preg'} ${cls || ''}" title="${d ? 'Dispensa eletrônica' : 'Pregão eletrônico'}">${d ? 'Dispensa' : 'Pregão'}</span>`;
-  }
+  // padronizado (19/11/2026, v1.166.2): UM selo com 3 tipos — Registro de preços, Aquisição ou Dispensa (a dispensa grava modalidade 'Dispensa' + tipoCompra 'Aquisição', para os cálculos de compra direta seguirem iguais)
+  function tipoVisual(p) { return modalidadeDe(p) === 'Dispensa' ? 'Dispensa' : tipoCompraDe(p); }
+  function tipoGravar(v) { return v === 'Dispensa' ? { tipoCompra: 'Aquisição', modalidade: 'Dispensa' } : { tipoCompra: v || '', modalidade: 'Pregão' }; }
   function tipoChip(p, cls) {
-    const t = tipoCompraDe(p);
+    const t = tipoVisual(p);
     const c = cls === 'curto';   // cartão do quadro: rótulo curto para não cortar o nº do pregão
     if (t === 'SRP') return `<span class="tipo-chip srp ${cls || ''}" title="Registro de preços (SRP): gera ata; o órgão compra conforme a demanda, em pedidos ao longo da vigência">${c ? 'SRP' : 'Reg. preços'}</span>`;
-    if (t === 'Aquisição') return `<span class="tipo-chip aq ${cls || ''}" title="Aquisição: compra direta, normalmente um pedido só com tudo">${c ? 'Compra' : 'Aquisição'}</span>`;
-    return `<span class="tipo-chip nd ${cls || ''}" title="Informe no pregão se é Registro de preços ou Aquisição">${c ? '?' : 'Tipo?'}</span>`;
+    if (t === 'Dispensa') return `<span class="tipo-chip disp ${cls || ''}" title="Dispensa eletrônica: compra direta, normalmente um pedido só">Dispensa</span>`;
+    if (t === 'Aquisição') return `<span class="tipo-chip aq ${cls || ''}" title="Aquisição (pregão): compra direta, normalmente um pedido só com tudo">${c ? 'Compra' : 'Aquisição'}</span>`;
+    return `<span class="tipo-chip nd ${cls || ''}" title="Informe no pregão: Registro de preços, Aquisição ou Dispensa">${c ? '?' : 'Tipo?'}</span>`;
   }
   function pregaoValues(p) {
     return {
-      numero: p.numero || '', orgao: p.orgao || '', plataforma: p.plataforma || '', tipoCompra: tipoCompraDe(p), modalidade: modalidadeDe(p), cidadeUf: p.cidadeUf || '', sessao: p.sessao || '', prazoPropostas: p.prazoPropostas || '',
+      numero: p.numero || '', orgao: p.orgao || '', plataforma: p.plataforma || '', tipoCompra: tipoVisual(p), cidadeUf: p.cidadeUf || '', sessao: p.sessao || '', prazoPropostas: p.prazoPropostas || '',
       prazoEntregaDias: p.prazoEntregaDias == null ? '' : String(p.prazoEntregaDias), exigencias: p.exigencias || '', status: p.status || 'Falta dados',
       km: p.km ? C.numBR(p.km, 1) : '', viagens: p.viagens == null ? '1' : String(p.viagens), pedagio: p.pedagio ? C.numBR(p.pedagio) : '',
       entregaDiferente: !!p.entregaDiferente, locaisEntrega: p.locaisEntrega || '',
@@ -4544,8 +4547,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
         ${field({ label: 'Status', name: 'status', type: 'select', value: v.status, options: (C.STATUS_SEL.includes(v.status) || !v.status ? C.STATUS_SEL : [v.status].concat(C.STATUS_SEL)).map((s) => ({ v: s, l: s })), hint: 'Padrão da BLL. Itens ganhos: marque “Venci” no item (com Venci o pregão ganha selo e borda verde em qualquer status). Concluído = terminou (sai do painel).' })}
         ${field({ label: 'Órgão / entidade *', name: 'orgao', value: v.orgao, full: true, ph: 'ex.: Universidade de Londrina' })}
         ${field({ label: 'Plataforma do pregão', name: 'plataforma', value: v.plataforma, ph: 'ex.: BLL, Compras.gov.br', list: PLATAFORMAS, hint: 'Onde a disputa acontece. Se ficar vazio, o app tenta reconhecer pelo site da proposta.' })}
-        ${field({ label: 'Modalidade', name: 'modalidade', type: 'select', value: v.modalidade, options: MODALIDADES, hint: 'Pregão eletrônico ou Dispensa eletrônica: aparece ao lado do número, no topo.' })}
-        ${field({ label: 'Tipo de compra', name: 'tipoCompra', type: 'select', value: v.tipoCompra, options: TIPO_COMPRA, hint: 'Registro de preços = ata, pedidos conforme a demanda. Aquisição = compra direta. Aparece como selo no cartão.' })}
+        ${field({ label: 'Tipo de compra', name: 'tipoCompra', type: 'select', value: v.tipoCompra, options: TIPO_COMPRA, hint: 'Registro de preços = ata, pedidos conforme a demanda. Aquisição = compra direta (pregão). Dispensa = dispensa eletrônica. Aparece como selo no cartão.' })}
         ${field({ label: 'Local do pregão (cidade/UF)', name: 'cidadeUf', value: v.cidadeUf, full: true, ph: 'Londrina/PR', hint: 'Ao preencher, o trajeto de ida e volta a partir do endereço da sua empresa é calculado sozinho.' })}
         ${field({ label: 'Link do edital', name: 'link', type: 'url', value: v.link, full: true, ph: 'https://…' })}
         ${field({ label: 'Site para enviar a proposta (ex.: BLL)', name: 'linkProposta', type: 'url', value: v.linkProposta, full: true, ph: 'https://…', hint: 'Aparece como botão no cartão da guia Pregões.' })}
@@ -4722,7 +4724,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
         if (!x.entregaDiferente && !(km > 0) && !PREG_SEM_KM_OK.includes(LEG(x.status)) && !C.FIM_RESULT.includes(x.status)) { $('[name=km]', form).classList.add('err'); $('[name=km]', form).scrollIntoView({ block: 'center' }); return 'Informe o km da entrega (ida e volta). Toque em “Recalcular trajeto” para o app calcular pela cidade.'; }
         if (x.entregaDiferente && ent.some((e) => !(C.n0(e.km) > 0)) && !PREG_SEM_KM_OK.includes(LEG(x.status)) && !C.FIM_RESULT.includes(x.status)) return 'Informe o km de cada local de entrega.';
         const data = {
-          numero: x.numero.trim(), orgao: x.orgao.trim(), plataforma: (x.plataforma || '').trim(), tipoCompra: x.tipoCompra || '', modalidade: x.modalidade || modalidadeDe(x), cidadeUf: x.cidadeUf.trim(), sessao: x.sessao || '', prazoPropostas: x.prazoPropostas || '',
+          numero: x.numero.trim(), orgao: x.orgao.trim(), plataforma: (x.plataforma || '').trim(), ...tipoGravar(x.tipoCompra), cidadeUf: x.cidadeUf.trim(), sessao: x.sessao || '', prazoPropostas: x.prazoPropostas || '',
           entregaDiferente: !!x.entregaDiferente, kmManual: form.dataset.kmManual === '1',
           prazoEntregaDias: x.prazoEntregaDias ? parseInt(x.prazoEntregaDias, 10) : null, exigencias: '', status: x.status,
           link: x.link.trim(), linkProposta: (x.linkProposta || '').trim(), linkLicitacao: (x.linkLicitacao || '').trim(), obs: x.obs.trim(),
@@ -5862,7 +5864,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
       ${selo}${mCount}
       ${alr ? `<div class="p-alert ${alr.nivel}">${icon(alr.nivel === 'gold' ? 'check' : 'alert', 'sm')}<span>${esc(alr.texto)}</span></div>` : ''}
       ${alr && alr.pergunta ? `<div class="p-ask"><button type="button" class="btn sm" data-act="sessao-continua" data-id="${p.id}">Continua amanhã</button><button type="button" class="btn sm" data-act="sessao-mais" data-id="${p.id}">Mais dias</button><button type="button" class="btn sm ghost" data-act="sessao-fim" data-id="${p.id}">Encerrou</button></div>` : ''}
-      <div class="row between p-hd"><span class="num" style="color:var(--gc)" title="Pregão nº ${esc(p.numero)}">${/^(preg|disp)/i.test(String(p.numero).trim()) ? esc(p.numero) : 'Nº ' + esc(p.numero)}</span><span class="mod-pc">${modChip(p, 'curto')}</span><span class="m-acts">${url(p.link) ? `<a class="ic-btn" href="${esc(url(p.link))}" target="_blank" rel="noopener noreferrer" data-act="link-externo" title="Abrir edital" aria-label="Abrir edital">${icon('pdf', 'sm')}</a>` : '<span class="ic-btn ic-vazio" aria-hidden="true"></span>'}${url(p.linkProposta) ? `<a class="ic-btn" href="${esc(url(p.linkProposta))}" target="_blank" rel="noopener noreferrer" data-act="link-externo" title="Enviar proposta" aria-label="Enviar proposta">${icon('link', 'sm')}</a>` : '<span class="ic-btn ic-vazio" aria-hidden="true"></span>'}</span><span class="p-hd-r">${tipoChip(p, 'curto')}${badgeStatus(p.status)}</span></div>
+      <div class="row between p-hd"><span class="num" style="color:var(--gc)" title="Pregão nº ${esc(p.numero)}">${/^(preg|disp)/i.test(String(p.numero).trim()) ? esc(p.numero) : 'Nº ' + esc(p.numero)}</span><span class="mod-pc">${tipoChip(p, 'curto')}</span><span class="m-acts">${url(p.link) ? `<a class="ic-btn" href="${esc(url(p.link))}" target="_blank" rel="noopener noreferrer" data-act="link-externo" title="Abrir edital" aria-label="Abrir edital">${icon('pdf', 'sm')}</a>` : '<span class="ic-btn ic-vazio" aria-hidden="true"></span>'}${url(p.linkProposta) ? `<a class="ic-btn" href="${esc(url(p.linkProposta))}" target="_blank" rel="noopener noreferrer" data-act="link-externo" title="Enviar proposta" aria-label="Enviar proposta">${icon('link', 'sm')}</a>` : '<span class="ic-btn ic-vazio" aria-hidden="true"></span>'}</span><span class="p-hd-r"><span class="tipo-mob">${tipoChip(p, 'curto')}</span>${badgeStatus(p.status)}</span></div>
       <h4>${esc(p.orgao).replace(/^(Prefeitura Municipal de|Prefeitura de|Município de)\s+/i, '<span class="org-pre">$1 </span>')}</h4>
       <div class="small muted row wrap" style="gap:4px 14px;align-items:center">${url(p.linkProposta) ? `<a class="btn sm lk p-prop" href="${esc(url(p.linkProposta))}" target="_blank" rel="noopener noreferrer" data-act="link-externo">${icon('link', 'sm')} Proposta</a>` : ''}${p.cidadeUf ? `<span class="row" style="gap:4px">${icon('pin', 'sm')}${esc(cidadeFmt(p.cidadeUf))}</span>` : ''}${p.sessao && (!pz || String(p.sessao) !== String(p.prazoPropostas || '')) ? `<span class="row" style="gap:4px">${icon('calendar', 'sm')}${esc(C.fmtSessao(p.sessao))}</span>` : ''}<span class="row p-nit" style="gap:4px">${icon('itens', 'sm')}${pst.itens.length ? pst.itens.length + (pst.itens.length === 1 ? ' item' : ' itens') : 'sem itens'}</span><span class="m-meta">${pst.itens.length ? pst.itens.length + (pst.itens.length === 1 ? ' item' : ' itens') : 'sem itens'}</span>${(p.obs || pst.itens.some((i) => String(i.obs || '').trim())) ? `<span class="m-meta m-obs" title="Tem observação">${icon('info', 'sm')}</span>` : ''}</div>
       ${(() => {
@@ -6526,8 +6528,8 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     return `<div class="page">
       <div class="detail-top"><button class="back" data-act="voltar">${icon('back')} Pregões</button>
         <button type="button" class="icon-btn" data-act="pdf-pregao" data-id="${p.id}" title="Proposta PDF" aria-label="Proposta PDF">${icon('pdf')}</button></div>
-      <div class="hero"><div class="hero-info"><span class="num">${/^(preg|disp)/i.test(String(p.numero).trim()) ? esc(p.numero) : (modalidadeDe(p) === 'Dispensa' ? 'DISPENSA' : 'PREGÃO') + ' Nº ' + esc(p.numero)}</span> ${modChip(p, 'hero')}<h2>${esc(p.orgao)}</h2>
-        <div class="m">${tipoChip(p, 'hero')}${p.cidadeUf ? `<span>${esc(cidadeFmt(p.cidadeUf))}</span>` : ''}${p.sessao ? `<span>Sessão ${esc(C.fmtSessao(p.sessao))}</span>` : ''}</div></div>
+      <div class="hero"><div class="hero-info"><span class="num">${/^(preg|disp)/i.test(String(p.numero).trim()) ? esc(p.numero) : (modalidadeDe(p) === 'Dispensa' ? 'DISPENSA' : 'PREGÃO') + ' Nº ' + esc(p.numero)}</span> ${tipoChip(p, 'hero')}<h2>${esc(p.orgao)}</h2>
+        <div class="m">${p.cidadeUf ? `<span>${esc(cidadeFmt(p.cidadeUf))}</span>` : ''}${p.sessao ? `<span>Sessão ${esc(C.fmtSessao(p.sessao))}</span>` : ''}</div></div>
         ${(() => {   // atalhos do pregão no cabeçalho: edital, site da proposta/lances, licitação e modelo
           const u = (v) => { v = String(v || '').trim(); return v ? (/^https?:\/\//i.test(v) ? v : 'https://' + v) : ''; };
           const bt = (href, ic, txt, tip) => href ? `<a class="hero-lk" href="${esc(href)}" target="_blank" rel="noopener noreferrer" data-act="link-externo" title="${tip}">${icon(ic, 'sm')}<span class="tx">${txt}</span></a>` : '';
@@ -6546,10 +6548,8 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
       })()}
       <div class="card st-tipo"><div class="field" style="margin:0"><label for="stsel">Status do pregão</label>
         <select class="input" id="stsel" data-status-pregao="${p.id}">${(C.STATUS_SEL.includes(p.status) ? C.STATUS_SEL : [p.status].concat(C.STATUS_SEL)).map((s) => `<option value="${esc(s)}"${s === p.status ? ' selected' : ''}>${esc(s)}</option>`).join('')}</select></div>
-        <div class="field" style="margin:0"><label for="mdsel">Modalidade</label>
-        <select class="input" id="mdsel" data-mod-pregao="${p.id}">${MODALIDADES.map((o) => `<option value="${esc(o.v)}"${o.v === modalidadeDe(p) ? ' selected' : ''}>${esc(o.l)}</option>`).join('')}</select></div>
         <div class="field" style="margin:0"><label for="tcsel">Tipo de compra</label>
-        <select class="input" id="tcsel" data-tipo-pregao="${p.id}">${TIPO_COMPRA.map((o) => `<option value="${esc(o.v)}"${o.v === tipoCompraDe(p) ? ' selected' : ''}>${esc(o.l)}</option>`).join('')}</select></div></div>
+        <select class="input" id="tcsel" data-tipo-pregao="${p.id}">${TIPO_COMPRA.map((o) => `<option value="${esc(o.v)}"${o.v === tipoVisual(p) ? ' selected' : ''}>${esc(o.l)}</option>`).join('')}</select></div></div>
       ${modoViavel(p, pst) ? `<button type="button" class="btn block navy modo-pz" data-act="modo-pregao" data-id="${p.id}" title="Abre uma janela só com o nº do item, o piso sem prejuízo e o lucro do lance">${icon('acomp', 'sm')} Modo pregão</button>` : ''}
       ${posCardHtml(pst)}
       ${ganhosCardHtml(pst)}
@@ -8102,8 +8102,7 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
     if (t.dataset.ui) { UI.pdf[t.dataset.ui] = t.value; return; }
     if (t.dataset.pdf || t.dataset.bloco !== undefined) { commitPdf(t); return; }
     if (t.dataset.cfg) { commitCfg(t); return; }
-    if (t.dataset.modPregao) { store.upsertPregao({ id: t.dataset.modPregao, modalidade: t.value }); toast('Modalidade: ' + t.value); render(); return; }
-    if (t.dataset.tipoPregao) { store.upsertPregao({ id: t.dataset.tipoPregao, tipoCompra: t.value }); toast(t.value ? 'Tipo: ' + (t.value === 'SRP' ? 'Registro de preços' : t.value) : 'Tipo de compra limpo'); render(); return; }
+    if (t.dataset.tipoPregao) { store.upsertPregao(Object.assign({ id: t.dataset.tipoPregao }, tipoGravar(t.value))); toast(t.value ? 'Tipo: ' + (t.value === 'SRP' ? 'Registro de preços' : t.value) : 'Tipo de compra limpo'); render(); return; }
     if (t.dataset.statusPregao) { const idp = t.dataset.statusPregao, antes = (store.get().pregoes.find((x) => x.id === idp) || {}).status; store.upsertPregao({ id: idp, status: t.value }); toast('Status: ' + t.value); perguntarItensGanhos(idp, antes); return; }
     if (t.dataset.coloc) {
       const iid = t.dataset.coloc, v = colocacaoDe(t.value);
