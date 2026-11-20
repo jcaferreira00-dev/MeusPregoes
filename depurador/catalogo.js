@@ -19,6 +19,10 @@
     `Cada pregão tem uma praça: Telêmaco (padrão) ou Curitiba, decidida pela cidade do órgão (lista em Config › Praça Curitiba) ou à mão no pregão. Na visão do João: faixa âmbar no cartão, filtro Todas/Telêmaco/Curitiba na guia Pregões, card "Curitiba" e "Acerto com Curitiba" no Painel. Na visão de Curitiba (link ?cwb=1 ou chave em Config): mesmo app em amarelo/laranja, só com os pregões da praça. Despesas (taxa da BLL etc.) e acerto 50/50 do lucro líquido e do prejuízo, por pregão.`,
     { para: 'Mexeu em praça, despesas ou acerto: rodar tests/praca_cwb.py e tests/protegidas.py.', sel: ['.pz-cwb', '.pr-bar', '.ac-card', '.cw-pz'], prot: true });
 
+  F('canal-curitiba', AR.preg, 4, 'manter', 'Login do William e canal compartilhado de Curitiba',
+    `O William entra com login próprio e o app abre no modo Curitiba, trabalhando só no documento compartilhado "cwb" (nas coleções pregoesmei_* do Firestore). O João mantém todos os pregões na conta dele e, a cada sincronização, troca com esse canal os pregões de Curitiba e seus itens (config só a operacional, sem dados bancários). Regras do Firestore liberam o documento cwb só para o João e o William.`,
+    { para: 'Mexeu na sincronização, no login ou nas regras: rodar tests/canal_cwb.py e tests/sync_duas_fontes.py.', sel: ['#gate'], prot: true });
+
   /* ================= 5 · ESSENCIAIS (sem isto o app não serve) ================= */
   F('item-detalhes', AR.calc, 5, 'manter', 'Detalhes dos custos e lucros do item',
     `Botão ⓘ no cartão do item (ao lado do Venci) abre o popup com preços, custos e lucros sem repetição (edital total, mínimo total, sem prejuízo, viagem, lucro ideal, Tesouro). O cartão mostra só os valores grandes; teto em etiqueta ao lado do nº do item; clicar em qualquer lugar do cartão abre a edição (v1.138.0).`),

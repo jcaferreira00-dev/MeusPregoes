@@ -2775,6 +2775,7 @@ html.cwb .kpi-mei { display: none; }   /* limite do MEI é do CNPJ do João, nã
   function createStore(storage, key) {
     let state = load();
     let viewFn = null;
+    let extraNovo = null;   // dados padrão de pregão novo (o modo Curitiba grava praca:'CWB')
     const listeners = new Set();
     let lastError = null;
 
@@ -2799,6 +2800,7 @@ html.cwb .kpi-mei { display: none; }   /* limite do MEI é do CNPJ do João, nã
       get: () => (viewFn ? viewFn(state) : state),
       full: () => state,
       setView(f) { viewFn = typeof f === 'function' ? f : null; },
+      setExtraNovo(f) { extraNovo = typeof f === 'function' ? f : null; },
       on: (fn) => { listeners.add(fn); return () => listeners.delete(fn); },
       error: () => lastError,
 
@@ -2808,7 +2810,7 @@ html.cwb .kpi-mei { display: none; }   /* limite do MEI é do CNPJ do João, nã
         if (i >= 0) state.pregoes[i] = Object.assign({}, state.pregoes[i], data, { updatedAt: t, deleted: false });
         else {
           const id = data.id || uid();
-          state.pregoes.push(Object.assign({ status: 'Falta dados', viagens: 1, km: 0, pedagio: 0 }, data, { id, createdAt: t, updatedAt: t, deleted: false }));
+          state.pregoes.push(Object.assign({ status: 'Falta dados', viagens: 1, km: 0, pedagio: 0 }, extraNovo ? extraNovo() : {}, data, { id, createdAt: t, updatedAt: t, deleted: false }));
           data = { id };
         }
         persist();
@@ -3140,13 +3142,15 @@ html.cwb .kpi-mei { display: none; }   /* limite do MEI é do CNPJ do João, nã
       const referenciaImagens = (uid) => mFs.doc(db, COLECAO_IMG, uid);
       let pararDeOuvirImagens = null;
       let pararDeOuvirLegado = null;
+      const pararExtra = {};
       const referenciaIdx = (uid) => mFs.doc(db, COL_IDX, uid);
       const referenciaCfg = (uid) => mFs.doc(db, COL_CFG, uid);
       const referenciaPz = (uid, k) => mFs.doc(db, COL_PZ + k, uid);
 
       // cópia do que já foi lido do SERVIDOR (por hash): a transação só baixa as fichas que mudaram
-      const cache = { uid: null, idx: null, cfgH: null, cfg: null, pz: {}, legadoNovo: null };
-      function cacheDe(uid) { if (cache.uid !== uid) { cache.uid = uid; cache.idx = null; cache.cfgH = null; cache.cfg = null; cache.pz = {}; cache.legadoNovo = null; } return cache; }
+      // uma cópia por canal (v1.170.0): o canal 'cwb' (praça Curitiba, compartilhado com o William) convive com o canal do próprio usuário
+      const caches = {};
+      function cacheDe(uid) { return caches[uid] || (caches[uid] = { idx: null, cfgH: null, cfg: null, pz: {}, legadoNovo: null }); }
       const idxMapa = (idx) => { const m = {}; ((idx && idx.pz) || []).forEach((x) => { m[x.k] = x.h; }); return m; };
 
       async function lerTx(tx, uid) {
@@ -3214,9 +3218,9 @@ html.cwb .kpi-mei { display: none; }   /* limite do MEI é do CNPJ do João, nã
         pararDeOuvirLegado = mFs.onSnapshot(referenciaDoUsuario(uid), (so) => {
           if (so.metadata.fromCache || !so.exists()) return;
           const d = so.data(), h = hashTxt(estavel(d));
-          const atual = (cache.idx && cache.idx.legado) || idx.legado;
-          if (h === atual || h === cache.legadoNovo) return;
-          cache.legadoNovo = h;
+          const cc = cacheDe(uid), atual = (cc.idx && cc.idx.legado) || idx.legado;
+          if (h === atual || h === cc.legadoNovo) return;
+          cc.legadoNovo = h;
           if (root.onCloudLegado) root.onCloudLegado(d);
         }, () => { /* sem permissão ou sem rede: ignora */ });
       }
@@ -3245,11 +3249,12 @@ html.cwb .kpi-mei { display: none; }   /* limite do MEI é do CNPJ do João, nã
               legado = remoto ? hashTxt(estavel(remoto)) : null;
               migrar = true;
             }
-            if (cache.legadoNovo) legado = cache.legadoNovo;
+            const cu = cacheDe(uid);
+            if (cu.legadoNovo) legado = cu.legadoNovo;
             const r = mesclar(remoto);
             if (r.gravar || migrar || (lido.idx && legado !== (lido.idx.legado || null))) gravarTx(tx, uid, r.dados, lido.idx, legado);
             return r.resultado;
-          }).then((res) => { if (cache.legadoNovo && cache.idx && cache.idx.legado === cache.legadoNovo) cache.legadoNovo = null; return res; });
+          }).then((res) => { const cu = cacheDe(uid); if (cu.legadoNovo && cu.idx && cu.idx.legado === cu.legadoNovo) cu.legadoNovo = null; return res; });
         },
 
         // imagens: lê, deixa o app decidir qual é mais nova e grava só se preciso (transação)
@@ -3272,7 +3277,21 @@ html.cwb .kpi-mei { display: none; }   /* limite do MEI é do CNPJ do João, nã
           }, (err) => console.warn('[cloud] escuta de imagens interrompida:', err && err.code));
         },
 
-        ouvirMudancas(uid, callback) {
+        ouvirMudancas(uid, callback, slot) {
+          const principal = !slot || slot === 'main';
+          if (!principal) {
+            // canal extra (praça Curitiba): só a escuta do índice e das fichas; sem ficha antiga
+            if (pararExtra[slot]) pararExtra[slot]();
+            let filaX = Promise.resolve();
+            const px = mFs.onSnapshot(referenciaIdx(uid), { includeMetadataChanges: true }, (snap) => {
+              filaX = filaX.then(async () => {
+                if (snap.metadata.fromCache || !snap.exists() || (snap.data() || {}).v !== 2) return;
+                try { callback(await montarDeLeituras(uid, snap.data(), mFs.getDocFromServer, true), false); } catch (e) { console.warn('[cloud:' + slot + '] leitura falhou:', e && (e.code || e.message)); }
+              });
+            }, (err) => { console.warn('[cloud:' + slot + '] escuta interrompida:', err && err.code); });
+            pararExtra[slot] = px;
+            return;
+          }
           if (pararDeOuvirSnapshot) pararDeOuvirSnapshot();
           if (pararDeOuvirLegado) { pararDeOuvirLegado(); pararDeOuvirLegado = null; }
           let fila = Promise.resolve();
@@ -3296,6 +3315,7 @@ html.cwb .kpi-mei { display: none; }   /* limite do MEI é do CNPJ do João, nã
           pararDeOuvirSnapshot = () => { p1(); if (pararDeOuvirLegado) { pararDeOuvirLegado(); pararDeOuvirLegado = null; } };
         },
         pararDeOuvir() {
+          Object.keys(pararExtra).forEach((k) => { try { pararExtra[k](); } catch (e) { /* ignora */ } delete pararExtra[k]; });
           if (pararDeOuvirSnapshot) { pararDeOuvirSnapshot(); pararDeOuvirSnapshot = null; }
           if (pararDeOuvirImagens) { pararDeOuvirImagens(); pararDeOuvirImagens = null; }
         },
@@ -4268,7 +4288,7 @@ html.cwb .kpi-mei { display: none; }   /* limite do MEI é do CNPJ do João, nã
     if (q === '1') localStorage.setItem('mp.modoCwb', '1'); else if (q === '0') localStorage.removeItem('mp.modoCwb');
     CWB.modo = localStorage.getItem('mp.modoCwb') === '1';
   } catch (e) { /* ignora */ }
-  if (CWB.modo) { store.setView((st) => C.viewPraca(st, 'CWB')); document.documentElement.classList.add('cwb'); }
+  if (CWB.modo) { store.setView((st) => C.viewPraca(st, 'CWB')); store.setExtraNovo(() => ({ praca: 'CWB' })); document.documentElement.classList.add('cwb'); }
 
   const $ = (s, r) => (r || document).querySelector(s);
   const $$ = (s, r) => [...(r || document).querySelectorAll(s)];
@@ -7385,7 +7405,7 @@ html.cwb .kpi-mei { display: none; }   /* limite do MEI é do CNPJ do João, nã
   const nuvemFotosOk = () => !!(window.CloudSync && Cloud.user && navigator.onLine);
   async function enviarFotos(id, rec) {
     if (!nuvemFotosOk()) return false;
-    try { await window.CloudSync.salvarFotos(Cloud.user.uid, id, { fotos: rec.fotos, em: rec.em }); await CatImg.setRec(id, Object.assign({}, rec, { pend: false })); return true; }
+    try { await window.CloudSync.salvarFotos(canalUid(), id, { fotos: rec.fotos, em: rec.em }); await CatImg.setRec(id, Object.assign({}, rec, { pend: false })); return true; }
     catch (e) { console.warn('[fotos] envio', e); if (!enviarFotos.avisou) { enviarFotos.avisou = true; toast(/permission/i.test(String(e && (e.code || e.message))) ? 'A nuvem recusou as fotos (regras do Firebase). Elas continuam salvas neste aparelho.' : 'Fotos salvas neste aparelho; envio para a nuvem fica para depois.'); } return false; }
   }
   async function gravarFotos(id, arr) {
@@ -7402,7 +7422,7 @@ html.cwb .kpi-mei { display: none; }   /* limite do MEI é do CNPJ do João, nã
     const remEm = (it && it.fotosEm) || 0;
     if (remEm > (loc.em || 0) && nuvemFotosOk()) {
       try {
-        const r = await window.CloudSync.buscarFotos(Cloud.user.uid, id);
+        const r = await window.CloudSync.buscarFotos(canalUid(), id);
         if (r && (r.em || 0) >= remEm) { const rec = { fotos: Array.isArray(r.fotos) ? r.fotos : [], em: r.em, pend: false }; await CatImg.setRec(id, rec); return rec.fotos; }
       } catch (e) { console.warn('[fotos] download', e); }
     }
@@ -8141,7 +8161,7 @@ html.cwb .kpi-mei { display: none; }   /* limite do MEI é do CNPJ do João, nã
     try {
       // imagens de antes desta função (sem data) valem "agora" na primeira vez: não são sobrescritas pela nuvem
       for (const [, path] of IMG_CHAVES) { const c = store.get().config[path]; if (c.imagem && !c.imagemEm) store.setImagem(path, c.imagem, C.agora()); }
-      const aplicar = await cs.mesclarImagens(u.uid, (remoto) => {
+      const aplicar = await cs.mesclarImagens(canalUid(), (remoto) => {
         const L = imgLocal(), R = imgRemoto(remoto);
         const dados = { cab: R.cab.img, cabEm: R.cab.em, marca: R.marca.img, marcaEm: R.marca.em };
         let gravar = false;
@@ -8450,7 +8470,26 @@ html.cwb .kpi-mei { display: none; }   /* limite do MEI é do CNPJ do João, nã
   }
 
   /* ---------- conta e sincronização na nuvem ---------- */
-  const Cloud = { estado: 'inicial', erro: '', user: null, ligado: false, ocupado: false };
+  const Cloud = { estado: 'inicial', erro: '', user: null, ligado: false, ocupado: false, canal: null };
+  // Praça Curitiba (v1.170.0): o William tem login próprio e trabalha SÓ no canal compartilhado 'cwb' (documento 'cwb' nas coleções pregoesmei_*).
+  // O João continua no canal dele e espelha os pregões de Curitiba no canal 'cwb'. As regras do Firestore (painel do Firebase) só deixam entrar no 'cwb' o João e o William.
+  const UID_WILLIAM = 'jRUcEfhYowPwfubkswkLRTlSUh32';
+  const canalUid = () => Cloud.canal || (Cloud.user && Cloud.user.uid) || '';
+  // config que vai para o canal de Curitiba: só o operacional (sem banco, CPF, RG nem endereço residencial)
+  function configCwb(cfg) {
+    cfg = cfg || {};
+    const pega = (o, ks) => { const r = {}; ks.forEach((k) => { if (o && o[k] !== undefined) r[k] = o[k]; }); return r; };
+    const out = pega(cfg, ['margemPadrao', 'lucroBom', 'selicPct', 'selicEm', 'diasDinheiroFora', 'consumo', 'combustivel', 'desgaste', 'impostoPct', 'atividadeMei', 'salarioMinimo', 'origemCwb', 'cidadesCwb', 'acertoPct', 'taxaBll', 'updatedAt']);
+    out.empresa = pega(cfg.empresa, ['nome', 'cnpj', 'ie', 'endereco', 'bairro', 'cep', 'cidade', 'uf', 'telefone', 'whatsapps', 'email', 'responsavel']);
+    out.proposta = Object.assign({}, cfg.proposta);
+    return out;
+  }
+  function subsetCwb(full) {
+    const cfg = full.config || {};
+    const pregoes = (full.pregoes || []).filter((p) => C.pracaDe(p, cfg) === 'CWB');
+    const ids = new Set(pregoes.map((p) => p.id));
+    return { version: 1, config: configCwb(cfg), pregoes, itens: (full.itens || []).filter((i) => ids.has(i.pregaoId)) };
+  }
 
   function erroAuth(e) {
     const c = (e && e.code) || '';
@@ -8552,8 +8591,36 @@ html.cwb .kpi-mei { display: none; }   /* limite do MEI é do CNPJ do João, nã
     };
   }
 
+  // João: antes do envio normal, troca os pregões de Curitiba com o canal compartilhado (o que o William mexeu chega aqui; o que o João mexeu vai para lá)
+  function adaptadorComCwb(uid) {
+    const base = adaptadorFirebase(uid);
+    return {
+      sync: async (local) => {
+        let atual = local;
+        try {
+          const sub = subsetCwb(local);
+          const m = await window.CloudSync.mesclarNaNuvem('cwb', (remoto) => {
+            const mm = C.mergeState(sub, remoto || {});
+            const dados = C.paraNuvem(mm);
+            const gravar = !remoto || C.diffState(remoto, dados);
+            dados.atualizadoEm = C.agora();
+            return { gravar, dados, resultado: mm };
+          });
+          // só pregões e itens voltam (a config do William nunca entra na do João)
+          atual = C.mergeState(local, { version: 1, config: local.config, pregoes: m.pregoes, itens: m.itens });
+        } catch (e) { console.warn('[cwb] canal de Curitiba indisponível:', e && (e.code || e.message)); }
+        return base.sync(atual);
+      },
+    };
+  }
+
   async function aoEntrar(user) {
     const cs = window.CloudSync;
+    // login do William: abre sozinho no modo Curitiba e trabalha só no canal compartilhado
+    const ehWilliam = user.uid === UID_WILLIAM;
+    Cloud.canal = ehWilliam ? 'cwb' : user.uid;
+    if (ehWilliam && !CWB.modo) { try { localStorage.setItem('mp.modoCwb', '1'); localStorage.setItem('mp.modoCwbAuto', '1'); } catch (e) { /* ignora */ } location.reload(); return; }
+    if (!ehWilliam && localStorage.getItem('mp.modoCwbAuto') === '1') { try { localStorage.removeItem('mp.modoCwb'); localStorage.removeItem('mp.modoCwbAuto'); } catch (e) { /* ignora */ } location.reload(); return; }
     const ultimo = localStorage.getItem('mp.cloud.uid');
     if (ultimo && ultimo !== user.uid && store.hasData()) {
       const v = await dialog({
@@ -8569,11 +8636,18 @@ html.cwb .kpi-mei { display: none; }   /* limite do MEI é do CNPJ do João, nã
       if (v === 'limpar') store.replaceAll(C.emptyState());
     }
     localStorage.setItem('mp.cloud.uid', user.uid);
-    S.configure(adaptadorFirebase(user.uid));
+    S.configure(ehWilliam ? adaptadorFirebase(Cloud.canal) : adaptadorComCwb(user.uid));
     // atualização ao vivo: mudanças feitas em outro aparelho chegam aqui (não reenvia: kind 'remote')
     sincronizarImagens();
-    cs.ouvirImagens(user.uid, (dados) => { if (aplicarImagensRemotas(imgRemoto(dados))) { UI.keepScroll = true; if (UI.tab === 'pdf') render(); } });
-    cs.ouvirMudancas(user.uid, (dados, doCache) => {
+    if (!ehWilliam) {
+      // escuta o canal de Curitiba: o que o William mexeu entra e segue para o canal do João
+      cs.ouvirMudancas('cwb', (dados) => {
+        if (!dados) return;
+        if (store.mergeFrom({ version: 1, config: store.full().config, pregoes: dados.pregoes || [], itens: dados.itens || [] })) { S.schedule('canal Curitiba', 1200); updateStatusPill(); }
+      }, 'cwb');
+    }
+    cs.ouvirImagens(Cloud.canal, (dados) => { if (aplicarImagensRemotas(imgRemoto(dados))) { UI.keepScroll = true; if (UI.tab === 'pdf') render(); } });
+    cs.ouvirMudancas(Cloud.canal, (dados, doCache) => {
       Cloud.aoVivo = !doCache;
       if (!dados) { if (!doCache) { S.server = {}; S.schedule('nuvem vazia', 800); } updateStatusPill(); return; }
       store.mergeFrom(dados);
@@ -8591,7 +8665,7 @@ html.cwb .kpi-mei { display: none; }   /* limite do MEI é do CNPJ do João, nã
   }
   function aoSair() {
     if (window.CloudSync) window.CloudSync.pararDeOuvir();
-    S.configure(null); S.server = null; S.confirmado = false;
+    S.configure(null); S.server = null; S.confirmado = false; Cloud.canal = null;
   }
 
   /* ---------- verificar: compara este aparelho com o que está NO SERVIDOR (sem cópia do navegador) ---------- */
@@ -8603,7 +8677,7 @@ html.cwb .kpi-mei { display: none; }   /* limite do MEI é do CNPJ do João, nã
     toast('Conferindo com a nuvem…');
     await S.run('verificar');   // envia o que estiver pendente antes de comparar
     let rem;
-    try { rem = await cs.buscarDoServidor(u.uid); }
+    try { rem = await cs.buscarDoServidor(canalUid()); }
     catch (e) { dialog({ title: 'Não consegui falar com a nuvem', text: 'O servidor não respondeu (' + (e && (e.code || e.message) || 'erro') + '). Se este PC está numa rede de empresa, ela pode estar bloqueando o Firebase. Seus dados continuam salvos neste aparelho.', buttons: [{ label: 'OK', value: true, cls: 'primary' }] }); return; }
     S.server = rem || {};
     const fotos = await contarFotosPendentes();
