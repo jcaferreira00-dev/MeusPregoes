@@ -1785,7 +1785,7 @@ html.cwb .kpi-mei { display: none; }   /* limite do MEI é do CNPJ do João, nã
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.171.1';
+  const APP_VERSION = '1.171.2';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   // Status do pregão (decisão do João, 11/11/2026): padrão da BLL + os dele (Falta dados, Analisando, Empenho, Concluído, Desisti).
   // O que muda nas contas e no Dashboard é ter ou não item Venci (pst.ganho), não o nome do status.
@@ -4360,7 +4360,7 @@ html.cwb .kpi-mei { display: none; }   /* limite do MEI é do CNPJ do João, nã
     { id: 'pdf', t: 'Proposta', title: 'Proposta em PDF' },
     { id: 'certidoes', t: 'Certidões', title: 'Onde baixar as certidões' },
     { id: 'config', t: 'Config', title: 'Configurações' },
-  ];
+  ].filter((t) => !(CWB.modo && (t.id === 'pdf' || t.id === 'certidoes')));   // modo Curitiba: sem Proposta (dados da empresa) nem Certidões (pedido do João, 20/11/2026)
 
   /* ---------- proteção: rascunhos e saída sem salvar ---------- */
   const Guard = { pending: new Set() };
@@ -6845,7 +6845,7 @@ html.cwb .kpi-mei { display: none; }   /* limite do MEI é do CNPJ do João, nã
   }
   // motivo curto (3 ou 4 palavras) do item que ficou de fora, tirado da observação; o texto inteiro vai no balão (pedido do João, 12/11/2026)
   function motivoFora(it) {
-    const o = String(it.obs || '').replace(/\s+/g, ' ').trim();
+    const o = String(it.obs || it.revisar || '').replace(/\s+/g, ' ').trim();   // sem obs, o motivo cai para o texto do revisar (que não aparece mais em item fora)
     if (!o) return '';
     const pal = (t, n) => { const w = t.split(' ').filter(Boolean); return w.slice(0, n).join(' ') + (w.length > n ? '…' : ''); };
     const cap = (t) => t.charAt(0).toUpperCase() + t.slice(1);
@@ -6858,7 +6858,7 @@ html.cwb .kpi-mei { display: none; }   /* limite do MEI é do CNPJ do João, nã
   }
   function motivoForaHtml(it) {
     const m = motivoFora(it); if (!m) return '';
-    return `<div class="motivo-fora" title="${esc(it.obs)}">${esc(m)}</div>`;
+    return `<div class="motivo-fora" title="${esc(it.obs || it.revisar)}">${esc(m)}</div>`;
   }
   function itemBloco(it, c) {
     const lt = C.padLE(it.loteEdital), ie = C.padLE(it.itemEdital);
@@ -8021,6 +8021,7 @@ html.cwb .kpi-mei { display: none; }   /* limite do MEI é do CNPJ do João, nã
     if (a && main.contains(a) && /INPUT|TEXTAREA|SELECT/.test(a.tagName) && Guard.pending.size) return;
     const y = window.scrollY;
     if ((UI.tab === 'itens' || UI.tab === 'certidoes') && window.matchMedia && window.matchMedia('(max-width: 600px)').matches) { UI.tab = 'pregoes'; saveUI(); }
+    if (!TABS.some((t) => t.id === UI.tab)) { UI.tab = 'painel'; UI.detailId = null; saveUI(); }
     const fn = { painel: renderPainel, pregoes: renderPregoes, itens: renderItens, acomp: renderAcomp, pdf: renderPDF, certidoes: renderCertidoes, config: renderConfig }[UI.tab];
     main.classList.toggle('wide', UI.tab === 'acomp' || UI.tab === 'certidoes' || (UI.tab === 'pregoes' && !UI.detailId) || UI.tab === 'itens' || UI.tab === 'painel');
     main.classList.toggle('pn', UI.tab === 'painel');
@@ -8822,6 +8823,7 @@ html.cwb .kpi-mei { display: none; }   /* limite do MEI é do CNPJ do João, nã
   // aviso ao abrir o app (pedido do João, 19/11/2026): certidão que vence em até 3 dias (ou já vencida) abre um popup, uma vez por abertura
   function avisoCertidoes(tent) {
     tent = tent || 0;
+    if (CWB.modo) return;   // Curitiba não vê certidões
     const g = document.getElementById('gate');
     if ((g && !g.hidden) || document.querySelector('.dlg-wrap')) { if (tent < 90) setTimeout(() => avisoCertidoes(tent + 1), 2000); return; }   // espera a tela de entrada fechar
     if (!tent) { setTimeout(() => avisoCertidoes(1), 1500); return; }   // deixa a nuvem carregar as certidões
