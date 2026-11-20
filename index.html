@@ -69,6 +69,7 @@ svg.i.sm { width: 16px; height: 16px; }
 .topbar .logo { width: 34px; height: 34px; border-radius: 9px; flex: none; }
 .topbar h1 { font-size: 17px; font-weight: 700; letter-spacing: .2px; }
 .topbar .sub { font-size: 12px; opacity: .75; }
+html.cwb .topbar a.depurar { display: none !important; }
 .topbar a.depurar { color: inherit; text-decoration: none; font-weight: 700; font-size: 14px; border: 1px solid currentColor; border-radius: 99px; padding: 5px 12px; white-space: nowrap; flex: none; }
 .topbar .grow { flex: 1; min-width: 0; }
 .pill { display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px; padding: 5px 10px; border-radius: 99px; background: rgba(255,255,255,.14); color: #fff; white-space: nowrap; }
@@ -1784,7 +1785,7 @@ html.cwb .kpi-mei { display: none; }   /* limite do MEI é do CNPJ do João, nã
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.170.0';
+  const APP_VERSION = '1.171.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   // Status do pregão (decisão do João, 11/11/2026): padrão da BLL + os dele (Falta dados, Analisando, Empenho, Concluído, Desisti).
   // O que muda nas contas e no Dashboard é ter ou não item Venci (pst.ganho), não o nome do status.
@@ -4388,12 +4389,12 @@ html.cwb .kpi-mei { display: none; }   /* limite do MEI é do CNPJ do João, nã
 
   /* ---------- toast e diálogos ---------- */
   let toastT;
-  function toast(msg) {
+  function toast(msg, ms) {
     $$('.toast').forEach((t) => t.remove());
     const el = document.createElement('div');
     el.className = 'toast'; el.setAttribute('role', 'status'); el.textContent = msg;
     document.body.appendChild(el);
-    clearTimeout(toastT); toastT = setTimeout(() => el.remove(), 3200);
+    clearTimeout(toastT); toastT = setTimeout(() => el.remove(), ms || 3200);
   }
   function dialog({ title, text, buttons }) {
     return new Promise((resolve) => {
@@ -8636,6 +8637,8 @@ html.cwb .kpi-mei { display: none; }   /* limite do MEI é do CNPJ do João, nã
       if (v === 'limpar') store.replaceAll(C.emptyState());
     }
     localStorage.setItem('mp.cloud.uid', user.uid);
+    // boas-vindas (uma vez por sessão do navegador)
+    try { if (!sessionStorage.getItem('mp.boasVindas')) { sessionStorage.setItem('mp.boasVindas', '1'); setTimeout(() => toast('Bem-vindo, ' + (ehWilliam ? 'William' : 'João Carlos') + ', ao Meus Pregões 👋', 4500), 600); } } catch (e) { /* ignora */ }
     S.configure(ehWilliam ? adaptadorFirebase(Cloud.canal) : adaptadorComCwb(user.uid));
     // atualização ao vivo: mudanças feitas em outro aparelho chegam aqui (não reenvia: kind 'remote')
     sincronizarImagens();
