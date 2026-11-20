@@ -1785,7 +1785,7 @@ html.cwb .kpi-mei { display: none; }   /* limite do MEI é do CNPJ do João, nã
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.171.0';
+  const APP_VERSION = '1.171.1';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   // Status do pregão (decisão do João, 11/11/2026): padrão da BLL + os dele (Falta dados, Analisando, Empenho, Concluído, Desisti).
   // O que muda nas contas e no Dashboard é ter ou não item Venci (pst.ganho), não o nome do status.
@@ -6258,7 +6258,14 @@ html.cwb .kpi-mei { display: none; }   /* limite do MEI é do CNPJ do João, nã
   // se ganhar só este item, ele paga a viagem inteira: lance mínimo sem prejuízo e com a margem
 
   // alerta "Revisar" (campo revisar = motivo); some com o botão "Revisado"
-  const temRevisar = (it) => !!String((it && it.revisar) || '').trim();
+  // não vale para item fora da disputa (semLance) nem para pregão Desisti (pedido do João, 20/11/2026): não há mais o que revisar
+  let _revMapa = null, _revRef = null;
+  const pregaoDesisti = (it) => {
+    const L = store.full().pregoes;
+    if (_revRef !== L) { _revRef = L; _revMapa = new Map(L.map((p) => [p.id, p.status === 'Desisti'])); }
+    return !!_revMapa.get(it.pregaoId);
+  };
+  const temRevisar = (it) => !!String((it && it.revisar) || '').trim() && !it.semLance && !pregaoDesisti(it);
   // registro/selo citado nas anotações do item (Inmetro, CA, Anatel...): vira etiqueta visível no lugar do texto da observação (pedido do João, 18/11/2026)
   const temSelo = (it) => /\b(inmetro|anvisa|anatel|ibama|marinha)\b|\bCA\b/i.test(String((it && it.obs) || ''));
   const revHtml = (it) => temRevisar(it) ? `<div class="rev-item">${icon('alert', 'sm')}<span class="grow"><b>REVISAR:</b> ${esc(it.revisar)}</span><button type="button" class="btn sm" data-act="item-revisado" data-id="${it.id}" title="Já conferi: tirar o alerta">${icon('check', 'sm')} Revisado</button></div>` : '';
