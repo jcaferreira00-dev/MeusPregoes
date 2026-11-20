@@ -4620,13 +4620,23 @@ html.cwb .kpi-mei { display: none; }   /* limite do MEI é do CNPJ do João, nã
   const pregaoSemKm = (p) => !!p && !p.deleted && !PREG_SEM_KM_OK.includes(LEG(p.status)) && !inat(p) && (p.entregaDiferente ? (Array.isArray(p.entregas) && p.entregas.some((e) => !(C.n0(e.km) > 0))) : !(C.n0(p.km) > 0));
   // km automático: pregão sem km e com cidade → calcula o trajeto (ida e volta) e grava. Roda ao abrir o app e depois de importar/sincronizar.
   // origem da viagem: pregão da praça Curitiba sai do endereço do irmão (Config › origemCwb); o resto, da empresa
-  const origemPara = (p) => { const cfg = store.full().config || {}; const o = String(cfg.origemCwb || '').trim(); return o && (CWB.modo || C.pracaDe(p || {}, cfg) === 'CWB') ? o : ''; };
+  const ehCwb = (p) => CWB.modo || C.pracaDe(p || {}, store.full().config || {}) === 'CWB';
+  const origemPara = (p) => {
+    const cfg = store.full().config || {}; const o = String(cfg.origemCwb || '').trim();
+    if (!ehCwb(p)) return '';
+    if (!o) throw new Error('Preencha o endereço de saída de Curitiba em Config › Praça Curitiba (empresa não serve de origem para essa praça).');
+    return o;
+  };
+  // assinatura da origem usada no km (muda quando o endereço muda → o km automático é refeito sozinho)
+  const origemSig = (p) => { const cfg = store.full().config || {}, e = cfg.empresa || {}; return ehCwb(p) ? 'CWB|' + String(cfg.origemCwb || '').trim().toLowerCase() : 'EMP|' + [e.endereco, e.bairro, e.cidade, e.uf].filter(Boolean).join(',').toLowerCase(); };
   const AutoKm = { rodando: false, falhou: new Set(), t: null };
   function autoKmAgendar(ms) { clearTimeout(AutoKm.t); AutoKm.t = setTimeout(autoKmRodar, ms == null ? 1500 : ms); }
-  async function autoKmRodar() {
+  async function autoKmRodar(forcar) {
     if (AutoKm.rodando || !navigator.onLine) return;
     const cfg = store.get().config;
-    const lista = store.get().pregoes.filter((p) => pregaoSemKm(p) && !p.entregaDiferente && String(p.cidadeUf || '').trim() && !AutoKm.falhou.has(p.id));
+    // refaz o km quando: falta km; ou o endereço de saída mudou (km automático); ou pregão de Curitiba ainda sem origem gravada; ou botão "Recalcular" (só os que não foram digitados à mão)
+    const precisa = (p) => pregaoSemKm(p) || (!p.kmManual && !p.entregaDiferente && !inat(p) && (forcar || (p.kmOrigem != null ? p.kmOrigem !== origemSig(p) : ehCwb(p) && C.n0(p.km) > 0)));
+    const lista = store.get().pregoes.filter((p) => !p.deleted && precisa(p) && !p.entregaDiferente && String(p.cidadeUf || '').trim() && !AutoKm.falhou.has(p.id));
     if (!lista.length) return;
     AutoKm.rodando = true;
     const feitos = [];
@@ -4635,13 +4645,13 @@ html.cwb .kpi-mei { display: none; }   /* limite do MEI é do CNPJ do João, nã
         try {
           const r = await Rota.calcular(cfg.empresa, [String(p.cidadeUf).trim()], origemPara(p));
           const atual = store.get().pregoes.find((x) => x.id === p.id);
-          if (!atual || !pregaoSemKm(atual)) continue;
-          store.upsertPregao({ id: p.id, km: r.km, tempoMin: r.min, viagens: C.n0(atual.viagens) > 0 ? atual.viagens : 1, kmAuto: true });
+          if (!atual || !precisa(atual)) continue;
+          store.upsertPregao({ id: p.id, km: r.km, tempoMin: r.min, kmOrigem: origemSig(p), viagens: C.n0(atual.viagens) > 0 ? atual.viagens : 1, kmAuto: true });
           feitos.push(cidadeFmt(p.cidadeUf) + ' ' + C.numBR(r.km, 0) + ' km');
-        } catch (e) { AutoKm.falhou.add(p.id); if (/empresa/i.test(String(e && e.message))) { toast(e.message); break; } }
+        } catch (e) { AutoKm.falhou.add(p.id); if (/empresa|Curitiba/i.test(String(e && e.message))) { toast(e.message); break; } }
       }
     } finally { AutoKm.rodando = false; }
-    if (feitos.length) toast('Km da entrega calculado pela cidade: ' + feitos.join(' · ') + '. Confira no cadastro do pregão.');
+    if (feitos.length) toast((forcar ? 'Km recalculado: ' : 'Km da entrega calculado pela cidade: ') + feitos.join(' · ') + '. Confira no cadastro do pregão.');
   }
 
   /* ---------- prazo de envio das propostas: cor muda com 2 dias (amarelo) e 1 dia ou menos (vermelho) ---------- */
@@ -5128,7 +5138,7 @@ html.cwb .kpi-mei { display: none; }   /* limite do MEI é do CNPJ do João, nã
           delete form.dataset.kmManual;
           const n = ++seq; info.style.color = ''; info.textContent = 'Calculando trajeto…';
           try {
-            const r = await Rota.calcular(store.get().config.empresa, [local], origemPara(store.get().pregoes.find((q) => q.id === (form.dataset.pregao || (form.elements.pregaoId && form.elements.pregaoId.value))) || {}));
+            const r = await Rota.calcular(store.get().config.empresa, [local], origemPara(store.full().pregoes.find((q) => q.id === (form.elements.pregaoId && form.elements.pregaoId.value)) || {}));
             if (n !== seq || !form.isConnected) return;
             ajustando = true; km.value = C.numBR(r.km, 1);
             if (!String(via.value).trim()) via.value = '1';
@@ -7846,6 +7856,7 @@ html.cwb .kpi-mei { display: none; }   /* limite do MEI é do CNPJ do João, nã
         ${fld('Endereço de saída em Curitiba (rua, nº, bairro, cidade)', 'origemCwb', 'text', c.origemCwb || '', { full: true, hint: 'Km, combustível e tempo de ida e volta dos pregões da praça Curitiba saem deste endereço (e não de Telêmaco Borba).' })}
         ${fld('Parte de Curitiba no lucro líquido (%)', 'acertoPct', 'num', C.numBR(c.acertoPct != null ? c.acertoPct : 50, 2), { im: 'decimal', hint: 'Vale também para o prejuízo. Lucro líquido = venda − compra, frete, viagem, imposto e as despesas lançadas no pregão.' })}
         ${fld('Taxa da BLL por pregão ganho (R$)', 'taxaBll', 'num', C.numBR(c.taxaBll || 0, 2), { im: 'decimal', hint: 'Valor sugerido no botão “Taxa BLL” das despesas do pregão. Pode mudar em cada pregão.' })}</div>
+        <div class="field full" style="margin-top:6px"><button type="button" class="btn sm" data-act="recalc-km">Recalcular km e tempo de todos os pregões</button><div class="hint">Refaz o trajeto dos pregões cujo km foi calculado pelo app (os que você digitou à mão ficam como estão), saindo do endereço certo: o da empresa (Telêmaco) ou o de Curitiba. Também roda sozinho quando o endereço muda.</div></div>
         <div class="field full" style="margin-top:6px"><label class="chk"><input type="checkbox" id="modoCwb"${CWB.modo ? ' checked' : ''}> Usar ESTE aparelho no modo Curitiba</label><div class="hint">Mesma conta e mesmos dados, mas só aparecem os pregões da praça Curitiba, em amarelo/laranja. Serve para o aparelho do seu irmão. Também liga com o link <b>…/MeusPregoes/?cwb=1</b> (e desliga com <b>?cwb=0</b>).</div></div></div>
       <div class="card"><h3>Limite do MEI</h3><div class="formgrid">
         ${fld('Ano de referência', 'anoRef', 'int', c.anoRef, { im: 'numeric' })}
@@ -8061,6 +8072,7 @@ html.cwb .kpi-mei { display: none; }   /* limite do MEI é do CNPJ do João, nã
     flashSaved();
     if (/^(salarioMinimo|atividadeMei|impostoPct)$/.test(path)) { const d = $('#dasInfo'); if (d) d.innerHTML = `DAS mensal: <b>${C.brl(C.dasMensal(store.get().config))}</b> (5% do salário mínimo + ICMS/ISS)`; }
     if (/^(anoRef|limiteCheio|anoAbertura|mesAbertura)$/.test(path)) { const e = $('#limAplic'); if (e) e.innerHTML = `Limite aplicável no ano: <b>${C.brl(C.limiteMEI(store.get().config))}</b>`; }
+    if (/^(origemCwb|empresa\.(endereco|bairro|cidade|uf))$/.test(path)) { AutoKm.falhou.clear(); autoKmAgendar(800); }
     if (path.startsWith('marcaDagua.')) refreshWmPreview();
     if (path.startsWith('cabecalho.')) refreshHdPreview();
   }
@@ -8231,6 +8243,7 @@ html.cwb .kpi-mei { display: none; }   /* limite do MEI é do CNPJ do João, nã
       case 'desp-del': { e.stopPropagation(); const pz = store.get().pregoes.find((x) => x.id === id); if (!pz) break; const l = (Array.isArray(pz.despesas) ? pz.despesas : []).slice(); l.splice(Number(t.dataset.i), 1); store.upsertPregao({ id, despesas: l }); UI.keepScroll = true; render(); break; }
       case 'acerto-marcar': e.stopPropagation(); UI.keepScroll = true; store.upsertPregao({ id, acertoEm: C.hojeISO() }); toast('Acerto com Curitiba registrado'); break;
       case 'acerto-desfaz': e.stopPropagation(); UI.keepScroll = true; store.upsertPregao({ id, acertoEm: '' }); toast('Acerto desfeito'); break;
+      case 'recalc-km': AutoKm.falhou.clear(); toast('Recalculando trajetos…'); autoKmRodar(true); break;
       case 'praca': UI.praca = t.dataset.v === 'todas' ? '' : t.dataset.v; UI.filtro = 'todos'; render(); break;
       case 'painel-encerrados': UI.mostrarEnc = !UI.mostrarEnc; UI.keepScroll = true; render(); break;
       case 'voltar': if (history.state && history.state.detail) history.back(); else { UI.detailId = null; render(); } break;
