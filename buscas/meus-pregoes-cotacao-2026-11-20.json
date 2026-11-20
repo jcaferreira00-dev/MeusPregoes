@@ -2,7 +2,7 @@
  "pregoes": [
   {
    "linkProposta": "",
-   "updatedAt": 1795178376894,
+   "updatedAt": 1795179504941,
    "id": "pz_arapoti_pce61_2026",
    "regrasEdital": {
     "observacoes": "Marca que identifique: usar 'Marca Própria'. Validade mínima 60 dias (7.9).",
@@ -41,7 +41,7 @@
    "modalidade": "Pregão",
    "linkModelo": "",
    "link": "https://pncp.gov.br/app/editais/77721363000140/2026/207",
-   "updatedAt": 1795178376894,
+   "updatedAt": 1795179504941,
    "exigencias": "",
    "tipoCompra": "SRP",
    "cidadeUf": "Ortigueira/PR",
@@ -90,11 +90,11 @@
    "linkLicitacao": "https://pncp.gov.br/app/editais/77001329000100/2026/128",
    "sessao": "2026-11-27T08:00",
    "linkProposta": "",
-   "updatedAt": 1795178376894,
+   "updatedAt": 1795179504941,
    "plataforma": "BLL",
    "km": 188,
    "numero": "53/2026",
-   "status": "Falta dados",
+   "status": "Cotando",
    "key": "pirai53",
    "orgao": "Prefeitura Municipal de Piraí do Sul",
    "entregaParcelada": true,
@@ -128,7 +128,7 @@
    "linkModelo": "",
    "entregaParcelada": true,
    "modalidade": "Pregão",
-   "updatedAt": 1795178376894,
+   "updatedAt": 1795179504941,
    "status": "Falta dados",
    "entregaParceladaObs": "Registro de preços: entregas parceladas em 20 dias úteis, em 2 endereços na cidade (Saúde e Educação) (TR 3.2/3.3).",
    "numero": "54/2026",
@@ -425,7 +425,7 @@
   {
    "itemEdital": "7",
    "descricao": "Bacia plástica canelada capacidade de 50 litros, em material…",
-   "updatedAt": 1795178376894,
+   "updatedAt": 1795179504941,
    "revisar": "",
    "deleted": false,
    "semLance": true,
@@ -433,7 +433,7 @@
    "margem": null,
    "loteEdital": "",
    "alternativas": [],
-   "obs": "FALTA COTAR: não achei bacia canelada de 50 L na busca (cotação de 20/11/2026).",
+   "obs": "Sem margem: bacia de 50 L não achada; a de 40 L sai de R$ 40 a R$ 61, acima do teto (2ª busca em 20/11/2026).",
    "teto": 43.12,
    "frete": 0,
    "id": "it_pirai_53_007",
@@ -522,7 +522,7 @@
    "revisar": "",
    "loteEdital": "",
    "pregaoId": "pz_pirai_53_2026",
-   "obs": "FALTA COTAR: não achei bandeja alta de plástico na busca (cotação de 20/11/2026).",
+   "obs": "Sem margem: bandeja plástica alta de 6 L no varejo ~R$ 25, acima do teto (2ª busca em 20/11/2026).",
    "createdAt": 1795097296080,
    "teto": 23.76,
    "id": "it_pirai_53_011",
@@ -532,7 +532,7 @@
    "descEdital": "Bandeja alta de plástico em material resistente e atóxico, com bordas elevadas, adequada para transporte e organização de alimentos e utensílios, de fácil higienização.",
    "qtd": 75,
    "semLance": true,
-   "updatedAt": 1795178376894
+   "updatedAt": 1795179504941
   },
   {
    "descricao": "Bandeja branca de plástico para servir em material resistent…",
@@ -1376,7 +1376,7 @@
    "loteEdital": "",
    "createdAt": 1795097296080,
    "margem": null,
-   "obs": "FALTA COTAR: kit de 6 potes de 200–300 g não achado (anúncios de 1 pote ou de potes menores) (cotação de 20/11/2026).",
+   "obs": "Sem margem: 6 potes de 200–300 g de areia cinética passam de R$ 150 no varejo (teto R$ 136,53) (2ª busca em 20/11/2026).",
    "deleted": false,
    "custo": 0,
    "alternativas": [],
@@ -1386,7 +1386,7 @@
    "itemEdital": "1",
    "semLance": true,
    "qtd": 8,
-   "updatedAt": 1795178376894
+   "updatedAt": 1795179504941
   },
   {
    "margem": null,
@@ -1459,11 +1459,24 @@
   {
    "pregaoId": "pz_pirai_54_2026",
    "margem": null,
-   "custo": 0,
+   "custo": 55.99,
    "id": "it_pirai_54_004",
-   "obs": "FALTA COTAR: não achei bola de futebol tamanho 3 ou 4 dentro do teto (cotação de 20/11/2026).",
-   "updatedAt": 1795178376894,
-   "alternativas": [],
+   "obs": "Bola Kipsta First Kick tamanho 4 (Decathlon), Cotado no Mercado Livre em 20/11/2026: R$ 55,99; estoque estoque não informado.",
+   "updatedAt": 1795179504941,
+   "alternativas": [
+    {
+     "loja": "Mercado Livre",
+     "link": "https://produto.mercadolivre.com.br/MLB-3712110817",
+     "custo": 55.99,
+     "frete": 0
+    },
+    {
+     "loja": "Mercado Livre",
+     "link": "https://produto.mercadolivre.com.br/MLB-4731420357",
+     "custo": 86.42,
+     "frete": 0
+    }
+   ],
    "loteEdital": "",
    "descricao": "BOLA DE FUTEBOL",
    "qtd": 4,
@@ -1471,8 +1484,8 @@
    "frete": 0,
    "unidade": "Un",
    "createdAt": 1795097296080,
-   "revisar": "",
-   "semLance": true,
+   "revisar": "Conferir material (PU ou PVC macio) e Inmetro.",
+   "semLance": false,
    "teto": 82.77,
    "descEdital": "BOLA DE FUTEBOL\nBola de futebol infantil (Tamanho 4 ou 3). Confeccionada em material poliuretano (PU) soft ou PVC macio de alta durabilidade, com gomos costurados à mão/máquina ou termo colados com amortecimento interno. Circunferência: 58 a 66 cm. Peso: 300 a 390 gramas. Câmara de ar: Butil ou borracha sintética com ótima retenção de pressão. Miolo: Removível e lubrificado. Material atóxico e sem extremidades cortantes. Cores variadas. O produto deve possuir selo de conformidade e segurança aplicável a brinquedos infantis.",
    "deleted": false
@@ -1512,8 +1525,8 @@
    "frete": 0
   },
   {
-   "updatedAt": 1795178376894,
-   "custo": 0,
+   "updatedAt": 1795179504941,
+   "custo": 74.1,
    "descricao": "BONECA INFANTIL INTERATIVA (MENINA QUE FALA)",
    "pregaoId": "pz_pirai_54_2026",
    "descEdital": "BONECA INFANTIL INTERATIVA (MENINA QUE FALA)\nBoneca infantil, gênero feminino. Confeccionada com cabeça e membros articuláveis em vinil macio de primeira qualidade, atóxico e lavável. Corpo confeccionado em material macio e maleável (tecido com enchimento de fibra siliconada antialérgica ou vinil soft flexível), que permita flexibilidade no manuseio pelas crianças. Dimensões: Altura mínima de 40 centímetros (medida do topo da cabeça à planta dos pés). Fisionomia e Estética: Rosto com feições realistas e expressivas. Olhos fixos ou móveis. Cabelos sintéticos implantados, de comprimento na altura dos ombros ou mais longos, permitindo que sejam penteados e escovados pelas crianças. Interatividade Sonora: Dispositivo eletrônico sonoro integrado (reparável ou com acesso protegido para troca de baterias), acionado por pressão (no peito, mão ou abdômen), que emita frases gravadas de forma clara, obrigatoriamente em idioma Português (Brasil). Vestuário e Acessórios: Acompanha conjunto de roupas completo (ex: vestido, conjunto de blusa e saia/calça) e sapatos/calçados, todos obrigatoriamente removíveis, com sistema de fechamento simplificado (como velcro ou elástico) para estímulo da coordenação motora e autonomia das crianças. Representatividade e Diversidade: Para fins de atendimento pedagógico e inclusivo no desenvolvimento infantil, as unidades fornecidas deverão contemplar modelos e etnias diversas (variação em cor de pele, cabelos e biotipos, ex: branca, negra e parda), garantindo a representatividade no ambiente de atendimento. Classificação Etária: Indicada e certificada para uso seguro por crianças a partir de 02 (dois) anos de idade. Certificação: Apresentar obrigatoriamente o Selo de Identificação da Conformidade do INMETRO (gravado no produto e/ou na embalagem individual), garantindo o cumprimento de todos os ensaios de segurança para brinquedos (ausência de partes cortantes, pontas perigosas ou peças pequenas que possam se soltar do mecanismo de voz/olhos).",
@@ -1521,15 +1534,22 @@
    "unidade": "Un",
    "createdAt": 1795097296080,
    "qtd": 4,
-   "revisar": "",
+   "revisar": "Brinquedo: conferir selo Inmetro do produto na base oficial antes do lance.",
    "id": "it_pirai_54_011",
    "margem": null,
-   "alternativas": [],
+   "alternativas": [
+    {
+     "loja": "Mercado Livre",
+     "link": "https://produto.mercadolivre.com.br/MLB-7381745970",
+     "custo": 74.1,
+     "frete": 0
+    }
+   ],
    "itemEdital": "11",
    "loteEdital": "",
    "teto": 94.36,
-   "semLance": true,
-   "obs": "FALTA COTAR: não achei boneca que fala dentro do teto (cotação de 20/11/2026).",
+   "semLance": false,
+   "obs": "Boneca que fala 60 frases, vinil articulado, Cotado no Mercado Livre em 20/11/2026: R$ 74,10; estoque +50 disponíveis.",
    "deleted": false
   },
   {
@@ -1701,7 +1721,7 @@
    "revisar": "",
    "margem": null,
    "alternativas": [],
-   "obs": "FALTA COTAR: não achei blocos de encaixe com 100 peças dentro do teto (cotação de 20/11/2026).",
+   "obs": "Sem margem: blocos de montar com 100 peças no varejo ~R$ 71, igual ao teto (2ª busca em 20/11/2026).",
    "teto": 72.09,
    "itemEdital": "25",
    "pregaoId": "pz_pirai_54_2026",
@@ -1716,7 +1736,7 @@
    "semLance": true,
    "frete": 0,
    "unidade": "Kit",
-   "updatedAt": 1795178376894
+   "updatedAt": 1795179504941
   },
   {
    "custo": 75.9,
@@ -1884,23 +1904,31 @@
   },
   {
    "deleted": false,
-   "obs": "FALTA COTAR: não achei girafa estica tubo na busca (cotação de 20/11/2026).",
+   "obs": "Kit com 4 girafas estica tubo com LED, Cotado no Mercado Livre em 20/11/2026: R$ 22,79 (anúncio com 4 un.); estoque +50 disponíveis.",
    "itemEdital": "33",
-   "revisar": "",
+   "revisar": "Brinquedo: conferir selo Inmetro do produto na base oficial antes do lance.",
    "loteEdital": "",
-   "semLance": true,
+   "semLance": false,
    "qtd": 15,
    "id": "it_pirai_54_033",
    "descricao": "GIRAFAS ESTICA TUBO LED MONTESSORI",
    "frete": 0,
-   "updatedAt": 1795178376894,
+   "updatedAt": 1795179504941,
    "margem": null,
    "teto": 17.73,
    "unidade": "Un",
    "createdAt": 1795097296080,
    "descEdital": "GIRAFAS ESTICA TUBO LED MONTESSORI\nBrinquedo em formato de girafas/tubos de silicone atóxico com luz de LED, que se esticam, conectam e grudam em superfícies lisas. Material flexível, sem quinas vivas, resistente e lavável. Acondicionado em sacola plástica ou caixa. O produto deve possuir selo de conformidade e segurança aplicável a brinquedos infantis. Representatividade e Diversidade: Para fins de atendimento pedagógico e inclusivo no desenvolvimento infantil, as unidades fornecidas deverão contemplar modelos diversos (variação de cor e formatos), garantindo a representatividade no ambiente de atendimento.",
-   "custo": 0,
-   "alternativas": [],
+   "custo": 5.7,
+   "alternativas": [
+    {
+     "loja": "Mercado Livre",
+     "link": "https://produto.mercadolivre.com.br/MLB-5422289113",
+     "custo": 22.79,
+     "frete": 0,
+     "emb": 4
+    }
+   ],
    "pregaoId": "pz_pirai_54_2026"
   },
   {
@@ -2579,22 +2607,29 @@
    "updatedAt": 1795178376894
   },
   {
-   "alternativas": [],
+   "alternativas": [
+    {
+     "loja": "Mercado Livre",
+     "link": "https://produto.mercadolivre.com.br/MLB-7426655572",
+     "custo": 76.95,
+     "frete": 0
+    }
+   ],
    "pregaoId": "pz_pirai_54_2026",
    "qtd": 4,
    "teto": 229.92,
    "frete": 0,
-   "custo": 0,
-   "obs": "FALTA COTAR: só achei kits de personagens licenciados (Marvel, Roblox); procurar bonecos genéricos (cotação de 20/11/2026).",
+   "custo": 76.95,
+   "obs": "Kit 7 bonecos (personagens de desenho, como o edital permite), Cotado no Mercado Livre em 20/11/2026: R$ 76,95; estoque +50 disponíveis.",
    "descEdital": "KIT MINIATURA BONECOS\nKit composto por no mínimo 4 bonecos em plástico resistente, representando personagens de desenhos, filmes, super heróis, com características variadas. Bonecos com aproximadamente 10 a 20cm de altura, pintura atóxica e sem quinas vivas. Acondicionado em caixa de papelão ou sacola de TNT. O produto deve possuir selo de conformidade e segurança aplicável a brinquedos infantis. Representatividade e Diversidade: Para fins de atendimento pedagógico e inclusivo no desenvolvimento infantil, as unidades fornecidas deverão contemplar modelos diversos (variação de cor e formatos), garantindo a representatividade no ambiente de atendimento.",
    "unidade": "Kit",
-   "semLance": true,
+   "semLance": false,
    "itemEdital": "77",
    "id": "it_pirai_54_077",
-   "revisar": "",
+   "revisar": "Conferir altura de 10 a 20 cm e Inmetro.",
    "margem": null,
    "createdAt": 1795097296080,
-   "updatedAt": 1795178376894,
+   "updatedAt": 1795179504941,
    "loteEdital": "",
    "deleted": false,
    "descricao": "KIT MINIATURA BONECOS"
@@ -3621,13 +3656,13 @@
    "loteEdital": "",
    "deleted": false,
    "createdAt": 1795097296080,
-   "obs": "FALTA COTAR: só achei desempenadeira de aço; procurar de madeira 25 cm (cotação de 20/11/2026).",
+   "obs": "Sem margem: desempenadeira de madeira no varejo ~R$ 32, acima do teto (2ª busca em 20/11/2026).",
    "teto": 20,
    "descricao": "DESEMPENADEIRA DE MADEIRA PARA PEDREIRO comp. 25 cm x largur…",
    "qtd": 80,
    "semLance": true,
    "descEdital": "DESEMPENADEIRA DE MADEIRA PARA PEDREIRO comp. 25 cm x largura 15cm.",
-   "updatedAt": 1795178376894,
+   "updatedAt": 1795179504941,
    "unidade": "Un"
   },
   {
@@ -3665,25 +3700,33 @@
    "semLance": false
   },
   {
-   "alternativas": [],
+   "alternativas": [
+    {
+     "loja": "Mercado Livre",
+     "link": "https://produto.mercadolivre.com.br/MLB-5418965627",
+     "custo": 41.7,
+     "frete": 0,
+     "emb": 3
+    }
+   ],
    "descEdital": "Disco Madeira Grande",
    "unidade": "Un",
-   "semLance": true,
+   "semLance": false,
    "teto": 18,
    "margem": null,
    "loteEdital": "",
    "frete": 0,
-   "obs": "FALTA COTAR: não achei disco de serra para madeira na busca (cotação de 20/11/2026).",
+   "obs": "Kit 3 discos de serra circular 7,1/4 (184 mm) para madeira, 24 dentes, Cotado no Mercado Livre em 20/11/2026: R$ 41,70 (anúncio com 3 un.); estoque +25 disponíveis.",
    "id": "it_ortigueira_112_081",
    "createdAt": 1795097296080,
-   "revisar": "",
+   "revisar": "Edital diz só \"disco madeira grande\": conferir o diâmetro pedido.",
    "qtd": 110,
    "deleted": false,
    "pregaoId": "pz_ortigueira_112_2026",
-   "updatedAt": 1795178376894,
+   "updatedAt": 1795179504941,
    "itemEdital": "81",
    "descricao": "Disco Madeira Grande",
-   "custo": 0
+   "custo": 13.9
   },
   {
    "pregaoId": "pz_ortigueira_112_2026",
@@ -4153,12 +4196,12 @@
    "qtd": 5,
    "frete": 0,
    "revisar": "",
-   "updatedAt": 1795178376894,
+   "updatedAt": 1795179504941,
    "alternativas": [],
    "descricao": "Kit jogo de soquete sextavado e acessórios com encaixe 3/4 P…",
    "descEdital": "Kit jogo de soquete sextavado e acessórios com encaixe 3/4 Pol com 14 peças (10 Soquetes sextavados: 22, 24, 27, 30, 32, 36, 38, 41, 46 e 50 mm, 1 Cabo T, 2 Extensões: 8\" e 16\", 1 Catraca simples). Deve ser fabricado em aço vanádio com acabamento niquelado e cromado. Indicado para parafusos e porcas com perfil de encaixe sextavado externo. Fornecido em estojo metálico na cor azul , com acabamento em pintura na cor azul e berço em polímero.",
    "teto": 380,
-   "obs": "FALTA COTAR: não achei o jogo de soquetes 22–41 mm do edital (cotação de 20/11/2026).",
+   "obs": "Sem margem: jogo de soquetes 3/4 de 22 a 50 mm no varejo ~R$ 530, acima do teto (2ª busca em 20/11/2026).",
    "custo": 0,
    "deleted": false,
    "createdAt": 1795097296080,
@@ -4288,16 +4331,30 @@
    "createdAt": 1795097296080,
    "frete": 0,
    "unidade": "Un",
-   "custo": 0,
-   "updatedAt": 1795178376894,
+   "custo": 13.37,
+   "updatedAt": 1795179504941,
    "descricao": "LUMINÁRIA, TIPO",
    "loteEdital": "",
    "qtd": 100,
-   "alternativas": [],
-   "semLance": true,
+   "alternativas": [
+    {
+     "loja": "Mercado Livre",
+     "link": "https://produto.mercadolivre.com.br/MLB-7895047496",
+     "custo": 66.85,
+     "frete": 0,
+     "emb": 5
+    },
+    {
+     "loja": "Mercado Livre",
+     "link": "https://produto.mercadolivre.com.br/MLB-4868081909",
+     "custo": 106.51,
+     "frete": 0
+    }
+   ],
+   "semLance": false,
    "deleted": false,
-   "revisar": "",
-   "obs": "FALTA COTAR: edital pede luminária de emergência; a busca trouxe luminária comum (cotação de 20/11/2026).",
+   "revisar": "Edital pede luminária de emergência fluorescente 2 x 8 W; o anúncio é LED: confirmar se aceitam.",
+   "obs": "Kit 5 luminárias de emergência de 30 LEDs, Cotado no Mercado Livre em 20/11/2026: R$ 66,85 (anúncio com 5 un.); estoque estoque não informado.",
    "itemEdital": "164"
   },
   {
@@ -4326,14 +4383,14 @@
    "semLance": true,
    "frete": 0,
    "teto": 68.3,
-   "obs": "FALTA COTAR: não achei machado 20\" na busca (cotação de 20/11/2026).",
+   "obs": "Sem margem: machado lenhador no varejo ~R$ 107–125, acima do teto (2ª busca em 20/11/2026).",
    "id": "it_ortigueira_112_172",
    "custo": 0,
    "unidade": "Un",
    "qtd": 15,
    "itemEdital": "172",
    "margem": null,
-   "updatedAt": 1795178376894,
+   "updatedAt": 1795179504941,
    "pregaoId": "pz_ortigueira_112_2026",
    "descEdital": "Machado 20 polegadas, 50cm de cabo de madeira, espessura base da lâmina: 2mm; Material do Corpo: Aço SAE 5160; Material do Olho: Aço 1020 \nAcabamento: Polido",
    "revisar": "",
@@ -4344,7 +4401,7 @@
   },
   {
    "semLance": true,
-   "obs": "FALTA COTAR: achei só rolos de 10 e 20 m; edital pede rolo de 50 m (cotação de 20/11/2026).",
+   "obs": "Sem margem: mangueira de nível 50 m sai ~R$ 93 (2,5 rolos de 20 m), margem de 17% (2ª busca em 20/11/2026).",
    "descEdital": "Mangueira De Nível cristal siliconada 5/16 Pol. X 1,00mm - Rolo 50 Metros",
    "revisar": "",
    "deleted": false,
@@ -4354,7 +4411,7 @@
    "margem": null,
    "frete": 0,
    "id": "it_ortigueira_112_176",
-   "updatedAt": 1795178376894,
+   "updatedAt": 1795179504941,
    "pregaoId": "pz_ortigueira_112_2026",
    "loteEdital": "",
    "descricao": "Mangueira De Nível cristal siliconada 5/16 Pol. X 1,00mm - R…",
@@ -5272,7 +5329,7 @@
   },
   {
    "teto": 68.2,
-   "updatedAt": 1795178376894,
+   "updatedAt": 1795179504941,
    "descEdital": "REGISTRO METAL 50MM PRESSÃO",
    "semLance": true,
    "descricao": "REGISTRO METAL 50MM PRESSÃO",
@@ -5288,7 +5345,7 @@
    "pregaoId": "pz_ortigueira_112_2026",
    "deleted": false,
    "revisar": "",
-   "obs": "FALTA COTAR: a busca trouxe só acabamentos; procurar registro de pressão 50 mm (cotação de 20/11/2026).",
+   "obs": "Sem margem: registro de pressão 50 mm no varejo ~R$ 82, acima do teto (2ª busca em 20/11/2026).",
    "itemEdital": "252"
   },
   {
@@ -5452,7 +5509,7 @@
   },
   {
    "deleted": false,
-   "obs": "FALTA COTAR: não achei rex triplo com roldanas (cotação de 20/11/2026).",
+   "obs": "Sem margem: rex triplo no varejo ~R$ 78, acima do teto (2ª busca em 20/11/2026).",
    "pregaoId": "pz_ortigueira_112_2026",
    "revisar": "",
    "descEdital": "REX TRIPLO COM 3 ROLDANAS",
@@ -5464,7 +5521,7 @@
    "semLance": true,
    "unidade": "Un",
    "margem": null,
-   "updatedAt": 1795178376894,
+   "updatedAt": 1795179504941,
    "loteEdital": "",
    "descricao": "REX TRIPLO COM 3 ROLDANAS",
    "id": "it_ortigueira_112_264",
@@ -6224,14 +6281,14 @@
    "deleted": false,
    "alternativas": [],
    "revisar": "",
-   "updatedAt": 1795178376894,
+   "updatedAt": 1795179504941,
    "descricao": "VÁLVULA DE DESCARGA 50 MM PVC",
    "semLance": true,
    "loteEdital": "",
    "margem": null,
    "custo": 0,
    "unidade": "Un",
-   "obs": "FALTA COTAR: a busca trouxe só peças; procurar válvula de descarga completa 50 mm (cotação de 20/11/2026).",
+   "obs": "Sem margem: válvula de descarga 50 mm completa sai ~R$ 260 (base + acabamento), margem de 10% (2ª busca em 20/11/2026).",
    "teto": 289.9,
    "id": "it_ortigueira_112_326",
    "frete": 0,
