@@ -4360,7 +4360,7 @@ html.cwb .kpi-mei { display: none; }   /* limite do MEI é do CNPJ do João, nã
     { id: 'pdf', t: 'Proposta', title: 'Proposta em PDF' },
     { id: 'certidoes', t: 'Certidões', title: 'Onde baixar as certidões' },
     { id: 'config', t: 'Config', title: 'Configurações' },
-  ].filter((t) => !(CWB.modo && (t.id === 'pdf' || t.id === 'certidoes')));   // modo Curitiba: sem Proposta (dados da empresa) nem Certidões (pedido do João, 20/11/2026)
+  ].filter((t) => !(CWB.modo && t.id === 'certidoes'));   // modo Curitiba: sem Certidões; a Proposta fica (ele monta e ajusta), sem o bloco Meus dados (pedido do João, 20/11/2026)
 
   /* ---------- proteção: rascunhos e saída sem salvar ---------- */
   const Guard = { pending: new Set() };
@@ -7113,7 +7113,7 @@ html.cwb .kpi-mei { display: none; }   /* limite do MEI é do CNPJ do João, nã
   function faltaEmpresaHtml(o, emp) {
     const f = faltasEmpresa(o, emp);
     if (!f.length) return '';
-    return `<div class="alert warn">${icon('alert', 'sm')}<div class="grow">Faltam dados da empresa que este modelo usa: <b>${esc(f.join(', '))}</b>. Sem eles, os campos saem em branco no PDF.</div><button class="btn sm" data-act="abrir-meus-dados">Preencher</button></div>`;
+    return `<div class="alert warn">${icon('alert', 'sm')}<div class="grow">Faltam dados da empresa que este modelo usa: <b>${esc(f.join(', '))}</b>. Sem eles, os campos saem em branco no PDF.</div>${CWB.modo ? '' : '<button class="btn sm" data-act="abrir-meus-dados">Preencher</button>'}</div>`;
   }
 
   function pdfModelCards(o, cfg, pz) {
@@ -7253,7 +7253,7 @@ html.cwb .kpi-mei { display: none; }   /* limite do MEI é do CNPJ do João, nã
         ${L.limitados ? `<div class="alert warn" style="margin-top:10px">${icon('alert', 'sm')}<span>${L.limitados} item(ns) passavam do teto do edital e entram na proposta com o valor do teto (${C.brl(L.reducao)} a menos no total), para não desclassificar.${L.abaixoMin ? ' Em ' + L.abaixoMin + ' deles o teto fica abaixo do seu valor mínimo: lucro menor ou prejuízo.' : ''}</span></div>` : ''}
         ${L.semValor ? `<div class="alert warn" style="margin-top:10px">${icon('alert', 'sm')}<span>${L.semValor} item(ns) sem valor nesta opção. Preencha o teto ou o lance final, ou troque a opção acima.</span></div>` : ''}
       </details>
-      ${meusDadosHtml(e)}
+      ${CWB.modo ? '' : meusDadosHtml(e)}
       <div class="m-hide">${pdfModelCards(opts, cfg, pz)}</div>
       <details class="pdf-avanc pdf-avanc-vis m-hide" data-k="pdfVis"${UI.pdfVis ? ' open' : ''}><summary class="card pd-blk pd-b5"><h3 style="display:inline">Avançado · cabeçalho e marca d’água</h3><span class="tiny muted" style="display:block;margin-top:2px">Imagem do cabeçalho e marca d’água das propostas. Fechado por padrão.</span></summary>
       <div class="card"><h3>Cabeçalho (imagem e nome)</h3>
@@ -7902,9 +7902,9 @@ html.cwb .kpi-mei { display: none; }   /* limite do MEI é do CNPJ do João, nã
         ${fld('Imposto sobre a venda (%)', 'impostoPct', 'pct', C.numBR(c.impostoPct * 100, 2), { im: 'decimal', hint: 'MEI: deixe 0. Use só se sair do MEI (alíquota do Simples).' })}</div>
         <div class="alert info" style="margin-top:6px">${icon('info', 'sm')}<span id="dasInfo">DAS mensal: <b>${C.brl(C.dasMensal(c))}</b> (5% do salário mínimo + ICMS/ISS)</span></div>
         <p class="tiny muted" style="margin-top:8px">Em 2026: INSS R$ 81,05 + ICMS R$ 1,00 (comércio) e/ou ISS R$ 5,00 (serviços). Com o imposto sobre a venda acima de 0, o valor mínimo da proposta já o considera. O DAS é fixo e aparece no Painel.</p></div>
-      <div class="card"><h3>Meus dados</h3>
+      ${CWB.modo ? '' : `<div class="card"><h3>Meus dados</h3>
         <div class="row between wrap" style="gap:10px"><span class="small muted">Empresa, titular e banco agora ficam na guia <b>Proposta</b>. ${dadosResumo(e)}</span>
-        <button class="btn primary" data-act="abrir-meus-dados">Abrir em Proposta</button></div></div>
+        <button class="btn primary" data-act="abrir-meus-dados">Abrir em Proposta</button></div></div>`}
       <div class="card"><h3>Dados e backup</h3>
         <div class="grid2"><button class="btn" data-act="export">${icon('download', 'sm')} Exportar</button><label class="btn" style="cursor:pointer">${icon('plus', 'sm')} Importar<input type="file" accept="application/json,.json" data-import class="hidden"></label></div>
         <div class="grid2" style="margin-top:10px"><button class="btn danger" data-act="apagar-desisti">${icon('trash', 'sm')} Limpar desistências</button><button class="btn danger" data-act="apagar">${icon('trash', 'sm')} Apagar tudo</button></div></div>
