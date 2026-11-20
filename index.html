@@ -7113,7 +7113,7 @@ html.cwb .kpi-mei { display: none; }   /* limite do MEI é do CNPJ do João, nã
   function faltaEmpresaHtml(o, emp) {
     const f = faltasEmpresa(o, emp);
     if (!f.length) return '';
-    return `<div class="alert warn">${icon('alert', 'sm')}<div class="grow">Faltam dados da empresa que este modelo usa: <b>${esc(f.join(', '))}</b>. Sem eles, os campos saem em branco no PDF.</div>${CWB.modo ? '' : '<button class="btn sm" data-act="abrir-meus-dados">Preencher</button>'}</div>`;
+    return `<div class="alert warn">${icon('alert', 'sm')}<div class="grow">Faltam dados da empresa que este modelo usa: <b>${esc(f.join(', '))}</b>. Sem eles, os campos saem em branco no PDF.${CWB.modo ? ' Peça ao João para gerar este PDF.' : ''}</div>${CWB.modo ? '' : '<button class="btn sm" data-act="abrir-meus-dados">Preencher</button>'}</div>`;
   }
 
   function pdfModelCards(o, cfg, pz) {
