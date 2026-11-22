@@ -1785,7 +1785,7 @@ html.cwb .kpi-mei { display: none; }   /* limite do MEI é do CNPJ do João, nã
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.171.2';
+  const APP_VERSION = '1.171.3';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   // Status do pregão (decisão do João, 11/11/2026): padrão da BLL + os dele (Falta dados, Analisando, Empenho, Concluído, Desisti).
   // O que muda nas contas e no Dashboard é ter ou não item Venci (pst.ganho), não o nome do status.
@@ -4655,8 +4655,9 @@ html.cwb .kpi-mei { display: none; }   /* limite do MEI é do CNPJ do João, nã
   async function autoKmRodar(forcar) {
     if (AutoKm.rodando || !navigator.onLine) return;
     const cfg = store.get().config;
-    // refaz o km quando: falta km; ou o endereço de saída mudou (km automático); ou pregão de Curitiba ainda sem origem gravada; ou botão "Recalcular" (só os que não foram digitados à mão)
-    const precisa = (p) => pregaoSemKm(p) || (!p.kmManual && !p.entregaDiferente && !inat(p) && (forcar || (p.kmOrigem != null ? p.kmOrigem !== origemSig(p) : ehCwb(p) && C.n0(p.km) > 0)));
+    // refaz o km quando: falta km; ou o km nunca foi calculado pelo app (sem kmOrigem: veio do JSON da análise, estimado, ou de versão antiga) — v1.171.3, pedido do João 22/11/2026:
+    // o km do JSON (linha reta × 1,3) ficava bem abaixo da estrada e o custo "quase dobrava" ao recalcular; ou o endereço de saída mudou; ou botão "Recalcular" (só os que não foram digitados à mão)
+    const precisa = (p) => pregaoSemKm(p) || (!p.kmManual && !p.entregaDiferente && !inat(p) && (forcar || p.kmOrigem == null || p.kmOrigem !== origemSig(p)));
     const lista = store.get().pregoes.filter((p) => !p.deleted && precisa(p) && !p.entregaDiferente && String(p.cidadeUf || '').trim() && !AutoKm.falhou.has(p.id));
     if (!lista.length) return;
     AutoKm.rodando = true;
