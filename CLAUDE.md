@@ -106,6 +106,7 @@ Ao acrescentar uma função que o João usa, acrescentar a conferência dela no 
 - Proposta inicial: preço guardado na 1ª geração (sem lance). Depois que o pregão tem item ganho,
   os ajustes da proposta final não mexem na inicial.
 - Proposta final: só itens vencidos, com confirmação de preço; ajustes dela não viram padrão.
+- Proposta INICIAL também abre a janela "Confirme os preços" antes de gerar o PDF (pedido do João, 23/11/2026, v1.172.0; mesma função `confirmarPrecosFinal(pid, tipo)`): mostra qtd, frete, compra, mínimo, teto, valor unit. e total que vão sair no PDF, com a caixinha "Confirmo" obrigatória. Valor alterado ali grava `lanceFinal` só no item que mudou (sem mudar = continua a regra do teto/preço guardado). Com item ganho (inicial congelada) ou "Qual valor entra" em mínimo/teto, a janela é só conferência (campos travados). A "Visualizar (rascunho)" não abre a janela.
 
 ---
 

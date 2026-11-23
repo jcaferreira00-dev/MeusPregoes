@@ -1785,7 +1785,7 @@ html.cwb .kpi-mei { display: none; }   /* limite do MEI é do CNPJ do João, nã
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.171.4';
+  const APP_VERSION = '1.172.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   // Status do pregão (decisão do João, 11/11/2026): padrão da BLL + os dele (Falta dados, Analisando, Empenho, Concluído, Desisti).
   // O que muda nas contas e no Dashboard é ter ou não item Venci (pst.ganho), não o nome do status.
@@ -7593,27 +7593,32 @@ html.cwb .kpi-mei { display: none; }   /* limite do MEI é do CNPJ do João, nã
     UI.pdf.busy = false; render();
     const card = $('#catPronto') || $('#pdfPronto'); if (card) card.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
-  // proposta final: confirma o preço de cada item vencido antes de gerar (grava o valor como lance final)
-  function confirmarPrecosFinal(pid) {
+  // confirma o preço de cada item antes de gerar (grava o valor como lance final).
+  // Proposta final: itens vencidos (como sempre). Proposta inicial (pedido do João, 23/11/2026, v1.172.0): mesma janela,
+  // com os preços que vão sair no PDF; só grava lance onde ele mudou o valor; pregão com item ganho = só conferência (a inicial não muda).
+  function confirmarPrecosFinal(pid, tipo) {
+    tipo = tipo === 'inicial' ? 'inicial' : 'final';
+    const ini = tipo === 'inicial';
     const st = store.get();
-    const L = C.linhasProposta(st, pid, UI.pdf.fonte, 0, 'final');
-    if (!L.linhas.length) { toast('Nenhum item para a proposta final'); return Promise.resolve(false); }
+    const L = C.linhasProposta(st, pid, UI.pdf.fonte, 0, tipo);
+    if (!L.linhas.length) { toast(ini ? 'Nenhum item para a proposta' : 'Nenhum item para a proposta final'); return Promise.resolve(false); }
+    const trava = ini && (L.ganho || UI.pdf.fonte === 'minimo' || UI.pdf.fonte === 'teto');   // pregão com item ganho (inicial congelada) ou valor escolhido à mão em "Qual valor entra": só conferência
     const RR = C.computeAll(st);
     const v2 = (n) => (n === null || n === undefined ? '' : Number(n).toFixed(2).replace('.', ','));
     return new Promise((resolve) => {
       const w = document.createElement('div');
       w.className = 'dlg-wrap';
-      w.innerHTML = `<div class="dlg dlg-precos" role="dialog" aria-modal="true"><h3>Confirme os preços da proposta final</h3>
-        <p>${L.ganho ? 'Itens vencidos' : 'Nenhum item marcado como Venci: entram todos os itens'}. Ajuste o valor unitário final se precisar.</p>
+      w.innerHTML = `<div class="dlg dlg-precos" role="dialog" aria-modal="true"><h3>Confirme os preços da proposta ${ini ? 'inicial' : 'final'}</h3>
+        <p>${ini ? (trava ? (L.ganho ? 'O pregão já tem item ganho: a proposta inicial sai com os preços guardados (só conferência).' : 'Os valores seguem a escolha "Qual valor entra na proposta?" (só conferência).') : 'Confira quantidade, valor unitário e total de cada item. Ajuste o valor unitário se precisar (vira o lance final do item).') : (L.ganho ? 'Itens vencidos' : 'Nenhum item marcado como Venci: entram todos os itens') + '. Ajuste o valor unitário final se precisar.'}</p>
         <div class="tbl-scroll"><table class="tbl"><thead><tr><th class="c">Lote</th><th class="c">Item</th><th>Descrição</th><th class="r">Qtd</th><th class="r">Frete</th><th class="c">Comprar</th><th class="r">Inicial</th><th class="r">Mínimo</th><th class="r">Teto</th><th class="r">Valor unit.</th><th class="r">Total</th></tr></thead><tbody>
         ${L.linhas.map((x) => { const it = st.itens.find((i) => i.id === x.id) || {}; const cps = comprasDoItem(it).filter((k) => k.href); return `<tr><td class="c">${esc(C.padLE(it.loteEdital) || '—')}</td><td class="c"><b>${esc(C.padLE(it.itemEdital) || x.numeroItem)}</b></td><td class="pf-desc" title="${esc(x.descricao)}"><div>${esc(x.descricao)}</div></td><td class="r">${C.qtdBR(x.qtd)}</td><td class="r">${C.brl(it.frete || 0)}</td>
           <td class="c">${cps.length ? cps.map((k) => `<a class="buy" href="${esc(k.href)}" target="_blank" rel="noopener noreferrer" title="Conferir preço e estoque: ${esc(k.label || 'link')}">$</a>`).join('') : '<span class="muted">—</span>'}</td>
           <td class="r">${C.brl(x.precoInicial)}</td><td class="r">${minSegTxt(RR.iMap.get(x.id))}</td><td class="r">${C.brl(x.teto)}</td>
-          <td class="r"><input class="input" inputmode="decimal" style="width:110px;text-align:right" data-pf="${x.id}" value="${esc(v2(x.unit))}"></td><td class="r pf-lt" data-pf-tot="${x.id}">${x.total != null ? C.brl(x.total) : '—'}</td></tr>`; }).join('')}
+          <td class="r"><input class="input" inputmode="decimal" style="width:110px;text-align:right" data-pf="${x.id}" value="${esc(v2(x.unit))}"${trava ? ' readonly' : ''}></td><td class="r pf-lt" data-pf-tot="${x.id}">${x.total != null ? C.brl(x.total) : '—'}</td></tr>`; }).join('')}
         </tbody><tfoot><tr><td colspan="10" class="r">Total da proposta</td><td class="r" id="pfTot">${C.brl(L.total)}</td></tr></tfoot></table></div>
         <div class="pf-check"><b>${icon('alert', 'sm')} Antes de gerar, confira (só lembrete):</b>
           <ul><li>O frete continua o mesmo da cotação?</li><li>O fornecedor ainda tem a quantidade disponível? (toque no <b>$</b> para abrir o link de compra)</li><li>O preço de compra se manteve desde a cotação?</li><li>O prazo de entrega do edital ainda é viável?</li></ul></div>
-        <label class="switch pf-ok"><span><b>Confirmo os valores acima</b> para esta proposta final, mesmo que sejam iguais aos de antes.</span><input type="checkbox" data-pf-conf></label>
+        <label class="switch pf-ok"><span><b>Confirmo os valores acima</b> para esta proposta ${ini ? 'inicial' : 'final'}, mesmo que sejam iguais aos de antes.</span><input type="checkbox" data-pf-conf></label>
         <div class="btns"><button type="button" class="btn primary" data-pf-ok disabled>Confirmar e gerar</button><button type="button" class="btn ghost" data-pf-no>Cancelar</button></div></div>`;
       document.body.appendChild(w);
       const qtd = Object.fromEntries(L.linhas.map((x) => [x.id, x.qtd]));
@@ -7630,7 +7635,12 @@ html.cwb .kpi-mei { display: none; }   /* limite do MEI é do CNPJ do João, nã
         const vals = [...w.querySelectorAll('[data-pf]')].map((el) => ({ id: el.dataset.pf, v: C.parseBR(el.value), el }));
         const ruim = vals.find((x) => !(x.v > 0));
         if (ruim) { ruim.el.classList.add('err'); ruim.el.focus(); toast('Informe o valor de todos os itens'); return; }
-        vals.forEach((x) => { const it = store.get().itens.find((i) => i.id === x.id); if (it && it.lanceFinal !== x.v) store.patchItem(x.id, (i) => { i.lanceFinal = x.v; }); });
+        const unit0 = Object.fromEntries(L.linhas.map((x) => [x.id, x.unit]));
+        if (!trava) vals.forEach((x) => {
+          const it = store.get().itens.find((i) => i.id === x.id); if (!it) return;
+          if (ini) { if (unit0[x.id] == null || Math.abs(unit0[x.id] - x.v) >= 0.005) store.patchItem(x.id, (i) => { i.lanceFinal = x.v; }); }   // inicial: só o que ele mudou
+          else if (it.lanceFinal !== x.v) store.patchItem(x.id, (i) => { i.lanceFinal = x.v; });
+        });
         w.remove(); resolve(true);
       });
       const first = w.querySelector('[data-pf]'); if (first) first.focus();
@@ -7788,7 +7798,7 @@ html.cwb .kpi-mei { display: none; }   /* limite do MEI é do CNPJ do João, nã
       if (v) { if (falt[0].falta.some((f) => f !== 'descritivo do item ofertado')) openItemForm(falt[0].id); else irCatalogoItem(falt[0].id); }
       return;
     }
-    if (!previa && UI.pdf.tipo === 'final' && !(await confirmarPrecosFinal(id))) return;
+    if (!previa && !(await confirmarPrecosFinal(id, UI.pdf.tipo))) return;
     if (!previa && UI.pdf.tipo !== 'final') {
       const pz = store.get().pregoes.find((x) => x.id === id), k = confereIdent(pz, C.resolverPdfOpts(pz, store.get().config, 'inicial'));
       if (k && !k.ok) {
