@@ -30,7 +30,7 @@ with sync_playwright() as p:
     pg.goto(APP); pg.evaluate("(s)=>{localStorage.setItem('mp.state.v1',s)}", json.dumps(st))
     pg.evaluate("()=>localStorage.setItem('mp.ui',JSON.stringify({tab:'pregoes'}))"); pg.reload(); pg.wait_for_timeout(1000)
     S = pg.evaluate("()=>Object.fromEntries(window.__app.store.get().pregoes.map(p=>[p.id,p.status]))")
-    ok(S['old_pe'] == 'Aguardando disputa' and S['old_pd'] == 'Homologado' and S['an'] == 'Cotando' and S['des'] == 'Anulado' and S['old_fa'] == 'Empenho', 'Nomes antigos viram o padrão BLL ' + str(S))
+    ok(S['old_pe'] == 'Enviada' and S['old_pd'] == 'Homologado' and S['an'] == 'Cotando' and S['des'] == 'Anulado' and S['old_fa'] == 'Empenho', 'Nomes antigos viram o padrão BLL ' + str(S))
     ok(pg.evaluate("()=>window.__app.store.get().pregoes.find(p=>p.id==='old_fa').faturado") is True, 'Faturado antigo vira Empenho com a marca de faturado')
     txt = pg.inner_text('#main')
     card = lambda i: pg.query_selector(f'article.pcard[data-id={i}]')
@@ -56,7 +56,7 @@ with sync_playwright() as p:
     # lista de status do pregão
     pg.evaluate("()=>document.querySelector('[data-act=abrir-pregao][data-id=h_g]').click()"); pg.wait_for_timeout(700)
     opts = pg.evaluate("()=>[...document.querySelectorAll('#stsel option')].map(o=>o.value)")
-    ok(opts[:9] == ['Falta dados', 'Cotando', 'Pronto', 'Julgamento', 'Habilitação', 'Homologado', 'Inabilitado', 'Anulado', 'Desisti'] and 'Analisando' not in opts and 'Proposta enviada' not in opts and 'Faturado' not in opts and 'Perdeu' not in opts, 'Seletor de status: lista de 19/11/2026 (com Cotando e Inabilitado)')
+    ok(opts[:10] == ['Falta dados', 'Cotando', 'Pronto', 'Enviada', 'Julgamento', 'Habilitação', 'Homologado', 'Inabilitado', 'Anulado', 'Desisti'] and 'Analisando' not in opts and 'Proposta enviada' not in opts and 'Faturado' not in opts and 'Perdeu' not in opts, 'Seletor de status: lista de 19/11/2026 + Enviada (23/11)')
     # dashboard
     pg.evaluate("()=>localStorage.setItem('mp.ui',JSON.stringify({tab:'painel'}))"); pg.reload(); pg.wait_for_timeout(1000)
     m = pg.evaluate("()=>{const R=Core.computeAll(window.__app.store.get());const g=(i)=>R.pMap.get(i);return {fat:R.mei.faturado,aFat:R.mei.aFaturar,disp:R.mei.emDisputa,hg:g('h_g').ganho,hp:g('h_p').ganho,vOld:g('old_fa').venda>0}}")

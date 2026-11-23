@@ -1785,17 +1785,18 @@ html.cwb .kpi-mei { display: none; }   /* limite do MEI é do CNPJ do João, nã
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.172.0';
+  const APP_VERSION = '1.173.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   // Status do pregão (decisão do João, 11/11/2026): padrão da BLL + os dele (Falta dados, Analisando, Empenho, Concluído, Desisti).
   // O que muda nas contas e no Dashboard é ter ou não item Venci (pst.ganho), não o nome do status.
   // Lista do seletor (decisão do João, 19/11/2026, v1.166.0): Falta dados (= Incompleto), Cotando (antigo Analisando), Julgamento, Habilitação, Homologado, Inabilitado, Anulado, Desisti.
-  const STATUS_SEL = ['Falta dados', 'Cotando', 'Pronto', 'Julgamento', 'Habilitação', 'Homologado', 'Inabilitado', 'Anulado', 'Desisti'];
+  const STATUS_SEL = ['Falta dados', 'Cotando', 'Pronto', 'Enviada', 'Julgamento', 'Habilitação', 'Homologado', 'Inabilitado', 'Anulado', 'Desisti'];
   // STATUS = todos os nomes válidos (os fora do seletor só existem em pregões que já os têm: Recepção/Aguardando disputa/Disputa, Empenho, Concluído)
   const STATUS = STATUS_SEL.concat(['Recepção de propostas', 'Aguardando disputa', 'Disputa', 'Empenho', 'Concluído', 'Resultado final', 'Adjudicado']);
   // cada status novo pertence a um "grupo" com o nome antigo (as regras do app continuam por grupo)
   const GRUPO_ST = {
     'Cotando': 'Analisando', 'Pronto': 'Analisando', 'Inabilitado': 'Perdeu',   // Pronto (v1.168.0): cotei e revisei, falta enviar; regras do grupo Analisando, cor própria
+    'Enviada': 'Proposta enviada',   // Enviada (pedido do João, 23/11/2026, v1.173.0): mandei a proposta, aguardando a sessão; regras do grupo Proposta enviada
     'Recepção de propostas': 'Proposta enviada', 'Aguardando disputa': 'Proposta enviada', 'Disputa': 'Proposta enviada',
     'Habilitação': 'Julgamento', 'Adjudicado': 'Julgamento', 'Homologado': 'Julgamento', 'Resultado final': 'Julgamento',
     'Empenho': 'Aguardando empenho',
@@ -1803,7 +1804,7 @@ html.cwb .kpi-mei { display: none; }   /* limite do MEI é do CNPJ do João, nã
   };
   const LEG = (st) => GRUPO_ST[st] || st;
   // nomes antigos que o app converte sozinho ao abrir
-  const MIGRA_ST = { 'Proposta enviada': 'Aguardando disputa', 'Aguardando empenho': 'Empenho', 'Faturado': 'Empenho', 'Ganhou': 'Empenho', 'Perdeu': 'Homologado', 'Desclassificado': 'Homologado', 'Em disputa': 'Julgamento',
+  const MIGRA_ST = { 'Proposta enviada': 'Enviada', 'Aguardando disputa': 'Enviada', 'Recepção de propostas': 'Enviada', 'Aguardando empenho': 'Empenho', 'Faturado': 'Empenho', 'Ganhou': 'Empenho', 'Perdeu': 'Homologado', 'Desclassificado': 'Homologado', 'Em disputa': 'Julgamento',
     'Analisando': 'Cotando', 'Gravado': 'Cotando', 'Publicado': 'Cotando', 'Em retificação': 'Cotando', 'Suspenso': 'Cotando', 'Análise de propostas': 'Julgamento',
     'Resultado final': 'Homologado', 'Adjudicado': 'Homologado', 'Deserto': 'Anulado', 'Fracassado': 'Anulado', 'Cancelado': 'Anulado', 'Revogado': 'Anulado' };
   const FIM_RESULT = ['Adjudicado', 'Homologado', 'Resultado final'];   // sem item Venci = terminou sem ganhar (vai para Encerrados)
