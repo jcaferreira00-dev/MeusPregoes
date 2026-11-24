@@ -315,6 +315,7 @@ JSON único (acima) + pastas no Google Drive conforme a seção 8:
 - Raio: até ~120 km de estrada de Telêmaco Borba/PR, MAIS Ponta Grossa (~126 km) — decisão de 22/10/2026
   (180 km ficou longe demais). Quanto mais perto, melhor: está começando e sem caixa para frete grande.
   A lista de municípios com código IBGE está em "Busca no PNCP".
+- Elotech NÃO recebe proposta (informação do João, 24/11/2026): quando o PNCP mostra `usuarioNome` = Elotech, é só o sistema de gestão que publicou a compra; NÃO escrever "Elotech: precisa de cadastro" nem pôr `plataforma: "Elotech"` no JSON. Ver no aviso/edital como a proposta é enviada (e-mail, protocolo físico ou outra plataforma); se o PNCP só tiver a fase interna/TR, avisar o João para ligar no setor de licitação e deixar `plataforma` vazia.
 - Plataformas (decisão de 31/10/2026): NÃO descartar por plataforma. O João só tem cadastro no **Compras.gov.br** e na **BLL**; pregão em outra plataforma (IPM/eLicita, Licitanet, BNC, Portal de Compras Públicas, Compras Paraná etc.) entra na lista/análise normalmente, com AVISO: "plataforma X — precisa de cadastro" e se ela cobra taxa do fornecedor (a IPM não cobra; Licitanet, BNC e outras costumam cobrar). Conferir a plataforma em `usuarioNome`/`linkSistemaOrigem` do PNCP e no próprio edital (o PNCP pode errar).
 - Entrega de carro de passeio, no máximo Strada com carretinha. Itens pesados ou grandes não compensam.
 - Itens em quantidade muito grande são difíceis de comprar (falta de fornecedor e de experiência):
