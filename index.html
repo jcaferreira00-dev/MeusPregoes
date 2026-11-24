@@ -1005,6 +1005,15 @@ input[type=color].input { padding: 4px; height: 46px; }
 .mod-pc { display: none; }
 .tipo-chip.disp { background: color-mix(in srgb, #d97706 18%, var(--card)); color: color-mix(in srgb, #b45309 85%, var(--ink)); border-color: color-mix(in srgb, #d97706 40%, transparent); }
 .tipo-chip.hero { margin-left: 6px; vertical-align: middle; }
+/* Compras.gov: selo da plataforma + UASG em texto ao lado do tipo (v1.174.0) */
+.plat-chip, .uasg-chip { display: inline-flex; align-items: center; font-size: 10.5px; font-weight: 800; letter-spacing: .02em; padding: 2px 7px; border-radius: 6px; white-space: nowrap; line-height: 1.4; border: 1px solid transparent; }
+.plat-chip.cg { background: color-mix(in srgb, #1d4ed8 14%, var(--card)); color: color-mix(in srgb, #1d4ed8 82%, var(--ink)); border-color: color-mix(in srgb, #1d4ed8 38%, transparent); }
+.uasg-chip { color: var(--muted); background: color-mix(in srgb, var(--muted) 10%, var(--card)); border-color: color-mix(in srgb, var(--muted) 28%, transparent); font-variant-numeric: tabular-nums; }
+.hero-tags { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.hero-tags .tipo-chip.hero, .hero-tags .plat-chip.hero, .hero-tags .uasg-chip.hero { margin-left: 0; }
+.plat-chip.hero, .uasg-chip.hero { margin-left: 6px; vertical-align: middle; font-size: 11.5px; padding: 2px 9px; }
+.pcard .plat-tab { position: absolute; top: -10px; right: 14px; z-index: 3; font-size: 10px; font-weight: 800; letter-spacing: .02em; line-height: 1.3; padding: 1px 8px; border-radius: 6px; white-space: nowrap; background: color-mix(in srgb, #1d4ed8 14%, var(--card)); color: color-mix(in srgb, #1d4ed8 82%, var(--ink)); border: 1px solid color-mix(in srgb, #1d4ed8 45%, transparent); font-variant-numeric: tabular-nums; pointer-events: none; }
+@media (max-width: 899px) { .pcard .plat-tab { top: auto; bottom: 9px; right: 12px; } .pcard .plat-tab .u { display: none; } }
 @media (min-width: 900px) { .tipo-mob { display: none; } }
 @media (min-width: 900px) { .mod-pc { display: inline-flex; margin-left: 6px; } }
 .tipo-chip.hero { font-size: 11.5px; padding: 2px 9px; }
@@ -1785,7 +1794,7 @@ html.cwb .kpi-mei { display: none; }   /* limite do MEI é do CNPJ do João, nã
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.173.0';
+  const APP_VERSION = '1.174.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   // Status do pregão (decisão do João, 11/11/2026): padrão da BLL + os dele (Falta dados, Analisando, Empenho, Concluído, Desisti).
   // O que muda nas contas e no Dashboard é ter ou não item Venci (pst.ganho), não o nome do status.
@@ -4570,9 +4579,16 @@ html.cwb .kpi-mei { display: none; }   /* limite do MEI é do CNPJ do João, nã
     if (t === 'Aquisição') return `<span class="tipo-chip aq ${cls || ''}" title="Aquisição (pregão): compra direta, normalmente um pedido só com tudo">${c ? 'Compra' : 'Aquisição'}</span>`;
     return `<span class="tipo-chip nd ${cls || ''}" title="Informe no pregão: Registro de preços, Aquisição ou Dispensa">${c ? '?' : 'Tipo?'}</span>`;
   }
+  // Compras.gov (pedido do João, 24/11/2026, v1.174.0): selo quando a disputa é no Compras.gov.br e o UASG (unidade compradora) em texto ao lado do tipo do pregão (Reg. preços/Aquisição/Dispensa)
+  const ehComprasGov = (p) => /compras\.?\s*gov|comprasnet|gov\.br\/compras/i.test(plataformaDe(p));
+  const uasgDe = (p) => String(p.uasg || '').replace(/\D/g, '');
+  function plataformaChip(p, cls) { return ehComprasGov(p) ? `<span class="plat-chip cg ${cls || ''}" title="Disputa no Compras.gov.br (Compras do Governo Federal)">Compras.gov</span>` : ''; }
+  // no cartão: etiqueta sobre a borda de cima (não ocupa espaço do cabeçalho nem muda a altura dos blocos)
+  function platTab(p) { const u = uasgDe(p); return ehComprasGov(p) ? `<span class="plat-tab" title="Disputa no Compras.gov.br${u ? ' · unidade compradora (UASG) ' + u : ''}">Compras.gov${u ? '<span class="u"> · UASG ' + u + '</span>' : ''}</span>` : ''; }
+  function uasgChip(p, cls) { const u = uasgDe(p); return u ? `<span class="uasg-chip ${cls || ''}" title="Unidade compradora (UASG) no Compras.gov.br">UASG ${u}</span>` : ''; }
   function pregaoValues(p) {
     return {
-      numero: p.numero || '', orgao: p.orgao || '', plataforma: p.plataforma || '', tipoCompra: tipoVisual(p), cidadeUf: p.cidadeUf || '', sessao: p.sessao || '', prazoPropostas: p.prazoPropostas || '',
+      numero: p.numero || '', orgao: p.orgao || '', plataforma: p.plataforma || '', uasg: p.uasg || '', tipoCompra: tipoVisual(p), cidadeUf: p.cidadeUf || '', sessao: p.sessao || '', prazoPropostas: p.prazoPropostas || '',
       prazoEntregaDias: p.prazoEntregaDias == null ? '' : String(p.prazoEntregaDias), exigencias: p.exigencias || '', status: p.status || 'Falta dados',
       km: p.km ? C.numBR(p.km, 1) : '', viagens: p.viagens == null ? '1' : String(p.viagens), pedagio: p.pedagio ? C.numBR(p.pedagio) : '',
       entregaDiferente: !!p.entregaDiferente, locaisEntrega: p.locaisEntrega || '',
@@ -4709,6 +4725,7 @@ html.cwb .kpi-mei { display: none; }   /* limite do MEI é do CNPJ do João, nã
         ${field({ label: 'Status', name: 'status', type: 'select', value: v.status, options: (C.STATUS_SEL.includes(v.status) || !v.status ? C.STATUS_SEL : [v.status].concat(C.STATUS_SEL)).map((s) => ({ v: s, l: s })), hint: 'Padrão da BLL. Itens ganhos: marque “Venci” no item (com Venci o pregão ganha selo e borda verde em qualquer status). Concluído = terminou (sai do painel).' })}
         ${field({ label: 'Órgão / entidade *', name: 'orgao', value: v.orgao, full: true, ph: 'ex.: Universidade de Londrina' })}
         ${field({ label: 'Plataforma do pregão', name: 'plataforma', value: v.plataforma, ph: 'ex.: BLL, Compras.gov.br', list: PLATAFORMAS, hint: 'Onde a disputa acontece. Se ficar vazio, o app tenta reconhecer pelo site da proposta.' })}
+        ${field({ label: 'UASG (Compras.gov.br)', name: 'uasg', value: v.uasg, ph: 'ex.: 987763', inputmode: 'numeric', hint: 'Código da unidade compradora, só números. Vem sozinho na cotação do edital do Compras.gov.' })}
         ${field({ label: 'Tipo de compra', name: 'tipoCompra', type: 'select', value: v.tipoCompra, options: TIPO_COMPRA, hint: 'Registro de preços = ata, pedidos conforme a demanda. Aquisição = compra direta (pregão). Dispensa = dispensa eletrônica. Aparece como selo no cartão.' })}
         ${field({ label: 'Local do pregão (cidade/UF)', name: 'cidadeUf', value: v.cidadeUf, full: true, ph: 'Londrina/PR', hint: 'Ao preencher, o trajeto de ida e volta a partir do endereço da sua empresa é calculado sozinho.' })}
         ${field({ label: 'Link do edital', name: 'link', type: 'url', value: v.link, full: true, ph: 'https://…' })}
@@ -4886,7 +4903,7 @@ html.cwb .kpi-mei { display: none; }   /* limite do MEI é do CNPJ do João, nã
         if (!x.entregaDiferente && !(km > 0) && !PREG_SEM_KM_OK.includes(LEG(x.status)) && !C.FIM_RESULT.includes(x.status)) { $('[name=km]', form).classList.add('err'); $('[name=km]', form).scrollIntoView({ block: 'center' }); return 'Informe o km da entrega (ida e volta). Toque em “Recalcular trajeto” para o app calcular pela cidade.'; }
         if (x.entregaDiferente && ent.some((e) => !(C.n0(e.km) > 0)) && !PREG_SEM_KM_OK.includes(LEG(x.status)) && !C.FIM_RESULT.includes(x.status)) return 'Informe o km de cada local de entrega.';
         const data = {
-          numero: x.numero.trim(), orgao: x.orgao.trim(), plataforma: (x.plataforma || '').trim(), ...tipoGravar(x.tipoCompra), cidadeUf: x.cidadeUf.trim(), sessao: x.sessao || '', prazoPropostas: x.prazoPropostas || '',
+          numero: x.numero.trim(), orgao: x.orgao.trim(), plataforma: (x.plataforma || '').trim(), uasg: String(x.uasg || '').replace(/\D/g, ''), ...tipoGravar(x.tipoCompra), cidadeUf: x.cidadeUf.trim(), sessao: x.sessao || '', prazoPropostas: x.prazoPropostas || '',
           entregaDiferente: !!x.entregaDiferente, kmManual: form.dataset.kmManual === '1',
           prazoEntregaDias: x.prazoEntregaDias ? parseInt(x.prazoEntregaDias, 10) : null, exigencias: '', status: x.status,
           link: x.link.trim(), linkProposta: (x.linkProposta || '').trim(), linkLicitacao: (x.linkLicitacao || '').trim(), obs: x.obs.trim(),
@@ -6062,7 +6079,7 @@ html.cwb .kpi-mei { display: none; }   /* limite do MEI é do CNPJ do João, nã
     const diasS = p.sessao ? -diasDesde(p.sessao) : null;
     const mCount = (!emSelo && diasS !== null) ? `<div class="m-count ${diasS < 0 ? 'passou' : diasS <= 1 ? 'urg' : diasS <= 3 ? 'perto' : ''}" title="Sessão: ${esc(C.fmtSessao(p.sessao))}">${diasS < 0 ? '<span>passou</span>' : diasS === 0 ? '<b class="w">HOJE</b>' : diasS === 1 ? '<b class="w">AMANHÃ</b>' : `<b>${diasS}</b><span>dias</span>`}</div>` : '';
     return `<article class="pcard${pzCls}${emSelo ? ' tem-selo' : ''}${!CWB.modo && C.pracaDe(p, store.get().config) === 'CWB' ? ' pz-cwb' : ''}" style="--gc:${corDe(p.id)};--sc:${corSt(p.status) || '#2e75b6'}" data-act="abrir-pregao" data-id="${p.id}" tabindex="0" role="button">
-      ${selo}${mCount}
+      ${platTab(p)}${selo}${mCount}
       ${alr ? `<div class="p-alert ${alr.nivel}">${icon(alr.nivel === 'gold' ? 'check' : 'alert', 'sm')}<span>${esc(alr.texto)}</span></div>` : ''}
       ${alr && alr.pergunta ? `<div class="p-ask"><button type="button" class="btn sm" data-act="sessao-continua" data-id="${p.id}">Continua amanhã</button><button type="button" class="btn sm" data-act="sessao-mais" data-id="${p.id}">Mais dias</button><button type="button" class="btn sm ghost" data-act="sessao-fim" data-id="${p.id}">Encerrou</button></div>` : ''}
       <div class="row between p-hd"><span class="num" style="color:var(--gc)" title="Pregão nº ${esc(p.numero)}">${/^(preg|disp)/i.test(String(p.numero).trim()) ? esc(p.numero) : 'Nº ' + esc(p.numero)}</span><span class="mod-pc">${tipoChip(p, 'curto')}</span><span class="m-acts">${url(p.link) ? `<a class="ic-btn" href="${esc(url(p.link))}" target="_blank" rel="noopener noreferrer" data-act="link-externo" title="Abrir edital" aria-label="Abrir edital">${icon('pdf', 'sm')}</a>` : '<span class="ic-btn ic-vazio" aria-hidden="true"></span>'}${url(p.linkProposta) ? `<a class="ic-btn" href="${esc(url(p.linkProposta))}" target="_blank" rel="noopener noreferrer" data-act="link-externo" title="Enviar proposta" aria-label="Enviar proposta">${icon('link', 'sm')}</a>` : '<span class="ic-btn ic-vazio" aria-hidden="true"></span>'}</span><span class="p-hd-r"><span class="tipo-mob">${tipoChip(p, 'curto')}</span>${badgeStatus(p.status)}</span></div>
@@ -6792,7 +6809,7 @@ html.cwb .kpi-mei { display: none; }   /* limite do MEI é do CNPJ do João, nã
     return `<div class="page">
       <div class="detail-top"><button class="back" data-act="voltar">${icon('back')} Pregões</button>
         <button type="button" class="icon-btn" data-act="pdf-pregao" data-id="${p.id}" title="Proposta PDF" aria-label="Proposta PDF">${icon('pdf')}</button></div>
-      <div class="hero"><div class="hero-info"><span class="num">${/^(preg|disp)/i.test(String(p.numero).trim()) ? esc(p.numero) : (modalidadeDe(p) === 'Dispensa' ? 'DISPENSA' : 'PREGÃO') + ' Nº ' + esc(p.numero)}</span> ${tipoChip(p, 'hero')}<h2>${esc(p.orgao)}</h2>
+      <div class="hero"><div class="hero-info"><span class="num">${/^(preg|disp)/i.test(String(p.numero).trim()) ? esc(p.numero) : (modalidadeDe(p) === 'Dispensa' ? 'DISPENSA' : 'PREGÃO') + ' Nº ' + esc(p.numero)}</span> <div class="hero-tags">${tipoChip(p, 'hero')}${uasgChip(p, 'hero')}${plataformaChip(p, 'hero')}</div><h2>${esc(p.orgao)}</h2>
         <div class="m">${p.cidadeUf ? `<span>${esc(cidadeFmt(p.cidadeUf))}</span>` : ''}${p.sessao ? `<span>Sessão ${esc(C.fmtSessao(p.sessao))}</span>` : ''}</div></div>
         ${(() => {   // atalhos do pregão no cabeçalho: edital, site da proposta/lances, licitação e modelo
           const u = (v) => { v = String(v || '').trim(); return v ? (/^https?:\/\//i.test(v) ? v : 'https://' + v) : ''; };

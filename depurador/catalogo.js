@@ -147,6 +147,9 @@
   F('tipo-compra', AR.preg, 4, 'revisar', 'Tipo de compra: Registro de preços (SRP) ou Aquisição',
     `Selo no cartão e seletor no pregão. SRP gera ata e pedidos ao longo do tempo; Aquisição é compra direta. Se o campo está vazio, o app tenta adivinhar lendo “registro de preços/SRP” nas observações. FEITO na v1.122.0 (05/11/2026, Rodada 2): no cartão o número do pregão aparece inteiro (“Nº 83/2026”) e nunca é cortado pelo selo; se faltar espaço, os selos descem para a linha de baixo.`,
     { probe: 'tipoCompra', para: 'Ainda a decidir: a adivinhação por texto (tipoCompraDe) continua?', sel: ['.tipo-chip', '[name=tipoCompra]'] });
+  F('compras-gov-uasg', AR.preg, 4, 'manter', 'Selo Compras.gov e UASG do pregão',
+    `Pedido do João (24/11/2026, v1.174.0). Pregão cuja plataforma é Compras.gov.br leva o selo azul "Compras.gov" no cartão (etiqueta sobre a borda de cima no PC; canto de baixo no celular) e, no topo da página do pregão, o selo e o texto "UASG 987763" ao lado do tipo (Reg. preços/Aquisição/Dispensa). O UASG (campo uasg, só números, a unidade compradora do edital) vem sozinho no JSON da cotação e também pode ser digitado no cadastro do pregão. Pregão de outra plataforma não leva o selo.`,
+    { sel: ['.plat-tab', '.hero-tags'] });
   F('sessao-passou', AR.quad, 4, 'manter', 'Sessão que passou de um dia para outro',
     `Pregão com proposta enviada (Enviada ou Disputa; Recepção/Aguardando disputa viram Enviada desde a v1.173.0) cuja sessão já passou vai para Atenção agora com 3 botões: “Continua amanhã”, “Mais dias” e “Encerrou” (vira Julgamento). A pergunta some quando a data fica no futuro.`,
     { sel: ['.p-ask', '[data-act=sessao-continua]'] });
