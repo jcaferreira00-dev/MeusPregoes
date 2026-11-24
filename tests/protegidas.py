@@ -129,7 +129,7 @@ with sync_playwright() as p:
     pg.evaluate("(s)=>{localStorage.setItem('mp.state.v1',s)}", json.dumps(std)); pg.reload(); pg.wait_for_timeout(500)
     pg.evaluate("()=>document.querySelector('[data-act=abrir-pregao][data-id=p1]').click()"); pg.wait_for_timeout(600)
     ok(pg.query_selector('[data-act=modo-pregao]') is None, 'Modo pregão: botão não aparece sem nenhum item na disputa')
-    # Compras.gov (24/11/2026, v1.174.0): selo na etiqueta do cartão e UASG ao lado do tipo no topo do pregão; BLL sem selo
+    # Compras.gov (24/11/2026, v1.174.0): selo na etiqueta do cartão e UASG ao lado do tipo no topo do pregão; BLL com selo verde; outras plataformas com selo roxo e o nome
     stc = json.loads(json.dumps(st)); stc['pregoes'][0]['plataforma'] = 'Compras.gov.br'; stc['pregoes'][0]['uasg'] = '987763'
     pg.set_viewport_size({'width': 1500, 'height': 950})
     pg.evaluate("(s)=>{localStorage.setItem('mp.state.v1',s);localStorage.setItem('mp.ui',JSON.stringify({tab:'pregoes'}))}", json.dumps(stc)); pg.reload(); pg.wait_for_timeout(800)
@@ -139,7 +139,12 @@ with sync_playwright() as p:
     ok('UASG 987763' in pg.inner_text('.hero-tags') and 'Compras.gov' in pg.inner_text('.hero-tags'), 'Compras.gov: topo do pregão mostra UASG e selo ao lado do tipo')
     stb = json.loads(json.dumps(stc)); stb['pregoes'][0]['plataforma'] = 'BLL'; stb['pregoes'][0]['uasg'] = ''
     pg.evaluate("(s)=>{localStorage.setItem('mp.state.v1',s);localStorage.setItem('mp.ui',JSON.stringify({tab:'pregoes'}))}", json.dumps(stb)); pg.reload(); pg.wait_for_timeout(800)
-    ok(pg.query_selector('[data-id=p1] .plat-tab') is None, 'Compras.gov: pregão da BLL não leva o selo')
+    bl = pg.query_selector('[data-id=p1] .plat-tab.bll')
+    ok(bl is not None and bl.inner_text().strip() == 'BLL', 'Selo verde BLL no cartão da BLL (sem UASG)')
+    stx = json.loads(json.dumps(stb)); stx['pregoes'][0]['plataforma'] = 'Licitanet'
+    pg.evaluate("(s)=>{localStorage.setItem('mp.state.v1',s);localStorage.setItem('mp.ui',JSON.stringify({tab:'pregoes'}))}", json.dumps(stx)); pg.reload(); pg.wait_for_timeout(800)
+    ou = pg.query_selector('[data-id=p1] .plat-tab.ou')
+    ok(ou is not None and ou.inner_text().strip() == 'Licitanet', 'Selo de outra plataforma mostra o nome dela')
     b.close()
 ok(not erros, 'Sem erro de JavaScript em nenhuma guia (PC, tela dividida e celular)' + ('' if not erros else ': ' + erros[0][:120]))
 print('\n' + ('TUDO OK' if not falhas else str(len(falhas)) + ' FALHA(S): NÃO PUBLICAR'))
