@@ -1798,7 +1798,7 @@ html.cwb .kpi-mei { display: none; }   /* limite do MEI é do CNPJ do João, nã
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.175.0';
+  const APP_VERSION = '1.175.1';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   // Status do pregão (decisão do João, 11/11/2026): padrão da BLL + os dele (Falta dados, Analisando, Empenho, Concluído, Desisti).
   // O que muda nas contas e no Dashboard é ter ou não item Venci (pst.ganho), não o nome do status.
@@ -4658,7 +4658,9 @@ html.cwb .kpi-mei { display: none; }   /* limite do MEI é do CNPJ do João, nã
         const j = await r.json();
         if (!j.routes || !j.routes[0]) throw new Error('Não foi encontrada rota de carro até esse local.');
         const nome = origemTxt ? 'Curitiba (saída)' : emp.cidade ? [emp.cidade, emp.uf].filter(Boolean).join('/') : 'sua empresa';
-        return { km: Math.round(j.routes[0].distance / 100) / 10, min: Math.round(j.routes[0].duration / 60), rotulo: [nome].concat(destinos, [nome]).join(' → ') };
+        // entrega na mesma cidade da saída (v1.175.1, 24/11/2026): a rota dava 0 km, o app achava que faltava km e recalculava (e avisava) sem parar; mínimo de 10 km e 20 min ida e volta
+        const kmR = Math.round(j.routes[0].distance / 100) / 10, minR = Math.round(j.routes[0].duration / 60);
+        return { km: Math.max(kmR, 10), min: Math.max(minR, 20), rotulo: [nome].concat(destinos, [nome]).join(' → ') };
       } catch (e) {
         if (e && e.message && e.message.length > 6 && e.message !== 'geo' && e.message !== 'rota') throw e;
         throw new Error('Não foi possível calcular o trajeto agora (sem internet ou serviço indisponível). Informe o km manualmente.');
