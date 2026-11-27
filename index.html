@@ -1798,7 +1798,7 @@ html.cwb .kpi-mei { display: none; }   /* limite do MEI é do CNPJ do João, nã
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.176.0';
+  const APP_VERSION = '1.177.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   // Status do pregão (decisão do João, 11/11/2026): padrão da BLL + os dele (Falta dados, Analisando, Empenho, Concluído, Desisti).
   // O que muda nas contas e no Dashboard é ter ou não item Venci (pst.ganho), não o nome do status.
@@ -6170,14 +6170,16 @@ html.cwb .kpi-mei { display: none; }   /* limite do MEI é do CNPJ do João, nã
       const hoje0 = new Date(); hoje0.setHours(0, 0, 0, 0);
       const tm = (x) => { const t = Date.parse(x.p.sessao || x.p.prazoPropostas || ''); return isNaN(t) ? null : t; };
       const grupo = (t) => (t == null ? 2 : t >= hoje0.getTime() ? 0 : 1);
-      const porData = [...atvAll].sort((a, b) => { const ta = tm(a), tb = tm(b), ga = grupo(ta), gb = grupo(tb); return (ga - gb) || (ga === 0 ? ta - tb : ga === 1 ? tb - ta : 0); });
+      // pregões com item ganho (Venci) SEMPRE no topo, na mesma ordem de data entre eles; os outros continuam na ordem de data
+      // logo abaixo (pedido do João, 27/11/2026, v1.177.0)
+      const porData = [...atvAll].sort((a, b) => { const ta = tm(a), tb = tm(b), ga = grupo(ta), gb = grupo(tb); return ((b.ganho ? 1 : 0) - (a.ganho ? 1 : 0)) || (ga - gb) || (ga === 0 ? ta - tb : ga === 1 ? tb - ta : 0); });
       cols = [['Todos', 'Todos', '', porData]];
     }
     // celular: com um filtro de status ligado, tudo o que é daquele status vai numa coluna só (antes o pregão de "Atenção agora" ficava
     // numa coluna e os outros noutra, fora da tela; o João via só o de amanhã) — pedido do João, 08/11/2026
     if (UI.filtro !== 'todos' && cols.length > 1) {
       const ref = cols.find((r) => r[0] !== 'Atenção agora') || cols[0];
-      cols = [[UI.filtro, UI.filtro === 'ganhei' ? 'Venci 🏆' : stTxt(UI.filtro.replace(/^g:/, '')), ref[2], cols.flatMap((r) => r[3])]];
+      cols = [[UI.filtro, UI.filtro === 'ganhei' ? 'Venci 🏆' : stTxt(UI.filtro.replace(/^g:/, '')), ref[2], cols.flatMap((r) => r[3]).map((x, i) => [x, i]).sort((A, B) => ((B[0].ganho ? 1 : 0) - (A[0].ganho ? 1 : 0)) || (A[1] - B[1])).map((y) => y[0])]];   // com item ganho primeiro (v1.177.0)
     }
     // celular, filtro "Todos" (pedido do João, 12/11/2026): uma coluna só com TODOS os pregões, na ordem de importância e com os encerrados
     // (cinza) no fim; antes ficava uma coluna por grupo, uma por vez, e os encerrados escondidos no botão, então "Todos" não mostrava todos

@@ -14,6 +14,10 @@
     pdf: 'Proposta (PDF)', conf: 'Config e dados', sync: 'Nuvem e aplicativo', cod: 'Código interno',
   };
 
+  F('ganhos-topo', AR.quad, 4, 'manter', 'Pregões com item ganho no topo',
+    `Na guia Pregões, os pregões com item ganho (Venci) ficam sempre acima dos outros, no filtro Todos e nos filtros de status; entre eles e entre os outros vale a ordem de sempre (data da sessão no Todos).`,
+    { ev: ['b.ganho ? 1 : 0'], para: 'Manter.' });
+
   /* ================= Nº do edital e declaração de MPE (v1.176.0) ================= */
   F('numero-edital', AR.pdf, 3, 'manter', 'Nº do edital diferente do pregão',
     `Campo “Nº do edital (se for outro)” no cadastro do pregão (numeroEdital). Preenchido, a faixa da proposta, do catálogo e do Word sai “EDITAL DE LICITAÇÃO Nº X - PREGÃO ELETRÔNICO Nº Y” (dispensa: DISPENSA ELETRÔNICA). Vazio, fica o texto de sempre. Frase Enquadramento com a declaração de MPE da LC 123/2006 (§ 4º do art. 3º) e “( X ) Declaramos que SIM”, como nos modelos de proposta das prefeituras (Piraí do Sul PE 53, Anexo II).`,
