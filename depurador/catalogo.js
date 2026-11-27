@@ -14,9 +14,9 @@
     pdf: 'Proposta (PDF)', conf: 'Config e dados', sync: 'Nuvem e aplicativo', cod: 'Código interno',
   };
 
-  F('ganhos-topo', AR.quad, 4, 'manter', 'Pregões com item ganho no topo',
-    `Na guia Pregões, os pregões com item ganho (Venci) ficam sempre acima dos outros, no filtro Todos e nos filtros de status; entre eles e entre os outros vale a ordem de sempre (data da sessão no Todos).`,
-    { ev: ['b.ganho ? 1 : 0'], para: 'Manter.' });
+  F('ganhos-topo', AR.item, 4, 'manter', 'Itens ganhos no topo da página do pregão',
+    `Na página do pregão, os itens ganhos (Venci) aparecem primeiro, na ordem do edital; os outros logo abaixo, também na ordem do edital. A ordem dos cartões da guia Pregões não muda.`,
+    { ev: ['ganhosNoTopo'], para: 'Manter.' });
 
   /* ================= Nº do edital e declaração de MPE (v1.176.0) ================= */
   F('numero-edital', AR.pdf, 3, 'manter', 'Nº do edital diferente do pregão',
