@@ -1798,7 +1798,7 @@ html.cwb .kpi-mei { display: none; }   /* limite do MEI é do CNPJ do João, nã
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.175.1';
+  const APP_VERSION = '1.176.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   // Status do pregão (decisão do João, 11/11/2026): padrão da BLL + os dele (Falta dados, Analisando, Empenho, Concluído, Desisti).
   // O que muda nas contas e no Dashboard é ter ou não item Venci (pst.ganho), não o nome do status.
@@ -2425,9 +2425,17 @@ html.cwb .kpi-mei { display: none; }   /* limite do MEI é do CNPJ do João, nã
     ['produtos', 'Produtos', 'Os produtos ofertados são novos, de primeira qualidade, sem uso e serão entregues em suas embalagens originais, nas quantidades, prazos e locais definidos no edital.', true],
     ['garantia', 'Garantia', 'Os produtos têm garantia conforme o edital e, no mínimo, a garantia legal do Código de Defesa do Consumidor, contada do recebimento definitivo; substituiremos sem custo o que apresentar defeito ou estiver fora da especificação.', true],
     ['entrega', 'Entrega', 'A entrega será feita por conta e risco do fornecedor, sem custo adicional para o órgão, mediante a emissão da ordem de fornecimento ou nota de empenho.', true],
-    ['enquadramento', 'Enquadramento', 'A licitante é Microempreendedor Individual (MEI), enquadrada como microempresa para os fins da Lei Complementar nº 123/2006.', true],
+    ['enquadramento', 'Enquadramento', 'Declaramos, sob as penas da lei, estar enquadrados como MPE (Microempreendedor Individual - MEI, equiparado a microempresa), em condições de usufruir do tratamento jurídico diferenciado determinado na Lei Complementar nº 123/2006, em especial quanto ao § 4º do art. 3º, não incidindo em nenhuma das vedações ali previstas, e que estamos cientes de que seremos penalizados caso esta declaração seja falsa. ( X ) Declaramos que SIM.', true],
     ['representante', 'Representante legal', 'Representante legal para assinatura da ata ou do contrato: {responsavel}, {nacionalidade}, {estadoCivil}, {profissao}, CPF {cpf}, RG {rg} {rgOrgao}, e-mail {email}, telefone {telefone}.', true],
   ];
+  // Nº do edital diferente do nº do pregão (pedido do João, 27/11/2026: Piraí do Sul = Edital 061/2026, Pregão 053/2026):
+  // com `numeroEdital` preenchido a faixa sai "EDITAL DE LICITAÇÃO Nº X - PREGÃO ELETRÔNICO Nº Y"; vazio, o texto de sempre
+  function faixaEdital(preg, texto) {
+    const ne = String((preg && preg.numeroEdital) || '').trim();
+    if (!ne) return texto;
+    const disp = String((preg && preg.modalidade) || '') === 'Dispensa';
+    return 'EDITAL DE LICITAÇÃO Nº ' + ne + ' - ' + (disp ? 'DISPENSA ELETRÔNICA' : 'PREGÃO ELETRÔNICO') + ' Nº ' + String(preg.numero || '');
+  }
   function pdfOptsBase(cfg) {
     const p = cfg.proposta || {};
     const colunas = {}; COLUNAS_DESC.forEach(([id, , , on]) => { colunas[id] = on; });
@@ -2936,7 +2944,7 @@ html.cwb .kpi-mei { display: none; }   /* limite do MEI é do CNPJ do João, nã
   /* ---------- dados de exemplo (os mesmos da planilha) ---------- */
 
   const api = {
-    APP_VERSION, STATUS, STATUS_SEL, INATIVOS, LEG, MIGRA_ST, FIM_RESULT, SEM_DISPUTA, PERDA_ST, fimP, faturadoP, PARTICIPOU, DECL_PADRAO, DECL_PROPOSTA, uid, n0, round2, ceil2, floor2, parseBR, brl, brl0, pct, numBR, qtdBR,
+    APP_VERSION, STATUS, STATUS_SEL, INATIVOS, LEG, MIGRA_ST, FIM_RESULT, SEM_DISPUTA, PERDA_ST, fimP, faturadoP, PARTICIPOU, DECL_PADRAO, DECL_PROPOSTA, faixaEdital, uid, n0, round2, ceil2, floor2, parseBR, brl, brl0, pct, numBR, qtdBR,
     fmtSessao, dataExtensa, hojeISO, defaultConfig, emptyState, migrate, custoViagem, localEntregaPadrao, calcItem, limiteMEI, isSRP, temEmpenho, pracaDe, viewPraca, acertoCwb,
     custoUnitOpc, embDe, tesouro, corTesouro, agora, setClockOffset, getClockOffset, pendenciasNuvem, computeAll, custoCompra, freteCompra, ordemLoteItem, padLE, dasMensal, mesesAtivos, previewItem, linhasProposta, faltasOferta, marcaModeloDoTexto, normMM, horizontal, separarObservacao, capitalizarTitulos, unitProposta, resolverPdfOpts, camposModelo, pendenciasModelo, CAMPOS_MODELO, identificaEmpresa, COLUNAS_DESC, CAMPOS_FORNECEDOR, CAMPOS_BANCO, mergeState, diffState, paraNuvem, createStore, };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
@@ -3656,7 +3664,7 @@ html.cwb .kpi-mei { display: none; }   /* limite do MEI é do CNPJ do João, nã
       if (D.faixaTexto) {
         garantir(30);
         page.drawRectangle({ x: M, y: y - 22, width: CW, height: 22, color: CINZA, borderColor: BLK, borderWidth: 1 });
-        TC(safe(D.faixaTexto).replace(/\{numero\}/g, preg.numero || '').replace(/\{orgao\}/g, preg.orgao || ''), PW / 2, y - 15, 11, bold, BLK);
+        TC(safe(C.faixaEdital(preg, D.faixaTexto)).replace(/\{numero\}/g, preg.numero || '').replace(/\{orgao\}/g, preg.orgao || ''), PW / 2, y - 15, 11, bold, BLK);
         y -= 30;
       }
       // órgão + quadro com os dados do fornecedor (você)
@@ -3807,7 +3815,7 @@ html.cwb .kpi-mei { display: none; }   /* limite do MEI é do CNPJ do João, nã
     if (D.faixa && D.faixaTexto) {
       garantir(30);
       page.drawRectangle({ x: M, y: y - 22, width: CW, height: 22, color: CINZA, borderColor: BLK, borderWidth: 1 });
-      TC(subst(D.faixaTexto), PW / 2, y - 15, 11.5, bold, BLK);
+      TC(subst(C.faixaEdital(preg, D.faixaTexto)), PW / 2, y - 15, 11.5, bold, BLK);
       y -= 22 + 14;
     }
 
@@ -4199,7 +4207,7 @@ html.cwb .kpi-mei { display: none; }   /* limite do MEI é do CNPJ do João, nã
       const sub = (t) => String(t || '').replace(/\{numero\}/g, preg.numero || '').replace(/\{orgao\}/g, preg.orgao || '');
       let body = '';
       body += p(run('CATÁLOGO DOS PRODUTOS OFERTADOS', { b: true, sz: 26 }), jc('center') + esp(0, 120));
-      if (D.faixaTexto) body += p(run(sub(D.faixaTexto), { b: true, sz: 22 }), jc('center') + esp(0, 120) + '<w:pBdr><w:top w:val="single" w:sz="8" w:space="2" w:color="000000"/><w:left w:val="single" w:sz="8" w:space="4" w:color="000000"/><w:bottom w:val="single" w:sz="8" w:space="2" w:color="000000"/><w:right w:val="single" w:sz="8" w:space="4" w:color="000000"/></w:pBdr><w:shd w:val="clear" w:color="auto" w:fill="E6E6E6"/>');
+      if (D.faixaTexto) body += p(run(sub(C.faixaEdital(preg, D.faixaTexto)), { b: true, sz: 22 }), jc('center') + esp(0, 120) + '<w:pBdr><w:top w:val="single" w:sz="8" w:space="2" w:color="000000"/><w:left w:val="single" w:sz="8" w:space="4" w:color="000000"/><w:bottom w:val="single" w:sz="8" w:space="2" w:color="000000"/><w:right w:val="single" w:sz="8" w:space="4" w:color="000000"/></w:pBdr><w:shd w:val="clear" w:color="auto" w:fill="E6E6E6"/>');
       body += p(run('Órgão: ', { b: true, sz: 19 }) + run(preg.orgao || '—', { sz: 19 }), esp(0, 100));
       const endC = [emp.endereco, emp.bairro, emp.cep ? 'CEP ' + emp.cep : '', [emp.cidade, emp.uf].filter(Boolean).join('/')].filter(Boolean).join(' - ');
       const bordas = (cor, w) => `<w:tblBorders>${['top', 'left', 'bottom', 'right', 'insideH', 'insideV'].map((k) => `<w:${k} w:val="single" w:sz="${w || 6}" w:space="0" w:color="${cor}"/>`).join('')}</w:tblBorders>`;
@@ -4601,7 +4609,7 @@ html.cwb .kpi-mei { display: none; }   /* limite do MEI é do CNPJ do João, nã
   function uasgChip(p, cls) { const u = uasgDe(p); return u ? `<span class="uasg-chip ${cls || ''}" title="Unidade compradora (UASG) no Compras.gov.br">UASG ${u}</span>` : ''; }
   function pregaoValues(p) {
     return {
-      numero: p.numero || '', orgao: p.orgao || '', plataforma: p.plataforma || '', uasg: p.uasg || '', tipoCompra: tipoVisual(p), cidadeUf: p.cidadeUf || '', sessao: p.sessao || '', prazoPropostas: p.prazoPropostas || '',
+      numero: p.numero || '', numeroEdital: p.numeroEdital || '', orgao: p.orgao || '', plataforma: p.plataforma || '', uasg: p.uasg || '', tipoCompra: tipoVisual(p), cidadeUf: p.cidadeUf || '', sessao: p.sessao || '', prazoPropostas: p.prazoPropostas || '',
       prazoEntregaDias: p.prazoEntregaDias == null ? '' : String(p.prazoEntregaDias), exigencias: p.exigencias || '', status: p.status || 'Falta dados',
       km: p.km ? C.numBR(p.km, 1) : '', viagens: p.viagens == null ? '1' : String(p.viagens), pedagio: p.pedagio ? C.numBR(p.pedagio) : '',
       entregaDiferente: !!p.entregaDiferente, locaisEntrega: p.locaisEntrega || '',
@@ -4737,6 +4745,7 @@ html.cwb .kpi-mei { display: none; }   /* limite do MEI é do CNPJ do João, nã
     const body = `
       <div class="formgrid">
         ${field({ label: 'Nº do pregão *', name: 'numero', value: v.numero, ph: 'ex.: 90001/2026', inputmode: 'text', hint: 'Só números e . - / (a proposta já escreve “Pregão nº” antes).' })}
+        ${field({ label: 'Nº do edital (se for outro)', name: 'numeroEdital', value: v.numeroEdital, ph: 'ex.: 061/2026', inputmode: 'text', hint: 'Só quando o edital tem número diferente do pregão. A faixa da proposta sai “Edital de licitação nº … - Pregão eletrônico nº …”.' })}
         ${field({ label: 'Status', name: 'status', type: 'select', value: v.status, options: (C.STATUS_SEL.includes(v.status) || !v.status ? C.STATUS_SEL : [v.status].concat(C.STATUS_SEL)).map((s) => ({ v: s, l: s })), hint: 'Padrão da BLL. Itens ganhos: marque “Venci” no item (com Venci o pregão ganha selo e borda verde em qualquer status). Concluído = terminou (sai do painel).' })}
         ${field({ label: 'Órgão / entidade *', name: 'orgao', value: v.orgao, full: true, ph: 'ex.: Universidade de Londrina' })}
         ${field({ label: 'Plataforma do pregão', name: 'plataforma', value: v.plataforma, ph: 'ex.: BLL, Compras.gov.br', list: PLATAFORMAS, hint: 'Onde a disputa acontece. Se ficar vazio, o app tenta reconhecer pelo site da proposta.' })}
@@ -4918,7 +4927,7 @@ html.cwb .kpi-mei { display: none; }   /* limite do MEI é do CNPJ do João, nã
         if (!x.entregaDiferente && !(km > 0) && !PREG_SEM_KM_OK.includes(LEG(x.status)) && !C.FIM_RESULT.includes(x.status)) { $('[name=km]', form).classList.add('err'); $('[name=km]', form).scrollIntoView({ block: 'center' }); return 'Informe o km da entrega (ida e volta). Toque em “Recalcular trajeto” para o app calcular pela cidade.'; }
         if (x.entregaDiferente && ent.some((e) => !(C.n0(e.km) > 0)) && !PREG_SEM_KM_OK.includes(LEG(x.status)) && !C.FIM_RESULT.includes(x.status)) return 'Informe o km de cada local de entrega.';
         const data = {
-          numero: x.numero.trim(), orgao: x.orgao.trim(), plataforma: (x.plataforma || '').trim(), uasg: String(x.uasg || '').replace(/\D/g, ''), ...tipoGravar(x.tipoCompra), cidadeUf: x.cidadeUf.trim(), sessao: x.sessao || '', prazoPropostas: x.prazoPropostas || '',
+          numero: x.numero.trim(), numeroEdital: String(x.numeroEdital || '').trim(), orgao: x.orgao.trim(), plataforma: (x.plataforma || '').trim(), uasg: String(x.uasg || '').replace(/\D/g, ''), ...tipoGravar(x.tipoCompra), cidadeUf: x.cidadeUf.trim(), sessao: x.sessao || '', prazoPropostas: x.prazoPropostas || '',
           entregaDiferente: !!x.entregaDiferente, kmManual: form.dataset.kmManual === '1',
           prazoEntregaDias: x.prazoEntregaDias ? parseInt(x.prazoEntregaDias, 10) : null, exigencias: '', status: x.status,
           link: x.link.trim(), linkProposta: (x.linkProposta || '').trim(), linkLicitacao: (x.linkLicitacao || '').trim(), obs: x.obs.trim(),

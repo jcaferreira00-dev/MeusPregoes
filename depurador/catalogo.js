@@ -14,6 +14,11 @@
     pdf: 'Proposta (PDF)', conf: 'Config e dados', sync: 'Nuvem e aplicativo', cod: 'Código interno',
   };
 
+  /* ================= Nº do edital e declaração de MPE (v1.176.0) ================= */
+  F('numero-edital', AR.pdf, 3, 'manter', 'Nº do edital diferente do pregão',
+    `Campo “Nº do edital (se for outro)” no cadastro do pregão (numeroEdital). Preenchido, a faixa da proposta, do catálogo e do Word sai “EDITAL DE LICITAÇÃO Nº X - PREGÃO ELETRÔNICO Nº Y” (dispensa: DISPENSA ELETRÔNICA). Vazio, fica o texto de sempre. Frase Enquadramento com a declaração de MPE da LC 123/2006 (§ 4º do art. 3º) e “( X ) Declaramos que SIM”, como nos modelos de proposta das prefeituras (Piraí do Sul PE 53, Anexo II).`,
+    { ev: ['faixaEdital', 'numeroEdital'], para: 'Manter.' });
+
   /* ================= Praça Curitiba (v1.169.0) ================= */
   F('praca-curitiba', AR.preg, 4, 'manter', 'Praça Curitiba (visão do irmão e acerto)',
     `Cada pregão tem uma praça: Telêmaco (padrão) ou Curitiba, decidida pela cidade do órgão (lista em Config › Praça Curitiba) ou à mão no pregão. Na visão do João: faixa âmbar no cartão, filtro Todas/Telêmaco/Curitiba na guia Pregões, card "Curitiba" e "Acerto com Curitiba" no Painel. Na visão de Curitiba (link ?cwb=1 ou chave em Config): mesmo app em amarelo/laranja, só com os pregões da praça. Despesas (taxa da BLL etc.) e acerto 50/50 do lucro líquido e do prejuízo, por pregão.`,
