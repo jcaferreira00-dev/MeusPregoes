@@ -1720,6 +1720,10 @@ html .pq-grid > .pcard.al-bad, html .pq-grid > .pcard.al-warn, html .pq-grid > .
 .obs-row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
 .obsline.item.mini, .pcard .obsline.item.mini { display: inline-flex; align-items: center; width: auto; padding: 4px 8px; cursor: help; }
 .selo-chk { color: var(--amber); background: var(--amber-soft); font-weight: 700; }
+/* alerta de volatilidade de preço (pedido do João, 28/11/2026, v1.178.0): obs que começa com "RISCO DE VOLATILIDADE" = etiqueta com borda roxa; só avisa, não bloqueia nada */
+.volat-chk { color: color-mix(in srgb, #7c3aed 85%, var(--ink)); background: color-mix(in srgb, #7c3aed 10%, var(--card)); border: 1.5px solid #8b5cf6; font-weight: 800; letter-spacing: .02em; text-transform: uppercase; }
+.obs-pen.volat > summary { color: #7c3aed; border: 1.5px solid #8b5cf6; background: color-mix(in srgb, #7c3aed 10%, var(--card)); }
+.obs-pen.volat textarea { border: 1.5px solid #8b5cf6; }
 @media (min-width: 700px) {
   /* observação do pregão no cartão (PC): só o ícone; o texto vai no balão e na página do pregão (pedido do João, 18/11/2026) */
   html body .pcard .obsline, html body .pq-grid .pcard .obsline { display: inline-flex; align-items: center; align-self: flex-start; width: auto; max-width: none; padding: 4px 8px; white-space: nowrap; overflow: visible; -webkit-line-clamp: unset; cursor: help; }
@@ -1798,7 +1802,7 @@ html.cwb .kpi-mei { display: none; }   /* limite do MEI é do CNPJ do João, nã
 (function (root) {
   'use strict';
 
-  const APP_VERSION = '1.177.2';
+  const APP_VERSION = '1.178.0';
   // "ganhar" é por item (botão Venci no item), não um status do pregão. 'Ganhou' antigo continua sendo lido (dados de antes).
   // Status do pregão (decisão do João, 11/11/2026): padrão da BLL + os dele (Falta dados, Analisando, Empenho, Concluído, Desisti).
   // O que muda nas contas e no Dashboard é ter ou não item Venci (pst.ganho), não o nome do status.
@@ -5139,7 +5143,7 @@ html.cwb .kpi-mei { display: none; }   /* limite do MEI é do CNPJ do João, nã
           <div class="formgrid">${ALTS.map(altFields).join('')}</div>
           <div class="hint" style="margin-bottom:12px">Compare quantos fornecedores quiser. Marque ✓ as opções que vai usar para comprar.<br>Se marcar mais de uma, preencha “Comprar aqui” em cada uma (a que ficar em branco leva o resto): o app calcula o custo médio e soma o frete de cada fornecedor.</div>
           <button type="button" class="btn primary block" data-alt="fechar">OK</button></div></div>
-        <details class="full obs-pen${String(v.obs || '').trim() ? ' tem' : ''}"><summary title="Anotações do item" aria-label="Anotações do item">${icon('edit', 'sm')}</summary>
+        <details class="full obs-pen${String(v.obs || '').trim() ? ' tem' : ''}${/^\s*\W*\s*RISCO DE VOLATILIDADE/i.test(String(v.obs || '')) ? ' volat' : ''}"${/^\s*\W*\s*RISCO DE VOLATILIDADE/i.test(String(v.obs || '')) ? ' open' : ''}><summary title="Anotações do item" aria-label="Anotações do item">${icon('edit', 'sm')}</summary>
           ${field({ label: 'Anotações (só para mim)', name: 'obs', type: 'textarea', rows: 3, value: v.obs, full: true, ph: 'O que conferir neste item…' })}</details>
         <div class="full"><label class="switch"><span>Posso ganhar<small class="hint" style="display:block;font-weight:500">Marque se ficou perto do 1º colocado neste item e ainda é possível ganhar. Dá para filtrar no Dashboard.</small></span><input type="checkbox" name="possivelGanhar"${v.possivelGanhar ? ' checked' : ''}></label></div>
         <input type="hidden" name="margem" value="${esc(v.margem)}">
@@ -6324,6 +6328,8 @@ html.cwb .kpi-mei { display: none; }   /* limite do MEI é do CNPJ do João, nã
   const temRevisar = (it) => !!String((it && it.revisar) || '').trim() && !it.semLance && !pregaoDesisti(it);
   // registro/selo citado nas anotações do item (Inmetro, CA, Anatel...): vira etiqueta visível no lugar do texto da observação (pedido do João, 18/11/2026)
   const temSelo = (it) => /\b(inmetro|anvisa|anatel|ibama|marinha)\b|\bCA\b/i.test(String((it && it.obs) || ''));
+  // risco de volatilidade de preço (pedido do João, 28/11/2026, v1.178.0): o obs do item começa com "RISCO DE VOLATILIDADE"
+  const temVolat = (it) => /^\s*\W*\s*RISCO DE VOLATILIDADE/i.test(String((it && it.obs) || ''));
   const revHtml = (it) => temRevisar(it) ? `<div class="rev-item">${icon('alert', 'sm')}<span class="grow"><b>REVISAR:</b> ${esc(it.revisar)}</span><button type="button" class="btn sm" data-act="item-revisado" data-id="${it.id}" title="Já conferi: tirar o alerta">${icon('check', 'sm')} Revisado</button></div>` : '';
   // detalhamento de custos e lucros do item (botão ao lado do "Venci"): tudo o que saiu do cartão, sem repetir
   function detalhesItemHtml(it, c) {
@@ -6381,7 +6387,7 @@ html.cwb .kpi-mei { display: none; }   /* limite do MEI é do CNPJ do João, nã
     }).join('')}</div>` : '';
     const venc = Number(it.vencedor) > 0 ? `<div><span class="chip venc">${icon('alert', 'sm')}Venceu por ${C.brl(it.vencedor)}</span></div>` : '';
     const obsT = String(it.obs || '').trim();
-    const obs = obsT ? `<div class="obs-row"><div class="obsline item mini" title="${esc(obsT)}">${icon('info', 'sm')}</div>${temSelo(it) ? `<span class="chip selo-chk" title="${esc('Registro/selo citado nas anotações: conferir. ' + obsT)}">${icon('alert', 'sm')}Conferir selo</span>` : ''}</div>` : '';
+    const obs = obsT ? `<div class="obs-row"><div class="obsline item mini" title="${esc(obsT)}">${icon('info', 'sm')}</div>${temVolat(it) ? `<span class="chip volat-chk" title="${esc(obsT)}">${icon('alert', 'sm')}Risco de volatilidade</span>` : ''}${temSelo(it) ? `<span class="chip selo-chk" title="${esc('Registro/selo citado nas anotações: conferir. ' + obsT)}">${icon('alert', 'sm')}Conferir selo</span>` : ''}</div>` : '';
     // celular: valor do meu lance (lance final; vazio = teto do edital) e mínimo pela margem
     const meuLance = C.unitProposta(c, 'auto').unit;   // mesma regra do PDF: lance final prevalece; sem lance, o teto do edital
     const acimaT = c.lance !== null && c.teto != null && c.lance > c.teto + 0.004;
